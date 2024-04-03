@@ -20,8 +20,15 @@ my_test(){
   sed '/^[[:blank:]]*#.*$/d;s/#.//' tmp2.dat > tmpB.dat
   # joins file lines
   paste tmpA.dat tmpB.dat > tmp.dat;
+  # debug
+  #head -n 20 tmp.dat
   # compare radius
-  awk 'BEGIN{val=0;}{if(index($0,"#") == 0){val+=($1 - $10)**2;}}END{print "L2 radius = ",val;if(val>0.01){print "failed",val;exit 1;}else{print "good";exit 0;}}' tmp.dat;
+  # more sensitive test (works only w/ gfortran tests)
+  #awk 'BEGIN{val=0;}{if(index($0,"#") == 0){val+=($1 - $10)**2;print $0," - val = ",val;}}END{print "L2 radius = ",val;if(val>0.01){print "failed",val;exit 1;}else{print "good";exit 0;}}' tmp.dat;
+  # less sensitive test
+  # works w/ intel ifort: two of the ouputted radius locations are shifted by 1km (val > 2.01 check) due to a different numerical precision
+  #                       all other outputted values are still the same as w/ gfortran
+  awk 'BEGIN{val=0;}{if(index($0,"#") == 0){val+=($1 - $10)**2;}}END{print "L2 radius = ",val;if(val>2.01){print "failed",val;exit 1;}else{print "good";exit 0;}}' tmp.dat;
   if [[ $? -ne 0 ]]; then echo "error model: $model "; echo "comparison failed, please check..."; exit 1; fi
   # compare rho
   awk 'BEGIN{val=0;}{if(index($0,"#") == 0){val+=($2 - $11)**2;}}END{print "L2 rho = ",val;if(val>0.01){print "failed",val;exit 1;}else{print "good";exit 0;}}' tmp.dat;
@@ -111,6 +118,7 @@ do
 
   # sets model
   sed -i "s:^MODEL .*:MODEL   = $model:" DATA/Par_file
+  sed -i "s:^ELLIPTICITY .*:ELLIPTICITY   = .false.:" DATA/Par_file    # no ellipticity profiles
 
   # turns off OCEANS for Mars & Moon models
   if [ "$model" == "1d_sohl" ] || [ "$model" == "1d_case65TAY_3D_crust" ] || [ "$model" == "vpremoon" ]; then
@@ -123,7 +131,7 @@ do
   rm -rf OUTPUT_FILES/*
 
   # MODEL s362ani profile
-  ./bin/xwrite_profile 1 1 47.5 -22.0 >> $testdir/results.log 2>&1
+  mpirun -np 1 ./bin/xwrite_profile 1 1 47.5 -22.0 >> $testdir/results.log 2>&1
 
   # checks exit code
   if [[ $? -ne 0 ]]; then
@@ -140,6 +148,13 @@ do
     echo "setup failed, please check..." >> $testdir/results.log
     exit 1
   fi
+
+  # debug
+  #echo ""
+  #head -n 20 OUTPUT_FILES/CARDS_th0042_ph0338
+  #echo ""
+  #tail -n 20 OUTPUT_FILES/CARDS_th0042_ph0338
+  #echo ""
 
   # test seismograms
   my_test >> $testdir/results.log

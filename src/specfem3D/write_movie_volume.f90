@@ -123,8 +123,9 @@
 !
 
 
-!! DK DK put the list of parameters back here to avoid a warning / error from the gfortran compiler
-!! DK DK about undefined behavior when aggressive loop vectorization is used by the compiler
+! put the list of parameters back here to avoid a warning / error from the gfortran compiler
+! about undefined behavior when aggressive loop vectorization is used by the compiler
+
   subroutine write_movie_volume_mesh(nu_3dmovie,num_ibool_3dmovie,mask_3dmovie,mask_ibool_3dmovie, &
                                      muvstore_crust_mantle_3dmovie,npoints_3dmovie)
 

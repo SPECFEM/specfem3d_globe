@@ -96,14 +96,14 @@ subroutine define_AVS_DX_global_faces_data_adios (nspec, iMPIcut_xi,iMPIcut_eta,
     ! only if on face
     if (iMPIcut_xi(1,ispec) .or. iMPIcut_xi(2,ispec) .or. &
         iMPIcut_eta(1,ispec) .or. iMPIcut_eta(2,ispec)) then
-      iglob1=ibool(1,1,1,ispec)
-      iglob2=ibool(NGLLX,1,1,ispec)
-      iglob3=ibool(NGLLX,NGLLY,1,ispec)
-      iglob4=ibool(1,NGLLY,1,ispec)
-      iglob5=ibool(1,1,NGLLZ,ispec)
-      iglob6=ibool(NGLLX,1,NGLLZ,ispec)
-      iglob7=ibool(NGLLX,NGLLY,NGLLZ,ispec)
-      iglob8=ibool(1,NGLLY,NGLLZ,ispec)
+      iglob1 = ibool(1,1,1,ispec)
+      iglob2 = ibool(NGLLX,1,1,ispec)
+      iglob3 = ibool(NGLLX,NGLLY,1,ispec)
+      iglob4 = ibool(1,NGLLY,1,ispec)
+      iglob5 = ibool(1,1,NGLLZ,ispec)
+      iglob6 = ibool(NGLLX,1,NGLLZ,ispec)
+      iglob7 = ibool(NGLLX,NGLLY,NGLLZ,ispec)
+      iglob8 = ibool(1,NGLLY,NGLLZ,ispec)
 
       ! face xi = xi_min
       if (iMPIcut_xi(1,ispec)) then
@@ -272,7 +272,7 @@ subroutine prepare_AVS_DX_global_faces_data_adios(nspec, &
 
   double precision r,rho,vp,vs,Qkappa,Qmu
   double precision vpv,vph,vsv,vsh,eta_aniso
-  double precision x,y,z,theta,phi_dummy,cost,p20,ell,factor
+  double precision x,y,z
   real(kind=CUSTOM_REAL) dvp,dvs
 
 ! for ellipticity
@@ -295,14 +295,14 @@ subroutine prepare_AVS_DX_global_faces_data_adios(nspec, &
   ! only if on face
     if (iMPIcut_xi(1,ispec) .or. iMPIcut_xi(2,ispec) .or. &
                 iMPIcut_eta(1,ispec) .or. iMPIcut_eta(2,ispec)) then
-      iglob1=ibool(1,1,1,ispec)
-      iglob2=ibool(NGLLX,1,1,ispec)
-      iglob3=ibool(NGLLX,NGLLY,1,ispec)
-      iglob4=ibool(1,NGLLY,1,ispec)
-      iglob5=ibool(1,1,NGLLZ,ispec)
-      iglob6=ibool(NGLLX,1,NGLLZ,ispec)
-      iglob7=ibool(NGLLX,NGLLY,NGLLZ,ispec)
-      iglob8=ibool(1,NGLLY,NGLLZ,ispec)
+      iglob1 = ibool(1,1,1,ispec)
+      iglob2 = ibool(NGLLX,1,1,ispec)
+      iglob3 = ibool(NGLLX,NGLLY,1,ispec)
+      iglob4 = ibool(1,NGLLY,1,ispec)
+      iglob5 = ibool(1,1,NGLLZ,ispec)
+      iglob6 = ibool(NGLLX,1,NGLLZ,ispec)
+      iglob7 = ibool(NGLLX,NGLLY,NGLLZ,ispec)
+      iglob8 = ibool(1,NGLLY,NGLLZ,ispec)
 
       ! face xi = xi_min
       if (iMPIcut_xi(1,ispec)) then
@@ -355,14 +355,14 @@ subroutine prepare_AVS_DX_global_faces_data_adios(nspec, &
     ! only if on face
     if (iMPIcut_xi(1,ispec) .or. iMPIcut_xi(2,ispec) .or. &
                 iMPIcut_eta(1,ispec) .or. iMPIcut_eta(2,ispec)) then
-      iglob1=ibool(1,1,1,ispec)
-      iglob2=ibool(NGLLX,1,1,ispec)
-      iglob3=ibool(NGLLX,NGLLY,1,ispec)
-      iglob4=ibool(1,NGLLY,1,ispec)
-      iglob5=ibool(1,1,NGLLZ,ispec)
-      iglob6=ibool(NGLLX,1,NGLLZ,ispec)
-      iglob7=ibool(NGLLX,NGLLY,NGLLZ,ispec)
-      iglob8=ibool(1,NGLLY,NGLLZ,ispec)
+      iglob1 = ibool(1,1,1,ispec)
+      iglob2 = ibool(NGLLX,1,1,ispec)
+      iglob3 = ibool(NGLLX,NGLLY,1,ispec)
+      iglob4 = ibool(1,NGLLY,1,ispec)
+      iglob5 = ibool(1,1,NGLLZ,ispec)
+      iglob6 = ibool(NGLLX,1,NGLLZ,ispec)
+      iglob7 = ibool(NGLLX,NGLLY,NGLLZ,ispec)
+      iglob8 = ibool(1,NGLLY,NGLLZ,ispec)
 
       ! face xi = xi_min
       if (iMPIcut_xi(1,ispec)) then
@@ -524,14 +524,14 @@ subroutine prepare_AVS_DX_global_faces_data_adios(nspec, &
     ! only if on face
     if (iMPIcut_xi(1,ispec) .or. iMPIcut_xi(2,ispec) .or. &
                 iMPIcut_eta(1,ispec) .or. iMPIcut_eta(2,ispec)) then
-      iglob1=ibool(1,1,1,ispec)
-      iglob2=ibool(NGLLX,1,1,ispec)
-      iglob3=ibool(NGLLX,NGLLY,1,ispec)
-      iglob4=ibool(1,NGLLY,1,ispec)
-      iglob5=ibool(1,1,NGLLZ,ispec)
-      iglob6=ibool(NGLLX,1,NGLLZ,ispec)
-      iglob7=ibool(NGLLX,NGLLY,NGLLZ,ispec)
-      iglob8=ibool(1,NGLLY,NGLLZ,ispec)
+      iglob1 = ibool(1,1,1,ispec)
+      iglob2 = ibool(NGLLX,1,1,ispec)
+      iglob3 = ibool(NGLLX,NGLLY,1,ispec)
+      iglob4 = ibool(1,NGLLY,1,ispec)
+      iglob5 = ibool(1,1,NGLLZ,ispec)
+      iglob6 = ibool(NGLLX,1,NGLLZ,ispec)
+      iglob7 = ibool(NGLLX,NGLLY,NGLLZ,ispec)
+      iglob8 = ibool(1,NGLLY,NGLLZ,ispec)
 
       ! include lateral variations if needed
       if (MODEL_3D_MANTLE_PERTUBATIONS) then
@@ -545,26 +545,22 @@ subroutine prepare_AVS_DX_global_faces_data_adios(nspec, &
           dvp = 0.0
           dvs = 0.0
           np  = 0
-          do k=2,NGLLZ-1
-            do j=2,NGLLY-1
-              do i=2,NGLLX-1
-                np=np+1
-                x=xstore(i,j,k,ispec)
-                y=ystore(i,j,k,ispec)
-                z=zstore(i,j,k,ispec)
-                r=dsqrt(x*x+y*y+z*z)
+          do k = 2,NGLLZ-1
+            do j = 2,NGLLY-1
+              do i = 2,NGLLX-1
+                np = np+1
+                x = xstore(i,j,k,ispec)
+                y = ystore(i,j,k,ispec)
+                z = zstore(i,j,k,ispec)
+
                 ! take out ellipticity
                 if (ELLIPTICITY) then
-                  call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi_dummy)
-                  cost=dcos(theta)
-! this is the Legendre polynomial of degree two, P2(cos(theta)), see the discussion above eq (14.4) in Dahlen and Tromp (1998)
-                  p20=0.5d0*(3.0d0*cost*cost-1.0d0)
-! get ellipticity using spline evaluation
-                  call spline_evaluation(rspl,ellipicity_spline,ellipicity_spline2,nspl,r,ell)
-! this is eq (14.4) in Dahlen and Tromp (1998)
-                  factor=ONE-(TWO/3.0d0)*ell*p20
-                  r=r/factor
+                  ! removes ellipticity stretch from position x/y/z
+                  call revert_ellipticity(x,y,z,nspl,rspl,ellipicity_spline,ellipicity_spline2)
                 endif
+
+                ! updates radius
+                r = dsqrt(x*x+y*y+z*z)
 
                 ! gets reference model values:rho,vpv,vph,vsv,vsh and eta_aniso
                 call meshfem3D_models_get1D_val(iregion_code, &

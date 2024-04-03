@@ -81,14 +81,14 @@ subroutine define_AVS_DX_global_data_adios(nspec, ibool, &
 
   ! mark global AVS or DX points
   do ispec = 1,nspec
-    iglob1=ibool(1,1,1,ispec)
-    iglob2=ibool(NGLLX,1,1,ispec)
-    iglob3=ibool(NGLLX,NGLLY,1,ispec)
-    iglob4=ibool(1,NGLLY,1,ispec)
-    iglob5=ibool(1,1,NGLLZ,ispec)
-    iglob6=ibool(NGLLX,1,NGLLZ,ispec)
-    iglob7=ibool(NGLLX,NGLLY,NGLLZ,ispec)
-    iglob8=ibool(1,NGLLY,NGLLZ,ispec)
+    iglob1 = ibool(1,1,1,ispec)
+    iglob2 = ibool(NGLLX,1,1,ispec)
+    iglob3 = ibool(NGLLX,NGLLY,1,ispec)
+    iglob4 = ibool(1,NGLLY,1,ispec)
+    iglob5 = ibool(1,1,NGLLZ,ispec)
+    iglob6 = ibool(NGLLX,1,NGLLZ,ispec)
+    iglob7 = ibool(NGLLX,NGLLY,NGLLZ,ispec)
+    iglob8 = ibool(1,NGLLY,NGLLZ,ispec)
     mask_ibool(iglob1) = .true.
     mask_ibool(iglob2) = .true.
     mask_ibool(iglob3) = .true.
@@ -215,14 +215,14 @@ end subroutine define_AVS_DX_global_data_adios
 
 ! mark global AVS or DX points
   do ispec = 1,nspec
-    iglob1=ibool(1,1,1,ispec)
-    iglob2=ibool(NGLLX,1,1,ispec)
-    iglob3=ibool(NGLLX,NGLLY,1,ispec)
-    iglob4=ibool(1,NGLLY,1,ispec)
-    iglob5=ibool(1,1,NGLLZ,ispec)
-    iglob6=ibool(NGLLX,1,NGLLZ,ispec)
-    iglob7=ibool(NGLLX,NGLLY,NGLLZ,ispec)
-    iglob8=ibool(1,NGLLY,NGLLZ,ispec)
+    iglob1 = ibool(1,1,1,ispec)
+    iglob2 = ibool(NGLLX,1,1,ispec)
+    iglob3 = ibool(NGLLX,NGLLY,1,ispec)
+    iglob4 = ibool(1,NGLLY,1,ispec)
+    iglob5 = ibool(1,1,NGLLZ,ispec)
+    iglob6 = ibool(NGLLX,1,NGLLZ,ispec)
+    iglob7 = ibool(NGLLX,NGLLY,NGLLZ,ispec)
+    iglob8 = ibool(1,NGLLY,NGLLZ,ispec)
     mask_ibool(iglob1) = .true.
     mask_ibool(iglob2) = .true.
     mask_ibool(iglob3) = .true.
@@ -242,14 +242,14 @@ end subroutine define_AVS_DX_global_data_adios
   ! fill the structure with global AVS or DX points
   numpoin = 0
   do ispec = 1,nspec
-    iglob1=ibool(1,1,1,ispec)
-    iglob2=ibool(NGLLX,1,1,ispec)
-    iglob3=ibool(NGLLX,NGLLY,1,ispec)
-    iglob4=ibool(1,NGLLY,1,ispec)
-    iglob5=ibool(1,1,NGLLZ,ispec)
-    iglob6=ibool(NGLLX,1,NGLLZ,ispec)
-    iglob7=ibool(NGLLX,NGLLY,NGLLZ,ispec)
-    iglob8=ibool(1,NGLLY,NGLLZ,ispec)
+    iglob1 = ibool(1,1,1,ispec)
+    iglob2 = ibool(NGLLX,1,1,ispec)
+    iglob3 = ibool(NGLLX,NGLLY,1,ispec)
+    iglob4 = ibool(1,NGLLY,1,ispec)
+    iglob5 = ibool(1,1,NGLLZ,ispec)
+    iglob6 = ibool(NGLLX,1,NGLLZ,ispec)
+    iglob7 = ibool(NGLLX,NGLLY,NGLLZ,ispec)
+    iglob8 = ibool(1,NGLLY,NGLLZ,ispec)
     if (.not. mask_ibool(iglob1)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob1) = numpoin
@@ -323,14 +323,14 @@ end subroutine define_AVS_DX_global_data_adios
 
   ! AVS or DX elements
   do ispec = 1,nspec
-    iglob1=ibool(1,1,1,ispec)
-    iglob2=ibool(NGLLX,1,1,ispec)
-    iglob3=ibool(NGLLX,NGLLY,1,ispec)
-    iglob4=ibool(1,NGLLY,1,ispec)
-    iglob5=ibool(1,1,NGLLZ,ispec)
-    iglob6=ibool(NGLLX,1,NGLLZ,ispec)
-    iglob7=ibool(NGLLX,NGLLY,NGLLZ,ispec)
-    iglob8=ibool(1,NGLLY,NGLLZ,ispec)
+    iglob1 = ibool(1,1,1,ispec)
+    iglob2 = ibool(NGLLX,1,1,ispec)
+    iglob3 = ibool(NGLLX,NGLLY,1,ispec)
+    iglob4 = ibool(1,NGLLY,1,ispec)
+    iglob5 = ibool(1,1,NGLLZ,ispec)
+    iglob6 = ibool(NGLLX,1,NGLLZ,ispec)
+    iglob7 = ibool(NGLLX,NGLLY,NGLLZ,ispec)
+    iglob8 = ibool(1,NGLLY,NGLLZ,ispec)
 
     avs_dx_adios%iglob1 = num_ibool_AVS_DX(iglob1)
     avs_dx_adios%iglob2 = num_ibool_AVS_DX(iglob2)

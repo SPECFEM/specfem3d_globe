@@ -82,6 +82,10 @@
 #endif
 
 
+#ifdef MANUALLY_UNROLLED_LOOPS
+#pragma message ("\n\nCompiling with: MANUALLY_UNROLLED_LOOPS enabled\n")
+#endif  // MANUALLY_UNROLLED_LOOPS
+
 
 static __device__ void compute_element_cm_att_stress(const int tx, const int working_element, const float * R_xx, const float * R_yy, const float * R_xy, const float * R_xz, const float * R_yz, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){
   int offset;

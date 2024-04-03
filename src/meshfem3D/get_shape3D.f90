@@ -56,39 +56,39 @@
 ! generate the 3D shape functions and their derivatives (27 nodes)
   do i = 1,NGLLX
 
-  xi=xigll(i)
+  xi = xigll(i)
 
-  l1xi=HALF*xi*(xi-ONE)
-  l2xi=ONE-xi**2
-  l3xi=HALF*xi*(xi+ONE)
+  l1xi = HALF*xi*(xi-ONE)
+  l2xi = ONE-xi**2
+  l3xi = HALF*xi*(xi+ONE)
 
-  l1pxi=xi-HALF
+  l1pxi = xi-HALF
   l2pxi=-TWO*xi
-  l3pxi=xi+HALF
+  l3pxi = xi+HALF
 
   do j = 1,NGLLY
 
-    eta=yigll(j)
+    eta = yigll(j)
 
-    l1eta=HALF*eta*(eta-ONE)
-    l2eta=ONE-eta**2
-    l3eta=HALF*eta*(eta+ONE)
+    l1eta = HALF*eta*(eta-ONE)
+    l2eta = ONE-eta**2
+    l3eta = HALF*eta*(eta+ONE)
 
-    l1peta=eta-HALF
+    l1peta = eta-HALF
     l2peta=-TWO*eta
-    l3peta=eta+HALF
+    l3peta = eta+HALF
 
     do k = 1,NGLLZ
 
-      gamma=zigll(k)
+      gamma = zigll(k)
 
-      l1gamma=HALF*gamma*(gamma-ONE)
-      l2gamma=ONE-gamma**2
-      l3gamma=HALF*gamma*(gamma+ONE)
+      l1gamma = HALF*gamma*(gamma-ONE)
+      l2gamma = ONE-gamma**2
+      l3gamma = HALF*gamma*(gamma+ONE)
 
-      l1pgamma=gamma-HALF
+      l1pgamma = gamma-HALF
       l2pgamma=-TWO*gamma
-      l3pgamma=gamma+HALF
+      l3pgamma = gamma+HALF
 
 !     corner nodes
 
@@ -229,19 +229,19 @@
     do j = 1,NGLLY
       do k = 1,NGLLZ
 
-      sumshape=ZERO
+      sumshape = ZERO
 
-      sumdershapexi=ZERO
-      sumdershapeeta=ZERO
-      sumdershapegamma=ZERO
+      sumdershapexi = ZERO
+      sumdershapeeta = ZERO
+      sumdershapegamma = ZERO
 
       do ia = 1,NGNOD
 
-        sumshape=sumshape+shape3D(ia,i,j,k)
+        sumshape = sumshape+shape3D(ia,i,j,k)
 
-        sumdershapexi=sumdershapexi+dershape3D(1,ia,i,j,k)
-        sumdershapeeta=sumdershapeeta+dershape3D(2,ia,i,j,k)
-        sumdershapegamma=sumdershapegamma+dershape3D(3,ia,i,j,k)
+        sumdershapexi = sumdershapexi+dershape3D(1,ia,i,j,k)
+        sumdershapeeta = sumdershapeeta+dershape3D(2,ia,i,j,k)
+        sumdershapegamma = sumdershapegamma+dershape3D(3,ia,i,j,k)
 
       enddo
 

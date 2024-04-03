@@ -188,7 +188,7 @@
   print *,'7 = elevation of Earth model'
   print *,'8 = by region number'
   print *,'9 = focus on one doubling flag only'
-  print *,'any other value=exit'
+  print *,'any other value = exit'
   print *
   print *,'enter value:'
   read(5,*) icolor
@@ -224,7 +224,7 @@
   print *,'2 = by slice number'
   print *,'3 = by region number'
   print *,'4 = by chunk number'
-  print *,'any other value=exit'
+  print *,'any other value = exit'
   print *
   print *,'enter value:'
   read(5,*) imaterial
@@ -381,7 +381,7 @@
   do iregion_code = region_min,region_max
 
 ! loop on the selected range of processors
-  do iproc=proc_p1,proc_p2
+  do iproc = proc_p1,proc_p2
 
   print *,'Reading slice ',iproc,' in region ',iregion_code
 
@@ -456,7 +456,7 @@
   do iregion_code = region_min,region_max
 
 ! loop on the selected range of processors
-  do iproc=proc_p1,proc_p2
+  do iproc = proc_p1,proc_p2
 
   print *,'Reading slice ',iproc,' in region ',iregion_code
 
@@ -793,7 +793,7 @@
   do iregion_code = region_min,region_max
 
 ! loop on the selected range of processors
-  do iproc=proc_p1,proc_p2
+  do iproc = proc_p1,proc_p2
 
   print *,'Reading slice ',iproc,' in region ',iregion_code
 
@@ -952,8 +952,8 @@
                  DT,1,min_tshift_cmt_original)
 
 !   convert geographic latitude lat (degrees) to geocentric colatitude theta (radians)
-    call lat_2_geocentric_colat_dble(lat(1),theta)
-    phi=dble(long(1))*DEGREES_TO_RADIANS
+    call lat_2_geocentric_colat_dble(lat(1),theta,ELLIPTICITY)
+    phi = dble(long(1))*DEGREES_TO_RADIANS
     call reduce(theta,phi)
 
 !   compute Cartesian position of the source (ignore ellipticity for AVS_DX)
@@ -1015,13 +1015,13 @@
       read(11,*) station_name(irec),network_name(irec),stlat(irec),stlon(irec),stele(irec),stbur(irec)
 
 ! convert geographic latitude stlat (degrees) to geocentric colatitude theta (radians)
-      call lat_2_geocentric_colat_dble(stlat(irec),theta)
-      phi=stlon(irec)*DEGREES_TO_RADIANS
+      call lat_2_geocentric_colat_dble(stlat(irec),theta,ELLIPTICITY)
+      phi = stlon(irec)*DEGREES_TO_RADIANS
       call reduce(theta,phi)
 
 ! compute the Cartesian position of the receiver (ignore ellipticity for AVS_DX)
 ! points for the receivers are put at the surface for clarity (depth ignored)
-      r_target=1.0d0
+      r_target = 1.0d0
       x_target(irec) = r_target*dsin(theta)*dcos(phi)
       y_target(irec) = r_target*dsin(theta)*dsin(phi)
       z_target(irec) = r_target*dcos(theta)

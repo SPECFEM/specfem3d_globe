@@ -37,27 +37,27 @@
 
   implicit none
 
-  integer :: nspec,nglob,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
+  integer, intent(in) :: nspec,nglob,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
 
-  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi,npoin2D_eta
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR), intent(in) :: npoin2D_xi,npoin2D_eta
 
-  logical, dimension(nspec) :: is_on_a_slice_edge
+  logical, dimension(nspec), intent(inout) :: is_on_a_slice_edge
 
-  integer, dimension(NGLOB2DMAX_XMIN_XMAX) :: iboolleft_xi,iboolright_xi
-  integer, dimension(NGLOB2DMAX_YMIN_YMAX) :: iboolleft_eta,iboolright_eta
+  integer, dimension(NGLOB2DMAX_XMIN_XMAX), intent(in) :: iboolleft_xi,iboolright_xi
+  integer, dimension(NGLOB2DMAX_YMIN_YMAX), intent(in) :: iboolleft_eta,iboolright_eta
 
-  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
+  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec), intent(in) :: ibool
 
   ! local parameters
   logical, dimension(:),allocatable :: mask_ibool
   integer :: ipoin,ispec,i,j,k,ier
 
-! clean the mask
+  ! clean the mask
   allocate(mask_ibool(nglob),stat=ier)
   if (ier /= 0) stop 'Error allocating mask in fix_non_blocking_slices routine'
   mask_ibool(:) = .false.
 
-! mark all the points that are in the MPI buffers to assemble inside each chunk
+  ! mark all the points that are in the MPI buffers to assemble inside each chunk
   do ipoin = 1,npoin2D_xi(1)
     mask_ibool(iboolleft_xi(ipoin)) = .true.
   enddo
@@ -74,11 +74,11 @@
     mask_ibool(iboolright_eta(ipoin)) = .true.
   enddo
 
-! now label all the elements that have at least one corner belonging
-! to any of these buffers as elements that must contribute to the
-! first step of the calculations (performed on the edges before starting
-! the non blocking communications); there is no need to examine the inside
-! of the elements, checking their eight corners is sufficient
+  ! now label all the elements that have at least one corner belonging
+  ! to any of these buffers as elements that must contribute to the
+  ! first step of the calculations (performed on the edges before starting
+  ! the non blocking communications); there is no need to examine the inside
+  ! of the elements, checking their eight corners is sufficient
   do ispec = 1,nspec
     do k = 1,NGLLZ,NGLLZ-1
       do j = 1,NGLLY,NGLLY-1
@@ -114,22 +114,22 @@
 
   implicit none
 
-  integer :: nspec,nglob,nb_msgs_theor_in_cube,NSPEC2D_BOTTOM_INNER_CORE
-  integer :: ichunk,npoin2D_cube_from_slices,NPROC_XI
+  integer, intent(in) :: nspec,nglob,nb_msgs_theor_in_cube,NSPEC2D_BOTTOM_INNER_CORE
+  integer, intent(in) :: ichunk,npoin2D_cube_from_slices,NPROC_XI
 
-  logical, dimension(nspec) :: is_on_a_slice_edge
+  logical, dimension(nspec), intent(inout) :: is_on_a_slice_edge
 
-  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
+  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec), intent(in) :: ibool
 
-  integer, dimension(nb_msgs_theor_in_cube,npoin2D_cube_from_slices) :: ibool_central_cube
+  integer, dimension(nb_msgs_theor_in_cube,npoin2D_cube_from_slices), intent(in) :: ibool_central_cube
 
-  integer, dimension(NSPEC2D_BOTTOM_INNER_CORE) :: ibelm_bottom_inner_core
+  integer, dimension(NSPEC2D_BOTTOM_INNER_CORE), intent(in) :: ibelm_bottom_inner_core
 
-  integer, dimension(nspec) :: idoubling_inner_core
+  integer, dimension(nspec), intent(in) :: idoubling_inner_core
 
   ! local parameters
-  logical, dimension(nglob) :: mask_ibool
-  integer :: ipoin,ispec,i,j,k,imsg,ispec2D
+  logical, dimension(:),allocatable :: mask_ibool
+  integer :: ipoin,ispec,i,j,k,imsg,ispec2D,ier
 
   if (ichunk /= CHUNK_AB .and. ichunk /= CHUNK_AB_ANTIPODE) then
     do ispec2D = 1,NSPEC2D_BOTTOM_INNER_CORE
@@ -149,6 +149,8 @@
   if (ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
 
     ! clean the mask
+    allocate(mask_ibool(nglob),stat=ier)
+    if (ier /= 0) stop 'Error allocating mask_ibool array'
     mask_ibool(:) = .false.
 
     do imsg = 1,nb_msgs_theor_in_cube
@@ -181,6 +183,9 @@
       enddo
     888 continue
     enddo
+
+    ! free array
+    deallocate(mask_ibool)
 
   endif
 

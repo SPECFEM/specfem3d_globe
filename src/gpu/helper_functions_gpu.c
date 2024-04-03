@@ -491,7 +491,7 @@ void gpuCopy_from_device_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array,
 // copy with offset
 void gpuCopy_from_device_realw_offset (gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size, size_t offset) {
 
-  TRACE ("gpuCopy_from_device_realw");
+  TRACE ("gpuCopy_from_device_realw_offset");
 
   // checks if anything to do
   if (size == 0){ return; }
@@ -515,7 +515,7 @@ void gpuCopy_from_device_realw_offset (gpu_realw_mem *d_array_addr_ptr, realw *h
   }
 #endif
 
-  GPU_ERROR_CHECKING ("gpuCopy_from_device_realw");
+  GPU_ERROR_CHECKING ("gpuCopy_from_device_realw_offset");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -1154,7 +1154,7 @@ void start_timing_gpu(gpu_event* start,gpu_event* stop) {
 #endif
 }
 
-void stop_timing_gpu(gpu_event* start,gpu_event* stop, char* info_str) {
+void stop_timing_gpu(gpu_event* start,gpu_event* stop, const char* info_str) {
   realw time = 0;
   // stops events
 #ifdef USE_OPENCL
@@ -1177,7 +1177,40 @@ void stop_timing_gpu(gpu_event* start,gpu_event* stop, char* info_str) {
   hipEventDestroy( *stop );
 #endif
   // user output
-  printf("%s: Execution Time = %f ms\n",info_str,time);
+  printf("GPU_timing %s: Execution Time = %f ms\n",info_str,time);
+}
+
+// note: C doesn't allow for function overloading.
+//       thus, naming this routine slightly different, with `_t` added, as it returns back time t.
+
+void stop_timing_gpu_t(gpu_event* start,gpu_event* stop, const char* info_str, realw* t){
+  realw time = 0;
+  // stops events
+#ifdef USE_OPENCL
+// not fully implemented yet...
+  clReleaseEvent(*start);
+  clReleaseEvent(*stop);
+#endif
+#ifdef USE_CUDA
+  // stops events
+  cudaEventRecord( *stop, 0);
+  cudaEventSynchronize( *stop );
+  cudaEventElapsedTime( &time, *start, *stop );
+  cudaEventDestroy( *start );
+  cudaEventDestroy( *stop );
+#endif
+#ifdef USE_HIP
+  // stops events
+  hipEventRecord( *stop, 0);
+  hipEventSynchronize( *stop );
+  hipEventElapsedTime( &time, *start, *stop );
+  hipEventDestroy( *start );
+  hipEventDestroy( *stop );
+#endif
+  // user output
+  printf("GPU_timing %s: Execution Time = %f ms\n",info_str,time);
+  // returns time
+  *t = time;
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -1329,6 +1362,22 @@ void FC_FUNC_ (pause_for_debug,
   TRACE ("pause_for_debug");
 
   pause_for_debugger (1);
+}
+
+/*----------------------------------------------------------------------------------------------- */
+
+// external function wrapper to synchronize GPU from Fortran routine
+
+extern EXTERN_LANG
+void FC_FUNC_ (gpu_synchronize,
+               GPU_SYNCHRONIZE) () {
+  TRACE ("gpu_synchronize");
+
+  // synchronize device kernels
+  gpuSynchronize();
+
+  // checks for previous errors
+  exit_on_gpu_error("gpuSynchronize");
 }
 
 /* ----------------------------------------------------------------------------------------------- */

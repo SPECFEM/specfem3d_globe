@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Check for changes
       id: diff
@@ -29,9 +29,20 @@ jobs:
           export DIFF=$( git diff --name-only ${{ github.event.before }} $GITHUB_SHA )
           echo "  diff between ${{ github.event.before }} and $GITHUB_SHA"
         fi
-        echo "$DIFF"
+        echo "***"; echo "$DIFF"; echo "***"
         # Escape newlines (replace \n with %0A)
-        echo "::set-output name=diff::$( echo "$DIFF" | sed ':a;N;$!ba;s/\n/%0A/g' )"
+        # deprecated:
+        #echo "::set-output name=diff::$( echo "$DIFF" | sed ':a;N;$!ba;s/\n/%0A/g' )"
+        # new:
+        # replace new line with %0A - will result finding only one file with a very long name...
+        #echo "diff=$( echo "$DIFF" | sed ':a;N;$!ba;s/\n/%0A/g' )" >> $GITHUB_OUTPUT
+        # doesn't work...
+        #echo "diff=\"$DIFF\"" >> "$GITHUB_OUTPUT"
+        # new multi-line format:
+        # (https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#multiline-strings)
+        echo "diff<<EOF" >> $GITHUB_OUTPUT
+        echo "$DIFF" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
 
     - name: Output changes
       run: echo "${{ steps.diff.outputs.diff }}"
@@ -75,7 +86,7 @@ jobs:
     needs: changesCheck
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install dependencies
       run: |
@@ -119,16 +130,16 @@ jobs:
       run: make tests
 
   linuxCheck:
-    name: Test on ${{ matrix.os }}    
+    name: Test on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     needs: changesCheck
 
     strategy:
       matrix:
-        os: [ubuntu-latest,ubuntu-18.04]
+        os: [ubuntu-latest,ubuntu-20.04]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -136,7 +147,7 @@ jobs:
 
     - name: configure
       run: ./configure
-      
+
     - name: make
       run: make -j2 all
 
@@ -147,11 +158,11 @@ jobs:
     needs: changesCheck
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Cache Intel oneapi packages
       id: cache-intel-oneapi
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: /opt/intel/oneapi
         key: install-${{ runner.os }}-all
@@ -165,8 +176,12 @@ jobs:
         sudo echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
         sudo apt-get update
         echo ""
-        echo "packages intel oneapi:"
-        sudo apt-get install -y intel-oneapi-compiler-fortran intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic intel-oneapi-mpi intel-oneapi-mpi-devel
+        # info
+        #sudo -E apt-cache pkgnames intel | grep intel-oneapi
+        #echo ""
+        echo "installing packages intel oneapi:"
+        sudo apt-get install -y intel-oneapi-compiler-fortran-2023.2.2 intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic-2023.2.2 intel-oneapi-mpi intel-oneapi-mpi-devel
+        echo ""
 
     - name: compiler infos
       run: |
@@ -174,22 +189,54 @@ jobs:
         source /opt/intel/oneapi/setvars.sh
         echo ""
         echo "compiler versions:"
+        echo "icx --version"
+        which icx
+        icx --version
+        echo ""
         echo "icc --version"
+        which icc
         icc --version
+        echo ""
+        echo "ifx --version"
+        which ifx
+        ifx --version
+        echo ""
         echo "ifort --version"
+        which ifort
         ifort --version
+        echo ""
         echo "mpiifort --version"
+        which mpiifort
         mpiifort --version
+        echo ""
         echo "mpif90 --version"
+        which mpif90
         mpif90 --version
         echo ""
-        export TERM=xterm
-        echo "exports:"
-        export
-        echo ""
+        # infos
         which ifort
         which icc
         which mpiifort
+        echo "mpirun:"
+        which mpirun
+        echo ""
+        # intel setup for running tests
+        echo ""
+        echo "replacing mpif90 with mpiifort link:"
+        sudo ln -sf $(which mpiifort) $(which mpif90)
+        mpif90 --version
+        echo ""
+        # debug
+        #export I_MPI_DEBUG=5,pid,host
+        #export I_MPI_LIBRARY_KIND=debug
+        # remove -ftrapuv which leads to issues for running tests
+        sed -i "s/-ftrapuv//g" flags.guess
+        # environment setting
+        export TERM=xterm
+        # export info
+        echo "exports:"
+        export
+        echo ""
         echo ""
         printenv >> $GITHUB_ENV
         echo "CXX=icpc" >> $GITHUB_ENV
@@ -198,7 +245,8 @@ jobs:
         echo ""
 
     - name: configure debug
-      run: ./configure --enable-debug FC=ifort CC=icc MPIFC=mpiifort
+      run: |
+        ./configure --enable-debug FC=ifort CC=icc MPIFC=mpiifort
 
     - name: make debug
       run: |
@@ -207,16 +255,18 @@ jobs:
         make clean
 
     - name: configure
-      run: ./configure FC=ifort CC=icc MPIFC=mpiifort
+      run: |
+        ./configure FC=ifort CC=icc MPIFC=mpiifort
 
     - name: make
       run: |
         make -j2 all
         make clean
 
-    # fails due to MPI issue on virtual nodes
-    #- name: make tests
-    #  run: make tests
+    # note: fails with -ftrapuv flag due to MPI issue on virtual nodes
+    - name: make tests
+      run: |
+        make tests
 
   linuxTest_0:
     name: Test run example 0 - make tests
@@ -224,7 +274,7 @@ jobs:
     needs: [linuxCheck]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -242,7 +292,7 @@ jobs:
      needs: [linuxCheck]
 
      steps:
-     - uses: actions/checkout@v2
+     - uses: actions/checkout@v3
 
      - name: Install packages
        run: ./.github/scripts/run_install.sh
@@ -267,7 +317,7 @@ jobs:
     needs: [linuxCheck]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -291,7 +341,7 @@ jobs:
     needs: [linuxCheck]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -315,7 +365,7 @@ jobs:
     needs: [linuxCheck]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -340,7 +390,7 @@ jobs:
     needs: [linuxCheck]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -364,7 +414,7 @@ jobs:
     needs: [linuxCheck]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh

@@ -211,26 +211,32 @@
     ! computes 1. matrix multiplication for temp1
     ! computes 2. matrix multiplication for temp2
     ! computes 3. matrix multiplication for temp3
-    select case (NGLLX)
-    case (5)
-      call mxm5_single(hprime_xx,m1,chi_elem,temp1,m2)
-      call mxm5_3dmat_single(chi_elem,m1,hprime_xxT,m1,temp2,NGLLX)
-      call mxm5_single(chi_elem,m2,hprime_xxT,temp3,m1)
-    case (6)
-      call mxm6_single(hprime_xx,m1,chi_elem,temp1,m2)
-      call mxm6_3dmat_single(chi_elem,m1,hprime_xxT,m1,temp2,NGLLX)
-      call mxm6_single(chi_elem,m2,hprime_xxT,temp3,m1)
-    case (7)
-      call mxm7_single(hprime_xx,m1,chi_elem,temp1,m2)
-      call mxm7_3dmat_single(chi_elem,m1,hprime_xxT,m1,temp2,NGLLX)
-      call mxm7_single(chi_elem,m2,hprime_xxT,temp3,m1)
-    case (8)
-      call mxm8_single(hprime_xx,m1,chi_elem,temp1,m2)
-      call mxm8_3dmat_single(chi_elem,m1,hprime_xxT,m1,temp2,NGLLX)
-      call mxm8_single(chi_elem,m2,hprime_xxT,temp3,m1)
-    end select
+    call mxm5_single(hprime_xx,m1,chi_elem,temp1,m2)
+    call mxm5_3dmat_single(chi_elem,m1,hprime_xxT,m1,temp2,NGLLX)
+    call mxm5_single(chi_elem,m2,hprime_xxT,temp3,m1)
 
-
+    ! note: this compute_forces_outer_core_Dev() routine is called for USE_DEVILLE_PRODUCTS_VAL == .true.
+    !       which is only the case for NGLLX == NGLLY == NGLLZ == 5
+    !
+    ! for more general cases one could do the following:
+    !select case (NGLLX)
+    !case (5)
+    !  call mxm5_single(hprime_xx,m1,chi_elem,temp1,m2)
+    !  call mxm5_3dmat_single(chi_elem,m1,hprime_xxT,m1,temp2,NGLLX)
+    !  call mxm5_single(chi_elem,m2,hprime_xxT,temp3,m1)
+    !case (6)
+    !  call mxm6_single(hprime_xx,m1,chi_elem,temp1,m2)
+    !  call mxm6_3dmat_single(chi_elem,m1,hprime_xxT,m1,temp2,NGLLX)
+    !  call mxm6_single(chi_elem,m2,hprime_xxT,temp3,m1)
+    !case (7)
+    !  call mxm7_single(hprime_xx,m1,chi_elem,temp1,m2)
+    !  call mxm7_3dmat_single(chi_elem,m1,hprime_xxT,m1,temp2,NGLLX)
+    !  call mxm7_single(chi_elem,m2,hprime_xxT,temp3,m1)
+    !case (8)
+    !  call mxm8_single(hprime_xx,m1,chi_elem,temp1,m2)
+    !  call mxm8_3dmat_single(chi_elem,m1,hprime_xxT,m1,temp2,NGLLX)
+    !  call mxm8_single(chi_elem,m2,hprime_xxT,temp3,m1)
+    !end select
 
     DO_LOOP_IJK
       ! get derivatives of potential with respect to x, y and z
@@ -391,24 +397,32 @@
     ! computes 1. matrix multiplication for newtemp1
     ! computes 2. matrix multiplication for newtemp2
     ! computes 3. matrix multiplication for newtemp3
-    select case (NGLLX)
-    case (5)
-      call mxm5_single(hprimewgll_xxT,m1,temp1,newtemp1,m2)
-      call mxm5_3dmat_single(temp2,m1,hprimewgll_xx,m1,newtemp2,NGLLX)
-      call mxm5_single(temp3,m2,hprimewgll_xx,newtemp3,m1)
-    case (6)
-      call mxm6_single(hprimewgll_xxT,m1,temp1,newtemp1,m2)
-      call mxm6_3dmat_single(temp2,m1,hprimewgll_xx,m1,newtemp2,NGLLX)
-      call mxm6_single(temp3,m2,hprimewgll_xx,newtemp3,m1)
-    case (7)
-      call mxm7_single(hprimewgll_xxT,m1,temp1,newtemp1,m2)
-      call mxm7_3dmat_single(temp2,m1,hprimewgll_xx,m1,newtemp2,NGLLX)
-      call mxm7_single(temp3,m2,hprimewgll_xx,newtemp3,m1)
-    case (8)
-      call mxm8_single(hprimewgll_xxT,m1,temp1,newtemp1,m2)
-      call mxm8_3dmat_single(temp2,m1,hprimewgll_xx,m1,newtemp2,NGLLX)
-      call mxm8_single(temp3,m2,hprimewgll_xx,newtemp3,m1)
-    end select
+    call mxm5_single(hprimewgll_xxT,m1,temp1,newtemp1,m2)
+    call mxm5_3dmat_single(temp2,m1,hprimewgll_xx,m1,newtemp2,NGLLX)
+    call mxm5_single(temp3,m2,hprimewgll_xx,newtemp3,m1)
+
+    ! note: this compute_forces_outer_core_Dev() routine is called for USE_DEVILLE_PRODUCTS_VAL == .true.
+    !       which is only the case for NGLLX == NGLLY == NGLLZ == 5
+    !
+    ! for more general cases one could do the following:
+    !select case (NGLLX)
+    !case (5)
+    !  call mxm5_single(hprimewgll_xxT,m1,temp1,newtemp1,m2)
+    !  call mxm5_3dmat_single(temp2,m1,hprimewgll_xx,m1,newtemp2,NGLLX)
+    !  call mxm5_single(temp3,m2,hprimewgll_xx,newtemp3,m1)
+    !case (6)
+    !  call mxm6_single(hprimewgll_xxT,m1,temp1,newtemp1,m2)
+    !  call mxm6_3dmat_single(temp2,m1,hprimewgll_xx,m1,newtemp2,NGLLX)
+    !  call mxm6_single(temp3,m2,hprimewgll_xx,newtemp3,m1)
+    !case (7)
+    !  call mxm7_single(hprimewgll_xxT,m1,temp1,newtemp1,m2)
+    !  call mxm7_3dmat_single(temp2,m1,hprimewgll_xx,m1,newtemp2,NGLLX)
+    !  call mxm7_single(temp3,m2,hprimewgll_xx,newtemp3,m1)
+    !case (8)
+    !  call mxm8_single(hprimewgll_xxT,m1,temp1,newtemp1,m2)
+    !  call mxm8_3dmat_single(temp2,m1,hprimewgll_xx,m1,newtemp2,NGLLX)
+    !  call mxm8_single(temp3,m2,hprimewgll_xx,newtemp3,m1)
+    !end select
 
     ! sum contributions from each element to the global mesh and add gravity term
     DO_LOOP_IJK
@@ -500,12 +514,25 @@
 
   subroutine mxm5_single(A,n1,B,C,n3)
 
+! we can force inlining (Intel compiler)
+#if defined __INTEL_COMPILER
+!DIR$ ATTRIBUTES FORCEINLINE :: mxm5_single
+#else
+! cray
+! note: with Cray Fortran versions >= 14 on Frontier, inlining this routine together with optimization -O3 leads to problems.
+!       for now, will avoid inlining by this directive INLINENEVER to allow for default compilation,
+!       otherwise the compilation flag -hipa0 would need to be added to suppress all inlining as well.
+!!DIR$ INLINEALWAYS mxm5_single
+!DIR$ INLINENEVER mxm5_single
+#endif
+
 ! 2-dimensional arrays (25,5)/(5,25)
 
   use constants_solver, only: CUSTOM_REAL
 
 #ifdef USE_XSMM
-  use my_libxsmm, only: libxsmm_smm_5_25_5,libxsmm_smm_25_5_5
+  !use my_libxsmm, only: libxsmm_smm_5_25_5,libxsmm_smm_25_5_5
+  use my_libxsmm, only: xmm1,xmm2,libxsmm_mmcall_abc => libxsmm_smmcall_abc
 #endif
 
   implicit none
@@ -524,10 +551,14 @@
   ! matrix-matrix multiplication C = alpha A * B + beta C
   if (n1 == 5) then
     ! with A(n1,n2) 5x5-matrix, B(n2,n3) 5x25-matrix and C(n1,n3) 5x25-matrix
-    call libxsmm_smm_5_25_5(a=A, b=B, c=C, pa=A, pb=B, pc=C)
+    !call libxsmm_smm_5_25_5(a=A, b=B, c=C, pa=A, pb=B, pc=C)
+    ! dispatch
+    call libxsmm_mmcall_abc(xmm1, A, B, C)
   else if (n1 == 25) then
     ! with A(n1,n2) 25x5-matrix, B(n2,n3) 5x5-matrix and C(n1,n3) 25x5-matrix
-    call libxsmm_smm_25_5_5(a=A, b=B, c=C, pa=A, pb=B, pc=C)
+    !call libxsmm_smm_25_5_5(a=A, b=B, c=C, pa=A, pb=B, pc=C)
+    ! dispatch
+    call libxsmm_mmcall_abc(xmm2, A, B, C)
   else
     stop 'Invalid n1 value for LibXSMM in mxm5_single routine'
   endif
@@ -549,106 +580,124 @@
 
   !-------------
 
-  subroutine mxm6_single(A,n1,B,C,n3)
-
-! two-dimensional arrays (36,6)/(6,36)
-
-  use constants, only: CUSTOM_REAL
-
-  implicit none
-
-  integer,intent(in) :: n1,n3
-  real(kind=CUSTOM_REAL),dimension(n1,6),intent(in) :: A
-  real(kind=CUSTOM_REAL),dimension(6,n3),intent(in) :: B
-  real(kind=CUSTOM_REAL),dimension(n1,n3),intent(out) :: C
-
-  ! local parameters
-  integer :: i,j
-
-  ! matrix-matrix multiplication
-  do j = 1,n3
-    do i = 1,n1
-      C(i,j) =  A(i,1) * B(1,j) &
-              + A(i,2) * B(2,j) &
-              + A(i,3) * B(3,j) &
-              + A(i,4) * B(4,j) &
-              + A(i,5) * B(5,j) &
-              + A(i,6) * B(6,j)
-    enddo
-  enddo
-
-  end subroutine mxm6_single
-
-  !-------------
-
-  subroutine mxm7_single(A,n1,B,C,n3)
-
-! two-dimensional arrays (49,7)/(7,49)
-
-  use constants, only: CUSTOM_REAL
-
-  implicit none
-
-  integer,intent(in) :: n1,n3
-  real(kind=CUSTOM_REAL),dimension(n1,7),intent(in) :: A
-  real(kind=CUSTOM_REAL),dimension(7,n3),intent(in) :: B
-  real(kind=CUSTOM_REAL),dimension(n1,n3),intent(out) :: C
-
-  ! local parameters
-  integer :: i,j
-
-  ! matrix-matrix multiplication
-  do j = 1,n3
-    do i = 1,n1
-      C(i,j) =  A(i,1) * B(1,j) &
-              + A(i,2) * B(2,j) &
-              + A(i,3) * B(3,j) &
-              + A(i,4) * B(4,j) &
-              + A(i,5) * B(5,j) &
-              + A(i,6) * B(6,j) &
-              + A(i,7) * B(7,j)
-    enddo
-  enddo
-
-  end subroutine mxm7_single
+! unused so far..
+!
+!  subroutine mxm6_single(A,n1,B,C,n3)
+!
+!! two-dimensional arrays (36,6)/(6,36)
+!
+!  use constants, only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  integer,intent(in) :: n1,n3
+!  real(kind=CUSTOM_REAL),dimension(n1,6),intent(in) :: A
+!  real(kind=CUSTOM_REAL),dimension(6,n3),intent(in) :: B
+!  real(kind=CUSTOM_REAL),dimension(n1,n3),intent(out) :: C
+!
+!  ! local parameters
+!  integer :: i,j
+!
+!  ! matrix-matrix multiplication
+!  do j = 1,n3
+!    do i = 1,n1
+!      C(i,j) =  A(i,1) * B(1,j) &
+!              + A(i,2) * B(2,j) &
+!              + A(i,3) * B(3,j) &
+!              + A(i,4) * B(4,j) &
+!              + A(i,5) * B(5,j) &
+!              + A(i,6) * B(6,j)
+!    enddo
+!  enddo
+!
+!  end subroutine mxm6_single
 
   !-------------
 
-  subroutine mxm8_single(A,n1,B,C,n3)
+! unused so far..
+!
+!  subroutine mxm7_single(A,n1,B,C,n3)
+!
+!! two-dimensional arrays (49,7)/(7,49)
+!
+!  use constants, only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  integer,intent(in) :: n1,n3
+!  real(kind=CUSTOM_REAL),dimension(n1,7),intent(in) :: A
+!  real(kind=CUSTOM_REAL),dimension(7,n3),intent(in) :: B
+!  real(kind=CUSTOM_REAL),dimension(n1,n3),intent(out) :: C
+!
+!  ! local parameters
+!  integer :: i,j
+!
+!  ! matrix-matrix multiplication
+!  do j = 1,n3
+!    do i = 1,n1
+!      C(i,j) =  A(i,1) * B(1,j) &
+!              + A(i,2) * B(2,j) &
+!              + A(i,3) * B(3,j) &
+!              + A(i,4) * B(4,j) &
+!              + A(i,5) * B(5,j) &
+!              + A(i,6) * B(6,j) &
+!              + A(i,7) * B(7,j)
+!    enddo
+!  enddo
+!
+!  end subroutine mxm7_single
 
-! two-dimensional arrays (64,8)/(8,64)
+  !-------------
 
-  use constants, only: CUSTOM_REAL
-
-  implicit none
-
-  integer,intent(in) :: n1,n3
-  real(kind=CUSTOM_REAL),dimension(n1,8),intent(in) :: A
-  real(kind=CUSTOM_REAL),dimension(8,n3),intent(in) :: B
-  real(kind=CUSTOM_REAL),dimension(n1,n3),intent(out) :: C
-
-  ! local parameters
-  integer :: i,j
-
-  ! matrix-matrix multiplication
-  do j = 1,n3
-    do i = 1,n1
-      C(i,j) =  A(i,1) * B(1,j) &
-              + A(i,2) * B(2,j) &
-              + A(i,3) * B(3,j) &
-              + A(i,4) * B(4,j) &
-              + A(i,5) * B(5,j) &
-              + A(i,6) * B(6,j) &
-              + A(i,7) * B(7,j) &
-              + A(i,8) * B(8,j)
-    enddo
-  enddo
-
-  end subroutine mxm8_single
+! unused so far..
+!
+!  subroutine mxm8_single(A,n1,B,C,n3)
+!
+!! two-dimensional arrays (64,8)/(8,64)
+!
+!  use constants, only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  integer,intent(in) :: n1,n3
+!  real(kind=CUSTOM_REAL),dimension(n1,8),intent(in) :: A
+!  real(kind=CUSTOM_REAL),dimension(8,n3),intent(in) :: B
+!  real(kind=CUSTOM_REAL),dimension(n1,n3),intent(out) :: C
+!
+!  ! local parameters
+!  integer :: i,j
+!
+!  ! matrix-matrix multiplication
+!  do j = 1,n3
+!    do i = 1,n1
+!      C(i,j) =  A(i,1) * B(1,j) &
+!              + A(i,2) * B(2,j) &
+!              + A(i,3) * B(3,j) &
+!              + A(i,4) * B(4,j) &
+!              + A(i,5) * B(5,j) &
+!              + A(i,6) * B(6,j) &
+!              + A(i,7) * B(7,j) &
+!              + A(i,8) * B(8,j)
+!    enddo
+!  enddo
+!
+!  end subroutine mxm8_single
 
 !--------------------------------------------------------------------------------------------
 
   subroutine mxm5_3dmat_single(A,n1,B,n2,C,n3)
+
+! we can force inlining (Intel compiler)
+#if defined __INTEL_COMPILER
+!DIR$ ATTRIBUTES FORCEINLINE :: mxm5_3dmat_single
+#else
+! cray
+! note: with Cray Fortran versions >= 14 on Frontier, inlining this routine together with optimization -O3 leads to problems.
+!       for now, will avoid inlining by this directive INLINENEVER to allow for default compilation,
+!       otherwise the compilation flag -hipa0 would need to be added to suppress all inlining as well.
+!!DIR$ INLINEALWAYS mxm5_3dmat_single
+!DIR$ INLINENEVER mxm5_3dmat_single
+#endif
 
 ! 3-dimensional arrays (5,5,5) for A and C
 
@@ -657,7 +706,8 @@
 ! note: on CPUs like Haswell or Sandy Bridge, the following will slow down computations
 !       however, on Intel Phi (KNC) it is still helpful (speedup +3%)
 #if defined(XSMM_FORCE_EVEN_IF_SLOWER) || ( defined(XSMM) && defined(__MIC__) )
-  use my_libxsmm, only: libxsmm_smm_5_5_5
+  !use my_libxsmm, only: libxsmm_smm_5_5_5
+  use my_libxsmm, only: xmm3,libxsmm_mmcall_abc => libxsmm_smmcall_abc
 #endif
 
   implicit none
@@ -677,13 +727,16 @@
   !do k = 1,5
   !  call libxsmm_call(xmm3, A(:,:,k), B, C(:,:,k))
   !enddo
-
+  ! dispatch
+  do k = 1,5
+    call libxsmm_mmcall_abc(xmm3, A(1,1,k), B, C(1,1,k))
+  enddo
   ! unrolled
-  call libxsmm_smm_5_5_5(a=A(1,1,1), b=B, c=C(1,1,1),pa=A(1,1,1+1), pb=B, pc=C(1,1,1+1))
-  call libxsmm_smm_5_5_5(a=A(1,1,2), b=B, c=C(1,1,2),pa=A(1,1,2+1), pb=B, pc=C(1,1,2+1))
-  call libxsmm_smm_5_5_5(a=A(1,1,3), b=B, c=C(1,1,3),pa=A(1,1,3+1), pb=B, pc=C(1,1,3+1))
-  call libxsmm_smm_5_5_5(a=A(1,1,4), b=B, c=C(1,1,4),pa=A(1,1,4+1), pb=B, pc=C(1,1,4+1))
-  call libxsmm_smm_5_5_5(a=A(1,1,5), b=B, c=C(1,1,5),pa=A(1,1,1), pb=B, pc=C(1,1,1))
+  !call libxsmm_smm_5_5_5(a=A(1,1,1), b=B, c=C(1,1,1),pa=A(1,1,1+1), pb=B, pc=C(1,1,1+1))
+  !call libxsmm_smm_5_5_5(a=A(1,1,2), b=B, c=C(1,1,2),pa=A(1,1,2+1), pb=B, pc=C(1,1,2+1))
+  !call libxsmm_smm_5_5_5(a=A(1,1,3), b=B, c=C(1,1,3),pa=A(1,1,3+1), pb=B, pc=C(1,1,3+1))
+  !call libxsmm_smm_5_5_5(a=A(1,1,4), b=B, c=C(1,1,4),pa=A(1,1,4+1), pb=B, pc=C(1,1,4+1))
+  !call libxsmm_smm_5_5_5(a=A(1,1,5), b=B, c=C(1,1,5),pa=A(1,1,1), pb=B, pc=C(1,1,1))
   return
 #endif
 
@@ -705,108 +758,114 @@
 
   !-------------
 
-  subroutine mxm6_3dmat_single(A,n1,B,n2,C,n3)
-
-! three-dimensional arrays (6,6,6) for A and C
-
-  use constants, only: CUSTOM_REAL
-
-  implicit none
-
-  integer,intent(in) :: n1,n2,n3
-  real(kind=CUSTOM_REAL),dimension(n1,6,n3),intent(in) :: A
-  real(kind=CUSTOM_REAL),dimension(6,n2),intent(in) :: B
-  real(kind=CUSTOM_REAL),dimension(n1,n2,n3),intent(out) :: C
-
-  ! local parameters
-  integer :: i,j,k
-
-  ! matrix-matrix multiplication
-  do k = 1,n3
-    do j = 1,n2
-      do i = 1,n1
-        C(i,j,k) =  A(i,1,k) * B(1,j) &
-                  + A(i,2,k) * B(2,j) &
-                  + A(i,3,k) * B(3,j) &
-                  + A(i,4,k) * B(4,j) &
-                  + A(i,5,k) * B(5,j) &
-                  + A(i,6,k) * B(6,j)
-      enddo
-    enddo
-  enddo
-
-  end subroutine mxm6_3dmat_single
-
-  !-------------
-
-  subroutine mxm7_3dmat_single(A,n1,B,n2,C,n3)
-
-! three-dimensional arrays (7,7,7) for A and C
-
-  use constants, only: CUSTOM_REAL
-
-  implicit none
-
-  integer,intent(in) :: n1,n2,n3
-  real(kind=CUSTOM_REAL),dimension(n1,7,n3),intent(in) :: A
-  real(kind=CUSTOM_REAL),dimension(7,n2),intent(in) :: B
-  real(kind=CUSTOM_REAL),dimension(n1,n2,n3),intent(out) :: C
-
-  ! local parameters
-  integer :: i,j,k
-
-  ! matrix-matrix multiplication
-  do k = 1,n3
-    do j = 1,n2
-      do i = 1,n1
-        C(i,j,k) =  A(i,1,k) * B(1,j) &
-                  + A(i,2,k) * B(2,j) &
-                  + A(i,3,k) * B(3,j) &
-                  + A(i,4,k) * B(4,j) &
-                  + A(i,5,k) * B(5,j) &
-                  + A(i,6,k) * B(6,j) &
-                  + A(i,7,k) * B(7,j)
-      enddo
-    enddo
-  enddo
-
-  end subroutine mxm7_3dmat_single
+! unused so far..
+!
+!  subroutine mxm6_3dmat_single(A,n1,B,n2,C,n3)
+!
+!! three-dimensional arrays (6,6,6) for A and C
+!
+!  use constants, only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  integer,intent(in) :: n1,n2,n3
+!  real(kind=CUSTOM_REAL),dimension(n1,6,n3),intent(in) :: A
+!  real(kind=CUSTOM_REAL),dimension(6,n2),intent(in) :: B
+!  real(kind=CUSTOM_REAL),dimension(n1,n2,n3),intent(out) :: C
+!
+!  ! local parameters
+!  integer :: i,j,k
+!
+!  ! matrix-matrix multiplication
+!  do k = 1,n3
+!    do j = 1,n2
+!      do i = 1,n1
+!        C(i,j,k) =  A(i,1,k) * B(1,j) &
+!                  + A(i,2,k) * B(2,j) &
+!                  + A(i,3,k) * B(3,j) &
+!                  + A(i,4,k) * B(4,j) &
+!                  + A(i,5,k) * B(5,j) &
+!                  + A(i,6,k) * B(6,j)
+!      enddo
+!    enddo
+!  enddo
+!
+!  end subroutine mxm6_3dmat_single
 
   !-------------
 
-  subroutine mxm8_3dmat_single(A,n1,B,n2,C,n3)
+! unused so far..
+!
+!  subroutine mxm7_3dmat_single(A,n1,B,n2,C,n3)
+!
+!! three-dimensional arrays (7,7,7) for A and C
+!
+!  use constants, only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  integer,intent(in) :: n1,n2,n3
+!  real(kind=CUSTOM_REAL),dimension(n1,7,n3),intent(in) :: A
+!  real(kind=CUSTOM_REAL),dimension(7,n2),intent(in) :: B
+!  real(kind=CUSTOM_REAL),dimension(n1,n2,n3),intent(out) :: C
+!
+!  ! local parameters
+!  integer :: i,j,k
+!
+!  ! matrix-matrix multiplication
+!  do k = 1,n3
+!    do j = 1,n2
+!      do i = 1,n1
+!        C(i,j,k) =  A(i,1,k) * B(1,j) &
+!                  + A(i,2,k) * B(2,j) &
+!                  + A(i,3,k) * B(3,j) &
+!                  + A(i,4,k) * B(4,j) &
+!                  + A(i,5,k) * B(5,j) &
+!                  + A(i,6,k) * B(6,j) &
+!                  + A(i,7,k) * B(7,j)
+!      enddo
+!    enddo
+!  enddo
+!
+!  end subroutine mxm7_3dmat_single
 
-! three-dimensional arrays (8,8,8) for A and C
+  !-------------
 
-  use constants, only: CUSTOM_REAL
-
-  implicit none
-
-  integer,intent(in) :: n1,n2,n3
-  real(kind=CUSTOM_REAL),dimension(n1,8,n3),intent(in) :: A
-  real(kind=CUSTOM_REAL),dimension(8,n2),intent(in) :: B
-  real(kind=CUSTOM_REAL),dimension(n1,n2,n3),intent(out) :: C
-
-  ! local parameters
-  integer :: i,j,k
-
-  ! matrix-matrix multiplication
-  do k = 1,n3
-    do j = 1,n2
-      do i = 1,n1
-        C(i,j,k) =  A(i,1,k) * B(1,j) &
-                  + A(i,2,k) * B(2,j) &
-                  + A(i,3,k) * B(3,j) &
-                  + A(i,4,k) * B(4,j) &
-                  + A(i,5,k) * B(5,j) &
-                  + A(i,6,k) * B(6,j) &
-                  + A(i,7,k) * B(7,j) &
-                  + A(i,8,k) * B(8,j)
-      enddo
-    enddo
-  enddo
-
-  end subroutine mxm8_3dmat_single
+! unused so far..
+!
+!  subroutine mxm8_3dmat_single(A,n1,B,n2,C,n3)
+!
+!! three-dimensional arrays (8,8,8) for A and C
+!
+!  use constants, only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  integer,intent(in) :: n1,n2,n3
+!  real(kind=CUSTOM_REAL),dimension(n1,8,n3),intent(in) :: A
+!  real(kind=CUSTOM_REAL),dimension(8,n2),intent(in) :: B
+!  real(kind=CUSTOM_REAL),dimension(n1,n2,n3),intent(out) :: C
+!
+!  ! local parameters
+!  integer :: i,j,k
+!
+!  ! matrix-matrix multiplication
+!  do k = 1,n3
+!    do j = 1,n2
+!      do i = 1,n1
+!        C(i,j,k) =  A(i,1,k) * B(1,j) &
+!                  + A(i,2,k) * B(2,j) &
+!                  + A(i,3,k) * B(3,j) &
+!                  + A(i,4,k) * B(4,j) &
+!                  + A(i,5,k) * B(5,j) &
+!                  + A(i,6,k) * B(6,j) &
+!                  + A(i,7,k) * B(7,j) &
+!                  + A(i,8,k) * B(8,j)
+!      enddo
+!    enddo
+!  enddo
+!
+!  end subroutine mxm8_3dmat_single
 
   end subroutine compute_forces_outer_core_Dev
 

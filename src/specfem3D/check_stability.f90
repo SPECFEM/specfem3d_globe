@@ -192,7 +192,7 @@
       call check_norm_elastic_acoustic_from_device(b_Usolidnorm,b_Ufluidnorm,Mesh_pointer,3)
     endif
 
-! this trick checks for NaN (Not a Number), which is not even equal to itself
+    ! this trick checks for NaN (Not a Number), which is not even equal to itself
     if (b_Usolidnorm > STABILITY_THRESHOLD .or. b_Usolidnorm < 0 .or. b_Usolidnorm /= b_Usolidnorm) &
       call exit_MPI(myrank,'backward simulation became unstable and blew up  in the solid')
     if (b_Ufluidnorm > STABILITY_THRESHOLD .or. b_Ufluidnorm < 0 .or. b_Ufluidnorm /= b_Ufluidnorm) &
@@ -290,11 +290,13 @@
     write(IMAIN,"(' Elapsed time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
     write(IMAIN,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
 
-! do not check before MIN_TIME_STEPS_FOR_SLOW_NODES time steps
-! because the time step estimate (which is an average) may then be unreliable
-    if (CHECK_FOR_SLOW_NODES .and. NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. it >= MIN_TIME_STEPS_FOR_SLOW_NODES .and. &
+    ! do not check before MIN_TIME_STEPS_FOR_SLOW_NODES time steps
+    ! because the time step estimate (which is an average) may then be unreliable
+    if (CHECK_FOR_SLOW_NODES) then
+      if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. it >= MIN_TIME_STEPS_FOR_SLOW_NODES .and. &
           tCPU/dble(it) > TOLERANCE_FACTOR_FOR_SLOW_NODES * REFERENCE_TIME_PER_TIME_STEP_ON_NORMAL_NODES) &
         I_am_running_on_a_slow_node = .true.
+    endif
 
     if (SHOW_SEPARATE_RUN_INFORMATION) then
       write(IMAIN,*) 'Time steps done for this run = ',it_run,' out of ',nstep_run
@@ -496,7 +498,7 @@
     call check_norm_elastic_acoustic_from_device(b_Usolidnorm,b_Ufluidnorm,Mesh_pointer,3)
   endif
 
-! this trick checks for NaN (Not a Number), which is not even equal to itself
+  ! this trick checks for NaN (Not a Number), which is not even equal to itself
   if (b_Usolidnorm > STABILITY_THRESHOLD .or. b_Usolidnorm < 0 .or. b_Usolidnorm /= b_Usolidnorm) &
     call exit_MPI(myrank,'backward simulation became unstable and blew up  in the solid')
   if (b_Ufluidnorm > STABILITY_THRESHOLD .or. b_Ufluidnorm < 0 .or. b_Ufluidnorm /= b_Ufluidnorm) &
@@ -556,7 +558,7 @@
     ! check stability of the code, exit if unstable
     ! negative values can occur with some compilers when the unstable value is greater
     ! than the greatest possible floating-point number of the machine
-! this trick checks for NaN (Not a Number), which is not even equal to itself
+    ! this trick checks for NaN (Not a Number), which is not even equal to itself
     if (b_Usolidnorm_all > STABILITY_THRESHOLD .or. b_Usolidnorm_all < 0 .or. b_Usolidnorm_all /= b_Usolidnorm_all) &
       call exit_MPI(myrank,'backward simulation became unstable and blew up in the solid')
     if (b_Ufluidnorm_all > STABILITY_THRESHOLD .or. b_Ufluidnorm_all < 0 .or. b_Ufluidnorm_all /= b_Ufluidnorm_all) &
@@ -710,19 +712,21 @@
 
   close(IOUT)
 
-! if the run is slow and gives up, create a disk file to indicate it, so that users or batch scripts can know it.
-! do not check before MIN_TIME_STEPS_FOR_SLOW_NODES time steps
-! because the time step estimate (which is an average) may then be unreliable
-  if (CHECK_FOR_SLOW_NODES .and. NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. it >= MIN_TIME_STEPS_FOR_SLOW_NODES .and. &
+  ! if the run is slow and gives up, create a disk file to indicate it, so that users or batch scripts can know it.
+  ! do not check before MIN_TIME_STEPS_FOR_SLOW_NODES time steps
+  ! because the time step estimate (which is an average) may then be unreliable
+  if (CHECK_FOR_SLOW_NODES) then
+    if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. it >= MIN_TIME_STEPS_FOR_SLOW_NODES .and. &
         tCPU/dble(it) > TOLERANCE_FACTOR_FOR_SLOW_NODES * REFERENCE_TIME_PER_TIME_STEP_ON_NORMAL_NODES) then
-    I_am_running_on_a_slow_node = .true.
-! rank is between 0 and the max rank - 1, for the earthquake here we start at 1, i.e. we use mygroup + 1 rather than mygroup
-    write(outputname,"('/slow_run_on_rank_',i6.6,'_giving_up_for_earthquake_run_',i6.6,'_at_time_step_',i6.6)") &
+      I_am_running_on_a_slow_node = .true.
+      ! rank is between 0 and the max rank - 1, for the earthquake here we start at 1, i.e. we use mygroup + 1 rather than mygroup
+      write(outputname,"('/slow_run_on_rank_',i6.6,'_giving_up_for_earthquake_run_',i6.6,'_at_time_step_',i6.6)") &
              myrank,mygroup + 1,it
-    open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write')
-! write outputname as the information message, since it contains all the information needed
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write')
+      ! write outputname as the information message, since it contains all the information needed
       write(IOUT,*) outputname
-    close(IOUT)
+      close(IOUT)
+    endif
   endif
 
   end subroutine write_timestamp_file

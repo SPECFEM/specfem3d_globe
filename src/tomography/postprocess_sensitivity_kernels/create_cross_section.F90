@@ -62,7 +62,7 @@
     NGNOD,CUSTOM_REAL,NGLLX,NGLLY,NGLLZ, &
     GAUSSALPHA,GAUSSBETA, &
     IIN,IOUT,MAX_STRING_LEN, &
-    RADIANS_TO_DEGREES,SMALLVAL
+    RADIANS_TO_DEGREES,SMALLVAL,HUGEVAL
 
   use shared_parameters, only: R_PLANET_KM,LOCAL_PATH
 
@@ -443,6 +443,12 @@
   ! cross-section points
   if (section_type == 0) then
     ! horizontal cross-section
+    ! user output
+    if (myrank == 0) then
+      print *,'  horizontal cross-section'
+      print *
+    endif
+
     ! uses a regular lat/lon grid
     !
     ! latitudes range [-90,90]
@@ -462,13 +468,22 @@
     ! (north/south pole will count as single points)
     nglob_target = (nlat - 2) * nlon * ndepth + 2
 
+    ! user output
+    if (myrank == 0) then
+      print *,'  number of lat/lon points      = ',nlat,'/',nlon
+      print *,'  total number of target points = ',nglob_target
+      print *
+    endif
+
     ! allocates arrays for target points
-    allocate( x2(nglob_target), &
-              y2(nglob_target), &
-              z2(nglob_target), &
-              model_distance2(nglob_target), &
-              model2(nglob_target),stat=ier )
+    allocate(x2(nglob_target), &
+             y2(nglob_target), &
+             z2(nglob_target), &
+             model_distance2(nglob_target), &
+             model2(nglob_target),stat=ier)
     if (ier /= 0) stop 'Error allocating target model point arrays'
+    x2(:) = 0.0_CUSTOM_REAL; y2(:) = 0.0_CUSTOM_REAL; z2(:) = 0.0_CUSTOM_REAL
+    model_distance2(:) = HUGEVAL; model2(:) = 0.0_CUSTOM_REAL
 
     ! creates cross-section points
     call set_horiz_cross_section_points(myrank,nglob_target,x2,y2,z2, &
@@ -477,6 +492,13 @@
 
   else
     ! vertical cross-section
+    ! user output
+    if (myrank == 0) then
+      print *,'  vertical cross-section'
+      print *
+    endif
+
+    ! checks depth input
     if (depth_min > depth_max) then
       ! switch depths
       depth0 = depth_min
@@ -494,11 +516,15 @@
 
     ! determines number of sections along great-circle arc
     ! gets geocentric locations
-    call get_geocentric_thetaphi(v_lat1,v_lon1,theta1,phi1,ELLIPTICITY)
-    call get_geocentric_thetaphi(v_lat2,v_lon2,theta2,phi2,ELLIPTICITY)
+    call latlon_2_geocentric_thetaphi_dble(v_lat1,v_lon1,theta1,phi1,ELLIPTICITY)
+    call latlon_2_geocentric_thetaphi_dble(v_lat2,v_lon2,theta2,phi2,ELLIPTICITY)
 
-    ! compute epicentral distance
-    epidist = acos(cos(theta1)*cos(theta2) + sin(theta1)*sin(theta2)*cos(phi1-phi2)) * RADIANS_TO_DEGREES
+    ! computes epicentral distance (in radians)
+    call get_greatcircle_distance(theta1,phi1,theta2,phi2,epidist)
+
+    ! distance in degrees
+    epidist = epidist * RADIANS_TO_DEGREES
+
     if (epidist <= SMALLVAL) then
       stop 'Error great-circle points too close to each other'
     endif
@@ -511,16 +537,25 @@
       nsec = int(epidist / dincr) + 1
     endif
 
+    ! user output
+    if (myrank == 0) then
+      print *,'  number of nsec/ndepth         = ',nlat,'/',nlon
+      print *,'  total number of target points = ',nglob_target
+      print *
+    endif
+
     ! total number of points
     nglob_target = ndepth * nsec
 
     ! allocates arrays for target points
-    allocate( x2(nglob_target), &
-              y2(nglob_target), &
-              z2(nglob_target), &
-              model_distance2(nglob_target), &
-              model2(nglob_target),stat=ier )
+    allocate(x2(nglob_target), &
+             y2(nglob_target), &
+             z2(nglob_target), &
+             model_distance2(nglob_target), &
+             model2(nglob_target),stat=ier)
     if (ier /= 0) stop 'Error allocating target model point arrays'
+    x2(:) = 0.0_CUSTOM_REAL; y2(:) = 0.0_CUSTOM_REAL; z2(:) = 0.0_CUSTOM_REAL
+    model_distance2(:) = HUGEVAL; model2(:) = 0.0_CUSTOM_REAL
 
     ! creates cross-section points
     call set_vertical_cross_section_points(myrank,nglob_target,x2,y2,z2, &
@@ -539,11 +574,11 @@
   endif
 
   ! mesh arrays for a single slice
-  allocate( xstore(NGLOB_CRUST_MANTLE), &
-            ystore(NGLOB_CRUST_MANTLE), &
-            zstore(NGLOB_CRUST_MANTLE),stat=ier )
+  allocate(xstore(NGLOB_CRUST_MANTLE), &
+           ystore(NGLOB_CRUST_MANTLE), &
+           zstore(NGLOB_CRUST_MANTLE),stat=ier)
   if (ier /= 0) stop 'Error allocating locations'
-  allocate( ibool(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier )
+  allocate(ibool(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
   if (ier /= 0) stop 'Error allocating ibool'
 
   ! reads in model and locations of old, source mesh
@@ -593,7 +628,7 @@
   endif
 
   ! model files
-  allocate( model(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier )
+  allocate(model(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
   if (ier /= 0) stop 'Error allocating initial model'
 
   ! reads in old model files
@@ -723,14 +758,25 @@
   ! statistics
   call max_all_cr(model_maxdiff,val)
   if (myrank == 0) then
-    ! min/max values
+    ! model min/max values
     min_val = minval(model2(:),mask = model_distance2(:) < 2 * typical_size)
     max_val = maxval(model2(:),mask = model_distance2(:) < 2 * typical_size)
     ! user output
     print *,'search statistics:','  parameter ',trim(fname)
     print *,'  min/max values = ',min_val,max_val
     print *
-    print *,'  maximum distance to target point = ',maxval(model_distance2(:)) * R_PLANET_KM,'(km)'
+
+    ! distance
+    ! note: the cross-section is over the whole lat/lon range [-90,90/0,360]
+    !       even if the mesh is only regional; thus having cross-section points with huge distance can happen.
+    !       we thus apply the mask to get the distance for those with valid model points
+    if (NCHUNKS_VAL /= 6) then
+      max_val = maxval(model_distance2(:),mask = model_distance2(:) < 2 * typical_size)
+    else
+      max_val = maxval(model_distance2(:))
+    endif
+    ! user output
+    print *,'  maximum distance to target point = ',max_val * R_PLANET_KM,'(km)'
     print *,'  maximum model value difference between closest GLL point = ',val
     print *
   endif
@@ -740,7 +786,7 @@
   if (myrank == 0) then
     ! allocates arrays for statistics
     allocate(model_diff(nglob_target), &
-             model_pert(nglob_target),stat=ier )
+             model_pert(nglob_target),stat=ier)
     if (ier /= 0) stop 'Error allocating statistics arrays'
 
     ! gets statistics values
@@ -759,7 +805,7 @@
     ! writes out cross section
     call write_cross_section(nglob_target,x2,y2,z2,model2,model_distance2, &
                              model_diff,model_pert,m_avg_total,point_avg_total, &
-                             typical_size,depth0,section_type,filename)
+                             typical_size,depth0,section_type,filename,fname)
 
     ! frees temporary arrays
     deallocate(model_diff,model_pert)
@@ -800,6 +846,9 @@
   use constants, only: CUSTOM_REAL,NR_DENSITY,R_UNIT_SPHERE
   use shared_parameters, only: R_PLANET,NX_BATHY,NY_BATHY
 
+  ! for testing
+  use constants, only: PI_OVER_TWO
+
   implicit none
 
   integer,intent(in) :: myrank,nglob_target
@@ -823,9 +872,8 @@
   integer :: nspl
   double precision,dimension(NR_DENSITY) :: rspl,ellipicity_spline,ellipicity_spline2
 
-  double precision :: r0,p20
-  double precision :: cost
-  double precision :: ell,elevation
+  double precision :: r0
+  double precision :: elevation
 
   integer :: iglob,ier
   integer :: ilat,ilon,idep
@@ -834,10 +882,11 @@
   double precision :: lat,lon,depth
   double precision :: x_target,y_target,z_target
 
+  ! debugging
+  logical, parameter :: DO_TEST = .false.
+
   ! user output
   if (myrank == 0) then
-    print *,'  horizontal cross-section'
-    print *
     print *,'  depth: ',depth0,'km'
     print *,'  lat/lon increments: ',sngl(dlat),'/',sngl(dlon),'degrees'
     print *
@@ -909,10 +958,8 @@
         if (lon > 360.d0 ) lon = lon - 360.d0
 
         ! converts geographic latitude lat (degrees) to geocentric colatitude theta (radians)
-        call get_geocentric_thetaphi(lat,lon,theta,phi,ELLIPTICITY)
-
-        ! reduce theta/phi to range [0,PI] and [0,2PI]
-        call reduce(theta,phi)
+        ! (reduce theta/phi to range [0,PI] and [0,2PI])
+        call latlon_2_geocentric_thetaphi_dble(lat,lon,theta,phi,ELLIPTICITY)
 
         ! normalized receiver radius
         r0 = R_UNIT_SPHERE
@@ -927,20 +974,14 @@
 
         ! ellipticity
         if (ELLIPTICITY) then
-          cost = cos(theta)
-          ! this is the Legendre polynomial of degree two, P2(cos(theta)),
-          ! see the discussion above eq (14.4) in Dahlen and Tromp (1998)
-          p20 = 0.5d0*(3.0d0*cost*cost-1.0d0)
-          ! get ellipticity using spline evaluation
-          call spline_evaluation(rspl,ellipicity_spline,ellipicity_spline2,nspl,r0,ell)
-          ! this is eq (14.4) in Dahlen and Tromp (1998)
-          r0 = r0*(1.0d0-(2.0d0/3.0d0)*ell*p20)
+          ! adds ellipticity factor to radius
+          call add_ellipticity_rtheta(r0,theta,nspl,rspl,ellipicity_spline,ellipicity_spline2)
         endif
 
         ! subtracts desired depth (in meters)
         r0 = r0 - depth/R_PLANET
 
-        !if (myrank == 0) print *,'  elevation = ',elevation,'ellip = ',ell,'radius = ',r0 * R_PLANET_KM
+        !if (myrank == 0) print *,'  elevation = ',elevation,'ellip = ',ELLIPTICITY,'radius = ',r0 * R_PLANET_KM
 
         ! compute the Cartesian position of the receiver
         x_target = r0 * sin(theta) * cos(phi)
@@ -959,6 +1000,69 @@
   enddo
   ! checks point count
   if (iglob /= nglob_target) stop 'Error iglob count invalid'
+
+  ! double check conversion from geographic to geocentric positions
+  if (DO_TEST .and. (myrank == 0)) then
+    ! test position
+    lat = 68.d0        ! over Alaska
+    lon = 200.d0
+    depth = 0.d0
+
+    ! initializes
+    theta = 0.d0
+    phi = 0.d0
+    r0 = 0.d0
+    elevation = 0.d0  ! for topo
+
+    ! converts geographic latitude lat (degrees) to geocentric colatitude theta (radians)
+    ! (reduce theta/phi to range [0,PI] and [0,2PI])
+    call latlon_2_geocentric_thetaphi_dble(lat,lon,theta,phi,ELLIPTICITY)
+
+    ! normalized receiver radius
+    r0 = R_UNIT_SPHERE
+
+    print *
+    print *,'test: lat/lon/r   = ',lat,lon,r0
+    print *,'test: theta/phi/r = ',theta,phi,r0
+
+    ! finds elevation
+    if (TOPOGRAPHY) then
+      ! gets elevation in meters
+      call get_topo_bathy(lat,lon,elevation,ibathy_topo)
+      ! adds to spherical radius
+      r0 = r0 + elevation/R_PLANET
+    endif
+
+    print *,'test: after topo : theta/phi/r = ',theta,phi,r0
+
+    ! ellipticity
+    if (ELLIPTICITY) then
+      ! adds ellipticity factor to radius
+      call add_ellipticity_rtheta(r0,theta,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+    endif
+
+    print *,'test: after ellip: theta/phi/r = ',theta,phi,r0
+
+    ! subtracts desired depth (in meters)
+    r0 = r0 - depth/R_PLANET
+
+    print *,'test: elevation = ',elevation,'ellip = ',ELLIPTICITY,'radius = ',r0 * R_PLANET / 1000.0,'(km)'
+
+    ! compute the Cartesian position of the receiver
+    x_target = r0 * sin(theta) * cos(phi)
+    y_target = r0 * sin(theta) * sin(phi)
+    z_target = r0 * cos(theta)
+
+    print *,'test: x/y/z = ',x_target,y_target,z_target
+
+    ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
+    ! for ellipticity, this is correcting latitude
+    call xyz_2_rlatlon_dble(x_target,y_target,z_target,r0,lat,lon,ELLIPTICITY)
+
+    print *,'test: back to geographic lat/lon/r = ',lat,lon,r0
+    print *,'test: done'
+    print *
+  endif ! test
 
   ! frees topography array
   if (TOPOGRAPHY) deallocate(ibathy_topo)
@@ -1009,9 +1113,8 @@
   integer :: nspl
   double precision,dimension(NR_DENSITY) :: rspl,ellipicity_spline,ellipicity_spline2
 
-  double precision :: r0,p20
-  double precision :: cost
-  double precision :: ell,elevation
+  double precision :: r0
+  double precision :: elevation
 
   integer :: iglob,ier
   integer :: isec,idep
@@ -1027,8 +1130,6 @@
 
   ! user output
   if (myrank == 0) then
-    print *,'  vertical cross-section'
-    print *
     print *,'  starting depth         : ',sngl(depth0),'km'
     print *,'  reaching maximum depth : ',sngl(depth0 + (ndepth-1) * ddepth),'km'
     print *,'  depth increment        : ',ddepth,'km'
@@ -1090,8 +1191,8 @@
 
   ! sets up great-circle points
   ! converts to radians and uses co-latitude
-  call get_geocentric_thetaphi(lat1,lon1,theta1,phi1,ELLIPTICITY)
-  call get_geocentric_thetaphi(lat2,lon2,theta2,phi2,ELLIPTICITY)
+  call latlon_2_geocentric_thetaphi_dble(lat1,lon1,theta1,phi1,ELLIPTICITY)
+  call latlon_2_geocentric_thetaphi_dble(lat2,lon2,theta2,phi2,ELLIPTICITY)
 
   ! reduce lat/lon to corresponding range
   call set_thetaphi_range(theta1,phi1,use_positive_lon)
@@ -1185,20 +1286,14 @@
 
       ! ellipticity
       if (ELLIPTICITY) then
-        cost = cos(theta)
-        ! this is the Legendre polynomial of degree two, P2(cos(theta)),
-        ! see the discussion above eq (14.4) in Dahlen and Tromp (1998)
-        p20 = 0.5d0*(3.0d0*cost*cost-1.0d0)
-        ! get ellipticity using spline evaluation
-        call spline_evaluation(rspl,ellipicity_spline,ellipicity_spline2,nspl,r0,ell)
-        ! this is eq (14.4) in Dahlen and Tromp (1998)
-        r0 = r0*(1.0d0-(2.0d0/3.0d0)*ell*p20)
+        ! adds ellipticity factor to radius
+        call add_ellipticity_rtheta(r0,theta,nspl,rspl,ellipicity_spline,ellipicity_spline2)
       endif
 
       ! subtracts desired depth (in meters)
       r0 = r0 - depth/R_PLANET
 
-      !if (myrank == 0) print *,'  elevation = ',elevation,'ellip = ',ell,'radius = ',r0 * R_PLANET_KM
+      !if (myrank == 0) print *,'  elevation = ',elevation,'ellip = ',ELLIPTICITY,'radius = ',r0 * R_PLANET_KM
 
       ! compute the Cartesian position of the receiver
       x_target = r0 * sin(theta) * cos(phi)
@@ -1238,12 +1333,16 @@
   real(kind=CUSTOM_REAL), dimension(nglob_target),intent(inout) :: model2,model_distance2
 
   ! local parameters
-  integer :: iglob,iproc
-
-  real(kind=CUSTOM_REAL), dimension(2,nglob_target) :: buffer
+  integer :: iglob,iproc,ier
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer
   real(kind=CUSTOM_REAL) :: dist,val
-
+  ! MPI communication tag
   integer, parameter :: itag = 11
+
+  ! temporary array
+  allocate(buffer(2,nglob_target),stat=ier)
+  if (ier /= 0) stop 'Error allocating buffer'
+  buffer(:,:) = 0.0_CUSTOM_REAL
 
   ! main gets point distances
   if (myrank == 0) then
@@ -1262,7 +1361,7 @@
         !print *,'collect from ',iproc,'iglob = ',iglob,'value = ',val,'dist = ',dist
 
         ! fills in best points
-        if ( dist < model_distance2(iglob) ) then
+        if (dist < model_distance2(iglob)) then
           model_distance2(iglob) = dist
           model2(iglob) = val
         endif
@@ -1281,6 +1380,9 @@
 
   ! synchronizes all mpi-processes
   call synchronize_all()
+
+  ! free temporary array
+  deallocate(buffer)
 
   end subroutine collect_closest_point_values
 
@@ -1358,7 +1460,7 @@
   real(kind=CUSTOM_REAL) :: xmin,xmax,ymin,ymax,zmin,zmax
 
   integer :: ipoin,nslice_points
-  integer,dimension(nglob_target) :: slice_points
+  integer,dimension(:),allocatable :: slice_points
 
   ! debug warning about large model value differences
   logical,parameter :: DO_WARNING = .false.
@@ -1381,6 +1483,11 @@
   ymax = maxval(ystore)
   zmin = minval(zstore)
   zmax = maxval(zstore)
+
+  ! temporary array
+  allocate(slice_points(nglob_target),stat=ier)
+  if (ier /= 0) stop 'Error allocating slice_points array'
+  slice_points(:) = 0
 
   ! counts points in this slice
   nslice_points = 0
@@ -1584,6 +1691,9 @@
     deallocate(search_elements)
 
   enddo
+
+  ! free temporary array
+  deallocate(slice_points)
 
   ! done looping over target locations
   if (myrank == 0) print *
@@ -1850,14 +1960,15 @@
   iz_initial_guess = 0
 
   ! finds closest interior GLL point
-  do k=1,NGLLZ
-    do j=1,NGLLY
-      do i=1,NGLLX
+  ! interior points should be good enough for iterative point search below
+  do k = 2,NGLLZ-1
+    do j = 2,NGLLY-1
+      do i = 2,NGLLX-1
         iglob = ibool(i,j,k,ispec_selected)
 
-        dist = (x_target - xstore(iglob))**2 &
-              +(y_target - ystore(iglob))**2 &
-              +(z_target - zstore(iglob))**2
+        dist = (x_target - xstore(iglob))*(x_target - xstore(iglob)) &
+              +(y_target - ystore(iglob))*(y_target - ystore(iglob)) &
+              +(z_target - zstore(iglob))*(z_target - zstore(iglob))
 
         ! keep this point if it is closer to the receiver
         if (dist < dist_min) then
@@ -1920,10 +2031,16 @@
     deta = etax*dx + etay*dy + etaz*dz
     dgamma = gammax*dx + gammay*dy + gammaz*dz
 
-    ! impose limit on increments
-    if (abs(dxi) > 0.1d0 ) dxi = sign(1.0d0,dxi)*0.1d0
-    if (abs(deta) > 0.1d0 ) deta = sign(1.0d0,deta)*0.1d0
-    if (abs(dgamma) > 0.1d0 ) dgamma = sign(1.0d0,dgamma)*0.1d0
+    ! decreases step length if step is large
+    if ((dxi*dxi + deta*deta + dgamma*dgamma) > 1.0d0) then
+      dxi = dxi * 0.33333333333d0
+      deta = deta * 0.33333333333d0
+      dgamma = dgamma * 0.33333333333d0
+    endif
+    ! alternative: impose limit on increments (seems to result in slightly less accurate locations)
+    !if (abs(dxi) > 0.1d0 ) dxi = sign(1.0d0,dxi)*0.1d0
+    !if (abs(deta) > 0.1d0 ) deta = sign(1.0d0,deta)*0.1d0
+    !if (abs(dgamma) > 0.1d0 ) dgamma = sign(1.0d0,dgamma)*0.1d0
 
     ! update values
     xi = xi + dxi
@@ -1952,7 +2069,7 @@
 
   ! found interpolated position
   ! compute final distance between asked and found (still normalized)
-  final_distance = sqrt((x_target-x)**2 + (y_target-y)**2 + (z_target-z)**2)
+  final_distance = sqrt((x_target-x)*(x_target-x) + (y_target-y)*(y_target-y) + (z_target-z)*(z_target-z))
 
   ! debug
   !if (final_distance > 5.0 ) &
@@ -2040,7 +2157,7 @@
 
   subroutine write_cross_section(nglob_target,x2,y2,z2,model2,model_distance2, &
                                  model_diff,model_pert,m_avg_total,point_avg_total, &
-                                 typical_size,depth0,section_type,filename)
+                                 typical_size,depth0,section_type,filename,fname)
 
   use constants, only: CUSTOM_REAL,IOUT,MAX_STRING_LEN
   use shared_parameters, only: R_PLANET_KM
@@ -2059,6 +2176,7 @@
   integer,intent(in) :: section_type
 
   character(len=MAX_STRING_LEN),intent(in) :: filename
+  character(len=16),intent(in) :: fname
 
   ! local parameters
   double precision :: r,lat,lon
@@ -2079,22 +2197,31 @@
     stop 'Error opening output model file'
   endif
 
+  ! note: to avoid line breaks after 80 characters, we specify a format in the write-statement:
+  !         write(IOUT,'(a)') ..
+  !       instead of
+  !         write(IOUT,*) ..
+  !       this is because compilers like ifort will add line breaks in the free formatted (list-directed) version,
+  !       and then the files becomes unreadable, e.g., for a plotting script.
+
   ! header info
-  write(IOUT,*) '# cross-section informations:'
+  write(IOUT,'(a)') '# cross-section informations:'
   if (section_type == 0) then
-    write(IOUT,*) '#   horizontal cross-section'
-    write(IOUT,*) '#'
-    write(IOUT,*) '#   depth = ',depth0
+    write(IOUT,'(a)') '#   horizontal cross-section'
+    write(IOUT,'(a)') '#'
+    write(IOUT,'(a,f14.6)') '#   depth = ',depth0
+    write(IOUT,'(a)') '#'
   else
-    write(IOUT,*) '#   vertical cross-section'
-    write(IOUT,*) '#'
+    write(IOUT,'(a)') '#   vertical cross-section'
+    write(IOUT,'(a)') '#'
   endif
-  write(IOUT,*) '#   cross-section average value (m_avg) = ',m_avg_total
-  write(IOUT,*) '#   point average value                 = ',point_avg_total
-  write(IOUT,*) '#'
+  write(IOUT,'(a)') '#   parameter                           = ' // trim(fname)
+  write(IOUT,'(a,f14.6)') '#   cross-section average value (m_avg) = ',m_avg_total
+  write(IOUT,'(a,f14.6)') '#   point average value                 = ',point_avg_total
+  write(IOUT,'(a)') '#'
   ! format: #lon #lat #parameter-value #actual-radius #minimum-distance(km)
-  write(IOUT,*) '#lon(degrees)   #lat(degrees)    #radius(km)   #parameter-value  #perturbation ln(m/m_avg)  ' // &
-                '#difference (m - m_avg)  #closest-point-distance(km)'
+  write(IOUT,'(a)') '#lon(degrees)   #lat(degrees)    #radius(km)   #parameter-value  #perturbation ln(m/m_avg)  ' // &
+                    '#difference (m - m_avg)  #closest-point-distance(km)'
 
   ! writes out data points
   do iglob = 1,nglob_target
@@ -2119,8 +2246,8 @@
       diff = model_diff(iglob)
 
       ! outputs cross-section points to file
-      write(IOUT,*) sngl(lon),sngl(lat),sngl(r*R_PLANET_KM),sngl(val), &
-                    sngl(pert),sngl(diff),sngl(dist_min*R_PLANET_KM)
+      write(IOUT,'(7f14.6)') sngl(lon),sngl(lat),sngl(r*R_PLANET_KM),sngl(val), &
+                             sngl(pert),sngl(diff),sngl(dist_min*R_PLANET_KM)
     endif
     !debug
     !print *,'lat/lon/r/param = ',sngl(lat),sngl(lon),sngl(r*R_PLANET_KM),model2(iglob),model_distance2(iglob)*R_PLANET_KM
@@ -2147,7 +2274,7 @@
 
   use constants, only: CUSTOM_REAL,RADIANS_TO_DEGREES, &
     TINYVAL,HUGEVAL,PI,PI_OVER_TWO
-  use shared_parameters, only: ONE_MINUS_F_SQUARED,R_PLANET_KM
+  use shared_parameters, only: R_PLANET_KM
 
   implicit none
 
@@ -2167,7 +2294,6 @@
   ! local parameters
   double precision :: x,y,z
   double precision :: r,lat,lon
-  double precision :: theta,phi
 
   integer :: iglob
   real(kind=CUSTOM_REAL) :: dist_min,distance_limit
@@ -2175,13 +2301,9 @@
   ! surface integral
   double precision :: area,total_spherical_area
   double precision :: model_integral
-  double precision :: val,pert,diff
+  double precision :: m_val,pert,diff
   double precision :: pert_min,pert_max
   integer :: ipoints_integral
-  double precision :: FACTOR_TAN
-
-  ! factor
-  FACTOR_TAN = 1.d0 / ONE_MINUS_F_SQUARED
 
   ! note: only main rank is computing this on collected array values
   !
@@ -2207,21 +2329,9 @@
     y = y2(iglob)
     z = z2(iglob)
 
-    ! gets radius/colatitude/longitude from x/y/z
-    call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
-    ! reduces range for colatitude to 0 and PI, for longitude to 0 and 2*PI
-    call reduce(theta,phi)
-
-    ! if mesh is spherical, then geocentric and geographic colatitudes are identical, otherwise
-    ! if mesh is elliptical
-    if (ELLIPTICITY) then
-      ! converts geocentric colatitude theta to geographic colatitude theta'
-      theta = PI_OVER_TWO - datan(FACTOR_TAN*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
-    endif
-
-    ! gets geographic latitude and longitude in degrees
-    lat = (PI_OVER_TWO - theta) * RADIANS_TO_DEGREES
-    lon = phi * RADIANS_TO_DEGREES
+    ! converts geocentric x/y/z to geographic lat/lon
+    ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
+    call xyz_2_rlatlon_dble(x,y,z,r,lat,lon,ELLIPTICITY)
 
     ! stores lat/lon/r in x2,y2,z2 arrays
     ! such that we don't need to recompute these when writing out
@@ -2244,16 +2354,16 @@
       endif
 
       ! model value
-      val = model2(iglob)
+      m_val = model2(iglob)
 
       ! adds to model integral value
-      model_integral = model_integral + area * val
+      model_integral = model_integral + area * m_val
 
       ! adds to total area
       total_spherical_area = total_spherical_area + area
 
       ! adds to point average
-      point_avg_total = point_avg_total + val
+      point_avg_total = point_avg_total + m_val
 
       ! point counter
       ipoints_integral = ipoints_integral + 1
@@ -2264,11 +2374,13 @@
   if (ipoints_integral == 0) then
     print *
     print *,'  Warning: no cross-section points within mesh volume'
+    call exit_mpi(0,'No cross-section points found')
   endif
   if (total_spherical_area <= 0.d0) then
     print *
     print *,'  Warning: integrated surface area is invalid'
     print *
+    call exit_mpi(0,'No valid cross-section area found')
   endif
 
   ! mean or average value over cross-section surface
@@ -2291,24 +2403,24 @@
     dist_min = model_distance2(iglob)
 
     ! model value
-    val = model2(iglob)
+    m_val = model2(iglob)
 
     ! difference
-    diff = val - m_avg_total
+    diff = m_val - m_avg_total
     model_diff(iglob) = diff
 
     ! relative perturbations
     ! logarithmic perturbation: log( m_new) - log( m_avg) = log( m_new / m_avg )
     if (m_avg_total == 0.d0) then
       ! assumes that model values are already perturbations
-      pert = val
+      pert = m_val
     else
-      if (m_avg_total > 0.d0 .and. val > 0.d0) then
+      if (m_avg_total > 0.d0 .and. m_val > 0.d0) then
         ! material values both positive
-        pert = log( val / m_avg_total )
+        pert = log( m_val / m_avg_total )
       else
         ! contains negative values
-        pert = (val - m_avg_total) / abs(m_avg_total)
+        pert = (m_val - m_avg_total) / abs(m_avg_total)
       endif
     endif
     model_pert(iglob) = pert
@@ -2502,39 +2614,6 @@
   area = r**2 * 2.d0 * PI * (1.d0 - sin(t))
 
   end subroutine get_area_spherical_cap
-
-
-!
-!------------------------------------------------------------------------------
-!
-
-  subroutine get_geocentric_thetaphi(lat,lon,theta,phi,ELLIPTICITY)
-
-! returns latitude/longitude in radians for geocentric location
-
-  use constants, only: DEGREES_TO_RADIANS,PI_OVER_TWO
-  use shared_parameters, only: ONE_MINUS_F_SQUARED
-
-  implicit none
-
-  double precision,intent(in) :: lat,lon
-  double precision,intent(out) :: theta,phi
-
-  logical,intent(in) :: ELLIPTICITY
-
-  ! see routine lat_2_geocentric_colat_dble(lat,theta)
-  if (ELLIPTICITY) then
-    ! converts geographic (lat) to geocentric latitude and converts to co-latitude (theta)
-    theta = PI_OVER_TWO - atan( ONE_MINUS_F_SQUARED*dtan(lat * DEGREES_TO_RADIANS) )
-  else
-    ! for perfect sphere, geocentric and geographic latitudes are the same
-    ! converts latitude (in degrees to co-latitude (in radians)
-    theta = PI_OVER_TWO - lat * DEGREES_TO_RADIANS
-  endif
-
-  phi = lon * DEGREES_TO_RADIANS
-
-  end subroutine get_geocentric_thetaphi
 
 !
 !------------------------------------------------------------------------------

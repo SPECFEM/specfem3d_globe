@@ -53,7 +53,8 @@
     ! note: the LDDRK scheme updates displacement after the stiffness computations and
     !       after adding boundary/coupling/source terms.
     !       thus, at each time loop step it, displ(:) is still at (n) and not (n+1) like for the Newmark scheme
-    !       when entering this routine. we therefore at an additional -DT to have the corresponding timing for the source.
+    !       when entering this routine. we therefore at an additional -DT to have the corresponding timing
+    !       for the source.
     timeval = real((dble(it-1-1)*DT + dble(C_LDDRK(istage))*DT - t0)*scale_t_inv, kind=CUSTOM_REAL)
   else
     timeval = real((dble(it-1)*DT - t0)*scale_t_inv, kind=CUSTOM_REAL)
@@ -265,7 +266,8 @@
     ! note: the LDDRK scheme updates displacement after the stiffness computations and
     !       after adding boundary/coupling/source terms.
     !       thus, at each time loop step it, displ(:) is still at (n) and not (n+1) like for the Newmark scheme
-    !       when entering this routine. we therefore at an additional -DT to have the corresponding timing for the source.
+    !       when entering this routine. we therefore at an additional -DT to have the corresponding timing
+    !       for the source.
     if (UNDO_ATTENUATION) then
       ! stepping moves forward from snapshot position
       b_timeval = real((dble(NSTEP-it_tmp-1)*DT + dble(C_LDDRK(istage))*DT - t0)*scale_t_inv, kind=CUSTOM_REAL)
@@ -285,7 +287,7 @@
   ! ****************************************************
 
   ! distinguishes two runs: for elements on MPI interfaces, and elements within the partitions
-  do iphase=1,2
+  do iphase = 1,2
 
     ! first, iphase == 1 for points on MPI interfaces (thus outer elements)
     ! second, iphase == 2 for points purely inside partition (thus inner elements)

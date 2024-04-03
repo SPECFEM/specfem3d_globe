@@ -49,21 +49,21 @@
   double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: xstore,ystore,zstore
 
   ! logical mask used to create arrays iboolleft_eta and iboolright_eta
-  integer :: npointot
-  logical,dimension(npointot) :: mask_ibool
+  integer,intent(in) :: npointot
+  logical,dimension(npointot),intent(inout) :: mask_ibool
 
-  integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_EDGES_ONEDIR) :: NSPEC2D_XI_FACE
+  integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_EDGES_ONEDIR),intent(in) :: NSPEC2D_XI_FACE
 
-  integer :: iregion
-  integer :: npoin2D_eta
+  integer,intent(in) :: iregion
+  integer,intent(inout) :: npoin2D_eta
 
-  integer :: NGLOB2DMAX_YMIN_YMAX
+  integer,intent(in) :: NGLOB2DMAX_YMIN_YMAX
   integer, dimension(NGLOB2DMAX_YMIN_YMAX),intent(inout) :: iboolleft_eta,iboolright_eta
 
-  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_eta_all
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR),intent(inout) :: npoin2D_eta_all
 
   ! processor identification
-  character(len=MAX_STRING_LEN) :: prname
+  character(len=MAX_STRING_LEN),intent(in) :: prname
 
   ! local parameters
   ! global element numbering

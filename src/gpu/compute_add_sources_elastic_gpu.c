@@ -32,8 +32,8 @@
 extern EXTERN_LANG
 void FC_FUNC_ (compute_add_sources_gpu,
                COMPUTE_ADD_SOURCES_GPU) (long *Mesh_pointer_f,
-                                         int *NSOURCESf,
-                                         double *h_stf_pre_compute) {
+                                         int *it_f,
+                                         int *istage_f) {
 
   TRACE ("compute_add_sources_gpu");
 
@@ -43,13 +43,22 @@ void FC_FUNC_ (compute_add_sources_gpu,
   // checks if anything to do
   if (mp->nsources_local == 0) return;
 
-  int NSOURCES = *NSOURCESf;
+  int it = *it_f - 1;   // -1 for Fortran -> C indexing differences
+  int istage = *istage_f - 1;
 
   int num_blocks_x, num_blocks_y;
-  get_blocks_xy (NSOURCES, &num_blocks_x, &num_blocks_y);
+  get_blocks_xy (mp->nsources_local, &num_blocks_x, &num_blocks_y);
 
+  // note: we try to avoid these copies `gpuCopy_todevice**` as they synchronize all streams and kernel executions.
+  //       this compute_add_sources_kernel is executing faster for a small number of sources than the next kernel launches,
+  //       thus we can not overlap and compute in an asynchronous way, but need to wait idle for kernel triggering.
+  //
+  //       to avoid this, we now allocate all local source time function arrays on the GPU in the preparation routine.
+  //       this will need more GPU memory and might need to be re-evaluated if the number of sources and time steps become very large.
+  //
   // copies source time function buffer values to GPU
-  gpuCopy_todevice_double (&mp->d_stf_pre_compute, h_stf_pre_compute, NSOURCES);
+  //gpuCopy_todevice_double (&mp->d_stf_pre_compute, h_stf_pre_compute, NSOURCES);
+
 
 #ifdef USE_OPENCL
   if (run_opencl) {
@@ -60,12 +69,13 @@ void FC_FUNC_ (compute_add_sources_gpu,
     // adds source contributions
     clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_accel_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ibool_crust_mantle.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_sourcearrays.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_stf_pre_compute.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (int), (void *) &mp->myrank));
-    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_islice_selected_source.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ispec_selected_source.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (int), (void *) &NSOURCES));
+    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_sourcearrays_local.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_stf_local.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ispec_selected_source_local.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (int), (void *) &mp->nsources_local));
+    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (int), (void *) &mp->NSTEP));
+    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (int), (void *) &it));
+    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (int), (void *) &istage));
 
     local_work_size[0] = NGLLX;
     local_work_size[1] = NGLLX;
@@ -85,12 +95,13 @@ void FC_FUNC_ (compute_add_sources_gpu,
     // adds source contributions
     compute_add_sources_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_accel_crust_mantle.cuda,
                                                                       mp->d_ibool_crust_mantle.cuda,
-                                                                      mp->d_sourcearrays.cuda,
-                                                                      mp->d_stf_pre_compute.cuda,
-                                                                      mp->myrank,
-                                                                      mp->d_islice_selected_source.cuda,
-                                                                      mp->d_ispec_selected_source.cuda,
-                                                                      NSOURCES);
+                                                                      mp->d_sourcearrays_local.cuda,
+                                                                      mp->d_stf_local.cuda,
+                                                                      mp->d_ispec_selected_source_local.cuda,
+                                                                      mp->nsources_local,
+                                                                      mp->NSTEP,
+                                                                      it,
+                                                                      istage);
   }
 #endif
 #ifdef USE_HIP
@@ -101,12 +112,13 @@ void FC_FUNC_ (compute_add_sources_gpu,
     hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_add_sources_kernel), grid, threads, 0, mp->compute_stream,
                                                                     mp->d_accel_crust_mantle.hip,
                                                                     mp->d_ibool_crust_mantle.hip,
-                                                                    mp->d_sourcearrays.hip,
-                                                                    mp->d_stf_pre_compute.hip,
-                                                                    mp->myrank,
-                                                                    mp->d_islice_selected_source.hip,
-                                                                    mp->d_ispec_selected_source.hip,
-                                                                    NSOURCES);
+                                                                    mp->d_sourcearrays_local.hip,
+                                                                    mp->d_stf_local.hip,
+                                                                    mp->d_ispec_selected_source_local.hip,
+                                                                    mp->nsources_local,
+                                                                    mp->NSTEP,
+                                                                    it,
+                                                                    istage);
   }
 #endif
 
@@ -120,8 +132,8 @@ void FC_FUNC_ (compute_add_sources_gpu,
 extern EXTERN_LANG
 void FC_FUNC_ (compute_add_sources_backward_gpu,
                COMPUTE_ADD_SOURCES_BACKWARD_GPU) (long *Mesh_pointer_f,
-                                                  int *NSOURCESf,
-                                                  double *h_stf_pre_compute) {
+                                                  int *it_tmp_f,
+                                                  int *istage_f) {
   TRACE ("compute_add_sources_backward_gpu");
   // debug
   DEBUG_BACKWARD_SOURCES ();
@@ -132,13 +144,44 @@ void FC_FUNC_ (compute_add_sources_backward_gpu,
   // checks if anything to do
   if (mp->nsources_local == 0) return;
 
-  int NSOURCES = *NSOURCESf;
+  // indexing: for default backward, we can use the forward stf_local array with corresponding indexing.
+  // for example, Newmark stepping:
+  //    backward time_t = dble(NSTEP-it_tmp)*DT - t0 with it_tmp 1..NSTEP
+  //    forward  time_t = dble(it_tmp-1)*DT - t0  with it_tmp 1..NSTEP
+  //    -> backward indexing:
+  //         it_tmp_backward == 1      -> it_tmp_forward = NSTEP
+  //         it_tmp_backward == 2      -> it_tmp_forward = NSTEP-1
+  //         ..
+  //         it_tmp_backward == NSTEP  -> it_tmp_forward = 1
+  //         and b_stf_local == stf_local(istage, NSTEP-(it_tmp_backward-1), isource_local)
+  // only exception is LDDRK and non-undo_attenuation stepping
+  gpu_realw_mem stf_local;
+  int it_forward;
+
+  stf_local = mp->d_stf_local;
+  it_forward = mp->NSTEP - (*it_tmp_f - 1);
+
+  // LDDRK case for non-undo-attenuation stepping
+  if (mp->use_b_stf){
+   stf_local = mp->d_b_stf_local;
+   it_forward = *it_tmp_f;  // no need to reverse order, b_stf_local is stored in same it_tmp 1..NSTEP order for backward stepping
+  }
+
+  int it = it_forward - 1;   // -1 for Fortran -> C indexing differences
+  int istage = *istage_f - 1;
 
   int num_blocks_x, num_blocks_y;
-  get_blocks_xy (NSOURCES, &num_blocks_x, &num_blocks_y);
+  get_blocks_xy (mp->nsources_local, &num_blocks_x, &num_blocks_y);
 
+  // note: we try to avoid these copies `gpuCopy_todevice**` as they synchronize all streams and kernel executions.
+  //       this compute_add_sources_kernel is executing faster for a small number of sources than the next kernel launches,
+  //       thus we can not overlap and compute in an asynchronous way, but need to wait idle for kernel triggering.
+  //
+  //       to avoid this, we now allocate all local source time function arrays on the GPU in the preparation routine.
+  //       this will need more GPU memory and might need to be re-evaluated if the number of sources and time steps become very large.
+  //
   // copies source time function buffer values to GPU
-  gpuCopy_todevice_double (&mp->d_stf_pre_compute, h_stf_pre_compute, NSOURCES);
+  //gpuCopy_todevice_double (&mp->d_stf_pre_compute, h_stf_pre_compute, NSOURCES);
 
 #ifdef USE_OPENCL
   if (run_opencl) {
@@ -149,12 +192,13 @@ void FC_FUNC_ (compute_add_sources_backward_gpu,
     // adds source contributions
     clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_accel_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ibool_crust_mantle.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_sourcearrays.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_stf_pre_compute.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (int), (void *) &mp->myrank));
-    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_islice_selected_source.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ispec_selected_source.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (int), (void *) &NSOURCES));
+    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_sourcearrays_local.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (cl_mem), (void *) &stf_local.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ispec_selected_source_local.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (int), (void *) &mp->nsources_local));
+    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (int), (void *) &mp->NSTEP));
+    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (int), (void *) &it));
+    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (int), (void *) &istage));
 
     local_work_size[0] = NGLLX;
     local_work_size[1] = NGLLX;
@@ -174,12 +218,13 @@ void FC_FUNC_ (compute_add_sources_backward_gpu,
 
     compute_add_sources_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_accel_crust_mantle.cuda,
                                                                       mp->d_ibool_crust_mantle.cuda,
-                                                                      mp->d_sourcearrays.cuda,
-                                                                      mp->d_stf_pre_compute.cuda,
-                                                                      mp->myrank,
-                                                                      mp->d_islice_selected_source.cuda,
-                                                                      mp->d_ispec_selected_source.cuda,
-                                                                      NSOURCES);
+                                                                      mp->d_sourcearrays_local.cuda,
+                                                                      stf_local.cuda,
+                                                                      mp->d_ispec_selected_source_local.cuda,
+                                                                      mp->nsources_local,
+                                                                      mp->NSTEP,
+                                                                      it,
+                                                                      istage);
   }
 #endif
 #ifdef USE_HIP
@@ -190,12 +235,13 @@ void FC_FUNC_ (compute_add_sources_backward_gpu,
     hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_add_sources_kernel), grid, threads, 0, mp->compute_stream,
                                                                     mp->d_b_accel_crust_mantle.hip,
                                                                     mp->d_ibool_crust_mantle.hip,
-                                                                    mp->d_sourcearrays.hip,
-                                                                    mp->d_stf_pre_compute.hip,
-                                                                    mp->myrank,
-                                                                    mp->d_islice_selected_source.hip,
-                                                                    mp->d_ispec_selected_source.hip,
-                                                                    NSOURCES);
+                                                                    mp->d_sourcearrays_local.hip,
+                                                                    stf_local.hip,
+                                                                    mp->d_ispec_selected_source_local.hip,
+                                                                    mp->nsources_local,
+                                                                    mp->NSTEP,
+                                                                    it,
+                                                                    istage);
   }
 #endif
 

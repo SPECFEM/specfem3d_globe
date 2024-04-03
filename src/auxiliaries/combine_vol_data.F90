@@ -405,7 +405,11 @@ program combine_vol_data
 
   ! sets up ellipticity splines in order to remove ellipticity from point coordinates
   ONE_CRUST = .false. ! if you want to correct a model with one layer only in PREM crust
-  if (CORRECT_ELLIPTICITY) call make_ellipticity(nspl,rspl,espl,espl2)
+  if (CORRECT_ELLIPTICITY) then
+    print *,'using ellipticity correction (reverts x/y/z positions back to a spherical Earth)'
+    print *
+    call make_ellipticity(nspl,rspl,espl,espl2)
+  endif
 
 #ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! ADIOS
@@ -667,7 +671,7 @@ program combine_vol_data
                 z = zstore(iglob)
 
                 ! remove ellipticity
-                if (CORRECT_ELLIPTICITY) call revert_ellipticity(x,y,z,nspl,rspl,espl,espl2)
+                if (CORRECT_ELLIPTICITY) call revert_ellipticity_cr(x,y,z,nspl,rspl,espl,espl2)
 
                 ! takes the averaged data value for mesh
                 if (AVERAGE_GLOBALPOINTS) then

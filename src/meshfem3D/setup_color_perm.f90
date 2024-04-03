@@ -31,13 +31,17 @@
 
   use meshfem_par, only: &
     IMAIN,USE_MESH_COLORING_GPU,SAVE_MESH_FILES, &
-    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE
+    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
+    IREGION_TRINFINITE,IREGION_INFINITE
 
   use meshfem_par, only: ibool,is_on_a_slice_edge
 
   use MPI_crust_mantle_par
   use MPI_outer_core_par
   use MPI_inner_core_par
+
+  use MPI_trinfinite_par
+  use MPI_infinite_par
 
   implicit none
 
@@ -51,7 +55,7 @@
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) '  mesh coloring: ',USE_MESH_COLORING_GPU
+    write(IMAIN,*) '     mesh coloring: ',USE_MESH_COLORING_GPU
     call flush_IMAIN()
   endif
 
@@ -66,7 +70,7 @@
     if (USE_MESH_COLORING_GPU) then
 
       ! user output
-      if (myrank == 0) write(IMAIN,*) '  coloring crust mantle... '
+      if (myrank == 0) write(IMAIN,*) '     coloring crust mantle... '
 
       ! crust/mantle region
       nspec = NSPEC_CRUST_MANTLE
@@ -93,7 +97,9 @@
       call synchronize_all()
       if (myrank == 0) then
         write(IMAIN,*) '     mesh permutation:'
+        call flush_IMAIN()
       endif
+
       call setup_permutation(nspec,nglob,ibool, &
                              idomain,perm, &
                              num_colors_outer_crust_mantle,num_colors_inner_crust_mantle, &
@@ -118,7 +124,7 @@
     if (USE_MESH_COLORING_GPU) then
 
       ! user output
-      if (myrank == 0) write(IMAIN,*) '  coloring outer core... '
+      if (myrank == 0) write(IMAIN,*) '     coloring outer core... '
 
       ! outer core region
       nspec = NSPEC_OUTER_CORE
@@ -145,7 +151,9 @@
       call synchronize_all()
       if (myrank == 0) then
         write(IMAIN,*) '     mesh permutation:'
+        call flush_IMAIN()
       endif
+
       call setup_permutation(nspec,nglob,ibool, &
                              idomain,perm, &
                              num_colors_outer_outer_core,num_colors_inner_outer_core, &
@@ -170,7 +178,7 @@
     if (USE_MESH_COLORING_GPU) then
 
       ! user output
-      if (myrank == 0) write(IMAIN,*) '  coloring inner core... '
+      if (myrank == 0) write(IMAIN,*) '     coloring inner core... '
 
       ! inner core region
       nspec = NSPEC_INNER_CORE
@@ -200,7 +208,9 @@
       call synchronize_all()
       if (myrank == 0) then
         write(IMAIN,*) '     mesh permutation:'
+        call flush_IMAIN()
       endif
+
       call setup_permutation(nspec,nglob,ibool, &
                              idomain,perm, &
                              num_colors_outer_inner_core,num_colors_inner_inner_core, &
@@ -213,6 +223,114 @@
       ! dummy array
       allocate(num_elem_colors_inner_core(num_colors_outer_inner_core+num_colors_inner_inner_core),stat=ier)
       if (ier /= 0 ) call exit_mpi(myrank,'Error allocating num_elem_colors_inner_core array')
+    endif
+
+  case (IREGION_TRINFINITE)
+    ! transition infinite
+    ! initializes
+    num_colors_outer_trinfinite = 0
+    num_colors_inner_trinfinite = 0
+
+    ! mesh coloring
+    if (USE_MESH_COLORING_GPU) then
+
+      ! user output
+      if (myrank == 0) write(IMAIN,*) '     coloring transition infinite region... '
+
+      ! crust/mantle region
+      nspec = NSPEC_TRINFINITE
+      nglob = NGLOB_TRINFINITE
+      idomain = IREGION_TRINFINITE
+
+      ! creates coloring of elements
+      allocate(perm(nspec),stat=ier)
+      if (ier /= 0 ) call exit_mpi(myrank,'Error allocating temporary perm transition infinite array')
+      perm(:) = 0
+
+      call setup_color(nspec,nglob,ibool,perm, &
+                       idomain,is_on_a_slice_edge, &
+                       num_phase_ispec_trinfinite,phase_ispec_inner_trinfinite, &
+                       SAVE_MESH_FILES)
+
+      ! checks
+      if (minval(perm) /= 1) &
+        call exit_MPI(myrank, 'minval(perm) should be 1')
+      if (maxval(perm) /= num_phase_ispec_trinfinite) &
+        call exit_MPI(myrank, 'maxval(perm) should be num_phase_ispec_trinfinite')
+
+      ! sorts array according to permutation
+      call synchronize_all()
+      if (myrank == 0) then
+        write(IMAIN,*) '     mesh permutation:'
+        call flush_IMAIN()
+      endif
+
+      call setup_permutation(nspec,nglob,ibool, &
+                             idomain,perm, &
+                             num_colors_outer_trinfinite,num_colors_inner_trinfinite, &
+                             num_elem_colors_trinfinite, &
+                             num_phase_ispec_trinfinite,phase_ispec_inner_trinfinite, &
+                             SAVE_MESH_FILES)
+
+      deallocate(perm)
+    else
+      ! dummy array
+      allocate(num_elem_colors_trinfinite(num_colors_outer_trinfinite+num_colors_inner_trinfinite),stat=ier)
+      if (ier /= 0 ) call exit_mpi(myrank,'Error allocating num_elem_colors_trinfinite array')
+    endif
+
+  case (IREGION_INFINITE)
+    ! infinite region
+    ! initializes
+    num_colors_outer_infinite = 0
+    num_colors_inner_infinite = 0
+
+    ! mesh coloring
+    if (USE_MESH_COLORING_GPU) then
+
+      ! user output
+      if (myrank == 0) write(IMAIN,*) '     coloring infinite region... '
+
+      ! crust/mantle region
+      nspec = NSPEC_INFINITE
+      nglob = NGLOB_INFINITE
+      idomain = IREGION_INFINITE
+
+      ! creates coloring of elements
+      allocate(perm(nspec),stat=ier)
+      if (ier /= 0 ) call exit_mpi(myrank,'Error allocating temporary perm infinite array')
+      perm(:) = 0
+
+      call setup_color(nspec,nglob,ibool,perm, &
+                       idomain,is_on_a_slice_edge, &
+                       num_phase_ispec_infinite,phase_ispec_inner_infinite, &
+                       SAVE_MESH_FILES)
+
+      ! checks
+      if (minval(perm) /= 1) &
+        call exit_MPI(myrank, 'minval(perm) should be 1')
+      if (maxval(perm) /= num_phase_ispec_infinite) &
+        call exit_MPI(myrank, 'maxval(perm) should be num_phase_ispec_infinite')
+
+      ! sorts array according to permutation
+      call synchronize_all()
+      if (myrank == 0) then
+        write(IMAIN,*) '     mesh permutation:'
+        call flush_IMAIN()
+      endif
+
+      call setup_permutation(nspec,nglob,ibool, &
+                             idomain,perm, &
+                             num_colors_outer_infinite,num_colors_inner_infinite, &
+                             num_elem_colors_infinite, &
+                             num_phase_ispec_infinite,phase_ispec_inner_infinite, &
+                             SAVE_MESH_FILES)
+
+      deallocate(perm)
+    else
+      ! dummy array
+      allocate(num_elem_colors_infinite(num_colors_outer_infinite+num_colors_inner_infinite),stat=ier)
+      if (ier /= 0 ) call exit_mpi(myrank,'Error allocating num_elem_colors_infinite array')
     endif
 
   end select
@@ -233,8 +351,11 @@
   use constants, only: myrank
 
   use meshfem_par, only: &
-    LOCAL_PATH,MAX_NUMBER_OF_COLORS,IMAIN,NGLLX,NGLLY,NGLLZ,IFLAG_IN_FICTITIOUS_CUBE, &
-    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE,MAX_STRING_LEN,IOUT
+    LOCAL_PATH,MAX_NUMBER_OF_COLORS,IMAIN,NGLLX,NGLLY,NGLLZ, &
+    MAX_STRING_LEN,IOUT, &
+    IFLAG_IN_FICTITIOUS_CUBE, &
+    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
+    IREGION_TRINFINITE,IREGION_INFINITE
 
   use meshfem_par, only: &
     idoubling,xstore_glob,ystore_glob,zstore_glob
@@ -247,6 +368,12 @@
 
   use MPI_inner_core_par, only: &
     num_colors_outer_inner_core,num_colors_inner_inner_core,num_elem_colors_inner_core
+
+  use MPI_trinfinite_par, only: &
+    num_colors_outer_trinfinite,num_colors_inner_trinfinite,num_elem_colors_trinfinite
+
+  use MPI_infinite_par, only: &
+    num_colors_outer_infinite,num_colors_inner_infinite,num_elem_colors_infinite
 
   implicit none
 
@@ -324,6 +451,9 @@
     if (count(ispec_is_d) == 0) then
       stop 'Error no inner core elements'
     endif
+  case (IREGION_TRINFINITE,IREGION_INFINITE)
+    ! infinite region meshes use all elements
+    ispec_is_d(:) = .true.
   case default
     stop 'Error idomain in setup_color'
   end select
@@ -404,7 +534,7 @@
     nspec_outer = ispec_counter
 
     ! only single color
-    if (nspec_outer > 0 ) nb_colors_outer_elements = 1
+    if (nspec_outer > 0) nb_colors_outer_elements = 1
 
     ! then generate all the inner elements
     do ispec = 1,nspec
@@ -418,7 +548,7 @@
     nspec_inner = ispec_counter - nspec_outer
 
     ! only single color
-    if (nspec_inner > 0 ) nb_colors_inner_elements = 1
+    if (nspec_inner > 0) nb_colors_inner_elements = 1
 
     ! user output
     if (myrank == 0) then
@@ -427,7 +557,7 @@
     endif
 
     ! re-allocate
-    if (allocated(num_of_elems_in_this_color) ) deallocate(num_of_elems_in_this_color)
+    if (allocated(num_of_elems_in_this_color)) deallocate(num_of_elems_in_this_color)
     allocate(num_of_elems_in_this_color(nb_colors_outer_elements + nb_colors_inner_elements),stat=ier)
     if (ier /= 0) then
       print *,'Error',myrank,' allocating num_of_elems_in_this_color:',nb_colors_outer_elements,nb_colors_inner_elements, &
@@ -435,8 +565,8 @@
       call exit_MPI(myrank,'Error allocating num_of_elems_in_this_color array')
     endif
 
-    if (nspec_outer > 0 ) num_of_elems_in_this_color(1) = nspec_outer
-    if (nspec_inner > 0 ) num_of_elems_in_this_color(2) = nspec_inner
+    if (nspec_outer > 0) num_of_elems_in_this_color(1) = nspec_outer
+    if (nspec_inner > 0) num_of_elems_in_this_color(2) = nspec_inner
   endif ! debug_color
 
   ! debug: saves mesh coloring numbers into files
@@ -445,7 +575,7 @@
     call create_name_database(prname,myrank,idomain,LOCAL_PATH)
     filename = prname(1:len_trim(prname))//'num_of_elems_in_this_color_'//str_domain(idomain)//'.dat'
     open(unit=IOUT,file=trim(filename),status='unknown',iostat=ier)
-    if (ier /= 0 ) stop 'Error opening num_of_elems_in_this_color file'
+    if (ier /= 0) stop 'Error opening num_of_elems_in_this_color file'
     ! number of colors for outer elements
     write(IOUT,*) nb_colors_outer_elements
     ! number of colors for inner elements
@@ -501,6 +631,26 @@
     if (ier /= 0 ) stop 'Error allocating num_elem_colors_inner_core array'
 
     num_elem_colors_inner_core(:) = num_of_elems_in_this_color(:)
+
+  case (IREGION_TRINFINITE)
+    ! transition infinite region
+    num_colors_outer_trinfinite = nb_colors_outer_elements
+    num_colors_inner_trinfinite = nb_colors_inner_elements
+
+    allocate(num_elem_colors_trinfinite(num_colors_outer_trinfinite + num_colors_inner_trinfinite),stat=ier)
+    if (ier /= 0 ) stop 'Error allocating num_elem_colors_trinfinite array'
+
+    num_elem_colors_trinfinite(:) = num_of_elems_in_this_color(:)
+
+  case (IREGION_INFINITE)
+    ! infinite region
+    num_colors_outer_infinite = nb_colors_outer_elements
+    num_colors_inner_infinite = nb_colors_inner_elements
+
+    allocate(num_elem_colors_infinite(num_colors_outer_infinite + num_colors_inner_infinite),stat=ier)
+    if (ier /= 0 ) stop 'Error allocating num_elem_colors_infinite array'
+
+    num_elem_colors_infinite(:) = num_of_elems_in_this_color(:)
 
   case default
     stop 'Error idomain not recognized'
@@ -625,6 +775,9 @@
   use MPI_crust_mantle_par, only: NSPEC_CRUST_MANTLE
   use MPI_outer_core_par, only: NSPEC_OUTER_CORE
   use MPI_inner_core_par, only: NSPEC_INNER_CORE
+
+  use MPI_trinfinite_par, only: NSPEC_TRINFINITE
+  use MPI_infinite_par, only: NSPEC_INFINITE
 
   implicit none
 
@@ -990,6 +1143,22 @@
 
     deallocate(temp_array_real)
 
+  case (IREGION_TRINFINITE)
+    ! checks number of elements
+    if (nspec /= NSPEC_TRINFINITE ) &
+      call exit_MPI(myrank,'Error in permutation nspec should be NSPEC_TRINFINITE')
+
+    ! TODO: check if/what arrays need to be permuted
+    stop 'Permutations for transition infinite region not fully implemented yet'
+
+  case (IREGION_INFINITE)
+    ! checks number of elements
+    if (nspec /= NSPEC_INFINITE ) &
+      call exit_MPI(myrank,'Error in permutation nspec should be NSPEC_INFINITE')
+
+    ! TODO: check if/what arrays need to be permuted
+    stop 'Permutations for infinite region not fully implemented yet'
+
   case default
     stop 'Error idomain in setup_permutation'
   end select
@@ -1098,11 +1267,11 @@
 !
 !  else
 !
-!    !! DK DK for regular C + MPI version for CPUs: do not use colors but nonetheless put all the outer elements
-!    !! DK DK first in order to be able to overlap non-blocking MPI communications with calculations
+!    ! for regular C + MPI version for CPUs: do not use colors but nonetheless put all the outer elements
+!    ! first in order to be able to overlap non-blocking MPI communications with calculations
 !
-!    !! DK DK nov 2010, for Rosa Badia / StarSs:
-!    !! no need for mesh coloring, but need to implement inner/outer subsets for non blocking MPI for StarSs
+!    ! nov 2010, for Rosa Badia / StarSs:
+!    ! no need for mesh coloring, but need to implement inner/outer subsets for non blocking MPI for StarSs
 !    ispec_counter = 0
 !    perm(:) = 0
 !
@@ -1150,7 +1319,7 @@
 !
 !    write(IOUT,*) 'integer, parameter :: NSPEC = ',nspec
 !    write(IOUT,*) 'integer, parameter :: NGLOB = ',nglob
-!    !!! DK DK use 1000 time steps only for the scaling tests
+!    ! use 1000 time steps only for the scaling tests
 !    write(IOUT,*) 'integer, parameter :: NSTEP = 1000 !!!!!!!!!!! ',nstep
 !    write(IOUT,*) 'real(kind=4), parameter :: deltat = ',DT
 !    write(IOUT,*)
@@ -1188,7 +1357,7 @@
 !    write(IOUT,*) '#define NSPEC ',nspec
 !    write(IOUT,*) '#define NGLOB ',nglob
 !    !!    write(IOUT,*) '#define NSTEP ',nstep
-!    !!! DK DK use 1000 time steps only for the scaling tests
+!    ! use 1000 time steps only for the scaling tests
 !    write(IOUT,*) '// #define NSTEP ',nstep
 !    write(IOUT,*) '#define NSTEP 1000'
 !    ! put an "f" at the end to force single precision

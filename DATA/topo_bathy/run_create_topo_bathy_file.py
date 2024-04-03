@@ -151,6 +151,9 @@ url_LOLA = 'https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xx
 # plots PNM image
 plot_image = True
 
+## smoothing (turned on by default)
+use_smoothing = True
+
 ####################################################################
 
 # global parameters
@@ -967,6 +970,12 @@ def create_topo_bathy(topo):
         print("Unrecognized option %s" % topo)
         sys.exit(1)
 
+    # for raw, unmodified output sets filter size to zero
+    if not use_smoothing:
+        SIZE_FILTER_ONE_SIDE = 0
+        print("  not using smoothing")
+        print("")
+
     # 1-degree in km
     if 'mars' in topo:
         radius = 3390.0
@@ -1004,6 +1013,15 @@ def create_topo_bathy(topo):
         #filename_grid = 'etopo1_ice_c_resampled_at_2minutes.grd'
         #filename_out = 'topo_bathy_etopo1_ice_c_resampled_at_2minutes_original_unmodified_unsmoothed.dat'
 
+    # raw topo output filenames
+    if not use_smoothing:
+        # special case for etopo1 & etopo2 handling
+        if topo == 'etopo1':
+            filename_out_smoothed = 'topo_bathy_etopo1_unmodified_unsmoothed.dat'
+        elif topo == 'etopo2':
+            filename_out_smoothed = 'topo_bathy_etopo2_unmodified_unsmoothed.dat'
+        # for all other topo, it will use a default 'topo_bathy_***_smoothed_window_0.dat' output name
+
     # data file download
     download_data_file(topo,filename_web)
 
@@ -1038,13 +1056,32 @@ def create_topo_bathy(topo):
     print("all done")
 
 
+def usage():
+    print("usage: ./run_create_topo_bathy_file.py topo [== etopo1,etopo2,etopo4,etopo5,etopo15,mars,moon] [--raw]")
+    sys.exit(1)
+
+
 if __name__ == '__main__':
+
     # gets arguments
-    if '--help' in sys.argv or '-h' in sys.argv or len(sys.argv) != 2:
-        print("usage: ./run_create_topo_bathy_file.py topo [== etopo1,etopo2,etopo4,etopo5,etopo15,mars,moon]")
-        sys.exit(1)
-    else:
-        topo = sys.argv[1]
+    if len(sys.argv) <= 1:
+        usage()
+
+    topo = sys.argv[1]
+
+    # reads arguments
+    i = 0
+    for arg in sys.argv:
+        i += 1
+        #print("arg: ",i,arg)
+        # get arguments
+        if "--help" in arg or '-h' in arg:
+            usage()
+        elif "--raw" in arg:
+            use_smoothing = False
+        elif i > 2:
+            print("argument not recognized: ",arg)
+            sys.exit(1)
 
     create_topo_bathy(topo)
 

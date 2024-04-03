@@ -28,15 +28,15 @@
   subroutine add_topography(xelm,yelm,zelm,ibathy_topo)
 
   use constants, only: myrank,NGNOD,R_UNIT_SPHERE,ONE
+  use shared_parameters, only: REGIONAL_MESH_CUTOFF,REGIONAL_MESH_CUTOFF_DEPTH,USE_LOCAL_MESH,ELLIPTICITY
   use meshfem_par, only: R220,NX_BATHY,NY_BATHY,R_PLANET
-  use shared_parameters, only: REGIONAL_MESH_CUTOFF,REGIONAL_MESH_CUTOFF_DEPTH,USE_LOCAL_MESH
 
   implicit none
 
-  double precision,dimension(NGNOD) :: xelm,yelm,zelm
+  double precision,dimension(NGNOD), intent(inout) :: xelm,yelm,zelm
 
   ! use integer array to store values
-  integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
+  integer, dimension(NX_BATHY,NY_BATHY), intent(in) :: ibathy_topo
 
   ! local parameters
   double precision :: r,lat,lon,elevation,rbottom
@@ -53,7 +53,14 @@
     z = zelm(ia)
 
     ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
-    call xyz_2_rlatlon_dble(x,y,z,r,lat,lon)
+    !
+    ! note: at this point, the mesh is still spherical. converting from x/y/z to r/lat/lon would give a geocentric position.
+    !       however, we want to add the topography of the geographic position if the mesh should become elliptical.
+    !       in SPECFEM, we add an elliptical stretch factor to the radius after adding topography, which only corrects
+    !       the radial direction. we thus have to correct the colatitude here for topography stretching,
+    !       depending on the user defined parameter ELLIPTICITY, read in from the Par_file, to end up with an
+    !       elliptical and topographic Earth.
+    call xyz_2_rlatlon_dble(x,y,z,r,lat,lon,ELLIPTICITY)
 
     ! compute elevation at current point
     call get_topo_bathy(lat,lon,elevation,ibathy_topo)
@@ -93,22 +100,22 @@
   ! than using control nodes
   ! Hejun Zhu, OCT16, 2009
 
-  subroutine add_topography_gll(xstore,ystore,zstore,ispec,nspec, &
-                                ibathy_topo)
+  subroutine add_topography_gll(xstore,ystore,zstore,ispec,nspec,ibathy_topo)
 
   use constants
   use shared_parameters, only: R_PLANET
+  use shared_parameters, only: REGIONAL_MESH_CUTOFF,REGIONAL_MESH_CUTOFF_DEPTH,USE_LOCAL_MESH,ELLIPTICITY
   use meshfem_par, only: R220,NX_BATHY,NY_BATHY
-  use shared_parameters, only: REGIONAL_MESH_CUTOFF,REGIONAL_MESH_CUTOFF_DEPTH,USE_LOCAL_MESH
+
 
   implicit none
 
   ! input parameters
-  integer:: ispec,nspec
+  integer, intent(in) :: ispec,nspec
 
-  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec):: xstore,ystore,zstore
+  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(inout):: xstore,ystore,zstore
 
-  integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
+  integer, dimension(NX_BATHY,NY_BATHY),intent(in) :: ibathy_topo
 
   ! local parameters used in this subroutine
   integer :: i,j,k
@@ -124,7 +131,8 @@
         z = zstore(i,j,k,ispec)
 
         ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
-        call xyz_2_rlatlon_dble(x,y,z,r,lat,lon)
+        ! note: at this point, the mesh is still spherical (no need to correct latitude for ellipticity)
+        call xyz_2_rlatlon_dble(x,y,z,r,lat,lon,ELLIPTICITY)
 
         ! compute elevation at current point
         call get_topo_bathy(lat,lon,elevation,ibathy_topo)

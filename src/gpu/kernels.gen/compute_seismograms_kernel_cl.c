@@ -92,7 +92,7 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #define BLOCKSIZE_TRANSFER 256\n\
 #endif\n\
 \n\
-__kernel void compute_seismograms_kernel(const int nrec_local, const __global float * displ, const __global int * d_ibool, const __global float * hxir, const __global float * hetar, const __global float * hgammar, __global float * seismograms, const __global float * nu, const __global int * ispec_selected_rec, const __global int * number_receiver_global, const float scale_displ){\n\
+__kernel void compute_seismograms_kernel(const int nrec_local, const __global float * displ, const __global int * d_ibool, const __global float * hxir, const __global float * hetar, const __global float * hgammar, __global float * seismograms, const __global float * nu, const __global int * ispec_selected_rec, const __global int * number_receiver_global, const float scale_displ, const int seismo_current){\n\
   int ispec;\n\
   int iglob;\n\
   int irec_local;\n\
@@ -104,6 +104,7 @@ __kernel void compute_seismograms_kernel(const int nrec_local, const __global fl
   int k;\n\
   int l;\n\
   int s;\n\
+  int idx;\n\
   __local float sh_dxd[(NGLL3_PADDED)];\n\
   __local float sh_dyd[(NGLL3_PADDED)];\n\
   __local float sh_dzd[(NGLL3_PADDED)];\n\
@@ -189,14 +190,16 @@ __kernel void compute_seismograms_kernel(const int nrec_local, const __global fl
     barrier(CLK_LOCAL_MEM_FENCE);\n\
     l = (l) * (2);\n\
 \n\
+    idx = INDEX3(NDIM, nrec_local, 0, irec_local, seismo_current);\n\
+\n\
     if (tx == 0) {\n\
-      seismograms[(irec_local) * (3) + 0] = (scale_displ) * ((nu[((irec_local) * (3)) * (3) + 0]) * (sh_dxd[0]) + (nu[((irec_local) * (3) + 1) * (3) + 0]) * (sh_dyd[0]) + (nu[((irec_local) * (3) + 2) * (3) + 0]) * (sh_dzd[0]));\n\
+      seismograms[idx + 0] = (scale_displ) * ((nu[((irec_local) * (3)) * (3) + 0]) * (sh_dxd[0]) + (nu[((irec_local) * (3) + 1) * (3) + 0]) * (sh_dyd[0]) + (nu[((irec_local) * (3) + 2) * (3) + 0]) * (sh_dzd[0]));\n\
     }\n\
     if (tx == 1) {\n\
-      seismograms[(irec_local) * (3) + 1] = (scale_displ) * ((nu[((irec_local) * (3)) * (3) + 1]) * (sh_dxd[0]) + (nu[((irec_local) * (3) + 1) * (3) + 1]) * (sh_dyd[0]) + (nu[((irec_local) * (3) + 2) * (3) + 1]) * (sh_dzd[0]));\n\
+      seismograms[idx + 1] = (scale_displ) * ((nu[((irec_local) * (3)) * (3) + 1]) * (sh_dxd[0]) + (nu[((irec_local) * (3) + 1) * (3) + 1]) * (sh_dyd[0]) + (nu[((irec_local) * (3) + 2) * (3) + 1]) * (sh_dzd[0]));\n\
     }\n\
     if (tx == 2) {\n\
-      seismograms[(irec_local) * (3) + 2] = (scale_displ) * ((nu[((irec_local) * (3)) * (3) + 2]) * (sh_dxd[0]) + (nu[((irec_local) * (3) + 1) * (3) + 2]) * (sh_dyd[0]) + (nu[((irec_local) * (3) + 2) * (3) + 2]) * (sh_dzd[0]));\n\
+      seismograms[idx + 2] = (scale_displ) * ((nu[((irec_local) * (3)) * (3) + 2]) * (sh_dxd[0]) + (nu[((irec_local) * (3) + 1) * (3) + 2]) * (sh_dyd[0]) + (nu[((irec_local) * (3) + 2) * (3) + 2]) * (sh_dzd[0]));\n\
     }\n\
   }\n\
 }\n\

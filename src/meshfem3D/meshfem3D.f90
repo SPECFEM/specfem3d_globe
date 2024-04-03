@@ -130,7 +130,7 @@
 ! number = 1,
 ! doi={10.1046/j.1365-246X.2002.01716.x}}
 !
-! and/or another article from http://web.univ-pau.fr/~dkomati1/publications.html
+! and/or another article from https://specfem.org/komatitsch.free.fr/publications.html
 !
 !
 ! If you use the kernel capabilities of the code, please cite at least one article
@@ -206,109 +206,6 @@
 ! To report bugs or suggest improvements to the code, please use our online
 ! Issues tracking system at https://github.com/SPECFEM/specfem3d_globe/ .
 !
-! Evolution of the code:
-! ---------------------
-!
-! v. 8.0, many developers, September 2020:
-!     support for new earth, moon & mars models, ADIOS2 file I/O support, GLL models for azimuthal anisotropy & Q,
-!     LDDRK on GPU support, Laplacian smoothing, monochromatic source time functions.
-!
-! v. 7.0, many developers, January 2015:
-!     simultaneous MPI runs, ADIOS file I/O support, ASDF seismograms, new seismogram names, tomography tools,
-!     CUDA and OpenCL GPU support, CEM model support, updates AK135 model, binary topography files,
-!     fixes geocentric/geographic conversions, updates ellipticity and gravity factors, git versioning system.
-!
-! v. 6.0, Daniel Peter (ETH Z\"urich, Switzerland), Dimitri Komatitsch and Zhinan Xie (CNRS / University of Marseille, France),
-!     Elliott Sales de Andrade (University of Toronto, Canada), and many others, in particular from Princeton University, USA,
-!     April 2014:
-!     more flexible MPI implementation, GPU support, exact undoing of attenuation, LDDRK4-6 higher-order time scheme, etc...
-!
-! v. 5.1, Dimitri Komatitsch, University of Toulouse, France and Ebru Bozdag, Princeton University, USA, February 2011:
-!     non blocking MPI for much better scaling on large clusters;
-!     new convention for the name of seismograms, to conform to the IRIS standard;
-!     new directory structure
-!
-! v. 5.0, many developers, February 2010:
-!     new moho mesh stretching honoring crust2.0 moho depths,
-!     new attenuation assignment, new SAC headers, new general crustal models,
-!     faster performance due to Deville routines and enhanced loop unrolling,
-!     slight changes in code structure
-!
-! v. 4.0 David Michea and Dimitri Komatitsch, University of Pau, France, February 2008:
-!      first port to GPUs using CUDA, new doubling brick in the mesh, new perfectly load-balanced mesh,
-!      more flexible routines for mesh design, new inflated central cube
-!      with optimized shape, far fewer mesh files saved by the mesher,
-!      global arrays sorted to speed up the simulation, seismos can be
-!      written by the main process, one more doubling level at the bottom
-!      of the outer core if needed (off by default)
-!
-! v. 3.6 Many people, many affiliations, September 2006:
-!      adjoint and kernel calculations, fixed IASP91 model,
-!      added AK135 and 1066a, fixed topography/bathymetry routine,
-!      new attenuation routines, faster and better I/Os on very large
-!      systems, many small improvements and bug fixes, new "configure"
-!      script, new user's manual etc.
-!
-! v. 3.5 Dimitri Komatitsch, Brian Savage and Jeroen Tromp, Caltech, July 2004:
-!      any size of chunk, 3D attenuation, case of two chunks,
-!      more precise topography/bathymetry model, new Par_file structure
-!
-! v. 3.4 Dimitri Komatitsch and Jeroen Tromp, Caltech, August 2003:
-!      merged global and regional codes, no iterations in fluid, better movies
-!
-! v. 3.3 Dimitri Komatitsch, Caltech, September 2002:
-!      flexible mesh doubling in outer core, inlined code, OpenDX support
-!
-! v. 3.2 Jeroen Tromp, Caltech, July 2002:
-!      multiple sources and flexible PREM reading
-!
-! v. 3.1 Dimitri Komatitsch, Caltech, June 2002:
-!      vectorized loops in solver and merged central cube
-!
-! v. 3.0 Dimitri Komatitsch and Jeroen Tromp, Caltech, May 2002:
-!   ported to SGI and Compaq, double precision solver, more general anisotropy
-!
-! v. 2.3 Dimitri Komatitsch and Jeroen Tromp, Caltech, August 2001:
-!                       gravity, rotation, oceans and 3-D models
-!
-! v. 2.2 Dimitri Komatitsch and Jeroen Tromp, Caltech, USA, March 2001:
-!                       final MPI package
-!
-! v. 2.0 Dimitri Komatitsch, Harvard, USA, January 2000: MPI code for the globe
-!
-! v. 1.0 Dimitri Komatitsch, UNAM, Mexico, June 1999: first MPI code for a chunk
-!
-! Jeroen Tromp and Dimitri Komatitsch, Harvard, USA, July 1998: first chunk solver using OpenMP on a Sun machine
-!
-! Dimitri Komatitsch, IPG Paris, France, December 1996: first 3-D solver for the CM-5 Connection Machine,
-!    parallelized on 128 processors using Connection Machine Fortran
-!
-! From Dahlen and Tromp (1998):
-! ----------------------------
-!
-! Gravity is approximated by solving eq (3.259) without the Phi_E' term
-! The ellipsoidal reference model is that of section 14.1
-! The transversely isotropic expression for PREM is that of eq (8.190)
-!
-! Formulation in the fluid (acoustic) outer core:
-! -----------------------------------------------
-!
-! In case of an acoustic medium, a displacement potential Chi is used
-! as in Chaljub and Valette, Geophysical Journal International, vol. 158,
-! p. 131-141 (2004) and *NOT* a velocity potential as in Komatitsch and Tromp,
-! Geophysical Journal International, vol. 150, p. 303-318 (2002).
-! This permits acoustic-elastic coupling based on a non-iterative time scheme.
-! Displacement if we ignore gravity is then: u = grad(Chi)
-! (In the context of the Cowling approximation displacement is
-! u = grad(rho * Chi) / rho, *not* u = grad(Chi).)
-! Velocity is then: v = grad(Chi_dot)       (Chi_dot being the time derivative of Chi)
-! and pressure is: p = - rho * Chi_dot_dot  (Chi_dot_dot being the time second derivative of Chi).
-! The source in an acoustic element is a pressure source.
-! The potential in the outer core is called displ_outer_core for simplicity.
-! Its first time derivative is called veloc_outer_core.
-! Its second time derivative is called accel_outer_core.
-
-
 
 ! ************** PROGRAM STARTS HERE **************
 

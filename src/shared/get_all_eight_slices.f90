@@ -209,24 +209,24 @@
   islice_eta_top = ieta+1
 
   if (ixi == 0) then
-    ichunk_left=chunk_left(ichunk+1)
-    islice_xi_left=slice_xi_left(ichunk+1)
-    islice_eta_left=slice_eta_left(ichunk+1)
+    ichunk_left = chunk_left(ichunk+1)
+    islice_xi_left = slice_xi_left(ichunk+1)
+    islice_eta_left = slice_eta_left(ichunk+1)
   endif
   if (ixi == nproc_xi - 1) then
-    ichunk_right=chunk_right(ichunk+1)
-    islice_xi_right=slice_xi_right(ichunk+1)
-    islice_eta_right=slice_eta_right(ichunk+1)
+    ichunk_right = chunk_right(ichunk+1)
+    islice_xi_right = slice_xi_right(ichunk+1)
+    islice_eta_right = slice_eta_right(ichunk+1)
   endif
   if (ieta == 0) then
-    ichunk_bot=chunk_bot(ichunk+1)
-    islice_xi_bot=slice_xi_bot(ichunk+1)
-    islice_eta_bot=slice_eta_bot(ichunk+1)
+    ichunk_bot = chunk_bot(ichunk+1)
+    islice_xi_bot = slice_xi_bot(ichunk+1)
+    islice_eta_bot = slice_eta_bot(ichunk+1)
   endif
   if (ieta == nproc_eta - 1) then
-    ichunk_top=chunk_top(ichunk+1)
-    islice_xi_top=slice_xi_top(ichunk+1)
-    islice_eta_top=slice_eta_top(ichunk+1)
+    ichunk_top = chunk_top(ichunk+1)
+    islice_xi_top = slice_xi_top(ichunk+1)
+    islice_eta_top = slice_eta_top(ichunk+1)
   endif
 
   ileft = get_slice_number(ichunk_left,islice_xi_left,islice_eta_left,nproc_xi,nproc_eta)

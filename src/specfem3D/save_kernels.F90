@@ -1692,8 +1692,9 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-!! DK DK put the list of parameters back here to avoid a warning / error from the gfortran compiler
-!! DK DK about undefined behavior when aggressive loop vectorization is used by the compiler
+! put the list of parameters back here to avoid a warning / error from the gfortran compiler
+! about undefined behavior when aggressive loop vectorization is used by the compiler
+
   subroutine save_kernels_outer_core(rhostore_outer_core,kappavstore_outer_core,rho_kl_outer_core,alpha_kl_outer_core)
 
   use specfem_par
@@ -1756,8 +1757,9 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-!! DK DK put the list of parameters back here to avoid a warning / error from the gfortran compiler
-!! DK DK about undefined behavior when aggressive loop vectorization is used by the compiler
+! put the list of parameters back here to avoid a warning / error from the gfortran compiler
+! about undefined behavior when aggressive loop vectorization is used by the compiler
+
   subroutine save_kernels_inner_core(rhostore_inner_core,muvstore_inner_core,kappavstore_inner_core, &
                                      rho_kl_inner_core,alpha_kl_inner_core,beta_kl_inner_core)
 

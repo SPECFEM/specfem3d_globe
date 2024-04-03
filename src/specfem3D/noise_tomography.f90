@@ -142,13 +142,13 @@
     if (SIMULATION_TYPE /= 1) &
       call exit_mpi(myrank,'NOISE_TOMOGRAPHY=2 requires SIMULATION_TYPE=1! check DATA/Par_file')
     if (.not. SAVE_FORWARD) &
-      call exit_mpi(myrank,'NOISE_TOMOGRAPHY=2 requires SAVE_FORWARD=.true.! check DATA/Par_file')
+      call exit_mpi(myrank,'NOISE_TOMOGRAPHY=2 requires SAVE_FORWARD = .true.! check DATA/Par_file')
   case (3)
     ! adjoint ensemble kernel simulation
     if (SIMULATION_TYPE /= 3) &
       call exit_mpi(myrank,'NOISE_TOMOGRAPHY=3 requires SIMULATION_TYPE=3! check DATA/Par_file')
     if (SAVE_FORWARD) &
-      call exit_mpi(myrank,'NOISE_TOMOGRAPHY=3 requires SAVE_FORWARD=.false.! check DATA/Par_file')
+      call exit_mpi(myrank,'NOISE_TOMOGRAPHY=3 requires SAVE_FORWARD = .false.! check DATA/Par_file')
   case default
     call exit_MPI(myrank,'Error invalid NOISE_TOMOGRAPHY value for noise simulation setup! check DATA/Par_file')
   end select
@@ -537,20 +537,21 @@
   implicit none
 
   ! input parameters
-  integer :: NSTEP
-  double precision, dimension(NGLLX) :: xigll
-  double precision, dimension(NGLLY) :: yigll
-  double precision, dimension(NGLLZ) :: zigll
-  double precision, dimension(NDIM,NDIM) :: nu_single  ! rotation matrix at the main receiver
+  double precision, intent(in) :: xi_noise, eta_noise, gamma_noise ! main receiver location
+  double precision, dimension(NDIM,NDIM), intent(in) :: nu_single  ! rotation matrix at the main receiver
+  double precision, dimension(NGLLX), intent(in) :: xigll
+  double precision, dimension(NGLLY), intent(in) :: yigll
+  double precision, dimension(NGLLZ), intent(in) :: zigll
+  integer, intent(in) :: NSTEP
   ! output parameters
-  real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP) :: noise_sourcearray
+  real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP), intent(out) :: noise_sourcearray
+
   ! local parameters
   integer itime, i, j, k, ier, nlines
   real(kind=CUSTOM_REAL) :: junk
   real(kind=CUSTOM_REAL), dimension(NSTEP) :: noise_src
   real(kind=CUSTOM_REAL), dimension(NDIM,NSTEP) :: noise_src_u
   double precision, dimension(NDIM) :: nu_main       ! component direction chosen at the main receiver
-  double precision :: xi_noise, eta_noise, gamma_noise ! main receiver location
   double precision, dimension(NGLLX) :: hxir, hpxir
   double precision, dimension(NGLLY) :: hetar, hpetar
   double precision, dimension(NGLLZ) :: hgammar, hpgammar
@@ -658,7 +659,7 @@
   ! local parameters
   integer :: irec,i
   double precision :: lat,lon
-  double precision :: theta,phi
+  double precision :: theta,phi,dist
   double precision :: theta_main,phi_main
   double precision, dimension(nrec) :: epidist
   ! sorting order
@@ -677,7 +678,7 @@
   if (lon > 360.d0 ) lon = lon - 360.d0
 
   ! converts geographic latitude stlat (degrees) to geocentric colatitude theta (radians)
-  call lat_2_geocentric_colat_dble(lat,theta_main)
+  call lat_2_geocentric_colat_dble(lat,theta_main,ELLIPTICITY_VAL)
 
   phi_main = lon * DEGREES_TO_RADIANS
   call reduce(theta_main,phi_main)
@@ -693,14 +694,15 @@
     if (lon > 360.d0 ) lon = lon - 360.d0
 
     ! converts geographic latitude stlat (degrees) to geocentric colatitude theta (radians)
-    call lat_2_geocentric_colat_dble(lat,theta)
+    call lat_2_geocentric_colat_dble(lat,theta,ELLIPTICITY_VAL)
 
     phi = lon*DEGREES_TO_RADIANS
     call reduce(theta,phi)
 
-    ! computes epicentral distance
-    epidist(irec) = acos(cos(theta)*cos(theta_main) + &
-                           sin(theta)*sin(theta_main)*cos(phi-phi_main))*RADIANS_TO_DEGREES
+    ! computes epicentral distance (in radians)
+    call get_greatcircle_distance(theta,phi,theta_main,phi_main,dist)
+
+    epidist(irec) = dist * RADIANS_TO_DEGREES
   enddo
 
   ! print some information about stations

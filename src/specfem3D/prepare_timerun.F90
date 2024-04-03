@@ -400,44 +400,48 @@
   endif
 
   ! outer core
-  call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
-                           rmass_outer_core, &
-                           num_interfaces_outer_core,max_nibool_interfaces_oc, &
-                           nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
-                           my_neighbors_outer_core)
+  if (num_interfaces_outer_core > 0) then
+    call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
+                             rmass_outer_core, &
+                             num_interfaces_outer_core,max_nibool_interfaces_oc, &
+                             nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
+                             my_neighbors_outer_core)
+  endif
 
   ! inner core
-  call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_INNER_CORE, &
-                           rmassz_inner_core, &
-                           num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                           nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
-                           my_neighbors_inner_core)
-
-  if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
-    call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
-                             rmassx_inner_core, &
+  if (num_interfaces_inner_core > 0) then
+    call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_INNER_CORE, &
+                             rmassz_inner_core, &
                              num_interfaces_inner_core,max_nibool_interfaces_ic, &
                              nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
                              my_neighbors_inner_core)
 
-    call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
-                             rmassy_inner_core, &
-                             num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                             nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
-                             my_neighbors_inner_core)
-
-    if (SIMULATION_TYPE == 3) then
+    if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
       call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
-                               b_rmassx_inner_core, &
+                               rmassx_inner_core, &
                                num_interfaces_inner_core,max_nibool_interfaces_ic, &
                                nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
                                my_neighbors_inner_core)
 
       call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
-                               b_rmassy_inner_core, &
+                               rmassy_inner_core, &
                                num_interfaces_inner_core,max_nibool_interfaces_ic, &
                                nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
                                my_neighbors_inner_core)
+
+      if (SIMULATION_TYPE == 3) then
+        call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
+                                 b_rmassx_inner_core, &
+                                 num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                                 nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
+                                 my_neighbors_inner_core)
+
+        call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
+                                 b_rmassy_inner_core, &
+                                 num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                                 nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
+                                 my_neighbors_inner_core)
+      endif
     endif
   endif
 
@@ -496,7 +500,9 @@
 !$OMP DO
 #endif
   do i = 1,NGLOB_CRUST_MANTLE
+    ! converts x/y/z to geocentric r/theta/phi
     call xyz_2_rthetaphi(xstore_crust_mantle(i),ystore_crust_mantle(i),zstore_crust_mantle(i),rval,thetaval,phival)
+
     rstore_crust_mantle(1,i) = rval
     rstore_crust_mantle(2,i) = thetaval
     rstore_crust_mantle(3,i) = phival
@@ -518,7 +524,9 @@
 !$OMP DO
 #endif
   do i = 1,NGLOB_OUTER_CORE
+    ! converts x/y/z to geocentric r/theta/phi
     call xyz_2_rthetaphi(xstore_outer_core(i),ystore_outer_core(i),zstore_outer_core(i),rval,thetaval,phival)
+
     rstore_outer_core(1,i) = rval
     rstore_outer_core(2,i) = thetaval
     rstore_outer_core(3,i) = phival
@@ -540,7 +548,9 @@
 !$OMP DO
 #endif
   do i = 1,NGLOB_INNER_CORE
+    ! converts x/y/z to geocentric r/theta/phi
     call xyz_2_rthetaphi(xstore_inner_core(i),ystore_inner_core(i),zstore_inner_core(i),rval,thetaval,phival)
+
     rstore_inner_core(1,i) = rval
     rstore_inner_core(2,i) = thetaval
     rstore_inner_core(3,i) = phival
@@ -575,13 +585,13 @@
 
   ! define constants for the time integration
   ! scaling to make displacement in meters and velocity in meters per second
-  scale_t = ONE/dsqrt(PI*GRAV*RHOAV)
-  scale_t_inv = dsqrt(PI*GRAV*RHOAV)
+  scale_t = ONE/dsqrt(PI*GRAV*RHOAV)        ! [s]
+  scale_t_inv = dsqrt(PI*GRAV*RHOAV)        ! [1/s]
 
-  scale_displ = R_PLANET
-  scale_displ_inv = ONE / scale_displ
+  scale_displ = R_PLANET                    ! [m]
+  scale_displ_inv = ONE / scale_displ       ! [1/m]
 
-  scale_veloc = scale_displ * scale_t_inv
+  scale_veloc = scale_displ * scale_t_inv   ! [m/s]
 
   ! distinguish between single and double precision for reals
   deltat = real(DT*scale_t_inv, kind=CUSTOM_REAL)

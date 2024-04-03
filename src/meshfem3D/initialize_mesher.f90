@@ -123,9 +123,11 @@
   implicit none
 
   ! compute rotation matrix from Euler angles
+  ! chunk width in rad
   ANGULAR_WIDTH_XI_RAD = ANGULAR_WIDTH_XI_IN_DEGREES * DEGREES_TO_RADIANS
   ANGULAR_WIDTH_ETA_RAD = ANGULAR_WIDTH_ETA_IN_DEGREES * DEGREES_TO_RADIANS
-
+  ! gets rotation matrix
+  rotation_matrix(:,:) = 0.d0
   if (NCHUNKS /= 6) call euler_angles(rotation_matrix,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH)
 
   ! ADIOS

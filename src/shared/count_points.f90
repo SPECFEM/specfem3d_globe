@@ -30,14 +30,10 @@
                           NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
                           NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
                           NGLOB_REGIONS, &
-                          nblocks_xi,nblocks_eta, &
-                          doubling, padding, tmp_sum, &
                           INCLUDE_CENTRAL_CUBE,NER_TOP_CENTRAL_CUBE_ICB,NEX_XI, &
                           NUMBER_OF_MESH_LAYERS,layer_offset, &
-                          nb_lay_sb, nglob_vol, nglob_surf, nglob_edge, &
                           CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
-                          last_doubling_layer, cut_doubling, nglob_int_surf_xi, nglob_int_surf_eta,nglob_ext_surf, &
-                          normal_doubling, nglob_center_edge, nglob_corner_edge, nglob_border_edge)
+                          last_doubling_layer)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!
@@ -56,25 +52,32 @@
 ! parameters to be computed based upon parameters above read from file
   integer :: NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube
 
-  integer, dimension(MAX_NUM_REGIONS) :: &
-      NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
-      NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
-      NGLOB_REGIONS
+  integer, dimension(MAX_NUM_REGIONS), intent(in) :: NSPEC1D_RADIAL
 
-  integer :: NER_TOP_CENTRAL_CUBE_ICB,NEX_XI
-  integer :: nblocks_xi,nblocks_eta
+  integer, dimension(MAX_NUM_REGIONS), intent(inout) :: NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
 
-  integer :: doubling, padding, tmp_sum
-  integer :: NUMBER_OF_MESH_LAYERS,layer_offset, &
-             nb_lay_sb, nglob_vol, nglob_surf, nglob_edge
+  integer, dimension(MAX_NUM_REGIONS), intent(out) :: NGLOB1D_RADIAL,NGLOB_REGIONS
 
-! for the cut doublingbrick improvement
-  logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,INCLUDE_CENTRAL_CUBE
-  integer :: last_doubling_layer, cut_doubling, nglob_int_surf_xi, nglob_int_surf_eta,nglob_ext_surf, &
-             normal_doubling, nglob_center_edge, nglob_corner_edge, nglob_border_edge
+  integer, intent(in) :: NER_TOP_CENTRAL_CUBE_ICB,NEX_XI
+
+  integer, intent(in) :: NUMBER_OF_MESH_LAYERS,layer_offset
+
+
+  ! for the cut doublingbrick improvement
+  logical, intent(in) :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
+  logical, intent(in) :: INCLUDE_CENTRAL_CUBE
+  integer, intent(in) :: last_doubling_layer
 
   ! local parameters
   integer :: ifirst_region, ilast_region, iter_region, iter_layer
+  integer :: nblocks_xi,nblocks_eta
+  integer :: cut_doubling, nglob_int_surf_xi, nglob_int_surf_eta, nglob_ext_surf, &
+             normal_doubling, nglob_center_edge, nglob_corner_edge, nglob_border_edge
+  integer :: doubling, padding, tmp_sum
+  integer :: nb_lay_sb, nglob_vol, nglob_surf, nglob_edge
+
+  ! initializes
+  NGLOB1D_RADIAL(:) = 0
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!
@@ -251,7 +254,7 @@
 !!! NGLOB = 6.NGLL^2 - 8.NGLL + 3 (Surface)
 !!! NGLOB = NGLL (Edge)
 !!!
-!!! those results were obtained by using the script UTILS/doubling_brick/count_nglob_analytical.pl
+!!! those results were obtained by using the script utils/small_utilities/doubling_brick/count_nglob_analytical.pl
 !!! with an OpenDX file of the superbrick's geometry
 
 !!! for the basic doubling bricks (two layers)

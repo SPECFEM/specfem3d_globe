@@ -82,9 +82,12 @@ void FC_FUNC_ (prepare_constants_device,
                                           int *h_NGLLX,
                                           realw *h_hprime_xx, realw *h_hprimewgll_xx,
                                           realw *h_wgllwgll_xy, realw *h_wgllwgll_xz, realw *h_wgllwgll_yz,
-                                          int *NSOURCES, int *nsources_local,
-                                          realw *h_sourcearrays,
-                                          int *h_islice_selected_source, int *h_ispec_selected_source,
+                                          int *NSOURCES,
+                                          int *nsources_local,
+                                          realw *h_sourcearrays_local,
+                                          realw *h_stf_local, realw *h_b_stf_local,
+                                          int *h_ispec_selected_source_local,
+                                          int *h_ispec_selected_source,
                                           int *nrec, int *nrec_local,
                                           int *h_number_receiver_global,
                                           int *h_islice_selected_rec, int *h_ispec_selected_rec,
@@ -110,10 +113,17 @@ void FC_FUNC_ (prepare_constants_device,
                                           realw *deltat_f,
                                           int *GPU_ASYNC_COPY_f,
                                           double * h_hxir_store,double * h_hetar_store,double * h_hgammar_store,double * h_nu,
+                                          int* nlength_seismogram,
                                           int *SAVE_SEISMOGRAMS_STRAIN_f,
-                                          int *CUSTOM_REAL_f) {
+                                          int *CUSTOM_REAL_f,
+                                          int *USE_LDDRK_f,
+                                          int *NSTEP_f, int *NSTAGES_f) {
 
   TRACE ("prepare_constants_device");
+
+  int size,size_padded;
+  int num_blocks_x,num_blocks_y;
+  int size_block_norm,size_block_norm_strain;
 
   // allocates mesh parameter structure
   Mesh *mp = (Mesh *) malloc (sizeof (Mesh));
@@ -305,7 +315,7 @@ void FC_FUNC_ (prepare_constants_device,
   mp->NSPEC_INNER_CORE_STRAIN_ONLY = *NSPEC_INNER_CORE_STRAIN_ONLY;
 
   // simulation flags initialization
-  mp->use_lddrk = 0;
+  mp->use_lddrk = *USE_LDDRK_f;
   mp->save_forward = *SAVE_FORWARD_f;
   mp->absorbing_conditions = *ABSORBING_CONDITIONS_f;
   mp->oceans = *OCEANS_f;
@@ -353,16 +363,41 @@ void FC_FUNC_ (prepare_constants_device,
   }
 
   // sources
-  mp->nsources_local = *nsources_local;
+  mp->nsources_local = 0;
   if (mp->simulation_type == 1 || mp->simulation_type == 3) {
-    // not needed in case of pure adjoint simulations (SIMULATION_TYPE == 2)
-    gpuCreateCopy_todevice_realw (&mp->d_sourcearrays, h_sourcearrays, (*NSOURCES) * NDIM * NGLL3);
-
-    // allocates buffer on GPU for source time function values
-    gpuMalloc_double (&mp->d_stf_pre_compute, *NSOURCES);
+    // only add CMT source for non-noise simulations and forward/kernel simulations
+    if (mp->noise_tomography == 0) {
+      mp->nsources_local = *nsources_local;
+    }
   }
-  gpuCreateCopy_todevice_int (&mp->d_islice_selected_source, h_islice_selected_source, *NSOURCES);
-  gpuCreateCopy_todevice_int (&mp->d_ispec_selected_source, h_ispec_selected_source, *NSOURCES);
+  mp->NSTEP = *NSTEP_f;
+  mp->NSTAGES = *NSTAGES_f;
+
+  // source arrays
+  // not needed in case of pure adjoint simulations (SIMULATION_TYPE == 2)
+  // full NSOURCES arrays not needed anymore...
+  //gpuCreateCopy_todevice_realw (&mp->d_sourcearrays, h_sourcearrays, (*NSOURCES) * NDIM * NGLL3);
+  //gpuMalloc_double (&mp->d_stf_pre_compute, *NSOURCES);
+  //gpuCreateCopy_todevice_int (&mp->d_islice_selected_source, h_islice_selected_source, *NSOURCES);
+
+  // only needed for pure adjoint simulation cases
+  if (mp->simulation_type == 2){
+    gpuCreateCopy_todevice_int (&mp->d_ispec_selected_source, h_ispec_selected_source, *NSOURCES);
+  }
+
+  // local sources only...
+  mp->use_b_stf = 0;
+  if (mp->nsources_local > 0){
+    // allocates buffer on GPU for source time function values
+    gpuCreateCopy_todevice_realw (&mp->d_sourcearrays_local, h_sourcearrays_local, mp->nsources_local * NDIM * NGLL3);
+    gpuCreateCopy_todevice_realw (&mp->d_stf_local, h_stf_local, mp->nsources_local * mp->NSTEP * mp->NSTAGES);
+    gpuCreateCopy_todevice_int (&mp->d_ispec_selected_source_local, h_ispec_selected_source_local, mp->nsources_local);
+    // additional array for LDDRK and backward stepping
+    if (mp->simulation_type == 3 && mp->use_lddrk && (! mp->undo_attenuation)){
+      mp->use_b_stf = 1;
+      gpuCreateCopy_todevice_realw (&mp->d_b_stf_local, h_b_stf_local, mp->nsources_local * mp->NSTEP * mp->NSTAGES);
+    }
+  }
 
   // receiver stations
   // note that:   size (number_receiver_global) = nrec_local
@@ -371,13 +406,14 @@ void FC_FUNC_ (prepare_constants_device,
   mp->nrec_local = *nrec_local;
   if (mp->nrec_local > 0) {
     gpuCreateCopy_todevice_int (&mp->d_number_receiver_global, h_number_receiver_global, mp->nrec_local);
+
     // for seismograms
     if (mp->simulation_type == 1 || mp->simulation_type == 3 ) {
       // forward/kernel simulations
       realw * xir    = (realw *)malloc(NGLLX * mp->nrec_local*sizeof(realw));
       realw * etar   = (realw *)malloc(NGLLX * mp->nrec_local*sizeof(realw));
       realw * gammar = (realw *)malloc(NGLLX * mp->nrec_local*sizeof(realw));
-      // converts to double to realw arrays, assumes NGLLX == NGLLY == NGLLZ
+      // converts from double to realw arrays, assumes NGLLX == NGLLY == NGLLZ
       for (int i=0;i<NGLLX * mp->nrec_local;i++){
         xir[i]    = (realw)h_hxir_store[i];
         etar[i]   = (realw)h_hetar_store[i];
@@ -391,7 +427,10 @@ void FC_FUNC_ (prepare_constants_device,
       free(gammar);
 
       // local seismograms
-      gpuMalloc_realw (&mp->d_seismograms, NDIM * mp->nrec_local);
+      // full seismograms length (considering sub-sampling)
+      size = (*nlength_seismogram) * mp->nrec_local;
+      gpuMalloc_realw (&mp->d_seismograms, NDIM * size);
+      gpuMemset_realw (&mp->d_seismograms, NDIM * size, 0);
 
       // orientation
       realw* nu;
@@ -465,12 +504,7 @@ void FC_FUNC_ (prepare_constants_device,
   // buffer for norm checking at every timestamp
   int blocksize = BLOCKSIZE_TRANSFER;
 
-  int size,size_padded;
-  int num_blocks_x,num_blocks_y;
-
   // buffer for crust_mantle arrays has maximum size
-  int size_block_norm,size_block_norm_strain;
-
   // norm arrays
   size = mp->NGLOB_CRUST_MANTLE;
 
@@ -626,6 +660,7 @@ void FC_FUNC_ (prepare_constants_adjoint_device,
       if (mp->h_stf_array_adjoint == NULL) exit_on_error ("h_stf_array_adjoint not allocated\n");
     }
     gpuMalloc_realw (&mp->d_stf_array_adjoint, mp->nadj_rec_local * NDIM );
+    gpuMemset_realw (&mp->d_stf_array_adjoint, mp->nadj_rec_local * NDIM, 0);
   }
 
   // synchronizes gpu calls
@@ -1042,6 +1077,7 @@ void FC_FUNC_ (prepare_fields_absorb_device,
     // boundary buffer
     if (mp->save_stacey) {
       gpuMalloc_realw (&mp->d_absorb_buffer_crust_mantle, NDIM * NGLLSQUARE * num_abs_boundary_faces);
+      gpuMemset_realw (&mp->d_absorb_buffer_crust_mantle, NDIM * NGLLSQUARE * num_abs_boundary_faces, 0);
     }
   }
 
@@ -1068,6 +1104,7 @@ void FC_FUNC_ (prepare_fields_absorb_device,
     // boundary buffer
     if (mp->save_stacey) {
       gpuMalloc_realw (&mp->d_absorb_buffer_outer_core, NGLLSQUARE * num_abs_boundary_faces);
+      gpuMemset_realw (&mp->d_absorb_buffer_outer_core, NGLLSQUARE * num_abs_boundary_faces, 0);
     }
   }
 
@@ -1344,6 +1381,7 @@ void FC_FUNC_ (prepare_fields_noise_device,
 
     // alloc storage for the surface buffer to be copied
     gpuMalloc_realw (&mp->d_noise_surface_movie, NDIM * NGLL2 * mp->nspec2D_top_crust_mantle);
+    gpuMemset_realw (&mp->d_noise_surface_movie, NDIM * NGLL2 * mp->nspec2D_top_crust_mantle, 0);
 
   } else {
     // for global mesh: each crust/mantle slice should have at top a free surface
@@ -1352,7 +1390,9 @@ void FC_FUNC_ (prepare_fields_noise_device,
 
   // prepares noise source array
   if (mp->noise_tomography == 1) {
-    gpuCreateCopy_todevice_realw (&mp->d_noise_sourcearray, noise_sourcearray, NDIM*NGLL3 * (*NSTEP));
+    // checks with setup NSTEP
+    if (mp->NSTEP != *NSTEP){ exit_on_error("Error invalid NSTEP setup for prepare_fields_noise_device() routine"); }
+    gpuCreateCopy_todevice_realw (&mp->d_noise_sourcearray, noise_sourcearray, NDIM * NGLL3 * mp->NSTEP);
   }
 
   // prepares noise directions
@@ -1435,8 +1475,8 @@ void FC_FUNC_ (prepare_lddrk_device,
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
   size_t size;
 
-  // sets flag
-  mp->use_lddrk = 1;
+  // checks flag
+  if (! mp->use_lddrk){ exit_on_error("Flag use_lddrk is not set properly for routine prepare_lddrk_device()"); }
 
   // note: we don't support yet reading initial wavefields for re-starting simulations with LDDRK.
   //       this would require to store and copy also the **_lddrk wavefields to the restart files which is not done yet.
@@ -2712,12 +2752,14 @@ void FC_FUNC_ (prepare_cleanup_device,
   //------------------------------------------
   // sources
   //------------------------------------------
-  if (mp->simulation_type == 1 || mp->simulation_type == 3) {
-    gpuFree (&mp->d_sourcearrays);
-    gpuFree (&mp->d_stf_pre_compute);
+  if (mp->nsources_local > 0){
+    gpuFree (&mp->d_sourcearrays_local);
+    gpuFree (&mp->d_stf_local);
+    gpuFree (&mp->d_ispec_selected_source_local);
   }
-  gpuFree (&mp->d_islice_selected_source);
-  gpuFree (&mp->d_ispec_selected_source);
+  if (mp->simulation_type == 2){
+    gpuFree (&mp->d_ispec_selected_source);
+  }
 
   //------------------------------------------
   // receivers

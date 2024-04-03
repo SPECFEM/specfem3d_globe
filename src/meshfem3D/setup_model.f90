@@ -182,7 +182,15 @@
     write(IMAIN,*) '  no surface topography'
   endif
   if (GRAVITY) then
-    write(IMAIN,*) '  incorporating self-gravitation (Cowling approximation)'
+    if (FULL_GRAVITY) then
+      if (ADD_TRINF) then
+        write(IMAIN,*) '  incorporating full self-gravitation (with transition layer)'
+      else
+        write(IMAIN,*) '  incorporating full self-gravitation (without transition layer)'
+      endif
+    else
+      write(IMAIN,*) '  incorporating self-gravitation (Cowling approximation)'
+    endif
   else
     write(IMAIN,*) '  no self-gravitation'
   endif
@@ -194,9 +202,9 @@
   if (ATTENUATION) then
     write(IMAIN,*) '  incorporating attenuation using ',N_SLS,' standard linear solids'
     if (ATTENUATION_GLL ) then
-       write(IMAIN,*)'  using GLL attenuation model'
+       write(IMAIN,*) '  using GLL attenuation model'
     else if (ATTENUATION_3D) then
-       write(IMAIN,*)'  using 3D attenuation model'
+       write(IMAIN,*) '  using 3D attenuation model'
     endif
   else
     write(IMAIN,*) '  no attenuation'

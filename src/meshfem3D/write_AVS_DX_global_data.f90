@@ -64,14 +64,14 @@
 
 ! mark global AVS or DX points
   do ispec = 1,nspec
-    iglob1=ibool(1,1,1,ispec)
-    iglob2=ibool(NGLLX,1,1,ispec)
-    iglob3=ibool(NGLLX,NGLLY,1,ispec)
-    iglob4=ibool(1,NGLLY,1,ispec)
-    iglob5=ibool(1,1,NGLLZ,ispec)
-    iglob6=ibool(NGLLX,1,NGLLZ,ispec)
-    iglob7=ibool(NGLLX,NGLLY,NGLLZ,ispec)
-    iglob8=ibool(1,NGLLY,NGLLZ,ispec)
+    iglob1 = ibool(1,1,1,ispec)
+    iglob2 = ibool(NGLLX,1,1,ispec)
+    iglob3 = ibool(NGLLX,NGLLY,1,ispec)
+    iglob4 = ibool(1,NGLLY,1,ispec)
+    iglob5 = ibool(1,1,NGLLZ,ispec)
+    iglob6 = ibool(NGLLX,1,NGLLZ,ispec)
+    iglob7 = ibool(NGLLX,NGLLY,NGLLZ,ispec)
+    iglob8 = ibool(1,NGLLY,NGLLZ,ispec)
     mask_ibool(iglob1) = .true.
     mask_ibool(iglob2) = .true.
     mask_ibool(iglob3) = .true.
@@ -94,14 +94,14 @@
 ! output global AVS or DX points
   numpoin = 0
   do ispec = 1,nspec
-    iglob1=ibool(1,1,1,ispec)
-    iglob2=ibool(NGLLX,1,1,ispec)
-    iglob3=ibool(NGLLX,NGLLY,1,ispec)
-    iglob4=ibool(1,NGLLY,1,ispec)
-    iglob5=ibool(1,1,NGLLZ,ispec)
-    iglob6=ibool(NGLLX,1,NGLLZ,ispec)
-    iglob7=ibool(NGLLX,NGLLY,NGLLZ,ispec)
-    iglob8=ibool(1,NGLLY,NGLLZ,ispec)
+    iglob1 = ibool(1,1,1,ispec)
+    iglob2 = ibool(NGLLX,1,1,ispec)
+    iglob3 = ibool(NGLLX,NGLLY,1,ispec)
+    iglob4 = ibool(1,NGLLY,1,ispec)
+    iglob5 = ibool(1,1,NGLLZ,ispec)
+    iglob6 = ibool(NGLLX,1,NGLLZ,ispec)
+    iglob7 = ibool(NGLLX,NGLLY,NGLLZ,ispec)
+    iglob8 = ibool(1,NGLLY,NGLLZ,ispec)
     if (.not. mask_ibool(iglob1)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob1) = numpoin
@@ -174,14 +174,14 @@
 
 ! output global AVS or DX elements
   do ispec = 1,nspec
-    iglob1=ibool(1,1,1,ispec)
-    iglob2=ibool(NGLLX,1,1,ispec)
-    iglob3=ibool(NGLLX,NGLLY,1,ispec)
-    iglob4=ibool(1,NGLLY,1,ispec)
-    iglob5=ibool(1,1,NGLLZ,ispec)
-    iglob6=ibool(NGLLX,1,NGLLZ,ispec)
-    iglob7=ibool(NGLLX,NGLLY,NGLLZ,ispec)
-    iglob8=ibool(1,NGLLY,NGLLZ,ispec)
+    iglob1 = ibool(1,1,1,ispec)
+    iglob2 = ibool(NGLLX,1,1,ispec)
+    iglob3 = ibool(NGLLX,NGLLY,1,ispec)
+    iglob4 = ibool(1,NGLLY,1,ispec)
+    iglob5 = ibool(1,1,NGLLZ,ispec)
+    iglob6 = ibool(NGLLX,1,NGLLZ,ispec)
+    iglob7 = ibool(NGLLX,NGLLY,NGLLZ,ispec)
+    iglob8 = ibool(1,NGLLY,NGLLZ,ispec)
     write(IOUT,*) ispec,idoubling(ispec),num_ibool_AVS_DX(iglob1), &
                   num_ibool_AVS_DX(iglob2),num_ibool_AVS_DX(iglob3), &
                   num_ibool_AVS_DX(iglob4),num_ibool_AVS_DX(iglob5), &
@@ -270,14 +270,14 @@
       do j = 1,NGLLY-1
         do i = 1,NGLLX-1
           nelem = nelem + 1
-          iglob1=flag(i,j,k,ispec)
-          iglob2=flag(i+1,j,k,ispec)
-          iglob3=flag(i+1,j+1,k,ispec)
-          iglob4=flag(i,j+1,k,ispec)
-          iglob5=flag(i,j,k+1,ispec)
-          iglob6=flag(i+1,j,k+1,ispec)
-          iglob7=flag(i+1,j+1,k+1,ispec)
-          iglob8=flag(i,j+1,k+1,ispec)
+          iglob1 = flag(i,j,k,ispec)
+          iglob2 = flag(i+1,j,k,ispec)
+          iglob3 = flag(i+1,j+1,k,ispec)
+          iglob4 = flag(i,j+1,k,ispec)
+          iglob5 = flag(i,j,k+1,ispec)
+          iglob6 = flag(i+1,j,k+1,ispec)
+          iglob7 = flag(i+1,j+1,k+1,ispec)
+          iglob8 = flag(i,j+1,k+1,ispec)
 
           write(IOUT,*) nelem,iglob1, &
                         iglob2,iglob3,iglob4, &
@@ -343,14 +343,14 @@
                         Qmu(6)=dble(Qmustore(i+1,j,k+1,ispec))
                         Qmu(7)=dble(Qmustore(i+1,j+1,k+1,ispec))
                         Qmu(8)=dble(Qmustore(i,j+1,k+1,ispec))
-                        Qmu_average=Qmu(1)
+                        Qmu_average = Qmu(1)
                 endif
                 !rho_average=sum(rho(1:4))/4.d0
                 !vp_average=sum(vp(1:4))/4.d0
                 !vs_average=sum(vs(1:4))/4.d0
-                rho_average=rho(1)
-                vp_average=vp(1)
-                vs_average=vs(1)
+                rho_average = rho(1)
+                vp_average = vp(1)
+                vs_average = vs(1)
 
                 if (ATTENUATION) then
                         write(IOUT,*) nelem,rho_average,vp_average,vs_average,Qmu_average

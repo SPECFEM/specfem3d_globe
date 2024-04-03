@@ -511,9 +511,9 @@ program smooth_sem_globe
     call zwgljd(xigll,wxgll,NGLLX,GAUSSALPHA,GAUSSBETA)
     call zwgljd(yigll,wygll,NGLLY,GAUSSALPHA,GAUSSBETA)
     call zwgljd(zigll,wzgll,NGLLZ,GAUSSALPHA,GAUSSBETA)
-    do k=1,NGLLZ
-      do j=1,NGLLY
-        do i=1,NGLLX
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
           wgll_cube(i,j,k) = real(wxgll(i)*wygll(j)*wzgll(k),kind=CUSTOM_REAL)
         enddo
       enddo
@@ -1498,13 +1498,13 @@ end program smooth_sem_globe
   integer :: ijk
   integer :: ijk2
 #  define INDEX_IJK2  ijk2,1,1
-#  define DO_LOOP_IJK2  do ijk2=1,NGLLCUBE
+#  define DO_LOOP_IJK2  do ijk2 = 1,NGLLCUBE
 #  define ENDDO_LOOP_IJK2  enddo                  ! NGLLCUBE
 #else
   integer :: i,j,k
   integer :: ii,jj,kk
 #  define INDEX_IJK2  ii,jj,kk
-#  define DO_LOOP_IJK2  do kk=1,NGLLZ; do jj=1,NGLLY; do ii=1,NGLLX
+#  define DO_LOOP_IJK2  do kk = 1,NGLLZ; do jj = 1,NGLLY; do ii = 1,NGLLX
 #  define ENDDO_LOOP_IJK2  enddo; enddo; enddo    ! NGLLZ,NGLLY,NGLLX
 #endif
 

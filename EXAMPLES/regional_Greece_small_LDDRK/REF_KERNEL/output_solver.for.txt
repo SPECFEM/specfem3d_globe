@@ -3,7 +3,7 @@
  **** Specfem3D MPI Solver ****
  ******************************
 
- Version: 7.0.3
+ Version: 8.1.1
 
 
  Planet: Earth
@@ -69,7 +69,7 @@
 
    reading in Stacey databases...
 
- Elapsed time for reading mesh in seconds =    8.20640028E-02
+ Elapsed time for reading mesh in seconds =    7.45209977E-02
 
  adjacency:
    total number of elements in this slice =         2240
@@ -85,7 +85,7 @@
    maximum neighbors found per element =           37 (should be 37 for globe meshes)
    total number of neighbors           =        48956
 
-   Elapsed time for detection of neighbors in seconds =   0.14076100000000002
+   Elapsed time for detection of neighbors in seconds =    5.5309999999999970E-002
 
  kd-tree:
    total data points:        60480
@@ -94,7 +94,7 @@
    actual        number of nodes:       120959
                 tree memory size:    3.69137573     MB
    maximum depth   :           23
-   creation timing :    4.16960120E-02 (s)
+   creation timing :    1.42520070E-02 (s)
 
 
  sources:           1
@@ -110,9 +110,11 @@
                   in element          556
 
    using moment tensor source:
-     xi coordinate of source in that element:   0.26698450392051182
-     eta coordinate of source in that element:   -9.5701646131075124E-002
-     gamma coordinate of source in that element:   0.64600044639512055
+     xi coordinate of source in that element:   0.27403139229249973
+     eta coordinate of source in that element:   0.19845490739179880
+     gamma coordinate of source in that element:   0.64599955479438764
+
+     at (x,y,z) coordinates =   0.72537360547575458       0.30596233085392688       0.59281294367541015
 
    source time function:
      using (quasi) Heaviside source time function
@@ -122,7 +124,7 @@
 
    magnitude of the source:
         scalar moment M0 =    2.2605667430978450E+025  dyne-cm
-     moment magnitude Mw =    6.2028115560521364
+     moment magnitude Mw =    6.2028117467869981
 
 
    original (requested) position of the source:
@@ -133,16 +135,16 @@
 
    position of the source that will be used:
 
-         latitude:    36.980000000000004
-        longitude:    22.870000000000001
-            depth:    92.390000000000285       km
+         latitude:    36.979999999999997
+        longitude:    22.869999999999997
+            depth:    92.390000000001706       km
 
-   Error in location of the source:    0.00000000      km
+   Error in location of the source:    7.90811264E-13  km
 
- maximum error in location of the sources:    0.00000000      km
+ maximum error in location of the sources:    7.90811264E-13  km
 
 
- Elapsed time for detection of sources in seconds =    3.4549999999999859E-003
+ Elapsed time for detection of sources in seconds =    7.5199999999997491E-004
 
  End of source detection - done
 
@@ -163,21 +165,22 @@
  reading receiver information...
 
  Stations sorted by epicentral distance:
- Station #     6:                  XS.S001    epicentral distance:      0.969061 degrees
- Station #     4:                   HT.LIT    epicentral distance:      3.130283 degrees
- Station #     5:                   GE.ZKR    epicentral distance:      3.289320 degrees
- Station #     2:                  YL.BEKI    epicentral distance:      9.849280 degrees
- Station #     3:                  SR.BGIO    epicentral distance:     11.375245 degrees
- Station #     1:                  IU.GRFO    epicentral distance:     15.247245 degrees
+ Station #     6:                  XS.S001    epicentral distance:      0.967117 degrees
+ Station #     4:                   HT.LIT    epicentral distance:      3.134912 degrees
+ Station #     5:                   GE.ZKR    epicentral distance:      3.286368 degrees
+ Station #     2:                  YL.BEKI    epicentral distance:      9.830813 degrees
+ Station #     3:                  SR.BGIO    epicentral distance:     11.362166 degrees
+ Station #     1:                  IU.GRFO    epicentral distance:     15.236944 degrees
 
  Station #           1 : IU.GRFO
         original latitude:    49.6908989
        original longitude:    11.2202997
-      epicentral distance:    15.2472448
-   closest estimate found:    32.4178123      km away
+      epicentral distance:    15.2369442
+   closest estimate found:    53.1097946      km away
     in slice            2  in element         2016
-    at xi,eta,gamma coordinates =    6.3488279793607147E-002   1.1000000000000001       0.97353062434594373
-    at lat/lon =    49.4031792       11.2897291
+    at xi,eta,gamma coordinates =   0.13809977635405707        1.1000000000000001       0.91410288186975008
+    at (x,y,z)                  =   0.64040044981195132       0.12824734764803522       0.75712460467389486
+    at lat/lon                  =    49.2180748       11.3243208
  Station #           1 : IU.GRFO
  *****************************************************************
  ***** WARNING: receiver is located outside the mesh, therefore excluded *****
@@ -186,49 +189,54 @@
  Station #           2 : YL.BEKI
         original latitude:    41.3149986
        original longitude:    34.2630005
-      epicentral distance:    9.84928036
-   closest estimate found:    2.26453882E-12  km away
+      epicentral distance:    9.83081341
+   closest estimate found:    1.27514481E-12  km away
     in slice            3  in element         2163
-    at xi,eta,gamma coordinates =  -0.70651787528276022      -0.20593648690884031        1.0000022213325612
-    at lat/lon =    41.3149986       34.2630005
+    at xi,eta,gamma coordinates =  -0.76939603311133631       0.40232344693124550       0.99999603567737350
+    at (x,y,z)                  =   0.62074845791712863       0.42285875013227497       0.66019832583101623
+    at lat/lon                  =    41.3149986       34.2630005
 
  Station #           3 : SR.BGIO
         original latitude:    31.7220001
        original longitude:    35.0877991
-      epicentral distance:    11.3752451
-   closest estimate found:    1.27514481E-12  km away
+      epicentral distance:    11.3621664
+   closest estimate found:    7.07323089E-13  km away
     in slice            1  in element         2196
-    at xi,eta,gamma coordinates =   0.73897301231532464      -0.75851147015861353       0.98667304876345086
-    at lat/lon =    31.7220001       35.0877991
+    at xi,eta,gamma coordinates =   0.67619392191662309      -0.20757978149900186       0.98668049579873185
+    at (x,y,z)                  =   0.69601894655704744       0.48894893408712364       0.52579004734678714
+    at lat/lon                  =    31.7220001       35.0877991
 
  Station #           4 : HT.LIT
         original latitude:    40.1007996
        original longitude:    22.4899998
-      epicentral distance:    3.13028336
-   closest estimate found:    1.73258066E-12  km away
-    in slice            0  in element         2192
-    at xi,eta,gamma coordinates =   0.84004263800150147       0.80587523885131418       0.99998587532874550
-    at lat/lon =    40.1007996       22.4899998
+      epicentral distance:    3.13491178
+   closest estimate found:    1.45818394E-12  km away
+    in slice            2  in element         2177
+    at xi,eta,gamma coordinates =   0.85702365178819473      -0.59072673805986331       0.99998903488969137
+    at (x,y,z)                  =   0.70673799555172767       0.29259596084621264       0.64413431001617061
+    at lat/lon                  =    40.1007996       22.4899998
 
  Station #           5 : GE.ZKR
         original latitude:    35.1147003
        original longitude:    26.2169991
-      epicentral distance:    3.28932023
-   closest estimate found:    1.73258066E-12  km away
-    in slice            1  in element         2008
-    at xi,eta,gamma coordinates =   0.20505307640947926       0.81064121714242099        1.0000173096267879
-    at lat/lon =    35.1147003       26.2169991
+      epicentral distance:    3.28636765
+   closest estimate found:    2.57469501E-12  km away
+    in slice            1  in element         2009
+    at xi,eta,gamma coordinates =   0.19713361451165151      -0.61349885781339220        1.0000050729227505
+    at (x,y,z)                  =   0.73385210065323114       0.36137049773551255       0.57521514038942601
+    at lat/lon                  =    35.1147003       26.2169991
 
  Station #           6 : XS.S001
         original latitude:    37.2830009
        original longitude:    21.7180004
-      epicentral distance:   0.969061255
-   closest estimate found:    1.06098463E-12  km away
+      epicentral distance:   0.967116952
+   closest estimate found:    1.58162253E-12  km away
     in slice            0  in element         2172
-    at xi,eta,gamma coordinates =   0.61457102159820076      -0.13954210453477014        1.0000010772656047
-    at lat/lon =    37.2830009       21.7180004
+    at xi,eta,gamma coordinates =   0.63633225681839234       0.45068507294059329       0.99999446479622667
+    at (x,y,z)                  =   0.73917488764629335       0.29442244086761848       0.60575235186224630
+    at lat/lon                  =    37.2830009       21.7180004
 
- maximum error in location of all the receivers:    32.4178123      km
+ maximum error in location of all the receivers:    53.1097946      km
 
  ************************************************************
  ************************************************************
@@ -236,7 +244,7 @@
  ************************************************************
  ************************************************************
 
- Elapsed time for receiver detection in seconds =    1.4040000000000163E-003
+ Elapsed time for receiver detection in seconds =    6.4100000000000268E-004
 
  End of receiver detection - done
 
@@ -251,8 +259,12 @@
 
  seismograms:
    seismograms written by all processes
+   Total number of simulation steps (NSTEP)                       =          600
    writing out seismograms at every NTSTEP_BETWEEN_OUTPUT_SEISMOS =          600
-   maximum number of local receivers is            2  in slice            0
+   number of subsampling steps for seismograms                    =            1
+   Total number of samples for seismograms                        =          600
+
+   maximum number of local receivers is            2  in slice            1
    size of maximum seismogram array       =    1.37329102E-02 MB
                                           =    1.34110451E-05 GB
 
@@ -282,8 +294,8 @@
  preparing gravity arrays
  preparing elastic element arrays
    crust/mantle transverse isotropic and isotropic elements
-   tiso elements =         1088
-   iso elements  =         1152
+   tiso elements =         4352
+   iso elements  =         4608
    inner core isotropic elements
  preparing wavefields
    allocating wavefields
@@ -303,12 +315,12 @@
    fused arrays done
    bandwidth test (STREAM TRIAD):
       memory accesses =    5.25822830     MB
-      timing  min/max =    6.85999985E-04 s /    1.18499994E-03 s
-      timing      avg =    9.55600000E-04 s
-      bandwidth       =    5.37357521     GB/s
+      timing  min/max =    5.99999985E-05 s /    6.09999988E-05 s
+      timing      avg =    6.08000009E-05 s
+      bandwidth       =    84.4570465     GB/s
 
 
- Elapsed time for preparing timerun in seconds =   0.170507997
+ Elapsed time for preparing timerun in seconds =    5.73900007E-02
 
 
  time loop:
@@ -323,6 +335,15 @@
  undoing attenuation:
    total number of time subsets                     =            1
    wavefield snapshots at every NT_DUMP_ATTENUATION =          600
+   number of buffered snapshots at each subset      =          600
+
+   estimated snapshot file storage:
+   size of single time snapshot subset per slice         =    5.43039322     MB
+   size of single time snapshot subset for all processes =    21.7215729     MB
+                                                         =    2.12124735E-02 GB
+
+   total size of all time snapshots subsets              =    21.7215729     MB
+                                                         =    2.12124735E-02 GB
 
  All processes are synchronized before time loop (undoatt)
 
@@ -330,21 +351,21 @@
 
  Time step #            5
  Time:   -5.60000017E-02  minutes
- Max norm displacement vector U in solid in all slices for forward prop. (m) =    3.20886670E-07
+ Max norm displacement vector U in solid in all slices for forward prop. (m) =    2.87405953E-07
  Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    0.00000000
- Max of strain, eps_trace_over_3_crust_mantle =   1.32821081E-11
- Max of strain, epsilondev_crust_mantle  =   7.37065686E-11
- Elapsed time in seconds =   0.92009299999999994
+ Max of strain, eps_trace_over_3_crust_mantle =   1.35716291E-11
+ Max of strain, epsilondev_crust_mantle  =   6.71887337E-11
+ Elapsed time in seconds =   0.18948399999999999
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
- Mean elapsed time per time step in seconds =   0.18401859999999998
+ Mean elapsed time per time step in seconds =    3.7896799999999994E-002
  Time steps done =            5  out of          600
  Time steps remaining =          595
- Estimated remaining time in seconds =    109.49106699999999
- Estimated remaining time in hh:mm:ss =      0 h 01 m 49 s
- Estimated total run time in seconds =    110.41115999999998
- Estimated total run time in hh:mm:ss =      0 h 01 m 50 s
+ Estimated remaining time in seconds =    22.548595999999996
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 22 s
+ Estimated total run time in seconds =    22.738079999999997
+ Estimated total run time in hh:mm:ss =      0 h 00 m 22 s
  We have done   0.833333313     % of that
- The run will finish approximately on (in local time): Thu Jun 25, 2020 11:25
+ The run will finish approximately on (in local time): Thu Mar 14, 2024 18:59
  ************************************************************
  **** BEWARE: the above time estimates are not very reliable
  **** because fewer than 100 iterations have been performed
@@ -352,65 +373,63 @@
 
  Time step #          200
  Time:   0.870249987      minutes
- Max norm displacement vector U in solid in all slices for forward prop. (m) =    2.55057449E-03
- Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    0.00000000
- Max of strain, eps_trace_over_3_crust_mantle =   2.98373806E-08
- Max of strain, epsilondev_crust_mantle  =   9.70582335E-08
- Elapsed time in seconds =    34.394377000000006
- Elapsed time in hh:mm:ss =      0 h 00 m 34 s
- Mean elapsed time per time step in seconds =   0.17197188500000002
+ Max norm displacement vector U in solid in all slices for forward prop. (m) =    2.43412796E-03
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    5.11614069E-42
+ Max of strain, eps_trace_over_3_crust_mantle =   3.30422054E-08
+ Max of strain, epsilondev_crust_mantle  =   9.50427150E-08
+ Elapsed time in seconds =    8.8137039999999995
+ Elapsed time in hh:mm:ss =      0 h 00 m 08 s
+ Mean elapsed time per time step in seconds =    4.4068520000000000E-002
  Time steps done =          200  out of          600
  Time steps remaining =          400
- Estimated remaining time in seconds =    68.788754000000012
- Estimated remaining time in hh:mm:ss =      0 h 01 m 08 s
- Estimated total run time in seconds =    103.18313100000002
- Estimated total run time in hh:mm:ss =      0 h 01 m 43 s
+ Estimated remaining time in seconds =    17.627407999999999
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 17 s
+ Estimated total run time in seconds =    26.441111999999997
+ Estimated total run time in hh:mm:ss =      0 h 00 m 26 s
  We have done    33.3333321     % of that
- The run will finish approximately on (in local time): Thu Jun 25, 2020 11:25
+ The run will finish approximately on (in local time): Thu Mar 14, 2024 18:59
 
  Time step #          400
  Time:    1.82025003      minutes
- Max norm displacement vector U in solid in all slices for forward prop. (m) =    2.58221547E-03
- Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    3.03781764E-30
- Max of strain, eps_trace_over_3_crust_mantle =   2.93163165E-08
- Max of strain, epsilondev_crust_mantle  =   1.02047970E-07
- Elapsed time in seconds =    67.817830999999998
- Elapsed time in hh:mm:ss =      0 h 01 m 07 s
- Mean elapsed time per time step in seconds =   0.16954457749999999
+ Max norm displacement vector U in solid in all slices for forward prop. (m) =    2.45343265E-03
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    4.00076963E-30
+ Max of strain, eps_trace_over_3_crust_mantle =   3.34709824E-08
+ Max of strain, epsilondev_crust_mantle  =   9.91932367E-08
+ Elapsed time in seconds =    17.668324000000002
+ Elapsed time in hh:mm:ss =      0 h 00 m 17 s
+ Mean elapsed time per time step in seconds =    4.4170810000000005E-002
  Time steps done =          400  out of          600
  Time steps remaining =          200
- Estimated remaining time in seconds =    33.908915499999999
- Estimated remaining time in hh:mm:ss =      0 h 00 m 33 s
- Estimated total run time in seconds =    101.72674649999999
- Estimated total run time in hh:mm:ss =      0 h 01 m 41 s
+ Estimated remaining time in seconds =    8.8341620000000010
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 08 s
+ Estimated total run time in seconds =    26.502486000000005
+ Estimated total run time in hh:mm:ss =      0 h 00 m 26 s
  We have done    66.6666641     % of that
- The run will finish approximately on (in local time): Thu Jun 25, 2020 11:25
+ The run will finish approximately on (in local time): Thu Mar 14, 2024 18:59
 
  Time step #          600
  Time:    2.77025008      minutes
- Max norm displacement vector U in solid in all slices for forward prop. (m) =    2.60395906E-03
- Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    6.38769666E-25
- Max of strain, eps_trace_over_3_crust_mantle =   2.94396809E-08
- Max of strain, epsilondev_crust_mantle  =   1.02479753E-07
- Elapsed time in seconds =    98.240324999999999
- Elapsed time in hh:mm:ss =      0 h 01 m 38 s
- Mean elapsed time per time step in seconds =   0.16373387500000000
+ Max norm displacement vector U in solid in all slices for forward prop. (m) =    2.47523561E-03
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    7.09624117E-25
+ Max of strain, eps_trace_over_3_crust_mantle =   3.37225181E-08
+ Max of strain, epsilondev_crust_mantle  =   1.02643575E-07
+ Elapsed time in seconds =    26.609555000000000
+ Elapsed time in hh:mm:ss =      0 h 00 m 26 s
+ Mean elapsed time per time step in seconds =    4.4349258333333336E-002
  Time steps done =          600  out of          600
  Time steps remaining =            0
  Estimated remaining time in seconds =    0.0000000000000000
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =    98.240324999999999
- Estimated total run time in hh:mm:ss =      0 h 01 m 38 s
+ Estimated total run time in seconds =    26.609555000000000
+ Estimated total run time in hh:mm:ss =      0 h 00 m 26 s
  We have done    100.000000     % of that
 
-
  Total number of time steps written:          600
-
- Writing the seismograms in parallel took    7.7639999999945530E-003  seconds
+ Writing the seismograms in parallel took    3.96399992E-03  seconds
 
  Time-Loop Complete. Timing info:
- Total elapsed time in seconds =    98.398981000000006
- Total elapsed time in hh:mm:ss =      0 h 01 m 38 s
+ Total elapsed time in seconds =    26.658350000000002
+ Total elapsed time in hh:mm:ss =      0 h 00 m 26 s
 
  finalizing simulation
 

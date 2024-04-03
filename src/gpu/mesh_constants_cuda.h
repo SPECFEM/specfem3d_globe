@@ -38,6 +38,8 @@
 // leads up to ~10% performance increase in OpenCL and ~1% in Cuda
 #define MANUALLY_UNROLLED_LOOPS   // uncomment to use loops
 
+/*----------------------------------------------------------------------------------------------- */
+
 // definitions
 typedef cudaEvent_t gpu_event;
 typedef cudaStream_t gpu_stream;
@@ -85,6 +87,10 @@ static inline void print_CUDA_error_if_any(cudaError_t err, int num) {
 
 #if CUSTOM_REAL == 4
 // textures
+// textures
+// note: texture templates are supported only for CUDA versions <= 11.x
+//       since CUDA 12.x, these are deprecated and texture objects should be used instead
+//       see: https://developer.nvidia.com/blog/cuda-pro-tip-kepler-texture-objects-improve-performance-and-flexibility/
 #if defined(USE_TEXTURES_FIELDS) || defined(USE_TEXTURES_CONSTANTS)
 typedef texture<float, cudaTextureType1D, cudaReadModeElementType> realw_texture;
 #endif
@@ -95,6 +101,10 @@ typedef float* __restrict__ realw_p; // otherwise use: //typedef float* realw_p;
 
 #elif CUSTOM_REAL == 8
 // textures
+// textures
+// note: texture templates are supported only for CUDA versions <= 11.x
+//       since CUDA 12.x, these are deprecated and texture objects should be used instead
+//       see: https://developer.nvidia.com/blog/cuda-pro-tip-kepler-texture-objects-improve-performance-and-flexibility/
 #if defined(USE_TEXTURES_FIELDS) || defined(USE_TEXTURES_CONSTANTS)
 typedef texture<double, cudaTextureType1D, cudaReadModeElementType> realw_texture;
 #endif

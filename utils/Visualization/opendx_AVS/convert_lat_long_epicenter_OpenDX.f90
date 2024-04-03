@@ -69,8 +69,8 @@
   print *,'reading topo file'
 
   open(unit=13,file='topo_bathy_etopo4_from_etopo2_subsampled.dat',status='old')
-  do iy=1,NY_BATHY
-    do ix=1,NX_BATHY
+  do iy = 1,NY_BATHY
+    do ix = 1,NX_BATHY
       read(13,*) ibathy_topo_ori(ix,iy)
     enddo
   enddo

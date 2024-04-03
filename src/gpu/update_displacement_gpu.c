@@ -92,6 +92,10 @@ void FC_FUNC_ (update_displacement_ic_gpu,
     accel = mp->d_b_accel_inner_core;
   }
 
+  // kernel timing
+  gpu_event start,stop;
+  if (GPU_TIMING){ start_timing_gpu(&start,&stop); }
+
 #ifdef USE_OPENCL
   if (run_opencl) {
     size_t global_work_size[2];
@@ -141,6 +145,9 @@ void FC_FUNC_ (update_displacement_ic_gpu,
                                                                   size,deltat,deltatsqover2,deltatover2);
   }
 #endif
+
+  // kernel timing
+  if (GPU_TIMING){ stop_timing_gpu(&start,&stop,"update_displacement_ic_gpu"); }
 
   GPU_ERROR_CHECKING ("update_displacement_ic_gpu");
 }
@@ -210,6 +217,10 @@ void FC_FUNC_ (update_displacement_cm_gpu,
     accel = mp->d_b_accel_crust_mantle;
   }
 
+  // kernel timing
+  gpu_event start,stop;
+  if (GPU_TIMING){ start_timing_gpu(&start,&stop); }
+
 #ifdef USE_OPENCL
   if (run_opencl) {
     size_t global_work_size[2];
@@ -259,6 +270,9 @@ void FC_FUNC_ (update_displacement_cm_gpu,
                                                                   size,deltat,deltatsqover2,deltatover2);
   }
 #endif
+
+  // kernel timing
+  if (GPU_TIMING){ stop_timing_gpu(&start,&stop,"update_displacement_cm_gpu"); }
 
   GPU_ERROR_CHECKING ("update_displacement_cm_gpu");
 }
@@ -328,6 +342,10 @@ void FC_FUNC_ (update_displacement_oc_gpu,
     accel = mp->d_b_accel_outer_core;
   }
 
+  // kernel timing
+  gpu_event start,stop;
+  if (GPU_TIMING){ start_timing_gpu(&start,&stop); }
+
 #ifdef USE_OPENCL
   if (run_opencl) {
     size_t global_work_size[2];
@@ -377,6 +395,9 @@ void FC_FUNC_ (update_displacement_oc_gpu,
                                                                  size,deltat,deltatsqover2,deltatover2);
   }
 #endif
+
+  // kernel timing
+  if (GPU_TIMING){ stop_timing_gpu(&start,&stop,"update_displacement_oc_gpu"); }
 
   GPU_ERROR_CHECKING ("update_displacement_oc_gpu");
 }
@@ -442,6 +463,9 @@ void FC_FUNC_ (multiply_accel_elastic_gpu,
   }
 #endif
 
+  // kernel timing
+  gpu_event start,stop;
+  if (GPU_TIMING){ start_timing_gpu(&start,&stop); }
 
 #ifdef USE_OPENCL
   if (run_opencl) {
@@ -590,6 +614,9 @@ void FC_FUNC_ (multiply_accel_elastic_gpu,
 #endif
   }
 
+  // kernel timing
+  if (GPU_TIMING){ stop_timing_gpu(&start,&stop,"multiply_accel_elastic_gpu"); }
+
   GPU_ERROR_CHECKING ("after multiply_accel_elastic_gpu");
 }
 
@@ -637,6 +664,10 @@ void FC_FUNC_ (update_veloc_elastic_gpu,
     veloc = mp->d_b_veloc_crust_mantle;
     accel = mp->d_b_accel_crust_mantle;
   }
+
+  // kernel timing
+  gpu_event start,stop;
+  if (GPU_TIMING){ start_timing_gpu(&start,&stop); }
 
 #ifdef USE_OPENCL
   if (run_opencl) {
@@ -797,6 +828,9 @@ void FC_FUNC_ (update_veloc_elastic_gpu,
 #endif
 #endif
 
+  // kernel timing
+  if (GPU_TIMING){ stop_timing_gpu(&start,&stop,"update_veloc_3_b"); }
+
   GPU_ERROR_CHECKING ("after update_veloc_3_b");
 }
 
@@ -851,6 +885,10 @@ void FC_FUNC_ (multiply_accel_acoustic_gpu,
   }
 #endif
 
+  // kernel timing
+  gpu_event start,stop;
+  if (GPU_TIMING){ start_timing_gpu(&start,&stop); }
+
 #ifdef USE_OPENCL
   if (run_opencl) {
     size_t global_work_size[2];
@@ -901,6 +939,9 @@ void FC_FUNC_ (multiply_accel_acoustic_gpu,
   }
 #endif
 
+  // kernel timing
+  if (GPU_TIMING){ stop_timing_gpu(&start,&stop,"multiply_accel_acoustic_gpu"); }
+
   GPU_ERROR_CHECKING ("after multiply_accel_acoustic_gpu");
 }
 
@@ -948,6 +989,10 @@ void FC_FUNC_ (update_veloc_acoustic_gpu,
     veloc = mp->d_b_veloc_outer_core;
     accel = mp->d_b_accel_outer_core;
   }
+
+  // kernel timing
+  gpu_event start,stop;
+  if (GPU_TIMING){ start_timing_gpu(&start,&stop); }
 
 #ifdef USE_OPENCL
   if (run_opencl) {
@@ -1037,6 +1082,9 @@ void FC_FUNC_ (update_veloc_acoustic_gpu,
     }
 #endif
 #endif
+
+  // kernel timing
+  if (GPU_TIMING){ stop_timing_gpu(&start,&stop,"update_veloc_acoustic_gpu"); }
 
   GPU_ERROR_CHECKING ("after update_veloc_acoustic_gpu");
 }

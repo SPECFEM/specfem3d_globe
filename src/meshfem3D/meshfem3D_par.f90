@@ -74,7 +74,9 @@
     THREE_D_MODEL_INNER_CORE_ISHII
 
   use shared_input_parameters, only: &
-    ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS, &
+    ELLIPTICITY, &
+    GRAVITY,FULL_GRAVITY, &
+    ROTATION,TOPOGRAPHY,OCEANS, &
     ATTENUATION,USE_FULL_TISO_MANTLE
 
   use shared_compute_parameters, only: &
@@ -85,8 +87,12 @@
     MODEL_3D_MANTLE_PERTUBATIONS,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
     ATTENUATION_3D, ATTENUATION_GLL, &
     CEM_REQUEST, CEM_ACCEPT, &
+    EMC_MODEL, &
     NX_BATHY,NY_BATHY, &
     R_PLANET,R_PLANET_KM,R_DEEPEST_CRUST,REGIONAL_MOHO_MESH
+
+  ! infinite elements
+  use constants, only: ADD_TRINF
 
   implicit none
 
@@ -109,7 +115,20 @@
 
 ! main parameter module for specfem simulations
 
-  use constants
+  use constants, only: myrank,CUSTOM_REAL,IMAIN,ISTANDARD_OUTPUT,IOUT,OUTPUT_FILES_BASE, &
+    ZERO,TINYVAL,GRAV,R_UNIT_SPHERE,SIZE_REAL, &
+    NDIM,NGLLX,NGLLY,NGLLZ, &
+    NX_OBSERVATION,NY_OBSERVATION,NCHUNKS_MAX, &
+    NUMFACES_SHARED,NUMCORNERS_SHARED, &
+    MAX_NUM_REGIONS,NB_SQUARE_CORNERS,NB_SQUARE_EDGES_ONEDIR, &
+    USE_MESH_COLORING_GPU,MAX_NUMBER_OF_COLORS, &
+    GRAVITY_INTEGRALS, &
+    SUPPRESS_CRUSTAL_MESH,SUPPRESS_MOHO_STRETCHING,SUPPRESS_INTERNAL_TOPOGRAPHY, &
+    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
+    IREGION_TRINFINITE,IREGION_INFINITE, &
+    IFLAG_IN_FICTITIOUS_CUBE, &
+    THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI,THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA, &
+    THREE_D_MODEL_MANTLE_SH,THREE_D_MODEL_SPIRAL
 
   use shared_parameters
 
@@ -154,10 +173,6 @@
   double precision, dimension(NDIM,NDIM) :: rotation_matrix
   double precision :: ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
 
-  ! for some statistics for the mesh
-  integer :: numelem_crust_mantle,numelem_outer_core,numelem_inner_core
-  integer :: numelem_total
-
   ! timer MPI
   double precision :: time_start
 
@@ -180,6 +195,9 @@
              NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
              NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
              NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION
+
+  integer :: NSPEC_TRINFINITE_ADJOINT,NSPEC_INFINITE_ADJOINT, &
+             NGLOB_TRINFINITE_ADJOINT,NGLOB_INFINITE_ADJOINT
 
   integer :: NT_DUMP_ATTENUATION_optimal
 
@@ -374,6 +392,7 @@
   use constants, only: &
     CUSTOM_REAL,NDIM,IMAIN, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
+    IREGION_TRINFINITE,IREGION_INFINITE, &
     NUMFACES_SHARED,NB_SQUARE_EDGES_ONEDIR
 
   implicit none
@@ -428,7 +447,7 @@
   ! we use the same buffers to assemble scalars and vectors because vectors are
   ! always three times bigger and therefore scalars can use the first part
   ! of the vector buffer in memory even if it has an additional index here
-  integer :: npoin2D_max_all_CM_IC
+  integer :: npoin2D_max_all_buffer
 
   ! buffers for send and receive between corners of the chunks
   real(kind=CUSTOM_REAL), dimension(:),allocatable :: &
@@ -620,3 +639,115 @@
   integer,dimension(:),allocatable :: num_elem_colors_outer_core
 
   end module MPI_outer_core_par
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  module MPI_trinfinite_par
+
+  use constants, only: CUSTOM_REAL,NUMFACES_SHARED,NB_SQUARE_EDGES_ONEDIR
+
+  implicit none
+
+  !--------------------------------------
+  ! MPI infinite layer mesh
+  !--------------------------------------
+  integer :: num_interfaces_trinfinite
+  integer :: max_nibool_interfaces_trinfinite
+  integer, dimension(:), allocatable :: my_neighbors_trinfinite,nibool_interfaces_trinfinite
+  integer, dimension(:,:), allocatable :: ibool_interfaces_trinfinite
+
+  !--------------------------------------
+  ! infinite layer
+  !--------------------------------------
+  integer :: NSPEC_TRINFINITE
+  integer :: NGLOB_TRINFINITE
+
+  integer :: NGLOB1D_RADIAL_TRINF
+  integer :: NGLOB2DMAX_XMIN_XMAX_TRINF
+  integer :: NGLOB2DMAX_YMIN_YMAX_TRINF
+  integer :: NSPEC2DMAX_XMIN_XMAX_TRINF
+  integer :: NSPEC2DMAX_YMIN_YMAX_TRINF
+  integer :: NSPEC2D_BOTTOM_TRINF
+  integer :: NSPEC2D_TOP_TRINF
+
+  ! assembly
+  integer, dimension(NUMFACES_SHARED) :: npoin2D_faces_trinfinite
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_trinfinite,npoin2D_eta_trinfinite
+
+  ! indirect addressing for each corner of the chunks
+  integer, dimension(:,:),allocatable :: iboolcorner_trinfinite
+
+  ! 2-D addressing and buffers for summation between slices
+  integer, dimension(:),allocatable :: iboolleft_xi_trinfinite,iboolright_xi_trinfinite
+  integer, dimension(:),allocatable :: iboolleft_eta_trinfinite,iboolright_eta_trinfinite
+
+  integer, dimension(:,:),allocatable :: iboolfaces_trinfinite
+
+  ! inner / outer elements outer core region
+  integer :: num_phase_ispec_trinfinite
+  integer :: nspec_inner_trinfinite,nspec_outer_trinfinite
+  integer, dimension(:,:), allocatable :: phase_ispec_inner_trinfinite
+
+  ! mesh coloring
+  integer :: num_colors_outer_trinfinite,num_colors_inner_trinfinite
+  integer,dimension(:),allocatable :: num_elem_colors_trinfinite
+
+  end module MPI_trinfinite_par
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  module MPI_infinite_par
+
+  use constants, only: CUSTOM_REAL,NUMFACES_SHARED,NB_SQUARE_EDGES_ONEDIR
+
+  implicit none
+
+  !--------------------------------------
+  ! MPI infinite layer mesh
+  !--------------------------------------
+  integer :: num_interfaces_infinite
+  integer :: max_nibool_interfaces_infinite
+  integer, dimension(:), allocatable :: my_neighbors_infinite,nibool_interfaces_infinite
+  integer, dimension(:,:), allocatable :: ibool_interfaces_infinite
+
+  !--------------------------------------
+  ! infinite layer
+  !--------------------------------------
+  integer :: NSPEC_INFINITE
+  integer :: NGLOB_INFINITE
+
+  integer :: NGLOB1D_RADIAL_INF
+  integer :: NGLOB2DMAX_XMIN_XMAX_INF
+  integer :: NGLOB2DMAX_YMIN_YMAX_INF
+  integer :: NSPEC2DMAX_XMIN_XMAX_INF
+  integer :: NSPEC2DMAX_YMIN_YMAX_INF
+  integer :: NSPEC2D_BOTTOM_INF
+  integer :: NSPEC2D_TOP_INF
+
+  ! assembly
+  integer, dimension(NUMFACES_SHARED) :: npoin2D_faces_infinite
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_infinite,npoin2D_eta_infinite
+
+  ! indirect addressing for each corner of the chunks
+  integer, dimension(:,:),allocatable :: iboolcorner_infinite
+
+  ! 2-D addressing and buffers for summation between slices
+  integer, dimension(:),allocatable :: iboolleft_xi_infinite,iboolright_xi_infinite
+  integer, dimension(:),allocatable :: iboolleft_eta_infinite,iboolright_eta_infinite
+
+  integer, dimension(:,:),allocatable :: iboolfaces_infinite
+
+  ! inner / outer elements outer core region
+  integer :: num_phase_ispec_infinite
+  integer :: nspec_inner_infinite,nspec_outer_infinite
+  integer, dimension(:,:), allocatable :: phase_ispec_inner_infinite
+
+  ! mesh coloring
+  integer :: num_colors_outer_infinite,num_colors_inner_infinite
+  integer,dimension(:),allocatable :: num_elem_colors_infinite
+
+  end module MPI_infinite_par

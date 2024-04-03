@@ -76,6 +76,7 @@
   double precision :: A_dble,F_dble,L_dble,N_dble !,C_dble
 
   integer :: ispec,iglob,i_SLS,icount,icount_iso
+  integer :: count_glob,count_iso_glob
 
 #ifdef FORCE_VECTORIZATION
 ! in this vectorized version we have to assume that N_SLS == 3 in order to be able to unroll and thus suppress
@@ -349,9 +350,12 @@
 !$OMP ENDDO
 !$OMP END PARALLEL
 
+      ! stats
+      call sum_all_i(icount,count_glob)
+
       ! user output
       if (myrank == 0) then
-        write(IMAIN,*) "  aniso elements = ",icount
+        write(IMAIN,*) "  aniso elements = ",count_glob
         call flush_IMAIN()
       endif
       ! check
@@ -491,10 +495,14 @@
 !$OMP ENDDO
 !$OMP END PARALLEL
 
+    ! stats
+    call sum_all_i(icount,count_glob)
+    call sum_all_i(icount_iso,count_iso_glob)
+
     ! user output
     if (myrank == 0) then
-      write(IMAIN,*) "  tiso elements = ",icount
-      write(IMAIN,*) "  iso elements  = ",icount_iso
+      write(IMAIN,*) "  tiso elements = ",count_glob
+      write(IMAIN,*) "  iso elements  = ",count_iso_glob
       call flush_IMAIN()
     endif
     if (icount > NSPECMAX_TISO_MANTLE) stop 'Error invalid number of tiso elements in prepare_timerun_aniso'
@@ -631,9 +639,12 @@
 !$OMP ENDDO
 !$OMP END PARALLEL
 
+      ! stats
+      call sum_all_i(icount,count_glob)
+
       ! user output
       if (myrank == 0) then
-        write(IMAIN,*) "  aniso elements = ",icount
+        write(IMAIN,*) "  aniso elements = ",count_glob
         call flush_IMAIN()
       endif
     endif ! ATTENUATION
@@ -689,9 +700,12 @@
 !$OMP ENDDO
 !$OMP END PARALLEL
 
+      ! stats
+      call sum_all_i(icount_iso,count_iso_glob)
+
       ! user output
       if (myrank == 0) then
-        write(IMAIN,*) "  iso elements  = ",icount_iso
+        write(IMAIN,*) "  iso elements  = ",count_iso_glob
         call flush_IMAIN()
       endif
     endif ! ATTENUATION

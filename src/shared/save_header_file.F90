@@ -39,8 +39,11 @@
                               NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
                               NSPEC_CRUST_MANTLE_ADJOINT, &
                               NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
-                              NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
-                              NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
+                              NSPEC_TRINFINITE_ADJOINT,NSPEC_INFINITE_ADJOINT, &
+                              NGLOB_CRUST_MANTLE_ADJOINT, &
+                              NGLOB_OUTER_CORE_ADJOINT,NGLOB_INNER_CORE_ADJOINT, &
+                              NGLOB_TRINFINITE_ADJOINT,NGLOB_INFINITE_ADJOINT, &
+                              NSPEC_OUTER_CORE_ROT_ADJOINT, &
                               NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
                               NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION,NT_DUMP_ATTENUATION_optimal, &
                               PRINT_INFO_TO_SCREEN)
@@ -66,8 +69,8 @@
 
   use shared_parameters, only: TOPOGRAPHY, &
     TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-    ELLIPTICITY,GRAVITY,ROTATION, &
-    OCEANS,ATTENUATION,ATTENUATION_3D, &
+    ELLIPTICITY,GRAVITY,FULL_GRAVITY,ROTATION,OCEANS, &
+    ATTENUATION,ATTENUATION_3D, &
     ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
     INCLUDE_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES, &
     CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH, &
@@ -107,25 +110,22 @@
          NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
          NSPEC2D_MOHO, NSPEC2D_400, NSPEC2D_670, NSPEC2D_CMB, NSPEC2D_ICB
 
+  integer :: NSPEC_TRINFINITE_ADJOINT,NSPEC_INFINITE_ADJOINT, &
+             NGLOB_TRINFINITE_ADJOINT,NGLOB_INFINITE_ADJOINT
+
   integer :: NGLOB_XY_CM, NGLOB_XY_IC
 
   ! local parameters
   double precision :: subtract_central_cube_elems,subtract_central_cube_points
   ! for regional code
-  double precision :: x,y,gamma,rgt,xi,eta
-  double precision :: x_top,y_top,z_top
   double precision :: ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
-  ! rotation matrix from Euler angles
-  integer :: i,j,ix,iy,icorner
-  double precision :: rotation_matrix(3,3)
-  double precision :: vector_ori(3),vector_rotated(3)
-  double precision :: r_corner,theta_corner,phi_corner,lat,long,colat_corner
-  integer :: ier
+  double precision :: corners_lat(4),corners_lon(4)
+  integer :: ix,iy,icorner,ier
 
   integer :: num_elem_gc,num_gll_gc
   double precision :: avg_dist_deg,avg_dist_km,avg_element_size
 
-!! DK DK for UNDO_ATTENUATION
+  ! for UNDO_ATTENUATION
   integer :: saved_SIMULATION_TYPE
   integer :: number_of_dumpings_to_do
   double precision :: static_memory_size_GB,size_to_store_at_each_time_step,disk_size_of_each_dumping
@@ -156,8 +156,11 @@
                    NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
                    NSPEC_CRUST_MANTLE_ADJOINT, &
                    NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
-                   NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
-                   NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
+                   NSPEC_TRINFINITE_ADJOINT,NSPEC_INFINITE_ADJOINT, &
+                   NGLOB_CRUST_MANTLE_ADJOINT, &
+                   NGLOB_OUTER_CORE_ADJOINT,NGLOB_INNER_CORE_ADJOINT, &
+                   NGLOB_TRINFINITE_ADJOINT,NGLOB_INFINITE_ADJOINT, &
+                   NSPEC_OUTER_CORE_ROT_ADJOINT, &
                    NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
                    NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
                    NSPEC2D_BOTTOM,NSPEC2D_TOP,static_memory_size)
@@ -182,8 +185,11 @@
                    NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
                    NSPEC_CRUST_MANTLE_ADJOINT, &
                    NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
-                   NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
-                   NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
+                   NSPEC_TRINFINITE_ADJOINT,NSPEC_INFINITE_ADJOINT, &
+                   NGLOB_CRUST_MANTLE_ADJOINT, &
+                   NGLOB_OUTER_CORE_ADJOINT,NGLOB_INNER_CORE_ADJOINT, &
+                   NGLOB_TRINFINITE_ADJOINT,NGLOB_INFINITE_ADJOINT, &
+                   NSPEC_OUTER_CORE_ROT_ADJOINT, &
                    NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
                    NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
                    NSPEC2D_BOTTOM,NSPEC2D_TOP,static_memory_size)
@@ -215,7 +221,7 @@
       print *
     endif
     print *,'on NEC SX, make sure "loopcnt=" parameter'
-! use fused loops on NEC SX
+    ! use fused loops on NEC SX
     print *,'in Makefile is greater than max vector length = ',NGLOB_REGIONS(IREGION_CRUST_MANTLE) * NDIM
     print *
 
@@ -316,7 +322,7 @@
   write(IOUT,*) '! number of chunks = ',NCHUNKS
   write(IOUT,*) '!'
 
-! the central cube is counted 6 times, therefore remove 5 times
+  ! the central cube is counted 6 times, therefore remove 5 times
   if (INCLUDE_CENTRAL_CUBE) then
     write(IOUT,*) '! these statistics include the central cube'
     subtract_central_cube_elems = 5.d0 * dble((NEX_XI/8))**3
@@ -332,7 +338,7 @@
   write(IOUT,*) '!'
   write(IOUT,*) '! maximum number of points per region = ',NGLOB_REGIONS(IREGION_CRUST_MANTLE)
   write(IOUT,*) '!'
-! use fused loops on NEC SX
+  ! use fused loops on NEC SX
   write(IOUT,*) '! on NEC SX, make sure "loopcnt=" parameter'
   write(IOUT,*) '! in Makefile is greater than max vector length = ',NGLOB_REGIONS(IREGION_CRUST_MANTLE) * NDIM
   write(IOUT,*) '!'
@@ -351,18 +357,14 @@
   write(IOUT,*) '! ',dble(NCHUNKS)*dble(NPROC)*dble(sum(NSPEC_REGIONS)) - subtract_central_cube_elems
   write(IOUT,*) '! approximate total number of points in entire mesh = '
   write(IOUT,*) '! ',dble(NCHUNKS)*dble(NPROC)*dble(sum(NGLOB_REGIONS)) - subtract_central_cube_points
-! there are 3 DOFs in solid regions, but only 1 in fluid outer core
+  ! there are 3 DOFs in solid regions, but only 1 in fluid outer core
   write(IOUT,*) '! approximate total number of degrees of freedom in entire mesh = '
   write(IOUT,*) '! ',dble(NCHUNKS)*dble(NPROC)*(3.d0*(dble(sum(NGLOB_REGIONS))) &
     - 2.d0*dble(NGLOB_REGIONS(IREGION_OUTER_CORE))) &
     - 3.d0*subtract_central_cube_points
   write(IOUT,*) '!'
 
-! convert width to radians
-  ANGULAR_WIDTH_XI_RAD = ANGULAR_WIDTH_XI_IN_DEGREES * DEGREES_TO_RADIANS
-  ANGULAR_WIDTH_ETA_RAD = ANGULAR_WIDTH_ETA_IN_DEGREES * DEGREES_TO_RADIANS
-
-! display location of chunk if regional run
+  ! display location of chunk if regional run
   if (NCHUNKS /= 6) then
 
     write(IOUT,*) '! position of the mesh chunk at the surface:'
@@ -376,68 +378,31 @@
     write(IOUT,*) '!'
     write(IOUT,*) '! angle of rotation of the first chunk = ',sngl(GAMMA_ROTATION_AZIMUTH)
 
-! compute rotation matrix from Euler angles
-    call euler_angles(rotation_matrix,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH)
+    call determine_chunk_corners_latlon(CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH, &
+                                        ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES, &
+                                        corners_lat,corners_lon)
 
-! loop on the four corners of the chunk to display their coordinates
+    ! loop on the four corners of the chunk to display their coordinates
     icorner = 0
     do iy = 0,1
       do ix = 0,1
+        icorner = icorner + 1
 
-      icorner = icorner + 1
-
-      xi  = - ANGULAR_WIDTH_XI_RAD/2.  + dble(ix)*ANGULAR_WIDTH_XI_RAD
-      eta = - ANGULAR_WIDTH_ETA_RAD/2. + dble(iy)*ANGULAR_WIDTH_ETA_RAD
-
-      x = dtan(xi)
-      y = dtan(eta)
-
-      gamma = ONE/dsqrt(ONE+x*x+y*y)
-      rgt = R_UNIT_SPHERE*gamma
-
-      ! define the mesh points at the top surface
-      x_top = -y*rgt
-      y_top = x*rgt
-      z_top = rgt
-
-      ! rotate top
-      vector_ori(1) = x_top
-      vector_ori(2) = y_top
-      vector_ori(3) = z_top
-      do i=1,3
-        vector_rotated(i)=0.0d0
-        do j=1,3
-          vector_rotated(i)=vector_rotated(i)+rotation_matrix(i,j)*vector_ori(j)
-        enddo
-      enddo
-      x_top = vector_rotated(1)
-      y_top = vector_rotated(2)
-      z_top = vector_rotated(3)
-
-      ! convert to latitude and longitude
-      call xyz_2_rthetaphi_dble(x_top,y_top,z_top,r_corner,theta_corner,phi_corner)
-      call reduce(theta_corner,phi_corner)
-
-      ! convert geocentric to geographic colatitude
-      call geocentric_2_geographic_dble(theta_corner,colat_corner)
-
-      if (phi_corner > PI) phi_corner=phi_corner-TWO_PI
-
-      ! compute real position of the source
-      lat = (PI_OVER_TWO-colat_corner)*RADIANS_TO_DEGREES
-      long = phi_corner*RADIANS_TO_DEGREES
-
-      write(IOUT,*) '!'
-      write(IOUT,*) '! corner ',icorner
-      write(IOUT,*) '! longitude in degrees = ',long
-      write(IOUT,*) '! latitude in degrees = ',lat
-
+        ! real position of the corner points
+        write(IOUT,*) '!'
+        write(IOUT,*) '! corner ',icorner
+        write(IOUT,*) '! longitude in degrees = ',corners_lon(icorner)
+        write(IOUT,*) '! latitude in degrees = ',corners_lat(icorner)
       enddo
     enddo
 
     write(IOUT,*) '!'
 
   endif  ! regional chunk
+
+  ! convert width to radians
+  ANGULAR_WIDTH_XI_RAD = ANGULAR_WIDTH_XI_IN_DEGREES * DEGREES_TO_RADIANS
+  ANGULAR_WIDTH_ETA_RAD = ANGULAR_WIDTH_ETA_IN_DEGREES * DEGREES_TO_RADIANS
 
   ! mesh averages
   if (NCHUNKS /= 6) then
@@ -512,10 +477,14 @@
   write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE = ',NSPEC_REGIONS(IREGION_CRUST_MANTLE)
   write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE = ',NSPEC_REGIONS(IREGION_OUTER_CORE)
   write(IOUT,*) 'integer, parameter :: NSPEC_INNER_CORE = ',NSPEC_REGIONS(IREGION_INNER_CORE)
+  write(IOUT,*) 'integer, parameter :: NSPEC_TRINFINITE = ',NSPEC_REGIONS(IREGION_TRINFINITE)
+  write(IOUT,*) 'integer, parameter :: NSPEC_INFINITE = ',NSPEC_REGIONS(IREGION_INFINITE)
   write(IOUT,*)
   write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE = ',NGLOB_REGIONS(IREGION_CRUST_MANTLE)
   write(IOUT,*) 'integer, parameter :: NGLOB_OUTER_CORE = ',NGLOB_REGIONS(IREGION_OUTER_CORE)
   write(IOUT,*) 'integer, parameter :: NGLOB_INNER_CORE = ',NGLOB_REGIONS(IREGION_INNER_CORE)
+  write(IOUT,*) 'integer, parameter :: NGLOB_TRINFINITE = ',NGLOB_REGIONS(IREGION_TRINFINITE)
+  write(IOUT,*) 'integer, parameter :: NGLOB_INFINITE = ',NGLOB_REGIONS(IREGION_INFINITE)
   write(IOUT,*)
 
   write(IOUT,*) 'integer, parameter :: NSPECMAX_ANISO_IC = ',NSPECMAX_ANISO_IC
@@ -545,6 +514,9 @@
   write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT = ',NSPEC_CRUST_MANTLE_ADJOINT
   write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_ADJOINT = ',NSPEC_OUTER_CORE_ADJOINT
   write(IOUT,*) 'integer, parameter :: NSPEC_INNER_CORE_ADJOINT = ',NSPEC_INNER_CORE_ADJOINT
+  write(IOUT,*) 'integer, parameter :: NSPEC_TRINFINITE_ADJOINT = ',NSPEC_TRINFINITE_ADJOINT
+  write(IOUT,*) 'integer, parameter :: NSPEC_INFINITE_ADJOINT = ',NSPEC_INFINITE_ADJOINT
+  write(IOUT,*)
 
   ! unused... (dynamic allocation used)
   !if (ANISOTROPIC_KL) then
@@ -570,6 +542,9 @@
   write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE_ADJOINT = ',NGLOB_CRUST_MANTLE_ADJOINT
   write(IOUT,*) 'integer, parameter :: NGLOB_OUTER_CORE_ADJOINT = ',NGLOB_OUTER_CORE_ADJOINT
   write(IOUT,*) 'integer, parameter :: NGLOB_INNER_CORE_ADJOINT = ',NGLOB_INNER_CORE_ADJOINT
+  write(IOUT,*) 'integer, parameter :: NGLOB_TRINFINITE_ADJOINT = ',NGLOB_TRINFINITE_ADJOINT
+  write(IOUT,*) 'integer, parameter :: NGLOB_INFINITE_ADJOINT = ',NGLOB_INFINITE_ADJOINT
+  write(IOUT,*)
 
   write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_ROT_ADJOINT = ',NSPEC_OUTER_CORE_ROT_ADJOINT
   write(IOUT,*)
@@ -632,6 +607,13 @@
   endif
   write(IOUT,*)
 
+  if (FULL_GRAVITY) then
+    write(IOUT,*) 'logical, parameter :: FULL_GRAVITY_VAL = .true.'
+  else
+    write(IOUT,*) 'logical, parameter :: FULL_GRAVITY_VAL = .false.'
+  endif
+  write(IOUT,*)
+
   if (OCEANS) then
     write(IOUT,*) 'logical, parameter :: OCEANS_VAL = .true.'
   else
@@ -686,16 +668,31 @@
   write(IOUT,*) 'integer, parameter :: NSPEC2DMAX_YMIN_YMAX_CM = ',NSPEC2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)
   write(IOUT,*) 'integer, parameter :: NSPEC2D_BOTTOM_CM = ',NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE)
   write(IOUT,*) 'integer, parameter :: NSPEC2D_TOP_CM = ',NSPEC2D_TOP(IREGION_CRUST_MANTLE)
+  write(IOUT,*)
 
   write(IOUT,*) 'integer, parameter :: NSPEC2DMAX_XMIN_XMAX_IC = ',NSPEC2DMAX_XMIN_XMAX(IREGION_INNER_CORE)
   write(IOUT,*) 'integer, parameter :: NSPEC2DMAX_YMIN_YMAX_IC = ',NSPEC2DMAX_YMIN_YMAX(IREGION_INNER_CORE)
   write(IOUT,*) 'integer, parameter :: NSPEC2D_BOTTOM_IC = ',NSPEC2D_BOTTOM(IREGION_INNER_CORE)
   write(IOUT,*) 'integer, parameter :: NSPEC2D_TOP_IC = ',NSPEC2D_TOP(IREGION_INNER_CORE)
+  write(IOUT,*)
 
   write(IOUT,*) 'integer, parameter :: NSPEC2DMAX_XMIN_XMAX_OC = ',NSPEC2DMAX_XMIN_XMAX(IREGION_OUTER_CORE)
   write(IOUT,*) 'integer, parameter :: NSPEC2DMAX_YMIN_YMAX_OC = ',NSPEC2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)
   write(IOUT,*) 'integer, parameter :: NSPEC2D_BOTTOM_OC = ',NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
   write(IOUT,*) 'integer, parameter :: NSPEC2D_TOP_OC = ',NSPEC2D_TOP(IREGION_OUTER_CORE)
+  write(IOUT,*)
+
+  write(IOUT,*) 'integer, parameter :: NSPEC2DMAX_XMIN_XMAX_TRINF = ',NSPEC2DMAX_XMIN_XMAX(IREGION_TRINFINITE)
+  write(IOUT,*) 'integer, parameter :: NSPEC2DMAX_YMIN_YMAX_TRINF = ',NSPEC2DMAX_YMIN_YMAX(IREGION_TRINFINITE)
+  write(IOUT,*) 'integer, parameter :: NSPEC2D_BOTTOM_TRINF = ',NSPEC2D_BOTTOM(IREGION_TRINFINITE)
+  write(IOUT,*) 'integer, parameter :: NSPEC2D_TOP_TRINF = ',NSPEC2D_TOP(IREGION_TRINFINITE)
+  write(IOUT,*)
+
+  write(IOUT,*) 'integer, parameter :: NSPEC2DMAX_XMIN_XMAX_INF = ',NSPEC2DMAX_XMIN_XMAX(IREGION_INFINITE)
+  write(IOUT,*) 'integer, parameter :: NSPEC2DMAX_YMIN_YMAX_INF = ',NSPEC2DMAX_YMIN_YMAX(IREGION_INFINITE)
+  write(IOUT,*) 'integer, parameter :: NSPEC2D_BOTTOM_INF = ',NSPEC2D_BOTTOM(IREGION_INFINITE)
+  write(IOUT,*) 'integer, parameter :: NSPEC2D_TOP_INF = ',NSPEC2D_TOP(IREGION_INFINITE)
+  write(IOUT,*)
 
   ! for boundary kernels
 
@@ -831,7 +828,7 @@
   if (UNDO_ATTENUATION) then
     if (MEMORY_INSTALLED_PER_CORE_IN_GB < 0.1d0) &
          stop 'less than 100 MB per core for MEMORY_INSTALLED_PER_CORE_IN_GB does not seem realistic; exiting...'
-!! DK DK the value below will probably need to be increased one day, on future machines
+    ! the value below will probably need to be increased one day, on future machines
     if (MEMORY_INSTALLED_PER_CORE_IN_GB > 512.d0) &
          stop 'more than 512 GB per core for MEMORY_INSTALLED_PER_CORE_IN_GB does not seem realistic; exiting...'
 
@@ -839,8 +836,8 @@
          stop 'less than 50% for PERCENT_OF_MEM_TO_USE_PER_CORE does not seem realistic; exiting...'
     if (PERCENT_OF_MEM_TO_USE_PER_CORE > 100.d0) &
          stop 'more than 100% for PERCENT_OF_MEM_TO_USE_PER_CORE makes no sense; exiting...'
-!! DK DK will need to remove the .and. .not. GPU_MODE test here
-!! DK DK if the undo_attenuation buffers are stored on the GPU instead of on the host
+    ! will need to remove the .and. .not. GPU_MODE test here
+    ! if the undo_attenuation buffers are stored on the GPU instead of on the host
     if (PERCENT_OF_MEM_TO_USE_PER_CORE > 92.d0 .and. .not. GPU_MODE) &
          stop 'more than 92% for PERCENT_OF_MEM_TO_USE_PER_CORE when not using GPUs is risky; exiting...'
   endif
@@ -850,9 +847,9 @@
   ! convert static memory size to GB
   static_memory_size_GB = static_memory_size / 1024.d0 / 1024.d0 / 1024.d0
 
-!! DK DK June 2014: TODO  this comment is true but the statement is commented out for now
-!! DK DK June 2014: TODO  because there is no GPU support for UNDO_ATTENUATION yet
-!! DK DK June 2014:
+! June 2014: TODO  this comment is true but the statement is commented out for now
+! June 2014: TODO  because there is no GPU support for UNDO_ATTENUATION yet
+! June 2014:
 ! in the case of GPUs, the buffers remain on the host i.e. on the CPU, thus static_memory_size_GB could be set to zero here
 ! because the solver uses almost no permanent host memory, since all calculations are performed and stored on the device;
 ! however we prefer not to do that here because we probably have some temporary copies of all the arrays created on the host first,
@@ -941,7 +938,7 @@
   ! convert to GB
   disk_size_of_each_dumping = disk_size_of_each_dumping / 1024.d0 / 1024.d0 / 1024.d0
 
-!! DK DK this formula could be made more precise; currently in some cases it can probably be off by +1 or -1; does not matter much
+  ! this formula could be made more precise; currently in some cases it can probably be off by +1 or -1; does not matter much
   number_of_dumpings_to_do = ceiling( dble(NSTEP)/dble(NT_DUMP_ATTENUATION_optimal) )
 
   end subroutine compute_optimized_dumping

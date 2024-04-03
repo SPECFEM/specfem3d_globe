@@ -188,7 +188,8 @@
 
   use shared_parameters, only: R_PLANET
 
-  use specfem_par, only: myrank, NEX_XI
+  use specfem_par, only: myrank, &
+    NCHUNKS_VAL,NEX_XI_VAL,NEX_ETA_VAL,ANGULAR_WIDTH_XI_IN_DEGREES_VAL,ANGULAR_WIDTH_ETA_IN_DEGREES_VAL
 
   use specfem_par_crustmantle, only: kl_reg_grid_variables
 
@@ -222,13 +223,14 @@
   integer :: ispec_in, ispec, iter_loop, ia, ipoint
   double precision :: lat, lon, radius, th, ph, x,y,z
   double precision :: x_target, y_target, z_target
-  double precision :: distmin_squared,dist_squared,typical_size_squared
+  double precision :: distmin_squared,dist_squared
+  double precision :: typical_size_squared,element_size
   double precision :: xi,eta,gamma,dx,dy,dz,dxi,deta,dgamma
   double precision :: xix,xiy,xiz
   double precision :: etax,etay,etaz
   double precision :: gammax,gammay,gammaz
-
-  logical locate_target
+  double precision :: ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
+  logical :: locate_target
   double precision, dimension(NGNOD) :: xelm, yelm, zelm
 
   double precision, dimension(NGLLX) :: hxir
@@ -240,10 +242,19 @@
   call hex_nodes_anchor_ijk(anchor_iax,anchor_iay,anchor_iaz)
 
   ! compute typical size of elements at the surface
-  typical_size_squared = TWO_PI * R_UNIT_SPHERE / (4.0 * NEX_XI)
+  ! (normalized)
+  if (NCHUNKS_VAL == 6) then
+    ! estimation for global meshes (assuming 90-degree chunks)
+    element_size = TWO_PI * R_UNIT_SPHERE / (4.d0 * NEX_XI_VAL)
+  else
+    ! estimation for 1-chunk meshes
+    ANGULAR_WIDTH_XI_RAD = ANGULAR_WIDTH_XI_IN_DEGREES_VAL * DEGREES_TO_RADIANS
+    ANGULAR_WIDTH_ETA_RAD = ANGULAR_WIDTH_ETA_IN_DEGREES_VAL * DEGREES_TO_RADIANS
+    element_size = max( ANGULAR_WIDTH_XI_RAD/NEX_XI_VAL,ANGULAR_WIDTH_ETA_RAD/NEX_ETA_VAL ) * R_UNIT_SPHERE
+  endif
 
-  ! use 10 times the distance as a criterion for source detection
-  typical_size_squared = (10.0 * typical_size_squared)**2
+  ! use 10 times the distance as a criterion for point detections
+  typical_size_squared = (10.d0 * element_size)**2
 
   do ipoint = 1, npoints_slice_reg
     isp = points_slice_reg(ipoint)
@@ -426,7 +437,7 @@
   real, intent(out) :: xi, eta
 
   real :: x, y, z
-  real, parameter :: EPS=1e-6
+  real, parameter :: EPS = 1e-6
 
   x = xx; y = yy; z = zz
   if (0 <= x .and. x < EPS)  x = EPS

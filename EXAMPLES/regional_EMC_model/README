@@ -1,0 +1,39 @@
+----------------------------------------------------------
+README
+----------------------------------------------------------
+
+This example creates a regional, local mesh with a cut-off depth at 200 km.
+It uses an IRIS EMC model for Alaska, embedded into the isotropic PREM background model.
+
+The simulation is setup to use 4 CPUs only, thus can be run locally on a desktop machine
+(needs to have MPI installed).
+
+0. model setup:
+---------------
+
+Please check out the README.md file in the DATA/IRIS_EMC/ folder.
+
+This example is supposed to run with the Alaska EMC model:
+* Alaska.JointInversion-RF+Vph+HV-1.Berg.2020-nc4.nc
+  https://ds.iris.edu/ds/products/emc-alaskajointinversion_rfvphhv-1berg2020/
+
+You will need to download the model file and rename it (or create a symbolic link), to be found as "DATA/IRIS_EMC/model.nc".
+
+
+1. forward simulation:
+----------------------
+
+Make sure you compile the code with NetCDF support. This can be done by configuring with flag `--with-emc` or `--with-netcdf` and 
+corresponding flags (see configure --help).
+For example:
+./configure --with-netcdf NETCDF_INC=/opt/local/include NETCDF_LIBS="-L/opt/local/lib -lnetcdff"
+
+
+To run the simulation, type:
+./run_this_example.sh
+
+to setup this directory for the simulation and to run a corresponding script "run_mesher_solver.bash".
+Reference seismograms for comparisons are provided in the directory: REF_SEIS/
+
+Please modify these scripts according to your specifics.
+

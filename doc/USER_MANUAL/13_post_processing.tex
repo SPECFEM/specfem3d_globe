@@ -30,7 +30,7 @@ made. For such comparisons, the following steps are recommended:\newline
 
 \begin{enumerate}
 \item Make sure that both synthetic and observed seismograms have the correct station/event and timing information.
-\item Convolve synthetic seismograms with a source time function with the half duration specified in the \texttt{CMTSOLUTION} file, provided, as recommended, you used a zero half duration in the SEM simulations.
+\item Convolve synthetic seismograms with a source-time function with the half duration specified in the \texttt{CMTSOLUTION} file, provided, as recommended, you used a zero half duration in the SEM simulations.
 \item Resample both observed and synthetic seismograms to a common sampling rate.
 \item Cut the records using the same window.
 \item Remove the trend and mean from the records and taper them.
@@ -88,7 +88,7 @@ to the file names.\newline
 
 More options are available for this script, such as adding a time shift
 to the origin time of the synthetics, convolving the synthetics with
-a triangular source time function with a given half duration, etc.
+a triangular source-time function with a given half duration, etc.
 Type \texttt{process\_syn.pl} without any argument for detailed
 usage.
 
@@ -123,7 +123,7 @@ to \texttt{.true.} in the parameter file \texttt{DATA/Par\_file}.
 
 Note: You need to have the \texttt{sismoutil-0.9b} package installed
 on your computer if you want to run this script on binary SAC files.
-The software is available via the ORFEUS web site \urlwithparentheses{http://www.orfeus-eu.org}.\newline
+The software is available via the \href{http://www.orfeus-eu.org}{ORFEUS web site}.\newline
 
 
 In case the simulation crashes during run-time without computing and

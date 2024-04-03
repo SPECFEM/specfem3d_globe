@@ -27,42 +27,41 @@
 
 
   subroutine setup_counters(NSPEC1D_RADIAL,NSPEC2D_XI,NSPEC2D_ETA,NGLOB1D_RADIAL, &
-                        DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA, &
-                        CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
-                        NPROCTOT,iproc_xi_slice,iproc_eta_slice, &
-                        NSPEC1D_RADIAL_CORNER,NSPEC2D_XI_FACE, &
-                        NSPEC2D_ETA_FACE,NGLOB1D_RADIAL_CORNER)
+                            DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA, &
+                            CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
+                            NPROCTOT,iproc_xi_slice,iproc_eta_slice, &
+                            NSPEC1D_RADIAL_CORNER,NSPEC2D_XI_FACE, &
+                            NSPEC2D_ETA_FACE,NGLOB1D_RADIAL_CORNER)
 
-! returns: NSPEC1D_RADIAL_CORNER,NSPEC2D_XI_FACE,
-!              NSPEC2D_ETA_FACE,NGLOB1D_RADIAL_CORNER
+! returns: NSPEC1D_RADIAL_CORNER, NGLOB1D_RADIAL_CORNER, NSPEC2D_XI_FACE, NSPEC2D_ETA_FACE
 
   use constants
 
   implicit none
 
-! this for all the regions
-  integer, dimension(MAX_NUM_REGIONS) :: NSPEC2D_XI,NSPEC2D_ETA, &
-                                         NSPEC1D_RADIAL,NGLOB1D_RADIAL
+  ! this for all the regions
+  integer, dimension(MAX_NUM_REGIONS), intent(in) :: NSPEC2D_XI,NSPEC2D_ETA, &
+                                                     NSPEC1D_RADIAL,NGLOB1D_RADIAL
 
-  integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
-  integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
+  integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE), intent(in) :: DIFF_NSPEC1D_RADIAL
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE), intent(in) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
 
   ! addressing for all the slices
-  integer :: NPROCTOT
-  integer, dimension(0:NPROCTOT-1) :: iproc_xi_slice,iproc_eta_slice
+  integer, intent(in) :: NPROCTOT
+  integer, dimension(0:NPROCTOT-1), intent(in) :: iproc_xi_slice,iproc_eta_slice
 
-  logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
+  logical, intent(in) :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
 
-! this for the different corners of the slice (which are different if the superbrick is cut)
-! 1 : xi_min, eta_min
-! 2 : xi_max, eta_min
-! 3 : xi_max, eta_max
-! 4 : xi_min, eta_max
-  integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: &
+  ! this for the different corners of the slice (which are different if the superbrick is cut)
+  ! 1 : xi_min, eta_min
+  ! 2 : xi_max, eta_min
+  ! 3 : xi_max, eta_max
+  ! 4 : xi_min, eta_max
+  integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS),intent(out) :: &
     NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER
-! 1 -> min, 2 -> max
-  integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_EDGES_ONEDIR) :: NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE
 
+  ! 1 -> min, 2 -> max
+  integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_EDGES_ONEDIR), intent(out) :: NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE
 
   ! local parameters
   integer :: iregion
@@ -74,6 +73,7 @@
     NGLOB1D_RADIAL_CORNER(iregion,:) = NGLOB1D_RADIAL(iregion)
   enddo
 
+  ! special cases for outer core
   if (CUT_SUPERBRICK_XI) then
     if (CUT_SUPERBRICK_ETA) then
       if (mod(iproc_xi_slice(myrank),2) == 0) then

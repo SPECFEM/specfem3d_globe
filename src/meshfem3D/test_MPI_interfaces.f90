@@ -27,15 +27,19 @@
 
 
   subroutine test_MPI_neighbors(iregion_code, &
-                                 num_interfaces,max_nibool_interfaces, &
-                                 my_neighbors,nibool_interfaces, &
-                                 ibool_interfaces)
+                                num_interfaces,max_nibool_interfaces, &
+                                my_neighbors,nibool_interfaces, &
+                                ibool_interfaces)
 
   use constants
   use meshfem_par, only: NPROCTOT,myrank
+
   use MPI_crust_mantle_par, only: NGLOB_CRUST_MANTLE
   use MPI_outer_core_par, only: NGLOB_OUTER_CORE
   use MPI_inner_core_par, only: NGLOB_INNER_CORE
+
+  use MPI_trinfinite_par, only: NGLOB_TRINFINITE
+  use MPI_infinite_par, only: NGLOB_INFINITE
 
   implicit none
 
@@ -81,9 +85,16 @@
   case (IREGION_INNER_CORE)
     allocate(mask(NGLOB_INNER_CORE),stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating mask for testing MPI neighbors')
+  case (IREGION_TRINFINITE)
+    allocate(mask(NGLOB_TRINFINITE),stat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating mask for testing MPI neighbors')
+  case (IREGION_INFINITE)
+    allocate(mask(NGLOB_INFINITE),stat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating mask for testing MPI neighbors')
   case default
     call exit_mpi(myrank,'Error test MPI: iregion_code not recognized')
   end select
+  mask(:) = .false.
 
   ! test ibool entries
   ! (must be non-zero and unique)
@@ -129,11 +140,15 @@
   ! gets maximum interfaces from all processes
   call max_all_i(num_interfaces,max_num)
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  maximum interfaces:',max_num
+    call flush_IMAIN()
+  endif
+  call synchronize_all()
+
   ! main gathers info
   if (myrank == 0) then
-    ! user output
-    write(IMAIN,*) '  maximum interfaces:',max_num
-
     ! array for gathering info
     allocate(test_interfaces(max_num,0:NPROCTOT),stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating test_interfaces')
@@ -325,7 +340,7 @@
   ! checks within slice
   if (i /= num_unique) then
     print *,'Error test crust mantle : rank',myrank,'unique MPI points:',i,num_unique
-    call exit_mpi(myrank,'Error MPI assembly crust mantle')
+    call exit_mpi(myrank,'Error MPI assembly unique points crust mantle')
   endif
 
   ! total number of assembly points
@@ -336,7 +351,7 @@
     ! checks
     if (inum /= icount) then
       print *,'Error crust mantle : total MPI points:',myrank,'total: ',inum,icount
-      call exit_mpi(myrank,'Error MPI assembly crust mantle')
+      call exit_mpi(myrank,'Error MPI assembly total points crust mantle')
     endif
 
     ! user output
@@ -404,6 +419,7 @@
     write(IMAIN,*) '  total MPI interface points : ',inum
     write(IMAIN,*) '  unique MPI interface points: ',icount
     write(IMAIN,*) '  maximum valence            : ',max_valence
+    call flush_IMAIN()
   endif
 
   ! initialized for assembly
@@ -436,7 +452,7 @@
   ! checks within slice
   if (i /= num_unique) then
     print *,'Error test outer core : rank',myrank,'unique MPI points:',i,num_unique
-    call exit_mpi(myrank,'Error MPI assembly outer core')
+    call exit_mpi(myrank,'Error MPI assembly unique points outer core')
   endif
   call sum_all_i(i,inum)
 
@@ -445,7 +461,7 @@
     ! checks
     if (inum /= icount) then
       print *,'Error outer core : total MPI points:',myrank,'total: ',inum,icount
-      call exit_mpi(myrank,'Error MPI assembly outer_core')
+      call exit_mpi(myrank,'Error MPI assembly total points outer_core')
     endif
 
     ! user output
@@ -515,6 +531,7 @@
     write(IMAIN,*) '  total MPI interface points : ',inum
     write(IMAIN,*) '  unique MPI interface points: ',icount
     write(IMAIN,*) '  maximum valence            : ',max_valence
+    call flush_IMAIN()
   endif
 
   ! initializes for assembly
@@ -549,7 +566,7 @@
   ! checks within slice
   if (i /= num_unique) then
     print *,'Error test inner core : rank',myrank,'unique MPI points:',i,num_unique
-    call exit_mpi(myrank,'Error MPI assembly inner core')
+    call exit_mpi(myrank,'Error MPI assembly unique points inner core')
   endif
   call sum_all_i(i,inum)
 
@@ -557,7 +574,7 @@
     ! checks
     if (inum /= icount) then
       print *,'Error inner core : total MPI points:',myrank,'total: ',inum,icount
-      call exit_mpi(myrank,'Error MPI assembly inner core')
+      call exit_mpi(myrank,'Error MPI assembly total points inner core')
     endif
 
     ! user output
@@ -572,3 +589,223 @@
   call synchronize_all()
 
   end subroutine test_MPI_ic
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine test_MPI_trinf()
+
+  use meshfem_par, only: NPROCTOT,myrank
+
+  use MPI_interfaces_par
+  use MPI_trinfinite_par
+
+  implicit none
+
+  ! local parameters
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag
+  integer :: i,j,iglob,ier
+  integer :: inum,icount
+  integer :: max_valence,num_unique
+  integer,dimension(:),allocatable :: valence
+
+  ! transition infinite region
+  allocate(test_flag(NGLOB_TRINFINITE),stat=ier)
+  if (ier /= 0 ) stop 'Error allocating array test_flag transition infinite region'
+  allocate(valence(NGLOB_TRINFINITE),stat=ier)
+  if (ier /= 0 ) stop 'Error allocating array valence'
+
+  ! points defined by interfaces
+  valence(:) = 0
+  test_flag = 0.0
+  do i = 1,num_interfaces_trinfinite
+    do j = 1,nibool_interfaces_trinfinite(i)
+      iglob = ibool_interfaces_trinfinite(j,i)
+      test_flag(iglob) = 1.0_CUSTOM_REAL
+      ! counts valence (occurrences)
+      valence(iglob) = valence(iglob) + 1
+    enddo
+  enddo
+
+  i = sum(nibool_interfaces_trinfinite)
+  call sum_all_i(i,inum)
+
+  i = nint( sum(test_flag) )
+  num_unique = i
+  call sum_all_i(i,icount)
+
+  ! maximum valence
+  i = maxval( valence(:) )
+  call max_all_i(i,max_valence)
+
+  if (myrank == 0) then
+    write(IMAIN,*) '  total MPI interface points : ',inum
+    write(IMAIN,*) '  unique MPI interface points: ',icount
+    write(IMAIN,*) '  maximum valence            : ',max_valence
+    call flush_IMAIN()
+  endif
+
+  ! initialized for assembly
+  test_flag(:) = 1.0_CUSTOM_REAL
+
+  ! adds contributions from different partitions to flag arrays
+  call assemble_MPI_scalar(NPROCTOT,NGLOB_TRINFINITE, &
+                           test_flag, &
+                           num_interfaces_trinfinite,max_nibool_interfaces_trinfinite, &
+                           nibool_interfaces_trinfinite,ibool_interfaces_trinfinite, &
+                           my_neighbors_trinfinite)
+
+  ! removes initial flag
+  test_flag(:) = test_flag(:) - 1.0_CUSTOM_REAL
+
+  ! checks number of interface points
+  i = 0
+  do iglob = 1,NGLOB_TRINFINITE
+    ! only counts flags with MPI contributions
+    if (test_flag(iglob) > 0.0 ) i = i + 1
+
+    ! checks valence
+    if (valence(iglob) /= nint(test_flag(iglob))) then
+      print *,'Error test MPI: rank',myrank,'valence:',valence(iglob),'flag:',test_flag(iglob)
+      call exit_mpi(myrank,'Error test transition infinite valence')
+    endif
+  enddo
+
+  ! checks within slice
+  if (i /= num_unique) then
+    print *,'Error test transition infinite : rank',myrank,'unique MPI points:',i,num_unique
+    call exit_mpi(myrank,'Error MPI assembly unique points transition infinite region')
+  endif
+  call sum_all_i(i,inum)
+
+  ! output
+  if (myrank == 0) then
+    ! checks
+    if (inum /= icount) then
+      print *,'Error test transition infinite : total MPI points:',myrank,'total: ',inum,icount
+      call exit_mpi(myrank,'Error MPI assembly total points transition infinite region')
+    endif
+
+    ! user output
+    write(IMAIN,*) '  total assembled MPI interface points:',inum
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  deallocate(test_flag)
+  deallocate(valence)
+
+  call synchronize_all()
+
+  end subroutine test_MPI_trinf
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine test_MPI_inf()
+
+  use meshfem_par, only: NPROCTOT,myrank
+
+  use MPI_interfaces_par
+  use MPI_infinite_par
+
+  implicit none
+
+  ! local parameters
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag
+  integer :: i,j,iglob,ier
+  integer :: inum,icount
+  integer :: max_valence,num_unique
+  integer,dimension(:),allocatable :: valence
+
+  ! infinite region
+  allocate(test_flag(NGLOB_INFINITE),stat=ier)
+  if (ier /= 0 ) stop 'Error allocating array test_flag infinite region'
+  allocate(valence(NGLOB_INFINITE),stat=ier)
+  if (ier /= 0 ) stop 'Error allocating array valence'
+
+  ! points defined by interfaces
+  valence(:) = 0
+  test_flag = 0.0
+  do i = 1,num_interfaces_infinite
+    do j = 1,nibool_interfaces_infinite(i)
+      iglob = ibool_interfaces_infinite(j,i)
+      test_flag(iglob) = 1.0_CUSTOM_REAL
+      ! counts valence (occurrences)
+      valence(iglob) = valence(iglob) + 1
+    enddo
+  enddo
+  i = sum(nibool_interfaces_infinite)
+  call sum_all_i(i,inum)
+
+  i = nint( sum(test_flag) )
+  num_unique = i
+  call sum_all_i(i,icount)
+
+  ! maximum valence
+  i = maxval( valence(:) )
+  call max_all_i(i,max_valence)
+
+  if (myrank == 0) then
+    write(IMAIN,*) '  total MPI interface points : ',inum
+    write(IMAIN,*) '  unique MPI interface points: ',icount
+    write(IMAIN,*) '  maximum valence            : ',max_valence
+    call flush_IMAIN()
+  endif
+
+  ! initialized for assembly
+  test_flag(:) = 1.0_CUSTOM_REAL
+
+  ! adds contributions from different partitions to flag arrays
+  call assemble_MPI_scalar(NPROCTOT,NGLOB_INFINITE, &
+                           test_flag, &
+                           num_interfaces_infinite,max_nibool_interfaces_infinite, &
+                           nibool_interfaces_infinite,ibool_interfaces_infinite, &
+                           my_neighbors_infinite)
+
+
+  ! removes initial flag
+  test_flag(:) = test_flag(:) - 1.0_CUSTOM_REAL
+
+  ! checks number of interface points
+  i = 0
+  do iglob = 1,NGLOB_INFINITE
+    ! only counts flags with MPI contributions
+    if (test_flag(iglob) > 0.0 ) i = i + 1
+
+    ! checks valence
+    if (valence(iglob) /= nint(test_flag(iglob))) then
+      print *,'Error test MPI: rank',myrank,'valence:',valence(iglob),'flag:',test_flag(iglob)
+      call exit_mpi(myrank,'Error test infinite valence')
+    endif
+  enddo
+
+  ! checks within slice
+  if (i /= num_unique) then
+    print *,'Error test infinite : rank',myrank,'unique MPI points:',i,num_unique
+    call exit_mpi(myrank,'Error MPI assembly unique points infinite region')
+  endif
+  call sum_all_i(i,inum)
+
+  ! output
+  if (myrank == 0) then
+    ! checks
+    if (inum /= icount) then
+      print *,'Error test infinite : total MPI points:',myrank,'total: ',inum,icount
+      call exit_mpi(myrank,'Error MPI assembly total points infinite region')
+    endif
+
+    ! user output
+    write(IMAIN,*) '  total assembled MPI interface points:',inum
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  deallocate(test_flag)
+  deallocate(valence)
+
+  call synchronize_all()
+
+  end subroutine test_MPI_inf

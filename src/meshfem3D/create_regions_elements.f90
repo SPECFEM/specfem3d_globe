@@ -30,14 +30,19 @@
                                      offset_proc_xi,offset_proc_eta)
 
 ! creates all elements belonging to different regions of the mesh
+! this will create a cubed-sphere mesh that accommodates Moho variations, topography and ellipticity.
+
+  use constants, only: &
+    myrank,IMAIN, &
+    IREGION_CRUST_MANTLE,IREGION_INNER_CORE,IREGION_OUTER_CORE, &
+    IREGION_TRINFINITE,IREGION_INFINITE, &
+    IFLAG_IN_FICTITIOUS_CUBE
 
   use meshfem_par, only: &
     nspec,iregion_code, &
     idoubling,is_on_a_slice_edge, &
-    IMAIN,myrank, &
-    IREGION_CRUST_MANTLE,IREGION_INNER_CORE,IFLAG_IN_FICTITIOUS_CUBE, &
     NPROC_XI,NPROC_ETA,NCHUNKS, &
-    INCLUDE_CENTRAL_CUBE,R_CENTRAL_CUBE, &
+    R_CENTRAL_CUBE,INCLUDE_CENTRAL_CUBE, &
     rmins,rmaxs,iproc_xi,iproc_eta,ichunk,NEX_XI, &
     rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
     this_region_has_a_doubling, &
@@ -99,8 +104,6 @@
   ! loop on all the layers in this region of the mesh
   do ilayer_loop = ifirst_region,ilast_region
 
-    ilayer = perm_layer(ilayer_loop)
-
     ! user output
     if (myrank == 0) then
       write(IMAIN,*) '  creating layer ',ilayer_loop-ifirst_region+1, &
@@ -108,70 +111,88 @@
       call flush_IMAIN()
     endif
 
-    ! determine the radii that define the shell
-    rmin = rmins(ilayer)
-    rmax = rmaxs(ilayer)
+    ! creates all elements per layer
+    select case(iregion_code)
+    case (IREGION_INNER_CORE,IREGION_OUTER_CORE,IREGION_CRUST_MANTLE)
+      ! default regions for global mesh (inner core, outer core, crust/mantle)
+      ! current layer
+      ilayer = perm_layer(ilayer_loop)
 
-    ! skips layers with zero thickness
-    if (abs(rmax - rmin) < TOLERANCE_LAYER_THICKNESS) cycle
+      ! determine the radii that define the shell
+      rmin = rmins(ilayer)
+      rmax = rmaxs(ilayer)
 
-    ner_without_doubling = ner_mesh_layers(ilayer)
+      ! skips layers with zero thickness
+      if (abs(rmax - rmin) < TOLERANCE_LAYER_THICKNESS) cycle
 
-    ! checks if anything to do
-    if (ner_without_doubling == 0) cycle
+      ner_without_doubling = ner_mesh_layers(ilayer)
 
-    ! if there is a doubling at the top of this region, we implement it in the last two layers of elements
-    ! and therefore we suppress two layers of regular elements here
-    USE_ONE_LAYER_SB = .false.
-    if (this_region_has_a_doubling(ilayer)) then
-      if (ner_mesh_layers(ilayer) == 1) then
-        ner_without_doubling = ner_without_doubling - 1
-        USE_ONE_LAYER_SB = .true.
-      else
-        ner_without_doubling = ner_without_doubling - 2
-        USE_ONE_LAYER_SB = .false.
+      ! checks if anything to do
+      if (ner_without_doubling == 0) cycle
+
+      ! if there is a doubling at the top of this region, we implement it in the last two layers of elements
+      ! and therefore we suppress two layers of regular elements here
+      USE_ONE_LAYER_SB = .false.
+      if (this_region_has_a_doubling(ilayer)) then
+        if (ner_mesh_layers(ilayer) == 1) then
+          ner_without_doubling = ner_without_doubling - 1
+          USE_ONE_LAYER_SB = .true.
+        else
+          ner_without_doubling = ner_without_doubling - 2
+          USE_ONE_LAYER_SB = .false.
+        endif
       endif
-    endif
 
-    ! regular mesh elements
-    call create_regular_elements(ilayer,ichunk,ispec_count,ipass, &
-                                 ifirst_region,ilast_region,iregion_code, &
-                                 nspec,NCHUNKS,NUMBER_OF_MESH_LAYERS, &
-                                 NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-                                 ner_without_doubling, &
-                                 INCLUDE_CENTRAL_CUBE, &
-                                 rmin,rmax,r_moho,r_400,r_670, &
-                                 iMPIcut_xi,iMPIcut_eta, &
-                                 ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
-                                 rotation_matrix,idoubling,USE_ONE_LAYER_SB, &
-                                 stretch_tab, &
-                                 NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho, &
-                                 ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
-                                 normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
-                                 ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top, &
-                                 ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
-                                 ispec_is_tiso)
+      ! regular mesh elements
+      call create_regular_elements(ilayer,ichunk,ispec_count,ipass, &
+                                   ifirst_region,ilast_region,iregion_code, &
+                                   nspec,NCHUNKS,NUMBER_OF_MESH_LAYERS, &
+                                   NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+                                   ner_without_doubling, &
+                                   INCLUDE_CENTRAL_CUBE, &
+                                   rmin,rmax,r_moho,r_400,r_670, &
+                                   iMPIcut_xi,iMPIcut_eta, &
+                                   ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
+                                   rotation_matrix,idoubling,USE_ONE_LAYER_SB, &
+                                   stretch_tab, &
+                                   NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho, &
+                                   ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
+                                   normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
+                                   ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top, &
+                                   ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
+                                   ispec_is_tiso)
 
 
-    ! mesh doubling elements
-    if (this_region_has_a_doubling(ilayer) ) then
-      call create_doubling_elements(ilayer,ichunk,ispec_count,ipass, &
-                                    ifirst_region,ilast_region,iregion_code, &
-                                    nspec,NCHUNKS,NUMBER_OF_MESH_LAYERS, &
-                                    NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-                                    INCLUDE_CENTRAL_CUBE, &
-                                    rmin,rmax,r_moho,r_400,r_670, &
-                                    iMPIcut_xi,iMPIcut_eta, &
-                                    ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
-                                    rotation_matrix,idoubling,USE_ONE_LAYER_SB, &
-                                    NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho, &
-                                    ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
-                                    normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
-                                    ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top, &
-                                    ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
-                                    CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,offset_proc_xi,offset_proc_eta, &
-                                    ispec_is_tiso)
-    endif
+      ! mesh doubling elements
+      if (this_region_has_a_doubling(ilayer) ) then
+        call create_doubling_elements(ilayer,ichunk,ispec_count,ipass, &
+                                      ifirst_region,ilast_region,iregion_code, &
+                                      nspec,NCHUNKS,NUMBER_OF_MESH_LAYERS, &
+                                      NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+                                      INCLUDE_CENTRAL_CUBE, &
+                                      rmin,rmax,r_moho,r_400,r_670, &
+                                      iMPIcut_xi,iMPIcut_eta, &
+                                      ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
+                                      rotation_matrix,idoubling,USE_ONE_LAYER_SB, &
+                                      NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho, &
+                                      ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
+                                      normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
+                                      ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top, &
+                                      ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
+                                      CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,offset_proc_xi,offset_proc_eta, &
+                                      ispec_is_tiso)
+      endif
+
+    case (IREGION_TRINFINITE,IREGION_INFINITE)
+      ! infinite-element mesh regions
+      ! current layer - no need for layer permutations
+      ilayer = ilayer_loop
+      ! mesh spectral-infinite elements
+      call SIEM_mesh_create_elements(ilayer,ispec_count,ipass,iregion_code)
+
+    case default
+      call exit_MPI(myrank,'Invalid region code for creating regions elements')
+    end select
 
     ! user output
     if (myrank == 0) then
@@ -240,7 +261,10 @@
   endif
 
   ! check total number of spectral elements created
-  if (ispec_count /= nspec) call exit_MPI(myrank,'ispec_count should equal nspec')
+  if (ispec_count /= nspec) then
+    print *,'Error: rank ',myrank,' has created invalid total number of elements ',ispec_count,'; should be ',nspec
+    call exit_MPI(myrank,'ispec_count should equal nspec')
+  endif
 
   ! if any of these flags is true, the element is on a communication edge
   ! this is not enough because it can also be in contact by an edge or a corner but not a full face

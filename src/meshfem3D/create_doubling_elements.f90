@@ -51,7 +51,7 @@
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE, &
     SAVE_BOUNDARY_MESH
 
-  use shared_parameters, only: ner_mesh_layers,ratio_sampling_array,doubling_index,r_bottom,r_top
+  use shared_parameters, only: ner_mesh_layers,ratio_sampling_array,doubling_index,r_bottom,r_top,NPROCTOT
 
   use meshfem_models_par, only: HONOR_1D_SPHERICAL_MOHO
 
@@ -77,23 +77,23 @@
   integer,intent(in) :: NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
   logical,intent(in) :: INCLUDE_CENTRAL_CUBE
 
-! parameters needed to store the radii of the grid points in the spherically symmetric Earth
+  ! parameters needed to store the radii of the grid points in the spherically symmetric Earth
   double precision,intent(in) :: rmin,rmax
   double precision,intent(in) :: r_moho,r_400,r_670
 
-! MPI cut-planes parameters along xi and along eta
+  ! MPI cut-planes parameters along xi and along eta
   logical, dimension(2,nspec),intent(inout) :: iMPIcut_xi,iMPIcut_eta
 
   double precision,intent(in) :: ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
   integer,intent(in) :: iproc_xi,iproc_eta
 
-! rotation matrix from Euler angles
+  ! rotation matrix from Euler angles
   double precision, dimension(NDIM,NDIM),intent(in) :: rotation_matrix
 
   integer,dimension(nspec),intent(inout) :: idoubling
   logical,intent(in) :: USE_ONE_LAYER_SB
 
-! Boundary Mesh
+  ! Boundary Mesh
   integer :: NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho
   integer :: ibelm_moho_top(NSPEC2D_MOHO),ibelm_moho_bot(NSPEC2D_MOHO)
   integer :: ibelm_400_top(NSPEC2D_400),ibelm_400_bot(NSPEC2D_400)
@@ -285,6 +285,8 @@
         call add_missing_nodes(offset_x,offset_y,offset_z)
 
         ! compute the actual position of all the grid points of that element
+        ! note: this will create the element positions xelm/yelm/zelm for a spherical mesh.
+        !       the mesh is layered according to r_top/r_bottom
         call compute_coord_main_mesh(offset_x,offset_y,offset_z,xelm,yelm,zelm, &
                                      ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
                                      NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
@@ -308,28 +310,28 @@
         ! new get_flag_boundaries
         ! xmin & xmax
         if (ix_elem == 1) then
-            iMPIcut_xi(1,ispec_loc) = iboun_sb(ispec_superbrick,1)
+            if (NPROCTOT > 1) iMPIcut_xi(1,ispec_loc) = iboun_sb(ispec_superbrick,1)
             if (iproc_xi == 0) iboun(1,ispec_loc)= iboun_sb(ispec_superbrick,1)
         endif
         if (ix_elem == (NEX_PER_PROC_XI-step_mult*ratio_sampling_array(ilayer)+1)) then
-            iMPIcut_xi(2,ispec_loc) = iboun_sb(ispec_superbrick,2)
+            if (NPROCTOT > 1) iMPIcut_xi(2,ispec_loc) = iboun_sb(ispec_superbrick,2)
             if (iproc_xi == NPROC_XI-1) iboun(2,ispec_loc)= iboun_sb(ispec_superbrick,2)
         endif
         !! ymin & ymax
         if (iy_elem == 1) then
-            iMPIcut_eta(1,ispec_loc) = iboun_sb(ispec_superbrick,3)
+            if (NPROCTOT > 1) iMPIcut_eta(1,ispec_loc) = iboun_sb(ispec_superbrick,3)
             if (iproc_eta == 0) iboun(3,ispec_loc)= iboun_sb(ispec_superbrick,3)
         endif
         if (iy_elem == (NEX_PER_PROC_ETA-step_mult*ratio_sampling_array(ilayer)+1)) then
-            iMPIcut_eta(2,ispec_loc) = iboun_sb(ispec_superbrick,4)
+            if (NPROCTOT > 1) iMPIcut_eta(2,ispec_loc) = iboun_sb(ispec_superbrick,4)
             if (iproc_eta == NPROC_ETA-1) iboun(4,ispec_loc)= iboun_sb(ispec_superbrick,4)
         endif
         ! zmax only
         if (ilayer == ifirst_region) then
-          iboun(6,ispec_loc)= iboun_sb(ispec_superbrick,6)
+          iboun(6,ispec_loc) = iboun_sb(ispec_superbrick,6)
         endif
         if (ilayer == ilast_region .and. iz_elem == 1) then
-          iboun(5,ispec_loc)= iboun_sb(ispec_superbrick,5)
+          iboun(5,ispec_loc) = iboun_sb(ispec_superbrick,5)
         endif
 
         ! define the doubling flag of this element
@@ -348,6 +350,8 @@
         endif
 
         ! compute several rheological and geometrical properties for this spectral element
+        ! note: this will stretch and move the element positions to accommodate Moho variations, topography and ellipticity.
+        !       it will also determine the rheological properties of the model at all the GLL positions.
         call compute_element_properties(ispec_loc,iregion_code,idoubling,ipass, &
                                         xstore,ystore,zstore,nspec, &
                                         xelm,yelm,zelm,shape3D, &

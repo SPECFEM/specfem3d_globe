@@ -188,7 +188,7 @@ close(CSH);
 
 print "\nplotting... \n\n";
 
-system("csh -f plot_movie.csh");
+system("csh plot_movie.csh");
 
 system("rm -f plot_movie.csh");
 

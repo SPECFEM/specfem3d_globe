@@ -154,7 +154,7 @@
   ! local parameters
   integer :: ios,julian_day
   integer :: isource,idummy
-  integer :: i,istart,iend,ier
+  integer :: i,istart,iend,ier,ipos
   double precision, dimension(NSOURCES) :: t_s,hdur,lat,lon,depth
   character(len=20), dimension(NSOURCES) :: e_n
   character(len=5) :: datasource
@@ -225,43 +225,92 @@
 
       ! read time shift
       read(IIN,"(a)") string
-      read(string(12:len_trim(string)),*) t_s(isource)
+      ipos = index(string,':')
+      if (ipos > 1 .and. ipos < len_trim(string)) then
+        read(string(ipos+1:len_trim(string)),*) t_s(isource)
+      else
+        read(string(12:len_trim(string)),*) t_s(isource)
+      endif
 
       read(IIN,"(a)") string
-      read(string(15:len_trim(string)),*) hdur(isource)
+      ipos = index(string,':')
+      if (ipos > 1 .and. ipos < len_trim(string)) then
+        read(string(ipos+1:len_trim(string)),*) hdur(isource)
+      else
+        read(string(15:len_trim(string)),*) hdur(isource)
+      endif
 
       ! read latitude
       read(IIN,"(a)") string
-      read(string(10:len_trim(string)),*) lat(isource)
+      ipos = index(string,':')
+      if (ipos > 1 .and. ipos < len_trim(string)) then
+        read(string(ipos+1:len_trim(string)),*) lat(isource)
+      else
+        read(string(10:len_trim(string)),*) lat(isource)
+      endif
 
       ! read longitude
       read(IIN,"(a)") string
-      read(string(11:len_trim(string)),*) lon(isource)
+      ipos = index(string,':')
+      if (ipos > 1 .and. ipos < len_trim(string)) then
+        read(string(ipos+1:len_trim(string)),*) lon(isource)
+      else
+        read(string(11:len_trim(string)),*) lon(isource)
+      endif
 
       ! read depth
       read(IIN,"(a)") string
-      read(string(7:len_trim(string)),*) depth(isource)
+      ipos = index(string,':')
+      if (ipos > 1 .and. ipos < len_trim(string)) then
+        read(string(ipos+1:len_trim(string)),*) depth(isource)
+      else
+        read(string(7:len_trim(string)),*) depth(isource)
+      endif
 
       ! source time function
       read(IIN,"(a)") string
-      read(string(22:len_trim(string)),*) idummy ! force_stf(isource)
+      ipos = index(string,':')
+      if (ipos > 1 .and. ipos < len_trim(string)) then
+        read(string(ipos+1:len_trim(string)),*) idummy ! force_stf(isource)
+      else
+        read(string(22:len_trim(string)),*) idummy ! force_stf(isource)
+      endif
 
       ! read magnitude
       read(IIN,"(a)") string
-      read(string(21:len_trim(string)),*) mb ! factor_force_source(isource)
+      ipos = index(string,':')
+      if (ipos > 1 .and. ipos < len_trim(string)) then
+        read(string(ipos+1:len_trim(string)),*) mb ! factor_force_source(isource)
+      else
+        read(string(21:len_trim(string)),*) mb ! factor_force_source(isource)
+      endif
 
       ! read direction vector's East component
       read(IIN,"(a)") string
-      read(string(29:len_trim(string)),*) Mpp ! Mcomp_dir_vect_source_E(isource)
+      ipos = index(string,':')
+      if (ipos > 1 .and. ipos < len_trim(string)) then
+        read(string(ipos+1:len_trim(string)),*) Mpp ! Mcomp_dir_vect_source_E(isource)
+      else
+        read(string(29:len_trim(string)),*) Mpp ! Mcomp_dir_vect_source_E(isource)
+      endif
 
       ! read direction vector's North component
       read(IIN,"(a)") string
-      read(string(29:len_trim(string)),*) Mtt ! comp_dir_vect_source_N(isource)
+      ipos = index(string,':')
+      if (ipos > 1 .and. ipos < len_trim(string)) then
+        read(string(ipos+1:len_trim(string)),*) Mtt ! comp_dir_vect_source_N(isource)
+      else
+        read(string(29:len_trim(string)),*) Mtt ! comp_dir_vect_source_N(isource)
+      endif
 
       ! read direction vector's vertical component
       read(IIN,"(a)") string
-      read(string(32:len_trim(string)),*) Mrr ! comp_dir_vect_source_Z_UP(isource)
-
+      ipos = index(string,':')
+      if (ipos > 1 .and. ipos < len_trim(string)) then
+        read(string(ipos+1:len_trim(string)),*) Mrr ! comp_dir_vect_source_Z_UP(isource)
+      else
+        read(string(32:len_trim(string)),*) Mrr ! comp_dir_vect_source_Z_UP(isource)
+      endif
     enddo
 
     close(IIN)
@@ -330,41 +379,106 @@
 
       ! read line with event name
       read(IIN,"(a)") string
-      read(string(12:len_trim(string)),*) e_n(isource)
+      ipos = index(string,':')
+      if (ipos > 1 .and. ipos < len_trim(string)) then
+        read(string(ipos+1:len_trim(string)),*) e_n(isource)
+      else
+        read(string(12:len_trim(string)),*) e_n(isource)
+      endif
 
       ! read time shift
       read(IIN,"(a)") string
-      read(string(12:len_trim(string)),*) t_s(isource)
+      ipos = index(string,':')
+      if (ipos > 1 .and. ipos < len_trim(string)) then
+        read(string(ipos+1:len_trim(string)),*) t_s(isource)
+      else
+        read(string(12:len_trim(string)),*) t_s(isource)
+      endif
 
       ! read half duration
       read(IIN,"(a)") string
-      read(string(15:len_trim(string)),*) hdur(isource)
+      ipos = index(string,':')
+      if (ipos > 1 .and. ipos < len_trim(string)) then
+        read(string(ipos+1:len_trim(string)),*) hdur(isource)
+      else
+        read(string(15:len_trim(string)),*) hdur(isource)
+      endif
 
       ! read latitude
       read(IIN,"(a)") string
-      read(string(10:len_trim(string)),*) lat(isource)
+      ipos = index(string,':')
+      if (ipos > 1 .and. ipos < len_trim(string)) then
+        read(string(ipos+1:len_trim(string)),*) lat(isource)
+      else
+        read(string(10:len_trim(string)),*) lat(isource)
+      endif
 
       ! read longitude
       read(IIN,"(a)") string
-      read(string(11:len_trim(string)),*) lon(isource)
+      ipos = index(string,':')
+      if (ipos > 1 .and. ipos < len_trim(string)) then
+        read(string(ipos+1:len_trim(string)),*) lon(isource)
+      else
+        read(string(11:len_trim(string)),*) lon(isource)
+      endif
 
       ! read depth
       read(IIN,"(a)") string
-      read(string(7:len_trim(string)),*) depth(isource)
+      ipos = index(string,':')
+      if (ipos > 1 .and. ipos < len_trim(string)) then
+        read(string(ipos+1:len_trim(string)),*) depth(isource)
+      else
+        read(string(7:len_trim(string)),*) depth(isource)
+      endif
 
       ! read the last 6 lines with moment tensor info
       read(IIN,"(a)") string
-      read(string(5:len_trim(string)),*) Mrr
+      ipos = index(string,':')
+      if (ipos > 1 .and. ipos < len_trim(string)) then
+        read(string(ipos+1:len_trim(string)),*) Mrr
+      else
+        read(string(5:len_trim(string)),*) Mrr
+      endif
+
       read(IIN,"(a)") string
-      read(string(5:len_trim(string)),*) Mtt
+      ipos = index(string,':')
+      if (ipos > 1 .and. ipos < len_trim(string)) then
+        read(string(ipos+1:len_trim(string)),*) Mtt
+      else
+        read(string(5:len_trim(string)),*) Mtt
+      endif
+
       read(IIN,"(a)") string
-      read(string(5:len_trim(string)),*) Mpp
+      ipos = index(string,':')
+      if (ipos > 1 .and. ipos < len_trim(string)) then
+        read(string(ipos+1:len_trim(string)),*) Mpp
+      else
+        read(string(5:len_trim(string)),*) Mpp
+      endif
+
       read(IIN,"(a)") string
-      read(string(5:len_trim(string)),*) Mrt
+      ipos = index(string,':')
+      if (ipos > 1 .and. ipos < len_trim(string)) then
+        read(string(ipos+1:len_trim(string)),*) Mrt
+      else
+        read(string(5:len_trim(string)),*) Mrt
+      endif
+
       read(IIN,"(a)") string
-      read(string(5:len_trim(string)),*) Mrp
+      ipos = index(string,':')
+      if (ipos > 1 .and. ipos < len_trim(string)) then
+        read(string(ipos+1:len_trim(string)),*) Mrp
+      else
+        read(string(5:len_trim(string)),*) Mrp
+      endif
+
       read(IIN,"(a)") string
-      read(string(5:len_trim(string)),*) Mtp
+      ipos = index(string,':')
+      if (ipos > 1 .and. ipos < len_trim(string)) then
+        read(string(ipos+1:len_trim(string)),*) Mtp
+      else
+        read(string(5:len_trim(string)),*) Mtp
+      endif
 
     enddo
 

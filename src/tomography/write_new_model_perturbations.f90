@@ -43,7 +43,7 @@ subroutine write_new_model_perturbations_iso()
   ! vp relative perturbations
   ! logarithmic perturbation: log( v_new) - log( v_old) = log( v_new / v_old )
   total_model = 0.0_CUSTOM_REAL
-  where( model_vp /= 0.0 ) total_model = log( model_vp_new / model_vp)
+  where( model_vp /= 0.0_CUSTOM_REAL ) total_model = log( model_vp_new / model_vp)
   ! or
   ! linear approximation: (v_new - v_old) / v_old
   !where( model_vp /= 0.0 ) total_model = ( model_vp_new - model_vp) / model_vp
@@ -59,7 +59,7 @@ subroutine write_new_model_perturbations_iso()
 
   ! vs relative perturbations
   total_model = 0.0_CUSTOM_REAL
-  where( model_vs /= 0.0 ) total_model = log( model_vs_new / model_vs)
+  where( model_vs /= 0.0_CUSTOM_REAL ) total_model = log( model_vs_new / model_vs)
 
   write(m_file,'(a,i6.6,a)') trim(OUTPUT_MODEL_DIR)//'proc',myrank,trim(REG)//'dvsvs.bin'
   if (myrank == 0) print *,'  ',trim(OUTPUT_MODEL_DIR)//'proc**'//trim(REG)//'dvsvs.bin'
@@ -72,7 +72,7 @@ subroutine write_new_model_perturbations_iso()
 
   ! rho relative model perturbations
   total_model = 0.0_CUSTOM_REAL
-  where( model_rho /= 0.0 ) total_model = log( model_rho_new / model_rho)
+  where( model_rho /= 0.0_CUSTOM_REAL ) total_model = log( model_rho_new / model_rho)
 
   write(m_file,'(a,i6.6,a)') trim(OUTPUT_MODEL_DIR)//'proc',myrank,trim(REG)//'drhorho.bin'
   if (myrank == 0) print *,'  ',trim(OUTPUT_MODEL_DIR)//'proc**'//trim(REG)//'drhorho.bin'
@@ -125,7 +125,7 @@ subroutine write_new_model_perturbations_tiso()
   ! vpv relative perturbations
   ! logarithmic perturbation: log( v_new) - log( v_old) = log( v_new / v_old )
   total_model = 0.0_CUSTOM_REAL
-  where( model_vpv /= 0.0 ) total_model = log( model_vpv_new / model_vpv)
+  where( model_vpv /= 0.0_CUSTOM_REAL ) total_model = log( model_vpv_new / model_vpv)
   ! or
   ! linear approximation: (v_new - v_old) / v_old
   !where( model_vpv /= 0.0 ) total_model = ( model_vpv_new - model_vpv) / model_vpv
@@ -141,7 +141,7 @@ subroutine write_new_model_perturbations_tiso()
 
   ! vph relative perturbations
   total_model = 0.0_CUSTOM_REAL
-  where( model_vph /= 0.0 ) total_model = log( model_vph_new / model_vph)
+  where( model_vph /= 0.0_CUSTOM_REAL ) total_model = log( model_vph_new / model_vph)
 
   write(m_file,'(a,i6.6,a)') trim(OUTPUT_MODEL_DIR)//'proc',myrank,trim(REG)//'dvphvph.bin'
   if (myrank == 0) print *,'  ',trim(OUTPUT_MODEL_DIR)//'proc**'//trim(REG)//'dvphvph.bin'
@@ -154,7 +154,7 @@ subroutine write_new_model_perturbations_tiso()
 
   ! vsv relative perturbations
   total_model = 0.0_CUSTOM_REAL
-  where( model_vsv /= 0.0 ) total_model = log( model_vsv_new / model_vsv)
+  where( model_vsv /= 0.0_CUSTOM_REAL ) total_model = log( model_vsv_new / model_vsv)
 
   write(m_file,'(a,i6.6,a)') trim(OUTPUT_MODEL_DIR)//'proc',myrank,trim(REG)//'dvsvvsv.bin'
   if (myrank == 0) print *,'  ',trim(OUTPUT_MODEL_DIR)//'proc**'//trim(REG)//'dvsvvsv.bin'
@@ -167,7 +167,7 @@ subroutine write_new_model_perturbations_tiso()
 
   ! vsh relative perturbations
   total_model = 0.0_CUSTOM_REAL
-  where( model_vsh /= 0.0 ) total_model = log( model_vsh_new / model_vsh)
+  where( model_vsh /= 0.0_CUSTOM_REAL ) total_model = log( model_vsh_new / model_vsh)
 
   write(m_file,'(a,i6.6,a)') trim(OUTPUT_MODEL_DIR)//'proc',myrank,trim(REG)//'dvshvsh.bin'
   if (myrank == 0) print *,'  ',trim(OUTPUT_MODEL_DIR)//'proc**'//trim(REG)//'dvshvsh.bin'
@@ -180,7 +180,7 @@ subroutine write_new_model_perturbations_tiso()
 
   ! eta relative perturbations
   total_model = 0.0_CUSTOM_REAL
-  where( model_eta /= 0.0 ) total_model = log( model_eta_new / model_eta)
+  where( model_eta /= 0.0_CUSTOM_REAL ) total_model = log( model_eta_new / model_eta)
 
   write(m_file,'(a,i6.6,a)') trim(OUTPUT_MODEL_DIR)//'proc',myrank,trim(REG)//'detaeta.bin'
   if (myrank == 0) print *,'  ',trim(OUTPUT_MODEL_DIR)//'proc**'//trim(REG)//'detaeta.bin'
@@ -193,7 +193,7 @@ subroutine write_new_model_perturbations_tiso()
 
   ! rho relative model perturbations
   total_model = 0.0_CUSTOM_REAL
-  where( model_rho /= 0.0 ) total_model = log( model_rho_new / model_rho)
+  where( model_rho /= 0.0_CUSTOM_REAL ) total_model = log( model_rho_new / model_rho)
 
   write(m_file,'(a,i6.6,a)') trim(OUTPUT_MODEL_DIR)//'proc',myrank,trim(REG)//'drhorho.bin'
   if (myrank == 0) print *,'  ',trim(OUTPUT_MODEL_DIR)//'proc**'//trim(REG)//'drhorho.bin'

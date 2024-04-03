@@ -43,9 +43,9 @@
   complex(kind=CUSTOM_CMPLX),dimension(*) :: xi
   real(kind=CUSTOM_REAL),intent(in) :: zign,dtt
 
-!! DK DK here is the hardwired maximum size of the array
-!! DK DK Aug 2016: if this routine is called many times (for different mesh points at which the SEM is coupled with FK)
-!! DK DK Aug 2016: this should be moved to the calling program and precomputed once and for all
+! here is the hardwired maximum size of the array
+! Aug 2016: if this routine is called many times (for different mesh points at which the SEM is coupled with FK)
+! Aug 2016: this should be moved to the calling program and precomputed once and for all
   real(kind=CUSTOM_REAL),intent(in) :: mpow(30)
 
   ! local parameters
@@ -56,9 +56,9 @@
 
   real(kind=CUSTOM_REAL), parameter :: PI = acos(-1.0)
 
-!! DK DK added this sanity check
+  ! added this sanity check
   if (npow > 30) stop 'Error: FTT routine has an hardwired maximum of 30 levels'
-!! DK DK in any case the line below imposes a maximum of 31, otherwise the integer 2**n will overflow
+  ! in any case the line below imposes a maximum of 31, otherwise the integer 2**n will overflow
 
   lx = 2**npow
 
@@ -127,7 +127,7 @@
     ! REVERSE FFT
     flx = flx*dtt
     inv_of_flx = 1._CUSTOM_REAL / flx
-!! DK DK Aug 2016: changed to multiplication by the precomputed inverse to make the routine faster
+! Aug 2016: changed to multiplication by the precomputed inverse to make the routine faster
 !       xi(1:lx) = xi(1:lx) / flx         ! division by dt
     xi(1:lx) = xi(1:lx) * inv_of_flx  ! division by dt
   endif
@@ -154,9 +154,9 @@
   complex(kind=CUSTOM_CMPLX) :: s(*)
   real(kind=CUSTOM_REAL) :: r(*)       ! note that this is real, not double precision
 
-!! DK DK here is the hardwired maximum size of the array
-!! DK DK Aug 2016: if this routine is called many times (for different mesh points at which the SEM is coupled with FK)
-!! DK DK Aug 2016: this should be moved to the calling program and precomputed once and for all
+! here is the hardwired maximum size of the array
+! Aug 2016: if this routine is called many times (for different mesh points at which the SEM is coupled with FK)
+! Aug 2016: this should be moved to the calling program and precomputed once and for all
   real(kind=CUSTOM_REAL) :: mpow(30)
 
   ! local parameters

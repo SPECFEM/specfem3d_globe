@@ -35,13 +35,22 @@
 #ifdef USE_HIP
 
 // (optional) unrolling loops
-// not tested yet for hip
-#undef MANUALLY_UNROLLED_LOOPS    // default to none
+// leads up to ~3% performance increase with HIP
+#define MANUALLY_UNROLLED_LOOPS   // uncomment to use loops
 
 // AMD MI100
 #ifdef GPU_DEVICE_MI100
 #undef USE_LAUNCH_BOUNDS
 #endif
+
+// AMD MI250X
+#ifdef GPU_DEVICE_MI250
+#undef USE_LAUNCH_BOUNDS
+//#define USE_LAUNCH_BOUNDS     // will slow down kernels...
+//#define LAUNCH_MIN_BLOCKS 7
+#endif
+
+/*----------------------------------------------------------------------------------------------- */
 
 // definitions
 typedef hipEvent_t gpu_event;

@@ -380,11 +380,11 @@
       double precision h
 
       i = 1
-      II=I2-1
+      II = I2-1
 
 !   GUARANTEE I WITHIN BOUNDS.
-      I=MAX0(I,I1)
-      I=MIN0(I,II)
+      I = MAX0(I,I1)
+      I = MIN0(I,II)
 
 !   SEE IF X IS INCREASING OR DECREASING.
       if (X(I2)-X(I1) < 0) goto 1
@@ -394,7 +394,7 @@
  1    if (S-X(I) <= 0) goto 3
       if (S-X(I) > 0) goto 4
 
- 4    I=I-1
+ 4    I = I-1
 
       if (I-I1 < 0) goto 11
       if (I-I1 == 0) goto 6
@@ -403,7 +403,7 @@
  3    if (S-X(I+1) < 0) goto 5
       if (S-X(I+1) >= 0) goto 6
 
- 5    I=I+1
+ 5    I = I+1
 
       if (I-II < 0) goto 3
       if (I-II == 0) goto 6
@@ -413,7 +413,7 @@
  2    if (S-X(I+1) <= 0) goto 8
       if (S-X(I+1) > 0) goto 9
 
- 9    I=I+1
+ 9    I = I+1
 
       if (I-II < 0) goto 2
       if (I-II == 0) goto 6
@@ -422,18 +422,18 @@
  8    if (S-X(I) < 0) goto 10
       if (S-X(I) >= 0) goto 6
 
- 10   I=I-1
+ 10   I = I-1
       if (I-I1 < 0) goto 11
       if (I-I1 == 0) goto 6
       if (I-I1 > 0) goto 8
 
- 7    I=II
+ 7    I = II
       goto 6
- 11   I=I1
+ 11   I = I1
 
 !   CALCULATE RSPLE USING SPLINE COEFFICIENTS IN Y AND Q.
- 6    H=S-X(I)
-      S20RTS_RSPLE=Y(I)+H*(Q(1,I)+H*(Q(2,I)+H*Q(3,I)))
+ 6    H = S-X(I)
+      S20RTS_RSPLE = Y(I)+H*(Q(1,I)+H*(Q(2,I)+H*Q(3,I)))
 
       end function s20rts_rsple
 
@@ -465,35 +465,35 @@
       equivalence (YY(1),Y0)
       data SMALL/1.0d-08/,YY/0.0d0,0.0d0,0.0d0/
 
-      J1=I1+1
-      Y0=0.0d0
+      J1 = I1+1
+      Y0 = 0.0d0
 
 !   BAIL OUT IF THERE ARE LESS THAN TWO POINTS TOTAL
       if (I2-I1 < 0) return
       if (I2-I1 == 0) goto 17
       if (I2-I1 > 0) goto 8
 
- 8    A0=X(J1-1)
+ 8    A0 = X(J1-1)
 !   SEARCH FOR DISCONTINUITIES.
-      DO 3 I=J1,I2
-      B0=A0
-      A0=X(I)
+      DO 3 I = J1,I2
+      B0 = A0
+      A0 = X(I)
       if (DABS((A0-B0)/DMAX1(A0,B0)) < SMALL) goto 4
  3    continue
- 17   J1=J1-1
-      J2=I2-2
+ 17   J1 = J1-1
+      J2 = I2-2
       goto 5
- 4    J1=J1-1
-      J2=I-3
+ 4    J1 = J1-1
+      J2 = I-3
 !   SEE IF THERE ARE ENOUGH POINTS TO INTERPOLATE (AT LEAST THREE).
  5    if (J2+1-J1 < 0) goto 9
       if (J2+1-J1 == 0) goto 10
       if (J2+1-J1 > 0) goto 11
 
 !   ONLY TWO POINTS.  USE LINEAR INTERPOLATION.
- 10   J2=J2+2
+ 10   J2 = J2+2
       Y0=(Y(J2)-Y(J1))/(X(J2)-X(J1))
-      DO J=1,3
+      DO J = 1,3
         Q(J,J1)=YY(J)
         Q(J,J2)=YY(J)
       enddo
@@ -501,47 +501,47 @@
 
 !   MORE THAN TWO POINTS.  DO SPLINE INTERPOLATION.
  11   A0 = 0.
-      H=X(J1+1)-X(J1)
-      H2=X(J1+2)-X(J1)
-      Y0=H*H2*(H2-H)
-      H=H*H
-      H2=H2*H2
+      H = X(J1+1)-X(J1)
+      H2 = X(J1+2)-X(J1)
+      Y0 = H*H2*(H2-H)
+      H = H*H
+      H2 = H2*H2
 !   CALCULATE DERIVATIVE AT NEAR END.
       B0=(Y(J1)*(H-H2)+Y(J1+1)*H2-Y(J1+2)*H)/Y0
-      B1=B0
+      B1 = B0
 
 !   EXPLICITLY REDUCE BANDED MATRIX TO AN UPPER BANDED MATRIX.
-      DO I=J1,J2
-        H=X(I+1)-X(I)
-        Y0=Y(I+1)-Y(I)
-        H2=H*H
-        HA=H-A0
-        H2A=H-2.0d0*A0
-        H3A=2.0d0*H-3.0d0*A0
-        H2B=H2*B0
+      DO I = J1,J2
+        H = X(I+1)-X(I)
+        Y0 = Y(I+1)-Y(I)
+        H2 = H*H
+        HA = H-A0
+        H2A = H-2.0d0*A0
+        H3A = 2.0d0*H-3.0d0*A0
+        H2B = H2*B0
         Q(1,I)=H2/HA
         Q(2,I)=-HA/(H2A*H2)
         Q(3,I)=-H*H2A/H3A
         F(1,I)=(Y0-H*B0)/(H*HA)
         F(2,I)=(H2B-Y0*(2.0d0*H-A0))/(H*H2*H2A)
         F(3,I)=-(H2B-3.0d0*Y0*HA)/(H*H3A)
-        A0=Q(3,I)
-        B0=F(3,I)
+        A0 = Q(3,I)
+        B0 = F(3,I)
       enddo
 
 !   TAKE CARE OF LAST TWO ROWS.
-      I=J2+1
-      H=X(I+1)-X(I)
-      Y0=Y(I+1)-Y(I)
-      H2=H*H
-      HA=H-A0
-      H2A=H*HA
-      H2B=H2*B0-Y0*(2.0d0*H-A0)
+      I = J2+1
+      H = X(I+1)-X(I)
+      Y0 = Y(I+1)-Y(I)
+      H2 = H*H
+      HA = H-A0
+      H2A = H*HA
+      H2B = H2*B0-Y0*(2.0d0*H-A0)
       Q(1,I)=H2/HA
       F(1,I)=(Y0-H*B0)/H2A
-      HA=X(J2)-X(I+1)
+      HA = X(J2)-X(I+1)
       Y0=-H*HA*(HA+H)
-      HA=HA*HA
+      HA = HA*HA
 
 !   CALCULATE DERIVATIVE AT FAR END.
       Y0=(Y(I+1)*(H2-HA)+Y(I)*HA-Y(J2)*H2)/Y0
@@ -549,17 +549,17 @@
       Q(2,I)=F(1,I)-Q(1,I)*Q(3,I)
 
 !   SOLVE UPPER BANDED MATRIX BY REVERSE ITERATION.
-      DO J=J1,J2
-        K=I-1
+      DO J = J1,J2
+        K = I-1
         Q(1,I)=F(3,K)-Q(3,K)*Q(2,I)
         Q(3,K)=F(2,K)-Q(2,K)*Q(1,I)
         Q(2,K)=F(1,K)-Q(1,K)*Q(3,K)
-        I=K
+        I = K
       enddo
       Q(1,I)=B1
 !   FILL IN THE LAST POINT WITH A LINEAR EXTRAPOLATION.
- 9    J2=J2+2
-      DO J=1,3
+ 9    J2 = J2+2
+      DO J = 1,3
         Q(J,J2)=YY(J)
       enddo
 
@@ -571,12 +571,12 @@
       endif
 
 !   NO.  GO BACK FOR MORE.
- 6    J1=J2+2
+ 6    J1 = J2+2
       if (J1-I2 <= 0) goto 8
       if (J1-I2 > 0) goto 7
 
 !   THERE IS ONLY ONE POINT LEFT AFTER THE LATEST DISCONTINUITY.
- 7    DO J=1,3
+ 7    DO J = 1,3
         Q(J,I2)=YY(J)
       enddo
 

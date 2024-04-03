@@ -30,11 +30,12 @@
                                        etaxstore,etaystore,etazstore, &
                                        gammaxstore,gammaystore,gammazstore, &
                                        NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top,idoubling, &
-                                       volume_total,RCMB,RICB,R_CENTRAL_CUBE)
+                                       volume_total,RCMB,RICB,R_CENTRAL_CUBE,RINF)
 
   use constants, only: NGLLX,NGLLY,NGLLZ,myrank, &
     ZERO,CUSTOM_REAL,PI,R_UNIT_SPHERE,IFLAG_IN_FICTITIOUS_CUBE,IMAIN, &
-    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE
+    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
+    IREGION_TRINFINITE,IREGION_INFINITE
 
   use shared_parameters, only: R_PLANET
   use meshfem_models_par, only: TOPOGRAPHY
@@ -47,7 +48,7 @@
   integer,intent(in) :: NCHUNKS,iregion_code
 
   double precision,intent(inout) :: volume_total
-  double precision,intent(in) :: RCMB,RICB,R_CENTRAL_CUBE
+  double precision,intent(in) :: RCMB,RICB,R_CENTRAL_CUBE,RINF
 
   integer,dimension(nspec),intent(in) :: idoubling
 
@@ -144,10 +145,12 @@
   call sum_all_dp(volume_local,volume_total_region)
 
   if (myrank == 0) then
-    !   sum volume over all the regions
-    volume_total = volume_total + volume_total_region
+    ! sum volume over all the regions
+    ! (without transition-to-infinite and infinite region)
+    if (iregion_code /= IREGION_TRINFINITE .and. iregion_code /= IREGION_INFINITE) &
+      volume_total = volume_total + volume_total_region
 
-    !   check volume of chunk, and bottom and top area
+    ! check volume of chunk, and bottom and top area
     write(IMAIN,*)
     write(IMAIN,*) 'calculated region volume: ',sngl(volume_total_region)
     write(IMAIN,*) '                top area: ',sngl(area_total_top)
@@ -156,11 +159,16 @@
     if (NCHUNKS == 6 .and. .not. TOPOGRAPHY) then
       select case (iregion_code)
         case (IREGION_CRUST_MANTLE)
-          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*R_UNIT_SPHERE**2
+          write(IMAIN,*) '              exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*R_UNIT_SPHERE**2
         case (IREGION_OUTER_CORE)
-          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RCMB/R_PLANET)**2
+          write(IMAIN,*) '              exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RCMB/R_PLANET)**2
         case (IREGION_INNER_CORE)
-          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RICB/R_PLANET)**2
+          write(IMAIN,*) '              exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RICB/R_PLANET)**2
+        ! TODO: need to fix for transition and infinite layers
+        case(IREGION_TRINFINITE)
+          write(IMAIN,*) '              exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*RINF**2  ! top at RINF
+        case(IREGION_INFINITE)
+          write(IMAIN,*) '              exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*RINF**2
         case default
           call exit_MPI(myrank,'incorrect region code')
       end select
@@ -172,12 +180,17 @@
     if (NCHUNKS == 6 .and. .not. TOPOGRAPHY) then
       select case (iregion_code)
         case (IREGION_CRUST_MANTLE)
-          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RCMB/R_PLANET)**2
+          write(IMAIN,*) '              exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RCMB/R_PLANET)**2
         case (IREGION_OUTER_CORE)
-          write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RICB/R_PLANET)**2
+          write(IMAIN,*) '              exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RICB/R_PLANET)**2
         case (IREGION_INNER_CORE)
-          write(IMAIN,*) '            more or less similar area (central cube): ', &
+          write(IMAIN,*) '              more or less similar area (central cube): ', &
                                            dble(NCHUNKS)*(2.*(R_CENTRAL_CUBE / R_PLANET)/sqrt(3.))**2
+        ! TODO: need to fix for transition and infinite layers
+        case(IREGION_TRINFINITE)
+          write(IMAIN,*) '              exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*R_UNIT_SPHERE**2 ! bottom at crust surface
+        case(IREGION_INFINITE)
+          write(IMAIN,*) '              exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*R_UNIT_SPHERE**2
         case default
           call exit_MPI(myrank,'incorrect region code')
       end select
@@ -277,7 +290,7 @@
           y_meshpoint = ystore(i,j,k,ispec)
           z_meshpoint = zstore(i,j,k,ispec)
 
-!! DK DK for gravity integral calculations we may want to shift the reference frame to a pre-computed center of mass
+          !! for gravity integral calculations we may want to shift the reference frame to a pre-computed center of mass
           if (SHIFT_TO_THIS_CENTER_OF_MASS) then
             x_meshpoint = x_meshpoint - x_shift
             y_meshpoint = y_meshpoint - y_shift
@@ -308,6 +321,7 @@
   Earth_center_of_mass_x_tot_reg = ZERO
   Earth_center_of_mass_y_tot_reg = ZERO
   Earth_center_of_mass_z_tot_reg = ZERO
+
   call sum_all_dp(Earth_mass_local,Earth_mass_total_region)
   call sum_all_dp(Earth_center_of_mass_x_local,Earth_center_of_mass_x_tot_reg)
   call sum_all_dp(Earth_center_of_mass_y_local,Earth_center_of_mass_y_tot_reg)

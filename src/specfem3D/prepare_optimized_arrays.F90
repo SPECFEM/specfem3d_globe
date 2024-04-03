@@ -78,7 +78,7 @@
   ! local parameters
   integer :: iphase,ier
   integer :: num_elements
-  integer,dimension(1) :: idummy
+  integer,dimension(1) :: idummy = (/ 0 /)
 
   ! inverse arrays use 1D indexing for better compiler vectorization
   ! only used for Deville routines and FORCE_VECTORIZATION)
@@ -543,14 +543,15 @@
 
     enddo
 
+    ! synchronizes processes
+    call synchronize_all()
+
     ! user output
     if (myrank == 0) then
       write(IMAIN,*)"  fused arrays done"
       call flush_IMAIN()
     endif
 
-    ! synchronizes processes
-    call synchronize_all()
   else
     ! dummy
     allocate(deriv_mapping_crust_mantle(1,1,1,1,1), &
@@ -571,7 +572,10 @@
 
   use specfem_par, only: myrank
 
-  use my_libxsmm, only: libxsmm_init,libxsmm_smm_25_5_5,libxsmm_smm_5_25_5,libxsmm_smm_5_5_5
+  use my_libxsmm, only: libxsmm_init
+  use my_libxsmm, only: libxsmm_dispatch,libxsmm_available,xmm1,xmm2,xmm3
+  use my_libxsmm, only: libxsmm_mmcall_abc => libxsmm_smmcall_abc
+  !use my_libxsmm, only: libxsmm_smm_25_5_5,libxsmm_smm_5_25_5,libxsmm_smm_5_5_5
 
   implicit none
 
@@ -599,24 +603,50 @@
   ! LIBXSMM static functions
   ! use version compilation with: MNK="5 25, 5" ALPHA=1 BETA=0
 
-  ! dummy static calls to check if they work...
+  ! dispatch functions for matrix multiplications
   ! (see in compute_forces_**Dev.F90 routines for actual function call)
+  ! example: a(n1,n2),b(n2,n3),c(n1,n3) -> c = a * b then libxsmm_dispatch(xmm,m=n1,n=n3,k=n2,alpha=1,beta=0)
 
   ! with A(n1,n2) 5x5-matrix, B(n2,n3) 5x25-matrix and C(n1,n3) 5x25-matrix
-  call libxsmm_smm_5_25_5(a=A1, b=B1, c=C1, pa=A1, pb=B1, pc=C1)
+  call libxsmm_dispatch(xmm1, m=5, n=25, k=5, alpha=1.0_CUSTOM_REAL, beta=0.0_CUSTOM_REAL)
 
   ! with A(n1,n2) 25x5-matrix, B(n2,n3) 5x5-matrix and C(n1,n3) 25x5-matrix
-  call libxsmm_smm_25_5_5(a=A2, b=B2, c=C2, pa=A2, pb=B2, pc=C2)
+  call libxsmm_dispatch(xmm2, m=25, n=5, k=5, alpha=1.0_CUSTOM_REAL, beta=0.0_CUSTOM_REAL)
 
   ! with A(n1,n2,n4) 5x5x5-matrix, B(n2,n3) 5x5-matrix and C(n1,n3,n4) 5x5x5-matrix
-  call libxsmm_smm_5_5_5(a=A3(1,1,1), b=B3, c=C3(1,1,1),pa=A3(1,1,1), pb=B3, pc=C3(1,1,1))
+  call libxsmm_dispatch(xmm3, m=5, n=5, k=5, alpha=1.0_CUSTOM_REAL, beta=0.0_CUSTOM_REAL)
 
-  ! user output
-  if (myrank == 0) then
-    write(IMAIN,*)
-    write(IMAIN,*) "  LIBXSMM functions ready for small matrix-matrix multiplications"
-    write(IMAIN,*)
-    call flush_IMAIN()
+  !directly: call libxsmm_smm_5_5_5(A,B,C),..
+  if (libxsmm_available(xmm1) .and. libxsmm_available(xmm2) .and. libxsmm_available(xmm3)) then
+    ! dummy static calls to check if they work...
+    ! (see in compute_forces_**Dev.F90 routines for actual function call)
+
+    ! with A(n1,n2) 5x5-matrix, B(n2,n3) 5x25-matrix and C(n1,n3) 5x25-matrix
+    !call libxsmm_smm_5_25_5(a=A1, b=B1, c=C1, pa=A1, pb=B1, pc=C1)
+    call libxsmm_mmcall_abc(xmm1, A1, B1, C1)
+
+    ! with A(n1,n2) 25x5-matrix, B(n2,n3) 5x5-matrix and C(n1,n3) 25x5-matrix
+    !call libxsmm_smm_25_5_5(a=A2, b=B2, c=C2, pa=A2, pb=B2, pc=C2)
+    call libxsmm_mmcall_abc(xmm2, A2, B2, C2)
+
+    ! with A(n1,n2,n4) 5x5x5-matrix, B(n2,n3) 5x5-matrix and C(n1,n3,n4) 5x5x5-matrix
+    !call libxsmm_smm_5_5_5(a=A3(1,1,1), b=B3, c=C3(1,1,1),pa=A3(1,1,1), pb=B3, pc=C3(1,1,1))
+    call libxsmm_mmcall_abc(xmm3, A3(1,1,1), B3, C3(1,1,1))
+
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*)
+      write(IMAIN,*) "  LIBXSMM functions ready for small matrix-matrix multiplications"
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
+
+  else
+    ! user output
+    print *,'LIBXSMM invalid dispatch function pointers:', &
+            libxsmm_available(xmm1),libxsmm_available(xmm2),libxsmm_available(xmm3)
+    ! hard stop
+    call exit_MPI(myrank,'LIBXSMM functions not ready, please check configuration & compilation')
   endif
 
   ! synchronizes processes
@@ -654,6 +684,14 @@
   real(kind=CUSTOM_REAL),dimension(:,:), allocatable :: displ0,veloc0,accel0
   ! repeats test
   integer, parameter :: NTIMES = 15
+
+  ! output bandwidth
+  if (myrank == 0) then
+    write(IMAIN,*) "  bandwidth test (STREAM TRIAD): "
+    call flush_IMAIN()
+  endif
+  ! synchronizes processes
+  call synchronize_all()
 
   ! note: we want to use the actual arrays displ/veloc/accel which will be used later in the code
   !       but they might have initial values read in, so we need to temporarily store them
@@ -760,7 +798,6 @@
 
   ! output bandwidth
   if (myrank == 0) then
-    write(IMAIN,*) "  bandwidth test (STREAM TRIAD): "
     write(IMAIN,*) "     memory accesses = ",sngl(mem),'MB'
     write(IMAIN,*) "     timing  min/max = ",sngl(t_min),'s / ',sngl(t_max),'s'
     write(IMAIN,*) "     timing      avg = ",sngl(t_avg),'s'

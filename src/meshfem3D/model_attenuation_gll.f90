@@ -157,7 +157,7 @@
 
   call synchronize_all()
   if (myrank == 0) then
-    write(IMAIN,*)'  reading done'
+    write(IMAIN,*) '  reading done'
     write(IMAIN,*)
     call flush_IMAIN()
   endif

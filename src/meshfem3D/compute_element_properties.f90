@@ -25,27 +25,32 @@
 !
 !=====================================================================
 
-! compute several rheological and geometrical properties for a given spectral element
+
   subroutine compute_element_properties(ispec,iregion_code,idoubling,ipass, &
                                         xstore,ystore,zstore,nspec, &
                                         xelm,yelm,zelm,shape3D, &
                                         rmin,rmax, &
                                         xigll,yigll,zigll,ispec_is_tiso)
 
+! compute several rheological and geometrical properties for a given spectral element
+
   use constants, only: myrank,NGLLX,NGLLY,NGLLZ,NGNOD,CUSTOM_REAL, &
     IFLAG_220_80,IFLAG_670_220,IFLAG_80_MOHO,IFLAG_MANTLE_NORMAL,IFLAG_CRUST, &
     IFLAG_OUTER_CORE_NORMAL,IFLAG_IN_FICTITIOUS_CUBE, &
     IREGION_CRUST_MANTLE,SUPPRESS_INTERNAL_TOPOGRAPHY,USE_GLL
 
-  use shared_parameters, only: REGIONAL_MESH_CUTOFF,USE_LOCAL_MESH
+  use shared_parameters, only: REGIONAL_MESH_CUTOFF,USE_LOCAL_MESH,EMC_MODEL
 
   use meshfem_models_par, only: &
     TOPOGRAPHY,ELLIPTICITY,CRUSTAL,CASE_3D, &
     THREE_D_MODEL,THREE_D_MODEL_MANTLE_SH,THREE_D_MODEL_S29EA, &
     THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI,THREE_D_MODEL_S362ANI_PREM, &
     THREE_D_MODEL_BKMNS_GLAD,THREE_D_MODEL_SPIRAL, &
-    ibathy_topo,nspl,rspl,ellipicity_spline,ellipicity_spline2, &
+    ibathy_topo, &
     REGIONAL_MOHO_MESH
+
+  ! ellipticity
+  use meshfem_models_par, only: nspl,rspl,ellipicity_spline,ellipicity_spline2
 
   use regions_mesh_par2, only: &
     xixstore,xiystore,xizstore, &
@@ -89,15 +94,53 @@
   ! flag for transverse isotropic elements
   logical :: elem_is_tiso
 
+  ! flag to add topography before model value assignment
+  ! (for models which define point values above sea level referenced to an Earth with topography)
+  logical :: is_model_with_surface_topography
+
+  ! flag to add ellipticity before model value assignment
+  ! (for models which define lat/lon/depth referenced to a "true", elliptical Earth)
+  logical :: is_model_with_ellipticity
+
   !debug
   logical, parameter :: DEBUG_OUTPUT = .false.
 
-! note: at this point, the mesh is still perfectly spherical
+! note: at this point, the mesh is still perfectly spherical.
+!       we will stretch elements to accommodate Moho variations, topography (surface and internal 410,660,..),
+!       and finally ellipticity. also, we will assign the rheological model parameters onto all GLL points.
+!
+!       generally, we assume that global models are given with respect to a spherical Earth.
+!       thus, the stretching for topography and ellipticity happens after assigning the model properties onto the GLL points.
+!
+!       this might be different for regional/local models, like the ones in the EMC catalog and/or more recent
+!       fully 3D tomography models, that prefer having the mesh point locations at the final, stretched positions.
+!       for those, we choose to add topography and ellipticity first, before assigning the model velocities.
+!
+!       TODO: we probably want to re-consider how spherical/3D models are defined internally, and choose the proper steps here.
 
   ! flag if element completely in crust (all corners above moho)
   elem_in_crust = .false.
   ! flag if element completely in mantle (all corners below moho)
   elem_in_mantle = .false.
+
+  ! by default, (mantle) models are defined for spherical earths, thus flag turned off
+  is_model_with_surface_topography = .false.
+  ! by default, models are defined for spherical earths, thus flag turned off
+  is_model_with_ellipticity = .false.
+
+  ! assign models that have non-spherical references
+  ! GLAD - block model for crust defines actual point locations above sea level
+  if (THREE_D_MODEL == THREE_D_MODEL_BKMNS_GLAD) then
+    ! uses topography
+    is_model_with_surface_topography = .true.
+  endif
+
+  ! IRIS EMC models (regional models typically assume mesh positions at actual elevation/depths)
+  if (EMC_MODEL) then
+    ! uses topography & ellipticity
+    is_model_with_surface_topography = .true.
+    is_model_with_ellipticity = .true.
+  endif
 
   !debug
   if (DEBUG_OUTPUT) then
@@ -106,6 +149,7 @@
 
   ! add topography of the Moho *before* adding the 3D crustal velocity model so that the stretched
   ! mesh gets assigned the right model values
+  ! (at this point, the mesh is still perfectly spherical)
   if (iregion_code == IREGION_CRUST_MANTLE) then
     if (CRUSTAL .and. CASE_3D .and. .not. (REGIONAL_MESH_CUTOFF .and. USE_LOCAL_MESH)) then
       ! 3D crustal models
@@ -155,19 +199,18 @@
   endif
 
   ! interpolates and stores GLL point locations
-  call compute_element_GLL_locations(xelm,yelm,zelm,ispec,nspec, &
-                                     xstore,ystore,zstore,shape3D)
+  call compute_element_GLL_locations(xelm,yelm,zelm,ispec,nspec,xstore,ystore,zstore,shape3D)
 
   !debug
   if (DEBUG_OUTPUT) then
     if (myrank == 0) print *,'  locations done'
   endif
 
-  ! block-mantle-spherical-harmonics expansion of GLAD model
-  ! the top block model assumes point locations with actual topography
-  if (THREE_D_MODEL == THREE_D_MODEL_BKMNS_GLAD) then
-    ! adds surface topography
-    if (TOPOGRAPHY) then
+  ! adds surface topography for models referenced w/ topography
+  ! (at this point, the mesh is still spherical w/ moho stretching)
+  if (TOPOGRAPHY) then
+    ! for models that need topography before assigning model velocities
+    if (is_model_with_surface_topography) then
       if (idoubling(ispec) == IFLAG_CRUST .or. &
           idoubling(ispec) == IFLAG_220_80 .or. &
           idoubling(ispec) == IFLAG_80_MOHO) then
@@ -178,16 +221,35 @@
         else
           ! stretches anchor points only, interpolates GLL points later on
           call add_topography(xelm,yelm,zelm,ibathy_topo)
+
           ! re-interpolates GLL point locations
           ! needed for get_model(..) routine to consider stretched locations in xstore,.. arrays
-          call compute_element_GLL_locations(xelm,yelm,zelm,ispec,nspec, &
-                                             xstore,ystore,zstore,shape3D)
+          call compute_element_GLL_locations(xelm,yelm,zelm,ispec,nspec,xstore,ystore,zstore,shape3D)
         endif
       endif
     endif
   endif
 
+  ! adds ellipticity for models referenced w/ ellipticity
+  if (ELLIPTICITY) then
+    if (is_model_with_ellipticity) then
+      ! note: after adding ellipticity, the mesh becomes elliptical and geocentric and geodetic/geographic colatitudes differ.
+      if (USE_GLL) then
+        ! make the Earth's ellipticity, use GLL points
+        call get_ellipticity_gll(xstore,ystore,zstore,ispec,nspec,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+      else
+        ! make the Earth's ellipticity, use element anchor points
+        call get_ellipticity(xelm,yelm,zelm,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+
+        ! re-interpolates GLL point locations
+        ! needed for get_model(..) routine to consider stretched locations in xstore,.. arrays
+        call compute_element_GLL_locations(xelm,yelm,zelm,ispec,nspec,xstore,ystore,zstore,shape3D)
+      endif
+    endif
+  endif
+
   ! computes velocity/density/... values for the chosen Earth model
+  ! (at this point, the mesh is generally still spherical w/ moho stretching, except for GLAD/EMC models)
   ! (only needed for second meshing phase)
   if (ipass == 2) then
     call get_model(iregion_code,ispec,nspec,idoubling(ispec), &
@@ -201,27 +263,29 @@
     endif
   endif
 
-
   ! either use GLL points or anchor points to capture TOPOGRAPHY and ELLIPTICITY
   !
   ! note:  using GLL points to capture them results in a slightly more accurate mesh.
-  !           however, it introduces more deformations to the elements which might lead to
-  !           problems with the Jacobian. using the anchors is therefore more robust.
+  !        however, it introduces more deformations to the elements which might lead to
+  !        problems with the Jacobian. using the anchors is therefore more robust.
 
   ! adds surface topography
-  ! (by default we add topography after setting model values on the GLL points, assuming that the models provided are defined
-  !  for spherical locations and crustal structures give with depth, not absolute position or altitude above sea-level)
-  if (TOPOGRAPHY .and. .not. THREE_D_MODEL == THREE_D_MODEL_BKMNS_GLAD) then
-    if (idoubling(ispec) == IFLAG_CRUST .or. &
-        idoubling(ispec) == IFLAG_220_80 .or. &
-        idoubling(ispec) == IFLAG_80_MOHO) then
-      ! stretches mesh between surface and R220 accordingly
-      if (USE_GLL) then
-        ! stretches every GLL point accordingly
-        call add_topography_gll(xstore,ystore,zstore,ispec,nspec,ibathy_topo)
-      else
-        ! stretches anchor points only, interpolates GLL points later on
-        call add_topography(xelm,yelm,zelm,ibathy_topo)
+  ! note: by default we add topography after setting model values on the GLL points,
+  !       assuming that the (global) models provided are defined for spherical locations
+  !       and crustal structures given with depth, not absolute position or altitude above sea-level.
+  if (TOPOGRAPHY) then
+    if (.not. is_model_with_surface_topography) then
+      if (idoubling(ispec) == IFLAG_CRUST .or. &
+          idoubling(ispec) == IFLAG_220_80 .or. &
+          idoubling(ispec) == IFLAG_80_MOHO) then
+        ! stretches mesh between surface and R220 accordingly
+        if (USE_GLL) then
+          ! stretches every GLL point accordingly
+          call add_topography_gll(xstore,ystore,zstore,ispec,nspec,ibathy_topo)
+        else
+          ! stretches anchor points only, interpolates GLL points later on
+          call add_topography(xelm,yelm,zelm,ibathy_topo)
+        endif
       endif
     endif
 
@@ -230,7 +294,6 @@
       if (myrank == 0) print *,'  topography done'
     endif
   endif
-
 
   ! adds topography on 410 km and 650 km discontinuity in model S362ANI
   if (.not. SUPPRESS_INTERNAL_TOPOGRAPHY) then
@@ -307,17 +370,19 @@
   ! make the Earth elliptical
   if (ELLIPTICITY) then
     ! note: after adding ellipticity, the mesh becomes elliptical and geocentric and geodetic/geographic colatitudes differ.
-    if (USE_GLL) then
-      ! make the Earth's ellipticity, use GLL points
-      call get_ellipticity_gll(xstore,ystore,zstore,ispec,nspec,nspl,rspl,ellipicity_spline,ellipicity_spline2)
-    else
-      ! make the Earth's ellipticity, use element anchor points
-      call get_ellipticity(xelm,yelm,zelm,nspl,rspl,ellipicity_spline,ellipicity_spline2)
-    endif
+    if (.not. is_model_with_ellipticity) then
+      if (USE_GLL) then
+        ! make the Earth's ellipticity, use GLL points
+        call get_ellipticity_gll(xstore,ystore,zstore,ispec,nspec,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+      else
+        ! make the Earth's ellipticity, use element anchor points
+        call get_ellipticity(xelm,yelm,zelm,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+      endif
 
-    !debug
-    if (DEBUG_OUTPUT) then
-      if (myrank == 0) print *,'  ellipticity done'
+      !debug
+      if (DEBUG_OUTPUT) then
+        if (myrank == 0) print *,'  ellipticity done'
+      endif
     endif
   endif
 
@@ -327,8 +392,7 @@
   !          their associated points. however, we don't re-calculate the velocity model values since the
   !          models are/should be referenced with respect to a spherical Earth.
   if (.not. USE_GLL) then
-    call compute_element_GLL_locations(xelm,yelm,zelm,ispec,nspec, &
-                                       xstore,ystore,zstore,shape3D)
+    call compute_element_GLL_locations(xelm,yelm,zelm,ispec,nspec,xstore,ystore,zstore,shape3D)
 
     !debug
     if (DEBUG_OUTPUT) then
@@ -359,8 +423,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine compute_element_GLL_locations(xelm,yelm,zelm,ispec,nspec, &
-                                           xstore,ystore,zstore,shape3D)
+  subroutine compute_element_GLL_locations(xelm,yelm,zelm,ispec,nspec,xstore,ystore,zstore,shape3D)
 
   use constants, only: NGLLX,NGLLY,NGLLZ,NGNOD,ZERO
 
@@ -414,7 +477,7 @@
 
 ! sets transverse isotropic flag for elements in crust/mantle
 
-  use constants, only: IMAIN,myrank,USE_OLD_VERSION_7_0_0_FORMAT,USE_OLD_VERSION_5_1_5_FORMAT, &
+  use constants, only: IMAIN,myrank, &
     IFLAG_CRUST,IFLAG_220_80,IFLAG_80_MOHO,IFLAG_670_220,IFLAG_MANTLE_NORMAL,IREGION_CRUST_MANTLE, &
     REFERENCE_MODEL_1DREF,REFERENCE_MODEL_1DREF, &
     THREE_D_MODEL_S362WMANI,THREE_D_MODEL_SGLOBE
@@ -448,10 +511,6 @@
       write(IMAIN,*) '  setting tiso flags in mantle model'
       if (USE_FULL_TISO_MANTLE) &
         write(IMAIN,*) '    using fully transverse isotopic mantle'
-      if (USE_OLD_VERSION_7_0_0_FORMAT) &
-        write(IMAIN,*) '    using formatting from version 7.0.0'
-      if (USE_OLD_VERSION_5_1_5_FORMAT) &
-        write(IMAIN,*) '    using formatting from version 5.1.5'
       call flush_IMAIN()
     endif
   endif
@@ -462,16 +521,12 @@
   if (USE_FULL_TISO_MANTLE) then
     ! all elements below the actual moho will be used for transverse isotropy
     ! note: this will increase the computation time by ~ 45 %
-    if (USE_OLD_VERSION_7_0_0_FORMAT) then
-      if (elem_in_mantle) elem_is_tiso = .true.
-    else
-      if (idoubling(ispec) == IFLAG_MANTLE_NORMAL &
+    if (idoubling(ispec) == IFLAG_MANTLE_NORMAL &
         .or. idoubling(ispec) == IFLAG_670_220 &
         .or. idoubling(ispec) == IFLAG_220_80 &
         .or. idoubling(ispec) == IFLAG_80_MOHO &
         .or. idoubling(ispec) == IFLAG_CRUST) then
-        elem_is_tiso = .true.
-      endif
+      elem_is_tiso = .true.
     endif
 
     ! all done
@@ -490,64 +545,26 @@
     ! THREE_D_MODEL_S29EA
     ! THREE_D_MODEL_GLL
     ! which show significant transverse isotropy also below 220km depth
-    if (USE_OLD_VERSION_5_1_5_FORMAT) then
-      ! assigns TI only to elements below (2-layer) fictitious moho down to 670
-      if (idoubling(ispec) == IFLAG_220_80 &
+    ! assigns TI to elements in crust and mantle down to 670
+    if (idoubling(ispec) == IFLAG_670_220 &
+        .or. idoubling(ispec) == IFLAG_220_80 &
         .or. idoubling(ispec) == IFLAG_80_MOHO &
-        .or. idoubling(ispec) == IFLAG_670_220) then
-        elem_is_tiso = .true.
-      endif
-    else if (USE_OLD_VERSION_7_0_0_FORMAT) then
-      ! assigns TI to elements in mantle elements just below actual moho down to 670
-      if (idoubling(ispec) == IFLAG_670_220 &
-          .or. idoubling(ispec) == IFLAG_220_80 &
-          .or. idoubling(ispec) == IFLAG_80_MOHO &
-          .or. (idoubling(ispec) == IFLAG_CRUST .and. elem_in_mantle) ) then
-        elem_is_tiso = .true.
-      endif
-    else
-      ! assigns TI to elements in crust and mantle down to 670
-      if (idoubling(ispec) == IFLAG_670_220 &
-          .or. idoubling(ispec) == IFLAG_220_80 &
-          .or. idoubling(ispec) == IFLAG_80_MOHO &
-          .or. idoubling(ispec) == IFLAG_CRUST) then
-        elem_is_tiso = .true.
-      endif
+        .or. idoubling(ispec) == IFLAG_CRUST) then
+      elem_is_tiso = .true.
     endif
 
   case default
     ! default reference models
     ! for example, PREM assigns transverse isotropy between Moho and 220km
-    if (USE_OLD_VERSION_5_1_5_FORMAT) then
-      ! assigns TI only to elements below (2-layer) fictitious moho
-      if (idoubling(ispec) == IFLAG_220_80 &
-          .or. idoubling(ispec) == IFLAG_80_MOHO) then
-        ! default case for PREM reference models:
-        ! models use only transverse isotropy between moho and 220 km depth
-        elem_is_tiso = .true.
-        ! checks mantle flag to be sure
-        if (elem_in_mantle .eqv. .false. ) stop 'Error mantle flag confused between moho and 220'
-      endif
-    else if (USE_OLD_VERSION_7_0_0_FORMAT) then
-      ! assigns TI to elements in mantle elements just below actual moho
-      if (idoubling(ispec) == IFLAG_220_80 &
-          .or. idoubling(ispec) == IFLAG_80_MOHO &
-          .or. (idoubling(ispec) == IFLAG_CRUST .and. elem_in_mantle )) then
-        ! default case for PREM reference models:
-        ! models use only transverse isotropy between moho and 220 km depth
-        elem_is_tiso = .true.
-      endif
-    else
-      ! assigns TI to elements in crust and mantle elements (down to 220),
-      ! to allow for tiso in crust and below actual moho (especially for oceanic crusts);
-      ! the crustal models will decide if model parameters are tiso or iso
-      if (idoubling(ispec) == IFLAG_220_80 &
-          .or. idoubling(ispec) == IFLAG_80_MOHO &
-          .or. idoubling(ispec) == IFLAG_CRUST) then
-        ! default case for PREM reference models:
-        ! models use only transverse isotropy between moho and 220 km depth
-        elem_is_tiso = .true.
-      endif
+    ! assigns TI to elements in crust and mantle elements (down to 220),
+    ! to allow for tiso in crust and below actual moho (especially for oceanic crusts);
+    ! the crustal models will decide if model parameters are tiso or iso
+    if (idoubling(ispec) == IFLAG_220_80 &
+        .or. idoubling(ispec) == IFLAG_80_MOHO &
+        .or. idoubling(ispec) == IFLAG_CRUST) then
+      ! default case for PREM reference models:
+      ! models use only transverse isotropy between moho and 220 km depth
+      elem_is_tiso = .true.
     endif
   end select
 
@@ -557,8 +574,7 @@
   !
   !       older implementations used also the flag elem_in_mantle to distinguish elements in the IFLAG_CRUST layer
   !       which were below the actual moho (needed for the case of 3D crustal models and thin oceanic moho).
-  !       this flag however becomes obsolete in this newer implementation. it is kept for backward compatibility,
-  !       in case one wants to run a simulation with USE_OLD_VERSION_5_1_5_FORMAT or USE_OLD_VERSION_7_0_0_FORMAT turned on.
+  !       this flag however becomes obsolete in this newer implementation. it is kept for backward compatibility.
 
   ! 3D mantle model specific additions
   select case (THREE_D_MODEL)

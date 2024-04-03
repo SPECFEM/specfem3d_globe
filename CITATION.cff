@@ -1,0 +1,200 @@
+cff-version: 1.2.0
+
+message: "If this software turns out to be helpful for your research, please cite both the article from preferred-citation and the software itself. More detailed citation suggestions can be found in the user manual."
+title: 'SPECFEM/specfem3d_globe: SPECFEM3D_GLOBE v8.1.1'
+version: v8.1.1
+date-released: '2024-03-18'
+repository-code: https://github.com/SPECFEM/specfem3d_globe/tree/v8.1.1
+url: "https://github.com/SPECFEM/specfem3d_globe"
+type: software
+identifiers:
+  - type: doi
+  - value: 10.5281/zenodo.10411115
+license: "GPL-3.0"
+
+authors:
+- family-names: Komatitsch
+  given-names: Dimitri
+- family-names: Tromp
+  given-names: Jeroen
+- family-names: Peter
+  given-names: Daniel
+- family-names: Sawade
+  given-names: Lucas
+- family-names: Thurin
+  given-names: Julien
+- family-names: Afanasiev
+  given-names: Michael
+- family-names: Alexeev
+  given-names: Dmitry
+- family-names: Ampuero
+  given-names: Jean-Paul
+- family-names: Ando
+  given-names: Kazuto
+- family-names: Bachmann
+  given-names: Etienne
+- family-names: Bai
+  given-names: Kangchen
+- family-names: Bangerth
+  given-names: Wolfgang
+- family-names: Basini
+  given-names: Piero
+- family-names: Beller
+  given-names: Stephen
+- family-names: Blitz
+  given-names: Celine
+- family-names: Bottero
+  given-names: Alexis
+- family-names: Bozdag
+  given-names: Ebru
+- family-names: Casarotti
+  given-names: Emanuele
+- family-names: Charles
+  given-names: Joseph
+- family-names: Chen
+  given-names: Min
+- family-names: Ciardelli
+  given-names: Caio
+- family-names: Cristini
+  given-names: Paul
+- family-names: Cui
+  given-names: Congyue
+- family-names: Durochat
+  given-names: Clement
+- family-names: Espindola Carmona
+  given-names: Armando
+- family-names: Galvez Barron
+  given-names: Percy
+- family-names: Gassmoeller
+  given-names: Rene
+- family-names: Gharti
+  given-names: Hom Nath
+- family-names: Goeddeke
+  given-names: Dominik
+- family-names: Gogar
+  given-names: Sunny
+- family-names: Grinberg
+  given-names: Leopold
+- family-names: Hjoerleifsdottir
+  given-names: Vala
+- family-names: Huang
+  given-names: Quancheng
+- family-names: Kendall
+  given-names: Elodie
+- family-names: Kientz
+  given-names: Sue
+- family-names: Labarta
+  given-names: Jesus
+- family-names: Lanucara
+  given-names: Piero
+- family-names: Le Goff
+  given-names: Nicolas
+- family-names: Le Loher
+  given-names: Pieyre
+- family-names: Lefebvre
+  given-names: Matthieu
+- family-names: Lei
+  given-names: Wenjie
+- family-names: Liu
+  given-names: Qinya
+- family-names: Liu
+  given-names: Youshan
+- family-names: Luet
+  given-names: David
+- family-names: Luo
+  given-names: Yang
+- family-names: Maggi
+  given-names: Alessia
+- family-names: Magnoni
+  given-names: Federica
+- family-names: Martin
+  given-names: Roland
+- family-names: Matzen
+  given-names: Rene
+- family-names: McPherson
+  given-names: Amanda
+- family-names: McRitchie
+  given-names: Dennis
+- family-names: Meenakshi
+  given-names: Yellapragada
+- family-names: Mehaut
+  given-names: Jean-Francois
+- family-names: Meschede
+  given-names: Matthias
+- family-names: Messmer
+  given-names: Peter
+- family-names: Michea
+  given-names: David
+- family-names: Miyoshi
+  given-names: Takayuki
+- family-names: Monteiller
+  given-names: Vadim
+- family-names: Nadh Somala
+  given-names: Surendra
+- family-names: Nissen-Meyer
+  given-names: Tarje
+- family-names: Nowacki
+  given-names: Andy
+- family-names: Orsvuran
+  given-names: Ridvan
+- family-names: Parisi
+  given-names: Laura
+- family-names: Podhorszki
+  given-names: Norbert
+- family-names: Pouget
+  given-names: Kevin
+- family-names: Raghukanth
+  given-names: S.T.G.
+- family-names: Rietmann
+  given-names: Max
+- family-names: Ruggiero
+  given-names: Vittorio
+- family-names: Sales de Andrade
+  given-names: Elliott
+- family-names: Savage
+  given-names: Brian
+- family-names: Schirwon
+  given-names: Malte
+- family-names: Schuberth
+  given-names: Bernhard
+- family-names: Sieminski
+  given-names: Anne
+- family-names: Smith
+  given-names: James
+- family-names: Strand
+  given-names: Leif
+- family-names: Tao
+  given-names: Kai
+- family-names: Tape
+  given-names: Carl
+- family-names: Tsuboi
+  given-names: Seiji
+- family-names: Valero Cano
+  given-names: Eduardo
+- family-names: Videau
+  given-names: Brice
+- family-names: Vilotte
+  given-names: Jean-Pierre
+- family-names: Xie
+  given-names: Zhinan
+- family-names: Zhang
+  given-names: Chang-Hua
+- family-names: Zhu
+  given-names: Hejun
+
+
+preferred-citation:
+  type: article
+  authors:
+  - family-names: Komatitsch
+    given-names: Dimitri
+  - family-names: Tromp
+    given-names: Jeroen
+  title: "Spectral-element simulations of global seismic wave propagation - I. Validation"
+  journal: "Geophys. J. Int."
+  volume: 149
+  issue: 2
+  start: 390  # First page number
+  end: 412    # Last page number
+  year: 2002
+  doi: "10.1046/j.1365-246X.2002.01653.x"

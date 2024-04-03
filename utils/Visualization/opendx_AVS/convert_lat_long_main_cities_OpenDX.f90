@@ -62,7 +62,7 @@
   print *,'city file used contains ',N_CITIES,' cities'
   print *,'reading the city file'
   open(unit=13,file='lat_long_main_cities_processed.dat',status='old')
-  do icity=1,N_CITIES
+  do icity = 1,N_CITIES
     read(13,*) idegrees_lat,iminutes_lat,icode_lat,idegrees_long,iminutes_long,icode_long
 
     lat(icity) = idegrees_lat + iminutes_lat/60.d0
@@ -84,8 +84,8 @@
   print *,'reading topo file'
 
   open(unit=13,file='topo_bathy_etopo4_from_etopo2_subsampled.dat',status='old')
-  do iy=1,NY_BATHY
-    do ix=1,NX_BATHY
+  do iy = 1,NY_BATHY
+    do ix = 1,NX_BATHY
       read(13,*) ibathy_topo_ori(ix,iy)
     enddo
   enddo

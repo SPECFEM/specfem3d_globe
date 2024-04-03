@@ -26,7 +26,7 @@
 !=====================================================================
 
 ! define the superbrick that implements the symmetric four-to-two mesh doubling.
-! Generated automatically by a script: UTILS/doubling_brick/define_superbrick.pl
+! Generated automatically by a script: utils/small_utilities/doubling_brick/define_superbrick.pl
 
   subroutine define_superbrick(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb)
 

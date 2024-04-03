@@ -109,6 +109,10 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
     B_array_rotation_lddrk = d_b_B_array_rotation_lddrk;
   }
 
+  // kernel timing
+  gpu_event start,stop;
+  if (GPU_TIMING){ start_timing_gpu(&start,&stop); }
+
 #ifdef USE_OPENCL
   if (run_opencl) {
     size_t global_work_size[2];
@@ -281,6 +285,9 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
                                                                mp->NSPEC_OUTER_CORE);
   }
 #endif
+
+  // kernel timing
+  if (GPU_TIMING){ stop_timing_gpu(&start,&stop,"outer_core"); }
 
   GPU_ERROR_CHECKING ("kernel outer_core");
 }

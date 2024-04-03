@@ -33,10 +33,16 @@
 
   use specfem_par, only: myrank,Mesh_pointer,GPU_MODE,GPU_ASYNC_COPY,SIMULATION_TYPE, &
     nrec_local,number_receiver_global,ispec_selected_rec,ispec_selected_source, &
-    it,it_begin,it_end,seismo_current,seismo_offset, seismograms,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+    it,it_end, &
+    seismo_current,seismo_offset, &
+    seismograms, &
+    nlength_seismogram, &
+    NTSTEP_BETWEEN_OUTPUT_SEISMOS,NTSTEP_BETWEEN_OUTPUT_SAMPLE, &
+    do_save_seismograms, &
     WRITE_SEISMOGRAMS_BY_MAIN,OUTPUT_SEISMOS_ASDF, &
-    SAVE_SEISMOGRAMS_IN_ADJOINT_RUN,SAVE_SEISMOGRAMS_STRAIN, &
-    it_adj_written,moment_der,sloc_der,shdur_der,stshift_der,scale_displ,NSTEP
+    SAVE_SEISMOGRAMS_STRAIN, &
+    moment_der,sloc_der,shdur_der,stshift_der, &
+    scale_displ
 
   use specfem_par_crustmantle, only: displ_crust_mantle,b_displ_crust_mantle, &
     eps_trace_over_3_crust_mantle,epsilondev_xx_crust_mantle,epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &
@@ -50,63 +56,68 @@
   double precision, external :: wtime
   double precision :: write_time_begin,write_time
 
-  ! update position in seismograms
-  seismo_current = seismo_current + 1
+  ! checks if anything to do
+  if (.not. do_save_seismograms) return
 
-  ! compute & store the seismograms only if there is at least one receiver located in this slice
-  if (nrec_local > 0) then
+  ! checks subsampling recurrence
+  if (mod(it-1,NTSTEP_BETWEEN_OUTPUT_SAMPLE) == 0) then
 
-    ! gets resulting array values onto CPU
-    if (GPU_MODE) then
-      ! for forward and kernel simulations, seismograms are computed by the GPU, thus no need to transfer the wavefield
-      ! gets field values from GPU
-      if (SIMULATION_TYPE == 2 .or. SAVE_SEISMOGRAMS_STRAIN) then
-        ! this transfers fields only in elements with stations for efficiency
-        call write_seismograms_transfer_gpu(Mesh_pointer, &
-                                            displ_crust_mantle,b_displ_crust_mantle, &
-                                            eps_trace_over_3_crust_mantle, &
-                                            epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
-                                            epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
-                                            number_receiver_global, &
-                                            ispec_selected_rec,ispec_selected_source, &
-                                            ibool_crust_mantle)
-        ! synchronizes field values from GPU
-        if (GPU_ASYNC_COPY) then
-          call transfer_seismo_from_device_async(Mesh_pointer, &
-                                                 displ_crust_mantle,b_displ_crust_mantle, &
-                                                 number_receiver_global,ispec_selected_rec,ispec_selected_source, &
-                                                 ibool_crust_mantle)
+    ! update position in seismograms
+    seismo_current = seismo_current + 1
+
+    ! check for edge effects
+    if (seismo_current < 1 .or. seismo_current > nlength_seismogram) &
+      call exit_mpi(myrank,'Error: seismo_current out of bounds in recording of seismograms')
+
+    ! compute & store the seismograms only if there is at least one receiver located in this slice
+    if (nrec_local > 0) then
+      ! gets resulting array values onto CPU
+      if (GPU_MODE) then
+        ! for forward and kernel simulations, seismograms are computed by the GPU, thus no need to transfer the wavefield
+        ! gets field values from GPU
+        if (SIMULATION_TYPE == 2 .or. SAVE_SEISMOGRAMS_STRAIN) then
+          ! this transfers fields only in elements with stations for efficiency
+          call write_seismograms_transfer_gpu(Mesh_pointer, &
+                                              displ_crust_mantle,b_displ_crust_mantle, &
+                                              eps_trace_over_3_crust_mantle, &
+                                              epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
+                                              epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
+                                              number_receiver_global, &
+                                              ispec_selected_rec,ispec_selected_source, &
+                                              ibool_crust_mantle)
+          ! synchronizes field values from GPU
+          if (GPU_ASYNC_COPY) then
+            call transfer_seismo_from_device_async(Mesh_pointer, &
+                                                   displ_crust_mantle,b_displ_crust_mantle, &
+                                                   number_receiver_global,ispec_selected_rec,ispec_selected_source, &
+                                                   ibool_crust_mantle)
+          endif
         endif
-      endif
-    endif ! GPU_MODE
+      endif ! GPU_MODE
 
-    ! computes traces at interpolated receiver locations
-    select case (SIMULATION_TYPE)
-    case (1)
-      ! forward run
-      if (.not. GPU_MODE) then
-        ! on CPU
-        call compute_seismograms(NGLOB_CRUST_MANTLE,displ_crust_mantle,seismo_current,seismograms)
-      else
-        ! on GPU
-        call compute_seismograms_gpu(Mesh_pointer,seismograms,seismo_current,it,it_end, &
-                                     scale_displ,NTSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP)
-
-      endif
-    case (2)
-      ! adjoint run
-      call compute_seismograms_adjoint(displ_crust_mantle, &
-                                       eps_trace_over_3_crust_mantle, &
-                                       epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
-                                       epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
-                                       it_adj_written, &
-                                       moment_der,sloc_der,stshift_der,shdur_der, &
-                                       seismograms)
-    case (3)
-      ! kernel run
-      if (.not. GPU_MODE) then
-        ! on CPU
-        if (.not. ( SIMULATION_TYPE == 3 .and. (.not. SAVE_SEISMOGRAMS_IN_ADJOINT_RUN)) ) then
+      ! computes traces at interpolated receiver locations
+      select case (SIMULATION_TYPE)
+      case (1)
+        ! forward run
+        if (.not. GPU_MODE) then
+          ! on CPU
+          call compute_seismograms(NGLOB_CRUST_MANTLE,displ_crust_mantle,seismo_current,seismograms)
+        else
+          ! on GPU
+          call compute_seismograms_gpu(Mesh_pointer,seismograms,seismo_current,it,it_end,scale_displ,nlength_seismogram)
+        endif
+      case (2)
+        ! adjoint run
+        call compute_seismograms_adjoint(displ_crust_mantle, &
+                                         eps_trace_over_3_crust_mantle, &
+                                         epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
+                                         epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
+                                         moment_der,sloc_der,stshift_der,shdur_der, &
+                                         seismograms)
+      case (3)
+        ! kernel run
+        if (.not. GPU_MODE) then
+          ! on CPU
           if (OUTPUT_ADJOINT_WAVEFIELD_SEISMOGRAMS) then
             ! uncomment to output adjoint wavefield instead for seismogram output
             call compute_seismograms(NGLOB_CRUST_MANTLE_ADJOINT,displ_crust_mantle,seismo_current,seismograms)
@@ -114,32 +125,43 @@
             ! default, backward reconstructed wavefield seismos
             call compute_seismograms(NGLOB_CRUST_MANTLE_ADJOINT,b_displ_crust_mantle,seismo_current,seismograms)
           endif
+        else
+          ! on GPU
+          call compute_seismograms_gpu(Mesh_pointer,seismograms,seismo_current,it,it_end,scale_displ,nlength_seismogram)
         endif
-      else
-        ! on GPU
-        if (.not. ( SIMULATION_TYPE == 3 .and. (.not. SAVE_SEISMOGRAMS_IN_ADJOINT_RUN)) ) then
-          call compute_seismograms_gpu(Mesh_pointer,seismograms,seismo_current,it,it_end, &
-                                       scale_displ,NTSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP)
-        endif
-      endif
-    end select
-
-    ! strain seismograms
-    if (SAVE_SEISMOGRAMS_STRAIN) then
-      select case (SIMULATION_TYPE)
-      case (1)
-        ! forward run
-        call compute_seismograms_strain(NGLOB_CRUST_MANTLE,displ_crust_mantle)
-      case (3)
-        ! kernel run
-        call compute_seismograms_strain(NGLOB_CRUST_MANTLE,b_displ_crust_mantle)
       end select
-    endif
 
-  endif ! nrec_local
+      ! strain seismograms
+      if (SAVE_SEISMOGRAMS_STRAIN) then
+        select case (SIMULATION_TYPE)
+        case (1)
+          ! forward run
+          call compute_seismograms_strain(NGLOB_CRUST_MANTLE,displ_crust_mantle)
+        case (3)
+          ! kernel run
+          call compute_seismograms_strain(NGLOB_CRUST_MANTLE,b_displ_crust_mantle)
+        end select
+      endif
+
+    endif ! nrec_local
+  endif
 
   ! write the current or final seismograms
-  if (seismo_current == NTSTEP_BETWEEN_OUTPUT_SEISMOS .or. it == it_end) then
+  !
+  ! for example:
+  !   NTSTEP_BETWEEN_OUTPUT_SEISMOS = 10 , NTSTEP_BETWEEN_OUTPUT_SAMPLE = 5
+  !       -> 10 / 5 == 2 steps (nlength_seismogram)
+  !          we will store samples at it==1,it==6 and output at it==10
+  !   NTSTEP_BETWEEN_OUTPUT_SEISMOS = 10 , NTSTEP_BETWEEN_OUTPUT_SAMPLE = 1
+  !       -> 10 / 1 == 10 steps
+  !          we will store samples at it==1,2,3,..,10 and output at it==10
+  !
+  !   that is for NTSTEP_BETWEEN_OUTPUT_SEISMOS = 10 , NTSTEP_BETWEEN_OUTPUT_SAMPLE = 5,
+  !   the seismograms have samples for the wavefield at mod((it-1),NTSTEP_BETWEEN_OUTPUT_SAMPLE) == 0,
+  !   which is at it==1,it==6. for writing the seismograms however,
+  !   we would write out at mod(it,NTSTEP_BETWEEN_OUTPUT_SEISMOS) == 0, which is at it==10
+  !
+  if (mod(it,NTSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == it_end) then
     ! timing
     write_time_begin = wtime()
 
@@ -151,14 +173,13 @@
       select case (SIMULATION_TYPE)
       case (1,3)
         ! forward/reconstructed wavefields
-        if (.not. ( SIMULATION_TYPE == 3 .and. (.not. SAVE_SEISMOGRAMS_IN_ADJOINT_RUN) ) ) &
+        if (do_save_seismograms) &
           call write_seismograms_to_file()
         if (SAVE_SEISMOGRAMS_STRAIN) &
           call write_seismograms_strain()
       case (2)
         ! adjoint wavefield
-        call write_adj_seismograms(it_adj_written)
-        it_adj_written = it
+        call write_adj_seismograms()
       end select
     endif
 
@@ -174,13 +195,11 @@
       ! timing
       write_time = wtime() - write_time_begin
       ! output
-      write(IMAIN,*)
-      write(IMAIN,*) 'Total number of time steps written: ', it-it_begin+1
-      write(IMAIN,*)
+      write(IMAIN,*) 'Total number of time steps written: ', seismo_offset
       if (WRITE_SEISMOGRAMS_BY_MAIN) then
-        write(IMAIN,*) 'Writing the seismograms by main proc alone took ',write_time,' seconds'
+        write(IMAIN,*) 'Writing the seismograms by main proc alone took ',sngl(write_time),' seconds'
       else
-        write(IMAIN,*) 'Writing the seismograms in parallel took ',write_time,' seconds'
+        write(IMAIN,*) 'Writing the seismograms in parallel took ',sngl(write_time),' seconds'
       endif
       write(IMAIN,*)
       call flush_IMAIN()
@@ -199,20 +218,21 @@
   use constants_solver, only: MAX_STRING_LEN,CUSTOM_REAL,NDIM,IMAIN,IOUT,itag
 
   use specfem_par, only: &
-          NPROCTOT_VAL,myrank,nrec,nrec_local, &
-          number_receiver_global,seismograms, &
-          islice_num_rec_local, &
-          seismo_offset,seismo_current, &
-          station_name,network_name, &
-          OUTPUT_SEISMOS_ASCII_TEXT, &
-          OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-          OUTPUT_SEISMOS_ASDF, &
-          OUTPUT_SEISMOS_3D_ARRAY, &
-          NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-          SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE, &
-          OUTPUT_FILES, &
-          WRITE_SEISMOGRAMS_BY_MAIN, &
-          DT,NSTEP,NTSTEP_BETWEEN_OUTPUT_SAMPLE
+    NPROCTOT_VAL,myrank,nrec,nrec_local, &
+    number_receiver_global, &
+    seismograms, &
+    nlength_seismogram, &
+    seismo_offset,seismo_current, &
+    islice_num_rec_local, &
+    station_name,network_name, &
+    OUTPUT_SEISMOS_ASCII_TEXT, &
+    OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
+    OUTPUT_SEISMOS_ASDF, &
+    OUTPUT_SEISMOS_3D_ARRAY, &
+    SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE, &
+    OUTPUT_FILES, &
+    WRITE_SEISMOGRAMS_BY_MAIN, &
+    DT,NSTEP,NTSTEP_BETWEEN_OUTPUT_SAMPLE
 
   implicit none
 
@@ -225,7 +245,7 @@
   character(len=MAX_STRING_LEN) :: sisname,staname
 
   ! allocates single station seismogram
-  allocate(one_seismogram(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
+  allocate(one_seismogram(NDIM,nlength_seismogram),stat=ier)
   if (ier /= 0) call exit_mpi(myrank,'Error while allocating one temporary seismogram')
   one_seismogram(:,:) = 0.0_CUSTOM_REAL
 
@@ -237,7 +257,7 @@
       ! get global number of that receiver
       irec = number_receiver_global(irec_local)
 
-      one_seismogram(:,:) = seismograms(:,irec_local,::NTSTEP_BETWEEN_OUTPUT_SAMPLE)
+      one_seismogram(:,:) = seismograms(:,irec_local,:)
 
       ! write this seismogram
       ! note: ASDF data structure is given in module
@@ -342,7 +362,7 @@
         ! get global number of that receiver
         irec = number_receiver_global(irec_local)
 
-        one_seismogram(:,:) = seismograms(:,irec_local,::NTSTEP_BETWEEN_OUTPUT_SAMPLE)
+        one_seismogram(:,:) = seismograms(:,irec_local,:)
 
         ! write this seismogram
         ! note: ASDF data structure is given in module
@@ -391,40 +411,44 @@
         ! loop on all the slices
         do iproc = 0,NPROCTOT_VAL-1
 
-         ! communicates only with processes that contain local receivers (to minimize MPI chatter)
-         if (islice_num_rec_local(iproc) == 0 ) cycle
+          ! communicates only with processes that contain local receivers (to minimize MPI chatter)
+          if (islice_num_rec_local(iproc) == 0 ) cycle
 
-         ! receive except from proc 0, which is me and therefore I already have this value
-         sender = iproc
-         if (iproc == 0) then
-           ! main is current slice
-           nrec_local_received = nrec_local
-         else
-           ! receives info from secondary processes
-           call recv_singlei(nrec_local_received,sender,itag)
-           if (nrec_local_received <= 0) call exit_MPI(myrank,'Error while receiving local number of receivers')
-         endif
-         if (nrec_local_received > 0) then
-           do irec_local = 1,nrec_local_received
-             ! receive except from proc 0, which is myself and therefore I already have these values
-             if (iproc == 0) then
-               ! get global number of that receiver
-               irec = number_receiver_global(irec_local)
-               one_seismogram(:,:) = seismograms(:,irec_local,::NTSTEP_BETWEEN_OUTPUT_SAMPLE)
-             else
-               ! receives info from secondary processes
-               call recv_singlei(irec,sender,itag)
-               if (irec < 1 .or. irec > nrec) call exit_MPI(myrank,'Error while receiving global receiver number')
-               call recv_cr(one_seismogram,NDIM*seismo_current,sender,itag)
-             endif
+          ! receive except from proc 0, which is me and therefore I already have this value
+          sender = iproc
+          if (iproc == 0) then
+            ! main is current slice
+            nrec_local_received = nrec_local
+          else
+            ! receives info from secondary processes
+            call recv_singlei(nrec_local_received,sender,itag)
+            if (nrec_local_received <= 0) call exit_MPI(myrank,'Error while receiving local number of receivers')
+          endif
 
-             ! write this seismogram
-             call write_one_seismogram(one_seismogram,irec,irec_local,.false.)
+          if (nrec_local_received > 0) then
+            do irec_local = 1,nrec_local_received
+              ! init trace
+              one_seismogram(:,:) = 0._CUSTOM_REAL
 
-             ! counts seismos written
-             total_seismos = total_seismos + 1
-           enddo
-         endif
+              ! receive except from proc 0, which is myself and therefore I already have these values
+              if (iproc == 0) then
+                ! get global number of that receiver
+                irec = number_receiver_global(irec_local)
+                one_seismogram(:,:) = seismograms(:,irec_local,:)
+              else
+                ! receives info from secondary processes
+                call recv_singlei(irec,sender,itag)
+                if (irec < 1 .or. irec > nrec) call exit_MPI(myrank,'Error while receiving global receiver number')
+                call recv_cr(one_seismogram,NDIM*seismo_current,sender,itag)
+              endif
+
+              ! write this seismogram
+              call write_one_seismogram(one_seismogram,irec,irec_local,.false.)
+
+              ! counts seismos written
+              total_seismos = total_seismos + 1
+            enddo
+          endif
         enddo
 
       else
@@ -438,7 +462,7 @@
             irec = number_receiver_global(irec_local)
             call send_singlei(irec,receiver,itag)
 
-            one_seismogram(:,:) = seismograms(:,irec_local,::NTSTEP_BETWEEN_OUTPUT_SAMPLE)
+            one_seismogram(:,:) = seismograms(:,irec_local,:)
             call send_cr(one_seismogram,NDIM*seismo_current,receiver,itag)
           enddo
         endif
@@ -447,10 +471,10 @@
       ! only main process
       if (myrank == 0) then
         ! output info
-        write(IMAIN,*)
         write(IMAIN,*) 'Total number of receivers saved is ',total_seismos,' out of ',nrec
-        write(IMAIN,*)
+        call flush_IMAIN()
 
+        ! checks
         if (total_seismos /= nrec) call exit_MPI(myrank,'incorrect total number of receivers saved')
 
         ! create one large file instead of one small file per station to avoid file system overload
@@ -475,25 +499,25 @@
     MAX_LENGTH_STATION_NAME,MAX_LENGTH_NETWORK_NAME
 
   use specfem_par, only: &
-          myrank, &
-          station_name,network_name,stlat,stlon, &
-          DT, &
-          seismo_current, &
-          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_ASDF, &
-          OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-          NTSTEP_BETWEEN_OUTPUT_SAMPLE
+    myrank, &
+    station_name,network_name,stlat,stlon, &
+    DT, &
+    seismo_current, &
+    OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_ASDF, &
+    OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT, &
+    nlength_seismogram
 
   use specfem_par, only: &
-          cmt_lat => cmt_lat_SAC,cmt_lon => cmt_lon_SAC
+    cmt_lat => cmt_lat_SAC,cmt_lon => cmt_lon_SAC
 
   implicit none
 
   integer,intent(in) :: irec,irec_local
   logical,intent(in) :: is_for_asdf
-  real(kind=CUSTOM_REAL), dimension(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS),intent(in) :: one_seismogram
+  real(kind=CUSTOM_REAL), dimension(NDIM,nlength_seismogram),intent(in) :: one_seismogram
 
   ! local parameters
-  real(kind=CUSTOM_REAL), dimension(5,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: seismogram_tmp
+  real(kind=CUSTOM_REAL), dimension(5,nlength_seismogram) :: seismogram_tmp
   integer :: iorientation,length_station_name,length_network_name
 
   character(len=4) :: chn
@@ -507,16 +531,14 @@
   double precision :: phi
   real(kind=CUSTOM_REAL) :: cphi,sphi
   integer :: isample
-  integer :: seismo_current_used
 
   ! initializes
   seismogram_tmp(:,:) = 0.0_CUSTOM_REAL
-  seismo_current_used = ceiling(real(seismo_current) / NTSTEP_BETWEEN_OUTPUT_SAMPLE)
 
   ! get band code
   call band_instrument_code(DT,bic)
 
-  if (ROTATE_SEISMOGRAMS_RT) then ! iorientation 1=N,2=E,3=Z,4=R,5=T
+  if (ROTATE_SEISMOGRAMS_RT) then ! iorientation 1 = N,2 = E,3 = Z,4 = R,5 = T
     ior_start = 3    ! starting from Z
     ior_end   = 5    ! ending with T => ZRT
   else
@@ -524,7 +546,7 @@
     ior_end   = 3    ! ending with Z => NEZ
   endif
 
-  do iorientation = ior_start,ior_end      ! BS BS changed according to ROTATE_SEISMOGRAMS_RT
+  do iorientation = ior_start,ior_end    ! changes according to ROTATE_SEISMOGRAMS_RT
 
     select case (iorientation)
     case (1)
@@ -546,9 +568,8 @@
       call exit_MPI(myrank,'incorrect channel value')
     end select
 
-    if (iorientation == 4 .or. iorientation == 5) then        ! LMU BS BS
-
-      ! BS BS calculate backazimuth needed to rotate East and North
+    if (iorientation == 4 .or. iorientation == 5) then
+      ! calculate backazimuth needed to rotate East and North
       ! components to Radial and Transverse components
       ! (back-azimuth returned in degrees between [0,360])
       call get_backazimuth(cmt_lat,cmt_lon,stlat(irec),stlon(irec),backaz)
@@ -571,25 +592,24 @@
       cphi = cos(phi*DEGREES_TO_RADIANS)
       sphi = sin(phi*DEGREES_TO_RADIANS)
 
-      ! BS BS do the rotation of the components and put result in
+      ! do the rotation of the components and put result in
       ! new variable seismogram_tmp
       if (iorientation == 4) then ! radial component
-         do isample = 1,seismo_current_used
-            seismogram_tmp(iorientation,isample) = &
+        do isample = 1,seismo_current
+          seismogram_tmp(iorientation,isample) = &
                cphi * one_seismogram(1,isample) + sphi * one_seismogram(2,isample)
-         enddo
+        enddo
       else if (iorientation == 5) then ! transverse component
-         do isample = 1,seismo_current_used
-            seismogram_tmp(iorientation,isample) = &
+        do isample = 1,seismo_current
+          seismogram_tmp(iorientation,isample) = &
             -1*sphi * one_seismogram(1,isample) + cphi * one_seismogram(2,isample)
-         enddo
+        enddo
       endif
-
-    else ! keep NEZ components
-      do isample = 1,seismo_current_used
+    else
+      ! keep NEZ components
+      do isample = 1,seismo_current
         seismogram_tmp(iorientation,isample) = one_seismogram(iorientation,isample)
       enddo
-
     endif
 
     ! create the name of the seismogram file for each slice
@@ -640,22 +660,22 @@
 
 ! write adjoint seismograms to text files
 
-  subroutine write_adj_seismograms(it_adj_written)
+  subroutine write_adj_seismograms()
 
   use constants, only: MAX_STRING_LEN,CUSTOM_REAL,IOUT
 
-  use specfem_par, only: NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+  use specfem_par, only: NTSTEP_BETWEEN_OUTPUT_SEISMOS,NTSTEP_BETWEEN_OUTPUT_SAMPLE, &
     DT,t0,OUTPUT_FILES, &
     seismograms,number_receiver_global,nrec_local, &
-    it,myrank,WRITE_SEISMOGRAMS_BY_MAIN
+    it,seismo_current,seismo_offset, &
+    myrank,WRITE_SEISMOGRAMS_BY_MAIN
 
   implicit none
 
-  integer,intent(in) :: it_adj_written
-
   ! local parameters
   integer :: irec,irec_local,ier
-  integer :: iorientation,isample
+  integer :: iorientation,isample,it_tmp
+  real(kind=CUSTOM_REAL) :: time_t
 
   character(len=4) :: chn
   character(len=MAX_STRING_LEN) :: sisname
@@ -705,29 +725,31 @@
       ! for example: NT.S000001.MXN.sem.ascii
       write(sisname,"(a3,'.',a1,i6.6,'.',a3,'.sem.ascii')") '/NT','S',irec,chn
 
-      ! save seismograms in text format with no subsampling.
-      ! Because we do not subsample the output, this can result in large files
-      ! if the simulation uses many time steps. However, subsampling the output
-      ! here would result in a loss of accuracy when one later convolves
-      ! the results with the source time function
+      ! save seismograms in text format
       if (it <= NTSTEP_BETWEEN_OUTPUT_SEISMOS) then
-        !open new file
+        ! open new file
         open(unit=IOUT,file=trim(OUTPUT_FILES)//sisname(1:len_trim(sisname)), &
               status='unknown',action='write',iostat=ier)
       else
         ! for it > NTSTEP_BETWEEN_OUTPUT_SEISMOS
-        !append to existing file
+        ! append to existing file
         open(unit=IOUT,file=trim(OUTPUT_FILES)//sisname(1:len_trim(sisname)), &
               status='old',position='append',action='write',iostat=ier)
       endif
       if (ier /= 0) call exit_mpi(myrank,'Error opening file: '//trim(OUTPUT_FILES)//trim(sisname))
 
       ! make sure we never write more than the maximum number of time steps
-      ! subtract half duration of the source to make sure travel time is correct
-      do isample = it_adj_written+1,min(it,NSTEP)
+      do isample = 1,seismo_current
+        ! current time
+        ! current time increment
+        it_tmp = seismo_offset + isample
+
+        ! subtract onset time to make sure travel time is correct
         ! distinguish between single and double precision for reals
-        write(IOUT,*) real(dble(isample-1)*DT - t0, kind=CUSTOM_REAL), ' ', &
-                      seismograms(iorientation,irec_local,isample-it_adj_written)
+        time_t = real(dble((it_tmp-1) * NTSTEP_BETWEEN_OUTPUT_SAMPLE) * DT - t0,kind=CUSTOM_REAL)
+
+        ! output
+        write(IOUT,*) time_t,seismograms(iorientation,irec_local,isample)
       enddo
 
       close(IOUT)
@@ -794,7 +816,7 @@
         call exit_MPI(myrank,'incorrect channel value in write_seismograms_strain()')
       end select
 
-      ! strain seismograms start will have channel-code S**
+      ! strain seismograms will have channel-code S**
       !
       ! create the name of the strain seismogram file using the station name and network name
       ! using format: **net**.**sta**.channel
@@ -829,7 +851,7 @@
 
         ! writes out to file
         ! distinguish between single and double precision for reals
-        write(IOUT,*) real(timeval, kind=CUSTOM_REAL), ' ', real(value, kind=CUSTOM_REAL)
+        write(IOUT,*) real(timeval, kind=CUSTOM_REAL), real(value, kind=CUSTOM_REAL)
       enddo
       close(IOUT)
 

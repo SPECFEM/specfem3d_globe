@@ -38,7 +38,7 @@
   use shared_parameters, only: &
     NEX_XI,NEX_ETA,NSTEP,NTSTEP_BETWEEN_FRAMES, &
     NCHUNKS,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-    OUTPUT_FILES,MOVIE_COARSE
+    OUTPUT_FILES,MOVIE_COARSE,ELLIPTICITY
 
   implicit none
 
@@ -88,7 +88,7 @@
 
   double precision :: min_field_current,max_field_current,max_absol
 
-  logical :: USE_OPENDX,UNIQUE_FILE,USE_GMT,USE_AVS
+  logical :: USE_OPENDX,UNIQUE_FILE,USE_GMT,USE_AVS,USE_VTU
 
   integer :: nframes,iframe
 
@@ -96,21 +96,27 @@
 
   integer :: iproc,ipoin
 
-! for sorting routine
+  ! for sorting routine
   integer :: npointot,ilocnum,nglob,ielm,ieoff,ispecloc
   integer :: NIT
   integer, dimension(:), allocatable :: iglob,ireorder
   logical, dimension(:), allocatable :: mask_point
   double precision, dimension(:), allocatable :: xp,yp,zp,xp_save,yp_save,zp_save,field_display
 
-! for dynamic memory allocation
+  ! for dynamic memory allocation
   integer :: ierror
 
-! movie files stored by solver
+  ! movie files stored by solver
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
          store_val_x,store_val_y,store_val_z, &
          store_val_ux,store_val_uy,store_val_uz
 
+  ! VTU
+  character(len=MAX_STRING_LEN) :: var_name
+  ! global point data
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: total_dat
+  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: total_dat_xyz
+  integer,dimension(:,:),allocatable :: total_dat_con
 
 ! ************** PROGRAM STARTS HERE **************
 
@@ -121,11 +127,12 @@
   print *,'2 = create files in AVS UCD format with individual files'
   print *,'3 = create files in AVS UCD format with one time-dependent file'
   print *,'4 = create files in GMT xyz Ascii long/lat/U format'
+  print *,'5 = create files in VTU format with individual files'
   print *,'any other value = exit'
   print *
   print *,'enter value:'
   read(5,*) iformat
-  if (iformat < 1 .or. iformat > 4 ) stop 'exiting...'
+  if (iformat < 1 .or. iformat > 5 ) stop 'exiting...'
 
   print *,'movie frames have been saved every ',NTSTEP_BETWEEN_FRAMES,' time steps'
   print *
@@ -151,31 +158,31 @@
 ! --------------------------------------
 
   ! runs the main program
+
+  ! initializes flags
+  USE_OPENDX = .false.
+  USE_AVS = .false.
+  USE_GMT = .false.
+  USE_VTU = .false.
+  UNIQUE_FILE = .false.
+
   ! sets flags
   if (iformat == 1) then
     ! OpenDX format
     USE_OPENDX = .true.
-    USE_AVS = .false.
-    USE_GMT = .false.
-    UNIQUE_FILE = .false.
   else if (iformat == 2) then
     ! AVS UCD format
-    USE_OPENDX = .false.
     USE_AVS = .true.
-    USE_GMT = .false.
-    UNIQUE_FILE = .false.
   else if (iformat == 3) then
     ! AVS UCD format
-    USE_OPENDX = .false.
     USE_AVS = .true.
-    USE_GMT = .false.
     UNIQUE_FILE = .true.
   else if (iformat == 4) then
     ! GMT format
-    USE_OPENDX = .false.
-    USE_AVS = .false.
     USE_GMT = .true.
-    UNIQUE_FILE = .false.
+  else if (iformat == 5) then
+    ! VTU format
+    USE_VTU = .true.
   else
     stop 'Error: invalid format'
   endif
@@ -238,7 +245,7 @@
   print *
   print *,'looping from ',it1,' to ',it2,' every ',NTSTEP_BETWEEN_FRAMES,' time steps'
 
-! count number of movie frames
+  ! count number of movie frames
   nframes = 0
   do it = it1,it2
     if (mod(it,NTSTEP_BETWEEN_FRAMES) == 0) nframes = nframes + 1
@@ -251,7 +258,7 @@
 ! a finite element with four corners. This means that inside each real
 ! spectral element one should have (NGLL-1)^2 OpenDX "elements"
 
-! define the total number of OpenDX "elements" at the surface
+  ! define the total number of OpenDX "elements" at the surface
   if (MOVIE_COARSE) then
     nspectot_AVS_max = NCHUNKS * NEX_XI * NEX_ETA
   else
@@ -269,7 +276,7 @@
   print *,'Allocating arrays of size ',npointot
   print *
 
-! allocate arrays for sorting routine
+  ! allocate arrays for sorting routine
   allocate(iglob(npointot),stat=ierror)
   if (ierror /= 0) stop 'Error while allocating iglob'
 
@@ -414,7 +421,6 @@
                displn(i,j) = displx*normal_x + disply*normal_y + displz*normal_z
 
             else if (USE_COMPONENT == 2) then
-
                ! compute unit tangent vector to the surface (N-S)
                RRval = sqrt(xcoord**2 + ycoord**2 + zcoord**2)
                if (RRval < 1.e-10 ) stop 'Error unit normal vector'
@@ -432,7 +438,6 @@
                displn(i,j) = - (displx*thetahat_x + disply*thetahat_y + displz*thetahat_z)
 
             else if (USE_COMPONENT == 3) then
-
                ! compute unit tangent to the surface (E-W)
                rhoval = sqrt(xcoord**2 + ycoord**2)
                if (rhoval < 1.e-10) then
@@ -464,7 +469,7 @@
             if (MOVIE_COARSE) then
               ieoff = NGNOD2D_AVS_DX * ielm
             else
-              ieoff = NGNOD2D_AVS_DX * (ielm+(i-1)+(j-1)*(NGLLX-1))
+              ieoff = NGNOD2D_AVS_DX * (ielm + (i-1) + (j-1)*(NGLLX-1))
             endif
 
             ! stores 4 points as element corners
@@ -633,6 +638,7 @@
       endif
       open(unit=11,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown')
       write(11,*) 'object 1 class array type float rank 1 shape 3 items ',nglob,' data follows'
+
     else if (USE_AVS) then
       ! AVS UCD format
       if (UNIQUE_FILE .and. iframe == 1) then
@@ -677,6 +683,7 @@
         !
         write(11,*) nglob,' ',nspectot_AVS_max,' 1 0 0'
       endif
+
     else if (USE_GMT) then
       ! GMT format
       if (USE_COMPONENT == 1) then
@@ -687,6 +694,22 @@
         write(outputname,"('/gmt_movie_',i6.6,'.E.xyz')") it
       endif
       open(unit=11,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown')
+
+    else if (USE_VTU) then
+      ! VTU format
+      ! filename and variable name
+      if (USE_COMPONENT == 1) then
+        write(outputname,"('/VTU_movie_',i6.6,'.Z.vtu')") it
+        var_name = 'val_Z'
+      else if (USE_COMPONENT == 2) then
+        write(outputname,"('/VTU_movie_',i6.6,'.N.vtu')") it
+        var_name = 'val_N'
+      else if (USE_COMPONENT == 3) then
+        write(outputname,"('/VTU_movie_',i6.6,'.E.vtu')") it
+        var_name = 'val_E'
+      endif
+      outputname = trim(OUTPUT_FILES)//trim(outputname)
+
     else
       stop 'wrong output format selected'
     endif
@@ -705,15 +728,10 @@
             ycoord = sngl(yp_save(ilocnum+ieoff))
             zcoord = sngl(zp_save(ilocnum+ieoff))
 
-            ! location latitude/longitude (with geocentric colatitude theta )
-            call xyz_2_rthetaphi(xcoord,ycoord,zcoord,rval,thetaval,phival)
+            ! location latitude/longitude (with geographic latitude in degrees)
+            call xyz_2_rlatlon_cr(xcoord,ycoord,zcoord,rval,lat,long,ELLIPTICITY)
 
-            ! note: converts the geocentric colatitude to a geographic colatitude
-            call geocentric_2_geographic_cr(thetaval,thetaval)
-
-            ! gets geographic latitude and longitude in degrees
-            lat = (PI_OVER_TWO-thetaval)*RADIANS_TO_DEGREES
-            long = phival*RADIANS_TO_DEGREES
+            ! puts lon in range [-180,180]
             if (long > 180.0) long = long-360.0
 
             write(11,*) long,lat,sngl(field_display(ilocnum+ieoff))
@@ -722,10 +740,10 @@
         enddo
       enddo
 
-    else
+    else if (USE_AVS .or. USE_OPENDX) then
       ! if unique file, output geometry only once
       if (.not. UNIQUE_FILE .or. iframe == 1) then
-
+        ! individual files (or for first frame step)
         ! output list of points
         mask_point = .false.
         ipoin = 0
@@ -738,9 +756,11 @@
               ipoin = ipoin + 1
               ireorder(ibool_number) = ipoin
               if (USE_OPENDX) then
+                ! DX format
                 write(11,"(f10.7,1x,f10.7,1x,f10.7)") &
                   xp_save(ilocnum+ieoff),yp_save(ilocnum+ieoff),zp_save(ilocnum+ieoff)
               else if (USE_AVS) then
+                ! AVS format
                 write(11,"(i10,1x,f10.7,1x,f10.7,1x,f10.7)") ireorder(ibool_number), &
                   xp_save(ilocnum+ieoff),yp_save(ilocnum+ieoff),zp_save(ilocnum+ieoff)
               endif
@@ -749,6 +769,7 @@
           enddo
         enddo
 
+        ! DX format
         if (USE_OPENDX) &
           write(11,*) 'object 2 class array type int rank 1 shape 4 items ',nspectot_AVS_max,' data follows'
 
@@ -761,10 +782,12 @@
           ibool_number3 = iglob(ieoff + 3)
           ibool_number4 = iglob(ieoff + 4)
           if (USE_OPENDX) then
+            ! DX format
             ! point order in OpenDX is 1,4,2,3 *not* 1,2,3,4 as in AVS
             write(11,"(i10,1x,i10,1x,i10,1x,i10)") ireorder(ibool_number1)-1, &
               ireorder(ibool_number4)-1,ireorder(ibool_number2)-1,ireorder(ibool_number3)-1
-          else
+          else if (USE_AVS) then
+            ! AVS format
             write(11,"(i10,' 1 quad ',i10,1x,i10,1x,i10,1x,i10)") ispec,ireorder(ibool_number1), &
               ireorder(ibool_number2),ireorder(ibool_number3),ireorder(ibool_number4)
           endif
@@ -773,10 +796,12 @@
       endif
 
       if (USE_OPENDX) then
+        ! DX format
         write(11,*) 'attribute "element type" string "quads"'
         write(11,*) 'attribute "ref" string "positions"'
         write(11,*) 'object 3 class array type float rank 0 items ',nglob,' data follows'
-      else
+
+      else if (USE_AVS) then
         ! AVS UCD formant
         if (UNIQUE_FILE) then
           ! step number for AVS multistep file
@@ -810,14 +835,18 @@
           if (.not. mask_point(ibool_number)) then
             if (.not. ALL_THRESHOLD_OFF) then
               if (USE_OPENDX) then
+                ! DX format
                 write(11,"(e18.6)") field_display(ilocnum+ieoff)
-              else
+              else if (USE_AVS) then
+                ! AVS format
                 write(11,"(i10,1x,e18.6)") ireorder(ibool_number),field_display(ilocnum+ieoff)
               endif
             else
               if (USE_OPENDX) then
+                ! DX format
                 write(11,"(e18.6)") field_display(ilocnum+ieoff)
-              else
+              else if (USE_AVS) then
+                ! AVS format
                 !write(11,*) ireorder(ibool_number),field_display(ilocnum+ieoff)
                 ! need format specifier (e.g. for Cray): note it might have problems w/ very small values
                 write(11,"(i10,1x,e18.6)") ireorder(ibool_number),field_display(ilocnum+ieoff)
@@ -838,8 +867,68 @@
         write(11,*) 'end'
       endif
 
+    else if (USE_VTU) then
+      ! VTU format
+      ! allocates temporary custom real arrays
+      allocate(total_dat(nglob),stat=ierror)
+      if (ierror /= 0 ) stop 'Error allocating total_dat array'
+      total_dat(:) = 0.0_CUSTOM_REAL
+      allocate(total_dat_xyz(3,nglob),stat=ierror)
+      if (ierror /= 0 ) stop 'Error allocating total_dat_xyz array'
+      total_dat_xyz(:,:) = 0.0_CUSTOM_REAL
+      allocate(total_dat_con(4,nspectot_AVS_max),stat=ierror)
+      if (ierror /= 0 ) stop 'Error allocating total_dat_con array'
+      total_dat_con(:,:) = 0
+
+      ! fills temporary arrays
+      mask_point(:) = .false.
+      ipoin = 0
+      do ispec = 1,nspectot_AVS_max
+        ieoff = NGNOD2D_AVS_DX*(ispec-1)
+
+        ! unique point value and locations
+        ! four points for each element
+        do ilocnum = 1,NGNOD2D_AVS_DX
+          ibool_number = iglob(ilocnum+ieoff)
+          if (.not. mask_point(ibool_number)) then
+            ipoin = ipoin + 1
+            ireorder(ibool_number) = ipoin
+            ! point value
+            total_dat(ipoin) = field_display(ilocnum+ieoff)
+            ! point location
+            total_dat_xyz(1,ipoin) = xp_save(ilocnum+ieoff)
+            total_dat_xyz(2,ipoin) = yp_save(ilocnum+ieoff)
+            total_dat_xyz(3,ipoin) = zp_save(ilocnum+ieoff)
+          endif
+          mask_point(ibool_number) = .true.
+        enddo
+      enddo
+
+      ! element connectivity
+      do ispec = 1,nspectot_AVS_max
+        ieoff = NGNOD2D_AVS_DX*(ispec-1)
+
+        ! four points for each element
+        ibool_number1 = iglob(ieoff + 1)
+        ibool_number2 = iglob(ieoff + 2)
+        ibool_number3 = iglob(ieoff + 3)
+        ibool_number4 = iglob(ieoff + 4)
+        ! note: indices for VTK start at 0
+        ! quad4 element using an indexing (left,bottom),(right,bottom),(right,top),(left,top)
+        total_dat_con(1,ispec) = ireorder(ibool_number1) - 1
+        total_dat_con(2,ispec) = ireorder(ibool_number2) - 1
+        total_dat_con(3,ispec) = ireorder(ibool_number4) - 1 ! switch points n3 and n4 to get correct orientation
+        total_dat_con(4,ispec) = ireorder(ibool_number3) - 1
+      enddo
+
+      ! writes out file
+      call write_VTU_2Dmovie_data_binary(nspectot_AVS_max,nglob,total_dat_xyz,total_dat_con,total_dat,outputname,var_name)
+
+      ! free arrays
+      deallocate(total_dat,total_dat_xyz,total_dat_con)
+
     ! end of test for GMT format
-    endif
+    endif  ! USE_GMT
 
     if (.not. UNIQUE_FILE) close(11)
 
@@ -854,6 +943,7 @@
   if (USE_OPENDX) print *,'DX files are stored in ', trim(OUTPUT_FILES), '/DX_*.dx'
   if (USE_AVS) print *,'AVS files are stored in ', trim(OUTPUT_FILES), '/AVS_*.inp'
   if (USE_GMT) print *,'GMT files are stored in ', trim(OUTPUT_FILES), '/gmt_*.xyz'
+  if (USE_VTU) print *,'VTU files are stored in ', trim(OUTPUT_FILES), '/VTU_*.vtu'
   print *
 
   end program xcreate_movie_AVS_DX

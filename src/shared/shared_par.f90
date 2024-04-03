@@ -100,6 +100,9 @@
   logical :: ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS, &
              ATTENUATION
 
+  ! full gravity support
+  logical :: FULL_GRAVITY = .false.
+
   ! regional mesh cut-off
   logical :: REGIONAL_MESH_CUTOFF
   ! regional mesh cut-off depth (in km)
@@ -268,8 +271,12 @@
   ! radii of layers
   double precision :: ROCEAN,RMIDDLE_CRUST,RMOHO,R80,R120,R220,R400, &
                       R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-                      R_CENTRAL_CUBE, &
-                      RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER
+                      R_CENTRAL_CUBE
+
+  ! infinite layer radius
+  double precision :: RINF
+
+  double precision :: RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER
 
   ! densities
   double precision :: RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS
@@ -285,6 +292,7 @@
              CRUSTAL,ONE_CRUST
   logical :: MODEL_3D_MANTLE_PERTUBATIONS,HETEROGEN_3D_MANTLE
   logical :: CEM_REQUEST,CEM_ACCEPT
+  logical :: EMC_MODEL
 
   logical :: MODEL_GLL
   integer :: MODEL_GLL_TYPE

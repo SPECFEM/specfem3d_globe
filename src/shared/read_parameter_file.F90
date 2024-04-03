@@ -99,6 +99,10 @@
   call read_value_logical(ATTENUATION, 'ATTENUATION', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: ATTENUATION'
 
+  ! full gravity support
+  call read_value_logical(FULL_GRAVITY, 'FULL_GRAVITY', ier)
+  if (ier /= 0) stop 'an error occurred while reading the parameter file: FULL_GRAVITY'
+
   call read_value_double_precision(RECORD_LENGTH_IN_MINUTES, 'RECORD_LENGTH_IN_MINUTES', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: RECORD_LENGTH_IN_MINUTES'
 

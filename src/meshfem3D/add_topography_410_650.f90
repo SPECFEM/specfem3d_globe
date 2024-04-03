@@ -28,22 +28,21 @@
   subroutine add_topography_410_650(xelm,yelm,zelm)
 
   use constants
-  use shared_parameters, only: R_PLANET
+  use shared_parameters, only: R_PLANET,ELLIPTICITY
   use meshfem_par, only: R220,R400,R670,R771
 
   implicit none
 
-  double precision :: xelm(NGNOD)
-  double precision :: yelm(NGNOD)
-  double precision :: zelm(NGNOD)
+  double precision,intent(inout) :: xelm(NGNOD),yelm(NGNOD),zelm(NGNOD)
 
+  ! local parameters
   integer :: ia
 
   real(kind=4) :: xcolat,xlon
   real(kind=4) :: topo410out,topo650out
   double precision :: topo410,topo650
 
-  double precision :: r,lat,lon,theta,phi
+  double precision :: r,lat,lon
   double precision :: gamma
   double precision :: x,y,z
 
@@ -68,24 +67,14 @@
     y = yelm(ia)
     z = zelm(ia)
 
-    if (USE_OLD_VERSION_5_1_5_FORMAT) then
-      ! convert to r theta phi
-      call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
-      call reduce(theta,phi)
-      ! get colatitude and longitude in degrees
-      xcolat = sngl(theta*RADIANS_TO_DEGREES)
-      xlon = sngl(phi*RADIANS_TO_DEGREES)
-    else
-      ! note: the topography on 410 and 650 is given in geographic colat/lon,
-      !       thus we need to convert geocentric colatitude to geographic colatitudes
-      !
-      ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
-      call xyz_2_rlatlon_dble(x,y,z,r,lat,lon)
+    ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
+    ! note: the topography on 410 and 650 is given in geographic colat/lon,
+    !       thus we need to convert geocentric colatitude to geographic colatitudes
+    call xyz_2_rlatlon_dble(x,y,z,r,lat,lon,ELLIPTICITY)
 
-      ! converts lat/lon to (real) colat/lon in degrees
-      xcolat = sngl(90.d0 - lat)     ! colatitude
-      xlon = sngl(lon)
-    endif
+    ! get colatitude and longitude in degrees
+    xcolat = sngl(90.d0 - lat)
+    xlon = sngl(lon)
 
     ! stretching occurs between 220 and 770
     if (r > R220/R_PLANET .or. r < R771/R_PLANET) cycle
@@ -163,21 +152,22 @@
   subroutine add_topography_410_650_gll(xstore,ystore,zstore,ispec,nspec)
 
   use constants
-  use shared_parameters, only: R_PLANET
+  use shared_parameters, only: R_PLANET,ELLIPTICITY
   use meshfem_par, only: R220,R400,R670,R771
 
   implicit none
 
-  integer:: ispec,nspec
-  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec):: xstore,ystore,zstore
+  integer,intent(in) :: ispec,nspec
+  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(inout) :: xstore,ystore,zstore
 
+  ! local parameters
   integer :: i,j,k
 
   real(kind=4) :: xcolat,xlon
   real(kind=4) :: topo410out,topo650out
   double precision :: topo410,topo650
 
-  double precision :: r,lat,lon,theta,phi
+  double precision :: r,lat,lon
   double precision :: gamma
   double precision :: x,y,z
 
@@ -193,21 +183,14 @@
         y = ystore(i,j,k,ispec)
         z = zstore(i,j,k,ispec)
 
-        if (USE_OLD_VERSION_5_1_5_FORMAT) then
-          ! convert to r theta phi
-          call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
-          call reduce(theta,phi)
-          ! get colatitude and longitude in degrees
-          xcolat = sngl(theta*RADIANS_TO_DEGREES)
-          xlon = sngl(phi*RADIANS_TO_DEGREES)
-        else
-          ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
-          call xyz_2_rlatlon_dble(x,y,z,r,lat,lon)
+        ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
+        ! note: the topography on 410 and 650 is given in geographic colat/lon,
+        !       thus we need to convert geocentric colatitude to geographic colatitudes
+        call xyz_2_rlatlon_dble(x,y,z,r,lat,lon,ELLIPTICITY)
 
-          ! converts lat/lon to (real) colat/lon in degrees
-          xcolat = sngl(90.d0 - lat)     ! colatitude
-          xlon = sngl(lon)
-        endif
+        ! get colatitude and longitude in degrees
+        xcolat = sngl(90.d0 - lat)
+        xlon = sngl(lon)
 
         ! stretching occurs between 220 and 770
         if (r > R220/R_PLANET .or. r < R771/R_PLANET) cycle

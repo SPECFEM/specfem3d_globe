@@ -60,7 +60,8 @@
     ATTENUATION_GLL, CASE_3D,CRUSTAL,HETEROGEN_3D_MANTLE, &
     HONOR_1D_SPHERICAL_MOHO, MODEL_3D_MANTLE_PERTUBATIONS, &
     ONE_CRUST, TRANSVERSE_ISOTROPY, OCEANS,TOPOGRAPHY, &
-    CEM_REQUEST,CEM_ACCEPT
+    CEM_REQUEST,CEM_ACCEPT, &
+    EMC_MODEL
 
   implicit none
 
@@ -68,7 +69,6 @@
   character(len=64) :: ending
   character(len=MAX_STRING_LEN) :: MODEL_ROOT,MODEL_L
   integer :: impose_crust
-  integer :: irange,i
 
   ! defaults:
   !
@@ -89,13 +89,7 @@
   !  to .false. for a 1D crustal model.
 
   ! converts all string characters to lowercase (to make user input case-insensitive)
-  MODEL_L = MODEL
-  irange = iachar('a') - iachar('A')
-  do i = 1,len_trim(MODEL_L)
-    if (lge(MODEL_L(i:i),'A') .and. lle(MODEL_L(i:i),'Z')) then
-      MODEL_L(i:i) = achar(iachar(MODEL_L(i:i)) + irange)
-    endif
-  enddo
+  call convert_to_lowercase(MODEL,MODEL_L)
   MODEL_ROOT = MODEL_L ! sets root name of model to original one
 
   ! note: in the following we check the model name and see if some specific ending has been appended
@@ -284,6 +278,9 @@
   ! no CEM by default
   CEM_REQUEST = .false.
   CEM_ACCEPT  = .false.
+
+  ! no EMC model by default
+  EMC_MODEL = .false.
 
   ! no 3D model by default
   THREE_D_MODEL = 0
@@ -730,8 +727,25 @@
     TRANSVERSE_ISOTROPY = .true.
 #else
   case ('cem_request','cem_accept','cem_gll')
-    print *,'Error model ',trim(MODEL),': package compiled without CEM model support. Please re-configure with --with-cem support.'
-    stop 'Invalid CEM model requested, compiled without CEM support'
+    print *,'Error model ',trim(MODEL),': package compiled without CEM model support.'
+    print *,'Please re-configure with --with-cem or --with-netcdf support.'
+    stop 'Invalid CEM model requested, compiled without CEM/NetCDF support'
+#endif
+
+#ifdef USE_EMC
+  case ('emc_model')
+    EMC_MODEL           = .true.
+    TRANSVERSE_ISOTROPY = .false. ! enforces isotropic model - for now, tiso models are not supported yet...
+  case ('emc_model_tiso')
+    EMC_MODEL           = .true.
+    TRANSVERSE_ISOTROPY = .true.
+    ! tiso models are not supported yet...
+    stop 'EMC models with transverse isotropy are not supported yet!'
+#else
+  case ('emc_model')
+    print *,'Error model ',trim(MODEL),': package compiled without EMC model support.'
+    print *,'Please re-configure with --with-emc or --with-netcdf support.'
+    stop 'Invalid EMC model requested, compiled without EMC/NetCDF support'
 #endif
 
   case ('ppm')
@@ -1288,7 +1302,7 @@
     RHO_BOTTOM_OC = 12168.6383 / RHOAV
 
   case (REFERENCE_MODEL_AK135F_NO_MUD)
-!! DK DK values below entirely checked and fixed by Dimitri Komatitsch in December 2012.
+    ! values below entirely checked and fixed by Dimitri Komatitsch in December 2012.
     ROCEAN = 6368000.d0
     RMIDDLE_CRUST = 6351000.d0
     RMOHO  = 6336000.d0         ! at 35km depth

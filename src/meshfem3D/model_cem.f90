@@ -30,8 +30,8 @@
 
 module cem_par
 
-  use constants, only: PI, GRAV, RHOAV, MAX_STRING_LEN
-
+  use constants, only: PI, GRAV, MAX_STRING_LEN, IMAIN
+  use shared_parameters, only: RHOAV
   implicit none
 
   double precision :: scaleval
@@ -68,10 +68,13 @@ end module cem_par
   subroutine model_cem_broadcast()
 
   use constants, only: myrank
-  use cem_par
-  use netcdf
+  use shared_parameters, only: R_PLANET
   use meshfem_models_par, only: CEM_ACCEPT
 
+  use cem_par
+  use netcdf
+
+  implicit none
   integer              :: wSize
 
   ! user info
@@ -121,10 +124,11 @@ end module cem_par
 
   subroutine request_cem (vsh, vsv, vph, vpv, rho, iregion_code, ispec, i, j, k)
 
-  use cem_par
   use constants
-
+  use shared_parameters, only: R_PLANET
   use meshfem_par, only: ibool
+
+  use cem_par
 
   implicit none
 
@@ -220,13 +224,14 @@ end module cem_par
 
   subroutine write_cem_request (iregion_code)
 
-  use netcdf
   use constants
-  use CEM_par
+
+  use netcdf
+  use cem_par
 
   implicit none
 
-  integer, parameter :: NDIMS_WRITE=2
+  integer, parameter :: NDIMS_WRITE = 2
   integer, dimension (NDIMS_WRITE) :: start, count, ids
 
   integer :: ncid, paramDimID, procDimID, varidX, varidY, varidZ
@@ -286,21 +291,22 @@ end module cem_par
   subroutine build_global_coordinates (iregion_code)
 
   use constants
-  use cem_par
-
+  use shared_parameters, only: R_PLANET_KM
   use meshfem_par, only: &
     nspec, nglob, &
     ibool,xstore,ystore,zstore
+
+  use cem_par
 
   implicit none
 
   integer, intent (in) :: iregion_code
   integer              :: i, j, k, iglob, ispec, region
 
-  double precision, parameter :: R_020_KM=6351.0d0, R_052_KM=6319.0d0
-  double precision, parameter :: R_100_KM=6271.0d0, R_400_KM=5971.0d0
-  double precision, parameter :: R_670_KM=5701.0d0, R_CMB_KM=3480.0d0
-  double precision, parameter :: R_ICB_KM=1221.0d0, R_THO_KM=5371.0d0
+  double precision, parameter :: R_020_KM = 6351.0d0, R_052_KM = 6319.0d0
+  double precision, parameter :: R_100_KM = 6271.0d0, R_400_KM = 5971.0d0
+  double precision, parameter :: R_670_KM = 5701.0d0, R_CMB_KM = 3480.0d0
+  double precision, parameter :: R_ICB_KM = 1221.0d0, R_THO_KM = 5371.0d0
   double precision            :: x, y, z, rad
 
   allocate(xyzOut(nglob,NDIMS))

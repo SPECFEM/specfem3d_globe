@@ -163,20 +163,20 @@
   if (timestamp >= year(MAX_YEAR)) stop 'year too high in invtime'
 
   iyr = 1979
-  itime=timestamp
+  itime = timestamp
 
- 10 iyr=iyr+1
-  ttime=itime-year(iyr)
+ 10 iyr = iyr+1
+  ttime = itime-year(iyr)
   if (ttime <= 0) then
    if (iyr == 1980) iyr=iyr+1
-   iyr=iyr-1
-   itime=itime-year(iyr)
+   iyr = iyr-1
+   itime = itime-year(iyr)
   else
    goto 10
   endif
 
 ! assign the return variable
-  yr=iyr
+  yr = iyr
 
 ! OK, the remaining time is less than one full year, so convert
 ! by the same method as above into months
@@ -187,19 +187,19 @@
 
 ! increment the month, and subtract off the minutes from the
 ! remaining time for a non-leap year
- 20 imon=imon+1
-   tmon=itime-month(imon)
+ 20 imon = imon+1
+   tmon = itime-month(imon)
    if (tmon > 0) then
       goto 20
    else if (tmon < 0) then
-      imon=imon-1
-      itime=itime-month(imon)
+      imon = imon-1
+      itime = itime-month(imon)
    else
       if (imon > 12) then
-         imon=imon-12
-         yr=yr+1
+         imon = imon-12
+         yr = yr+1
       endif
-      mon=imon
+      mon = imon
       day = 1
       hr = 0
       minvalue = 0
@@ -210,19 +210,19 @@
   else
 
 ! same thing, same code, but for a leap year
- 30 imon=imon+1
-   tmon=itime-leap_mon(imon)
+ 30 imon = imon+1
+   tmon = itime-leap_mon(imon)
    if (tmon > 0) then
       goto 30
    else if (tmon < 0) then
-      imon=imon-1
-      itime=itime-month(imon)
+      imon = imon-1
+      itime = itime-month(imon)
    else
       if (imon > 12) then
-         imon=imon-12
-         yr=yr+1
+         imon = imon-12
+         yr = yr+1
       endif
-      mon=imon
+      mon = imon
       day = 1
       hr = 0
       minvalue = 0
@@ -231,39 +231,39 @@
   endif
 
 ! assign the return variable
-  mon=imon
+  mon = imon
 
 ! any remaining minutes will belong to day/hour/minutes
 ! OK, let us get the days
   iday = 0
- 40 iday=iday+1
-  ttime=itime-min_day
+ 40 iday = iday+1
+  ttime = itime-min_day
   if (ttime >= 0) then
-   itime=ttime
+   itime = ttime
    goto 40
   endif
 
 ! assign the return variable
   if (is_leap_year(iyr) .and. mon > 2) then
-   day=iday-1
+   day = iday-1
   else
-   day=iday
+   day = iday
   endif
 
 ! pick off the hours of the days...remember, hours can be 0, so we start at -1
   ihour=-1
- 50 ihour=ihour+1
-  thour=itime-min_hr
+ 50 ihour = ihour+1
+  thour = itime-min_hr
   if (thour >= 0) then
-   itime=thour
+   itime = thour
    goto 50
   endif
 
 ! assign the return variables
-  hr=ihour
+  hr = ihour
 
 ! the remainder at this point is the minutes, so return them directly
-  minvalue=itime
+  minvalue = itime
 
   end subroutine invtime
 

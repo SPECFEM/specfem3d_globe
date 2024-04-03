@@ -30,6 +30,8 @@
                        rmin,rmax, &
                        elem_in_crust,elem_in_mantle)
 
+! assigns rheological parameters to all GLL points
+
   use constants, only: &
     NGLLX,NGLLY,NGLLZ,MIDX,MIDY,MIDZ,N_SLS,CUSTOM_REAL, &
     TINYVAL,PI, &
@@ -88,6 +90,11 @@
 
   integer :: i,j,k,i_sls
 
+  ! note: at this point, the mesh is generally still spherical w/ moho stretching for most (global) models.
+  !
+  !       regional/local models, like EMC models, might have surface topography and ellipticy added already with
+  !       the mesh points being at the "true" x/y/z positions.
+
   ! it is *CRUCIAL* to leave this initialization here, this was the cause of the "s362ani + attenuation" bug in 2013 and 2014
   ! thus please never remove the line below
   moho = 0.d0
@@ -145,8 +152,7 @@
         ymesh = ystore(i,j,k,ispec)
         zmesh = zstore(i,j,k,ispec)
 
-        ! gets point's position theta/phi, lat/lon, and
-        ! exact point location radius
+        ! gets point's (geocentric) position theta/phi, and exact point location radius
         call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r,theta,phi)
 
         ! puts theta in range [0,PI] / phi in range [0,2PI]

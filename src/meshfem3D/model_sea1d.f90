@@ -104,10 +104,9 @@
   double precision :: r,frac,scaleval
   integer :: i
 
-!! DK DK implementation of model sea1d below and its radii has not been thoroughly
-!! DK DK checked yet
+! implementation of model sea1d below and its radii has not been thoroughly checked yet
 
-! compute real physical radius in meters
+  ! compute real physical radius in meters
   r = x * R_PLANET
 
   i = 1
@@ -115,7 +114,7 @@
     i = i + 1
   enddo
 
-! make sure we stay in the right region
+  ! make sure we stay in the right region
   if (iregion_code == IREGION_INNER_CORE .and. i > 13) i = 13
   if (iregion_code == IREGION_OUTER_CORE .and. i < 15) i = 15
   if (iregion_code == IREGION_OUTER_CORE .and. i > 37) i = 37
@@ -128,8 +127,7 @@
     Qmu = SEA1DM_V_Qmu_sea1d(i)
     Qkappa = SEA1DM_V_Qkappa_sea1d(i)
   else
-
-! interpolate from SEA1DM_V_radius_sea1d(i-1) to r using the values at i-1 and i
+    ! interpolate from SEA1DM_V_radius_sea1d(i-1) to r using the values at i-1 and i
     frac = (r-SEA1DM_V_radius_sea1d(i-1))/(SEA1DM_V_radius_sea1d(i)-SEA1DM_V_radius_sea1d(i-1))
 
     rho = SEA1DM_V_density_sea1d(i-1) + frac * (SEA1DM_V_density_sea1d(i)-SEA1DM_V_density_sea1d(i-1))
@@ -140,20 +138,20 @@
 
   endif
 
-! make sure Vs is zero in the outer core even if roundoff errors on depth
-! also set fictitious attenuation to a very high value (attenuation is not used in the fluid)
+  ! make sure Vs is zero in the outer core even if roundoff errors on depth
+  ! also set fictitious attenuation to a very high value (attenuation is not used in the fluid)
   if (iregion_code == IREGION_OUTER_CORE) then
     vs = 0.d0
     Qkappa = 3000.d0
     Qmu = 3000.d0
   endif
 
-! non-dimensionalize
-! time scaling (s^{-1}) is done with scaleval
-  scaleval=dsqrt(PI*GRAV*RHOAV)
-  rho=rho*1000.0d0/RHOAV
-  vp=vp*1000.0d0/(R_PLANET*scaleval)
-  vs=vs*1000.0d0/(R_PLANET*scaleval)
+  ! non-dimensionalize
+  ! time scaling (s^{-1}) is done with scaleval
+  scaleval = dsqrt(PI*GRAV*RHOAV)
+  rho = rho*1000.0d0/RHOAV
+  vp = vp*1000.0d0/(R_PLANET*scaleval)
+  vs = vs*1000.0d0/(R_PLANET*scaleval)
 
   end subroutine model_sea1d
 
@@ -1159,7 +1157,7 @@
 
 ! strip the crust and replace it by mantle
   if (SUPPRESS_CRUSTAL_MESH .or. USE_EXTERNAL_CRUSTAL_MODEL) then
-    do i=NR_SEA1D-12,NR_SEA1D
+    do i = NR_SEA1D-12,NR_SEA1D
       SEA1DM_V_density_sea1d(i) = SEA1DM_V_density_sea1d(NR_SEA1D-13)
       SEA1DM_V_vp_sea1d(i) = SEA1DM_V_vp_sea1d(NR_SEA1D-13)
       SEA1DM_V_vs_sea1d(i) = SEA1DM_V_vs_sea1d(NR_SEA1D-13)

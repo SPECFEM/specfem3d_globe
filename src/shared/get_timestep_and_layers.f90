@@ -264,7 +264,7 @@
       MAX_ATTENUATION_PERIOD   = 750d0
       ! number of element layers in each mesh region
       NER_CRUST                = 3
-      NER_80_MOHO              = 2  ! 2 okay; setting w/ jacobian error: nex96, rmoho=28km, r80=130km, ner > 2
+      NER_80_MOHO              = 2  ! 2 okay; setting w/ jacobian error: nex96, rmoho = 28km, r80 = 130km, ner > 2
       NER_220_80               = 3
       NER_400_220              = 2
       NER_600_400              = 2
@@ -313,7 +313,7 @@
 
     else if (NEX_MAX*multiplication_factor <= 96) then
       ! time step
-      !! DK DK to handle a case that Zhinan Xie found to be unstable for NEX = 96 I reduce the time step to 90% of its value here
+      ! to handle a case that Zhinan Xie found to be unstable for NEX = 96 I reduce the time step to 90% of its value here
       DT                       = 0.252d0 * 0.90d0
       ! attenuation period range
       MIN_ATTENUATION_PERIOD   = 30.d0
@@ -862,6 +862,11 @@
     print *,'Invalid planet, timestep and layers not implemented yet'
     stop 'Invalid planet, timestep and layers not implemented yet'
   end select ! planet_type
+
+  ! Further reduce time step for FULL_GRAVITY
+  if (FULL_GRAVITY) then
+    if (THREE_D_MODEL > 0) DT = 0.7d0 * DT    ! 0.7 is an arbitrary value
+  endif
 
   ! the maximum CFL of LDDRK is significantly higher than that of the Newmark scheme,
   ! in a ratio that is theoretically 1.327 / 0.697 = 1.15 / 0.604 = 1.903 for a solid with Poisson's ratio = 0.25

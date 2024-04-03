@@ -90,6 +90,9 @@
     close(IOUT)
   endif
 
+  ! synchronizes GPU kernels
+  if (GPU_MODE) call gpu_synchronize()
+
   ! initialize variables for writing seismograms
   seismo_offset = it_begin-1
   seismo_current = 0
@@ -503,9 +506,8 @@
   if (SIMULATION_TYPE /= 1 .and. SIMULATION_TYPE /= 3) &
     call exit_MPI(myrank,'EXACT_UNDOING_TO_DISK can only be used with SIMULATION_TYPE == 1 or SIMULATION_TYPE == 3')
 
-
-!! DK DK determine the largest value of iglob that we need to save to disk,
-!! DK DK since we save the upper part of the mesh only in the case of surface-wave kernels
+  ! determine the largest value of iglob that we need to save to disk,
+  ! since we save the upper part of the mesh only in the case of surface-wave kernels
   ! crust_mantle
   allocate(integer_mask_ibool_exact_undo(NGLOB_CRUST_MANTLE))
   integer_mask_ibool_exact_undo(:) = -1

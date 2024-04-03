@@ -56,7 +56,9 @@
 
   end subroutine xyz_2_rthetaphi
 
-!-------------------------------------------------------------
+!
+!------------------------------------------------------------------------------
+!
 
   subroutine xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
 
@@ -89,7 +91,9 @@
 
   end subroutine xyz_2_rthetaphi_dble
 
-!-------------------------------------------------------------
+!
+!------------------------------------------------------------------------------
+!
 
   subroutine rthetaphi_2_xyz(x,y,z,r,theta,phi)
 
@@ -109,7 +113,9 @@
   end subroutine rthetaphi_2_xyz
 
 
-!-------------------------------------------------------------
+!
+!------------------------------------------------------------------------------
+!
 
   subroutine rthetaphi_2_xyz_dble(x,y,z,r,theta,phi)
 
@@ -126,10 +132,235 @@
 
   end subroutine rthetaphi_2_xyz_dble
 
+!
+!------------------------------------------------------------------------------
+!
 
-!-------------------------------------------------------------
+  subroutine latlon_2_thetaphi_dble(lat,lon,theta,phi)
 
-  subroutine xyz_2_rlatlon_dble(x,y,z,r,lat,lon)
+! converts lat/lon (in degree) to theta/phi (in rad), double precision call
+
+  use constants, only: DEGREES_TO_RADIANS
+
+  implicit none
+
+  double precision, intent(in) :: lat,lon
+  double precision, intent(out) :: theta,phi
+
+  ! converts to theta/phi
+  theta = (90.d0 - lat) * DEGREES_TO_RADIANS
+  phi = lon * DEGREES_TO_RADIANS
+
+  ! reduces range for colatitude to 0 and PI, for longitude to 0 and 2*PI
+  call reduce(theta,phi)
+
+  end subroutine latlon_2_thetaphi_dble
+
+!
+!------------------------------------------------------------------------------
+!
+
+  subroutine latlon_2_geocentric_thetaphi_dble(lat,lon,theta,phi,is_mesh_elliptical)
+
+! returns latitude/longitude in radians for geocentric location
+
+  use constants, only: DEGREES_TO_RADIANS
+
+  implicit none
+
+  double precision,intent(in) :: lat,lon
+  double precision,intent(out) :: theta,phi
+
+  logical,intent(in) :: is_mesh_elliptical
+
+  ! converts geographic (lat) to geocentric latitude and converts to co-latitude (theta)
+  call lat_2_geocentric_colat_dble(lat,theta,is_mesh_elliptical)
+
+  ! longitude (in rad)
+  phi = lon * DEGREES_TO_RADIANS
+
+  ! reduces range for colatitude to 0 and PI, for longitude to 0 and 2*PI
+  call reduce(theta,phi)
+
+  end subroutine latlon_2_geocentric_thetaphi_dble
+
+!
+!------------------------------------------------------------------------------
+!
+
+  subroutine lat_2_geocentric_colat_dble(lat_prime,theta,is_mesh_elliptical)
+
+! converts geographic latitude (lat_prime) (in degrees) to geocentric colatitude (theta) (in radians)
+
+  use constants, only: PI_OVER_TWO,DEGREES_TO_RADIANS,ASSUME_PERFECT_SPHERE
+  use shared_parameters, only: ONE_MINUS_F_SQUARED
+
+  implicit none
+
+  ! latitude (in degrees)
+  double precision,intent(in) :: lat_prime
+  ! co-latitude (in radians)
+  double precision,intent(inout) :: theta
+  ! mesh ellipticity
+  logical, intent(in) :: is_mesh_elliptical
+
+  ! local parameter
+  double precision :: val
+
+  if (.not. ASSUME_PERFECT_SPHERE) then
+    ! converts geographic (lat_prime) to geocentric latitude and converts to co-latitude (theta)
+    if (is_mesh_elliptical) then
+      ! geocentric colatitude, accounting for ellipticity factor
+      val = PI_OVER_TWO - atan( ONE_MINUS_F_SQUARED*dtan(lat_prime * DEGREES_TO_RADIANS) )
+    else
+      ! for perfect sphere, geocentric and geographic latitudes are the same
+      ! converts geographic latitude (in degrees) to geocentric co-latitude (in radians)
+      val = PI_OVER_TWO - lat_prime * DEGREES_TO_RADIANS
+    endif
+  else
+    ! for perfect sphere, geocentric and geographic latitudes are the same
+    ! converts latitude (in degrees) to co-latitude (in radians)
+    val = PI_OVER_TWO - lat_prime * DEGREES_TO_RADIANS
+  endif
+
+  ! return result
+  theta = val
+
+  end subroutine lat_2_geocentric_colat_dble
+
+!
+!------------------------------------------------------------------------------
+!
+
+  subroutine geographic_2_geocentric_lat_dble(lat_prime,lat,is_mesh_elliptical)
+
+! converts geographic latitude (lat_prime) (in degrees) to geocentric colatitude (theta) (in radians)
+
+  use constants, only: PI_OVER_TWO,DEGREES_TO_RADIANS,RADIANS_TO_DEGREES,ASSUME_PERFECT_SPHERE
+  use shared_parameters, only: ONE_MINUS_F_SQUARED
+
+  implicit none
+
+  ! latitude (in degrees) (geographic/geodetic)
+  double precision,intent(in) :: lat_prime
+  ! latitude (in radians) (geocentric)
+  double precision,intent(inout) :: lat
+  ! mesh ellipticity
+  logical, intent(in) :: is_mesh_elliptical
+
+  ! local parameter
+  double precision :: val
+
+  if (.not. ASSUME_PERFECT_SPHERE) then
+    ! converts geographic (lat_prime) to geocentric latitude (lat)
+    if (is_mesh_elliptical) then
+      ! geocentric latitude, accounting for ellipticity factor
+      val = datan( ONE_MINUS_F_SQUARED * dtan(lat_prime * DEGREES_TO_RADIANS) ) * RADIANS_TO_DEGREES
+    else
+      ! for perfect sphere, geocentric and geographic latitudes are the same
+      val = lat_prime
+    endif
+  else
+    ! for perfect sphere, geocentric and geographic latitudes are the same
+    val = lat_prime
+  endif
+
+  ! return result
+  lat = val
+
+  end subroutine geographic_2_geocentric_lat_dble
+
+!
+!------------------------------------------------------------------------------
+!
+
+! not used yet...
+!
+!  subroutine geographic_2_geocentric_colat_dble(theta_prime,theta)
+!
+!! converts geographic colatitude (theta_prime) to geocentric colatitude (theta) (in radians)
+!
+!  use constants, only: PI_OVER_TWO
+!  use shared_parameters, only: ONE_MINUS_F_SQUARED
+!
+!  implicit none
+!
+!  double precision,intent(in) :: theta_prime
+!  double precision,intent(inout) :: theta
+!
+!  ! temporary variable for theta
+!  ! (in case the input and output variable is the same, the compiler might do some weird things otherwise)
+!  double precision :: val,lat_prime
+!
+!  if (.not. ASSUME_PERFECT_SPHERE) then
+!    ! mesh is elliptical
+!    ! geocentric colatitude, accounting for ellipticity factor
+!    ! latitude in rad
+!    lat_prime = PI_OVER_TWO - theta_prime
+!    ! range from atan is [-PI/2,PI/2], thus theta should always be within [0,PI]
+!    val = PI_OVER_TWO - datan( ONE_MINUS_F_SQUARED * dtan(lat_prime) )
+!  else
+!    ! mesh is spherical, thus geocentric and geographic colatitudes are identical
+!    val = theta_prime
+!  endif
+!
+!  ! return result
+!  theta = val
+!
+!  end subroutine geographic_2_geocentric_colat_dble
+!
+!!
+!------------------------------------------------------------------------------
+!
+
+  subroutine thetaphi_2_geographic_latlon_dble(theta_in,phi_in,lat,lon,is_mesh_elliptical)
+
+! convert geocentric theta/phi (in rad) to geographic lat/lon (in degrees)
+
+  use constants, only: DEGREES_TO_RADIANS,PI_OVER_TWO,RADIANS_TO_DEGREES
+
+  implicit none
+
+  double precision,intent(in) :: theta_in,phi_in
+  double precision,intent(out) :: lat,lon
+
+  logical,intent(in) :: is_mesh_elliptical
+
+  ! local parameters
+  double precision :: theta,phi,theta_prime
+
+  ! initializes
+  theta = theta_in
+  phi = phi_in
+
+  ! reduces range for colatitude to 0 and PI, for longitude to 0 and 2*PI
+  call reduce(theta,phi)
+
+  ! converts geocentric to geographic colatitude
+  if (is_mesh_elliptical) then
+    ! note: for example, the source/station information is given in geographic latitude/longitude
+    !       (lat/lon given with respect to a reference ellipsoid).
+    !       we need to convert the geocentric mesh positions (theta,phi) to geographic ones (lat/lon),
+    !       correcting geocentric latitude for ellipticity if the mesh is elliptical.
+    !
+    !       for spherical meshes, the conversion from x/y/z to r/theta/phi to get colatitude/longitude is enough
+    !       and won't need the correction factor of ellipticity.
+    call geocentric_2_geographic_colat_dble(theta,theta_prime)
+    ! sets colatitude to geographic colatitude
+    theta = theta_prime
+  endif
+
+  ! gets geographic latitude and longitude in degrees
+  lat = (PI_OVER_TWO - theta) * RADIANS_TO_DEGREES
+  lon = phi * RADIANS_TO_DEGREES
+
+  end subroutine thetaphi_2_geographic_latlon_dble
+
+!
+!------------------------------------------------------------------------------
+!
+
+  subroutine xyz_2_rlatlon_dble(x,y,z,r,lat,lon,is_mesh_elliptical)
 
 ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
 
@@ -139,32 +370,42 @@
 
   double precision,intent(in) :: x,y,z
   double precision,intent(out) :: r,lat,lon
+  logical, intent(in) :: is_mesh_elliptical
 
   ! local parameters
   double precision :: theta,phi,theta_prime
 
-  ! converts location to radius/colatitude/longitude
+  ! converts location to (geocentric) position radius/colatitude/longitude
   call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
 
   ! reduces range for colatitude to 0 and PI, for longitude to 0 and 2*PI
   call reduce(theta,phi)
 
   ! converts geocentric to geographic colatitude
-  ! note: for example, the moho/topography/3D-model information is given in geographic latitude/longitude
-  !       (lat/lon given with respect to a reference ellipsoid).
-  !       we need to convert the geocentric mesh positions (theta,phi) to geographic ones (lat/lon),
-  !       thus correcting geocentric latitude for ellipticity
-  call geocentric_2_geographic_dble(theta,theta_prime)
+  if (is_mesh_elliptical) then
+    ! note: for example, the source/station information is given in geographic latitude/longitude
+    !       (lat/lon given with respect to a reference ellipsoid).
+    !       we need to convert the geocentric mesh positions (theta,phi) to geographic ones (lat/lon),
+    !       correcting geocentric latitude for ellipticity if the mesh is elliptical.
+    !
+    !       for spherical meshes, the conversion from x/y/z to r/theta/phi to get colatitude/longitude is enough
+    !       and won't need the correction factor of ellipticity.
+    call geocentric_2_geographic_colat_dble(theta,theta_prime)
+    ! sets colatitude to geographic colatitude
+    theta = theta_prime
+  endif
 
   ! gets geographic latitude and longitude in degrees
-  lat = (PI_OVER_TWO - theta_prime) * RADIANS_TO_DEGREES
+  lat = (PI_OVER_TWO - theta) * RADIANS_TO_DEGREES
   lon = phi * RADIANS_TO_DEGREES
 
   end subroutine xyz_2_rlatlon_dble
 
-!-------------------------------------------------------------
+!
+!------------------------------------------------------------------------------
+!
 
-  subroutine geocentric_2_geographic_dble(theta,theta_prime)
+  subroutine geocentric_2_geographic_colat_dble(theta,theta_prime)
 
 ! converts geocentric colatitude (theta) to geographic colatitude (theta_prime) (in radians)
 
@@ -330,13 +571,13 @@
 ! Anyway, I'm sorry that I'm not giving a clear answer, but hopefully this
 ! gives some thoughts.
 
-  use constants, only: PI_OVER_TWO,TINYVAL,ASSUME_PERFECT_SPHERE,USE_OLD_VERSION_5_1_5_FORMAT
+  use constants, only: PI_OVER_TWO,TINYVAL,ASSUME_PERFECT_SPHERE
   use shared_parameters, only: ONE_MINUS_F_SQUARED
 
   implicit none
 
   double precision,intent(in) :: theta
-  double precision,intent(out) :: theta_prime
+  double precision,intent(inout) :: theta_prime
 
   ! note: september, 2014
   ! factor: 1/(1 - e^2) = 1/(1 - (1 - (1-f)^2)) = 1/( (1-f)^2 )
@@ -345,6 +586,10 @@
   !                                            f = 1/299.8 -> 1/( (1-f)^2 ) = 1.0067046409645724
   double precision :: FACTOR_TAN
 
+  ! temporary variable for theta_prime
+  ! (in case the input and output variable is the same, the compiler might do some weird things otherwise)
+  double precision :: val
+
   ! factor
   FACTOR_TAN = 1.d0 / ONE_MINUS_F_SQUARED
 
@@ -352,79 +597,112 @@
 
   if (.not. ASSUME_PERFECT_SPHERE) then
     ! mesh is elliptical
-    if (USE_OLD_VERSION_5_1_5_FORMAT) then
-      theta_prime = PI_OVER_TWO - datan(1.006760466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
-    else
-      ! converts geocentric colatitude theta to geographic colatitude theta_prime
-      theta_prime = PI_OVER_TWO - datan(FACTOR_TAN*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
-    endif
+    ! converts geocentric colatitude theta to geographic colatitude theta_prime
+    val = PI_OVER_TWO - datan(FACTOR_TAN*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
   else
     ! mesh is spherical, thus geocentric and geographic colatitudes are identical
-    theta_prime = theta
+    val = theta
   endif
 
+  ! return result
   ! range from atan is [-PI/2,PI/2], thus theta_prime should always be within [0,PI]
+  theta_prime = val
 
-  end subroutine geocentric_2_geographic_dble
+  end subroutine geocentric_2_geographic_colat_dble
 
-!-------------------------------------------------------------
+!
+!------------------------------------------------------------------------------
+!
 
-  subroutine geocentric_2_geographic_cr(theta,theta_prime)
+  subroutine xyz_2_rlatlon_cr(x_in,y_in,z_in,r_out,lat_out,lon_out,is_mesh_elliptical)
 
-! converts geocentric colatitude (theta) to geographic colatitude (theta_prime) (in radians)
+! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
 
-  use constants, only: CUSTOM_REAL
+  use constants, only: CUSTOM_REAL,RADIANS_TO_DEGREES,PI_OVER_TWO
 
   implicit none
 
-  real(kind=CUSTOM_REAL),intent(in) :: theta
-  real(kind=CUSTOM_REAL),intent(out) :: theta_prime
+  real(kind=CUSTOM_REAL),intent(in) :: x_in,y_in,z_in
+  real(kind=CUSTOM_REAL),intent(out) :: r_out,lat_out,lon_out
+  logical, intent(in) :: is_mesh_elliptical
 
   ! local parameters
-  double precision :: dtheta,dtheta_prime
+  double precision :: r,theta,phi,theta_prime,lat,lon
+  double precision :: x,y,z
 
-  ! gets double precision value
-  dtheta = dble(theta)
+  ! converts to double
+  x = x_in
+  y = y_in
+  z = z_in
+
+  ! converts location to (geocentric) position radius/colatitude/longitude
+  call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
+
+  ! reduces range for colatitude to 0 and PI, for longitude to 0 and 2*PI
+  call reduce(theta,phi)
 
   ! converts geocentric to geographic colatitude
-  call geocentric_2_geographic_dble(dtheta,dtheta_prime)
-
-  ! gets custom-real value
-  theta_prime = real(dtheta_prime, kind=CUSTOM_REAL)
-
-  end subroutine geocentric_2_geographic_cr
-
-!-------------------------------------------------------------
-
-  subroutine lat_2_geocentric_colat_dble(lat_prime,theta)
-
-! converts geographic latitude (lat_prime) (in degrees) to geocentric colatitude (theta) (in radians)
-
-  use constants, only: PI_OVER_TWO,DEGREES_TO_RADIANS,ASSUME_PERFECT_SPHERE
-  use shared_parameters, only: ONE_MINUS_F_SQUARED
-
-  implicit none
-
-  ! latitude (in degrees)
-  double precision,intent(in) :: lat_prime
-  ! co-latitude (in radians)
-  double precision,intent(out) :: theta
-
-  if (.not. ASSUME_PERFECT_SPHERE) then
-    ! converts geographic (lat_prime) to geocentric latitude and converts to co-latitude (theta)
-    theta = PI_OVER_TWO - atan( ONE_MINUS_F_SQUARED*dtan(lat_prime * DEGREES_TO_RADIANS) )
-  else
-    ! for perfect sphere, geocentric and geographic latitudes are the same
-    ! converts latitude (in degrees to co-latitude (in radians)
-    theta = PI_OVER_TWO - lat_prime * DEGREES_TO_RADIANS
+  if (is_mesh_elliptical) then
+    ! note: for example, the source/station information is given in geographic latitude/longitude
+    !       (lat/lon given with respect to a reference ellipsoid).
+    !       we need to convert the geocentric mesh positions (theta,phi) to geographic ones (lat/lon),
+    !       correcting geocentric latitude for ellipticity if the mesh is elliptical.
+    !
+    !       for spherical meshes, the conversion from x/y/z to r/theta/phi to get colatitude/longitude is enough
+    !       and won't need the correction factor of ellipticity.
+    call geocentric_2_geographic_colat_dble(theta,theta_prime)
+    ! sets colatitude to geographic colatitude
+    theta = theta_prime
   endif
 
-  end subroutine lat_2_geocentric_colat_dble
+  ! gets geographic latitude and longitude in degrees
+  lat = (PI_OVER_TWO - theta) * RADIANS_TO_DEGREES
+  lon = phi * RADIANS_TO_DEGREES
 
-!-------------------------------------------------------------
+  ! converts to custom real
+  r_out = real(r,kind=CUSTOM_REAL)
+  lat_out = real(lat,kind=CUSTOM_REAL)
+  lon_out = real(lon,kind=CUSTOM_REAL)
+
+  end subroutine xyz_2_rlatlon_cr
+
+!
+!------------------------------------------------------------------------------
+!
+
+! not used yet...
+!
+!  subroutine geocentric_2_geographic_colat_cr(theta,theta_prime)
+!
+!! converts geocentric colatitude (theta) to geographic colatitude (theta_prime) (in radians)
+!
+!  use constants, only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  real(kind=CUSTOM_REAL),intent(in) :: theta
+!  real(kind=CUSTOM_REAL),intent(inout) :: theta_prime
+!
+!  ! local parameters
+!  double precision :: dtheta,dtheta_prime
+!
+!  ! gets double precision value
+!  dtheta = dble(theta)
+!
+!  ! converts geocentric to geographic colatitude
+!  call geocentric_2_geographic_dble(dtheta,dtheta_prime)
+!
+!  ! gets custom-real value
+!  theta_prime = real(dtheta_prime, kind=CUSTOM_REAL)
+!
+!  end subroutine geocentric_2_geographic_colat_cr
+!
+!
+!------------------------------------------------------------------------------
+!
 
   subroutine xyz_2_latlon_minmax(nspec,nglob,ibool,xstore,ystore,zstore, &
-                                 lat_min,lat_max,lon_min,lon_max)
+                                 lat_min,lat_max,lon_min,lon_max,is_mesh_elliptical)
 
 ! returns minimum and maximum values of latitude/longitude of given mesh points;
 ! latitude in degree between [-90,90], longitude in degree between [0,360]
@@ -441,6 +719,7 @@
   real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: xstore,ystore,zstore
 
   double precision,intent(out) :: lat_min,lat_max,lon_min,lon_max
+  logical, intent(in) :: is_mesh_elliptical
 
   ! local parameters
   double precision :: x,y,z
@@ -471,7 +750,7 @@
           z = zstore(iglob)
 
           ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
-          call xyz_2_rlatlon_dble(x,y,z,r,lat,lon)
+          call xyz_2_rlatlon_dble(x,y,z,r,lat,lon,is_mesh_elliptical)
 
           ! stores min/max
           if (lat < lat_min ) lat_min = lat
@@ -498,4 +777,151 @@
   if (lon_max > 360.d0 ) lon_max = lon_max - 360.d0
 
   end subroutine xyz_2_latlon_minmax
+
+!
+!-------------------------------------------------------------------------------------------
+!
+
+  subroutine get_greatcircle_distance(theta1,phi1,theta2,phi2,dist)
+
+! returns great-circle distance (by haversine formula) in radians
+
+  implicit none
+
+  double precision, intent(in) :: theta1,phi1,theta2,phi2    ! positions colat/phi in rad
+  double precision, intent(out) :: dist
+  ! local parameters
+  double precision :: mid_theta,mid_phi,sintheta,sinphi
+  double precision :: a
+
+! note: the haversine formula calculates the great-circle distance for positions on a sphere.
+!       It is slightly more accurate than the law of cosines formula:
+!          d = acos( sin(theta1) * sin(theta2) + cos(theta1) * cos(theta2) * cos(phi1 - phi2) )
+!       Both are valid for distances on a sphere.
+!
+!       We could correct the geodetic lat/lon positions to get geocentric lat/lon and then calculate the distance.
+!       This would be more accurate, but adds additional computational costs.
+
+  ! using latitudes:
+  !  lat1 = PI_OVER_TWO - theta1    ! in rad
+  !  lat2 = PI_OVER_TWO - theta2
+  !  ! haversine formula
+  !  mid_lat = 0.5d0 * (lat1 - lat2)
+  !  mid_lon = 0.5d0 * (phi1 - phi2)
+  !  sinlat = dsin(mid_lat)
+  !  sinlon = dsin(mid_lon)
+  !  a = dsqrt( sinlat*sinlat + dcos(lat1) * dcos(lat2) * sinlon*sinlon )
+
+  ! here, we're using colatitudes:
+  !  -> lat1 - lat2 = pi/2 - theta1 - (pi/2 - theta2)
+  !                 = theta2 - theta1
+  !     it doesn't matter though if we use (theta2 - theta1) or (theta1 - theta2) below as it will be used
+  !     together with sin^2.
+  !
+  !  -> cos(lat1)   = cos(pi/2 - theta1)
+  !                 = sin(theta1)
+  !     this is the main difference wrt/ to the formula for latitudes
+
+  ! haversine formula
+  mid_theta = 0.5d0 * (theta1 - theta2)
+  mid_phi = 0.5d0 * (phi1 - phi2)
+
+  sintheta = dsin(mid_theta)
+  sinphi = dsin(mid_phi)
+
+  a = dsqrt( sintheta*sintheta + dsin(theta1) * dsin(theta2) * sinphi*sinphi )
+
+  if (abs(a) > 1.d0) a = sign(1.d0,a) * 1.d0 ! limit to +/- 1 numerical accuracy for asin(..)
+
+  ! great-circle (epicentral) distance in rad
+  dist = 2.d0 * dasin(a)
+
+  end subroutine get_greatcircle_distance
+
+!
+!-------------------------------------------------------------------------------------------
+!
+
+! not used yet...
+!
+!  subroutine get_greatcircle_distance_cosines(theta1,phi1,theta2,phi2,dist)
+!
+!! returns great-circle distance (by law of cosines formula) in radians
+!
+!  use constants, only: RADIANS_TO_DEGREES
+!
+!  implicit none
+!
+!  double precision, intent(in) :: theta1,phi1,theta2,phi2    ! positions colat/phi in rad
+!  double precision, intent(out) :: dist
+!  ! local parameters
+!  double precision :: a
+!
+!  ! (formula by law of cosines)
+!  a = cos(theta1)*cos(theta2) + sin(theta1)*sin(theta2)*cos(phi1-phi2)
+!
+!  if (abs(a) > 1.d0) a = sign(1.d0,a) * 1.d0 ! limit to +/- 1 numerical accuracy for acos(..)
+!
+!  ! great-circle (epicentral) distance in rad
+!  dist = acos(a)
+!
+!  end subroutine get_greatcircle_distance_cosines
+!
+!
+!
+!-------------------------------------------------------------------------------------------
+!
+
+! not used yet...
+!
+!  subroutine get_greatcircle_distance_latlon_haversine(lat1,lon1,lat2,lon2,dist)
+!
+!! returns great-circle distance (by haversine formula) in degrees
+!
+!  use constants, only: DEGREES_TO_RADIANS, RADIANS_TO_DEGREES, TWO_PI
+!
+!  implicit none
+!
+!  double precision, intent(in) :: lat1,lon1,lat2,lon2
+!  double precision, intent(out) :: dist
+!
+!  ! local parameters
+!  double precision :: lat1_rad,lon1_rad,lat2_rad,lon2_rad
+!  double precision :: mid_lat,mid_lon,sinlat,sinlon
+!  double precision :: a,c
+!
+!! note: the haversine formula calculates the great-circle distance for lat/lon positions on a sphere.
+!!       It is slightly more accurate than the law of cosines formula:
+!!          d = acos( sin(lat1) * sin(lat2) + cos(lat1) * cos(lat2) * cos(lon1 - lon2) )
+!!       Both are valid for distances on a sphere.
+!!
+!!       We could correct the geodetic lat/lon positions to get geocentric lat/lon and then calculate the distance.
+!!       This would be more accurate, but adds additional computational costs.
+!!
+!!       Given we only use epicentral distances for output infos, we reduce here the costs and
+!!       use the simple haversine formula.
+!
+!  ! converts to radians
+!  lat1_rad = lat1 * DEGREES_TO_RADIANS
+!  lon1_rad = lon1 * DEGREES_TO_RADIANS
+!
+!  lat2_rad = lat2 * DEGREES_TO_RADIANS
+!  lon2_rad = lon2 * DEGREES_TO_RADIANS
+!
+!  mid_lat = 0.5d0 * (lat1_rad - lat2_rad)
+!  mid_lon = 0.5d0 * (lon1_rad - lon2_rad)
+!
+!  sinlat = dsin(mid_lat)
+!  sinlon = dsin(mid_lon)
+!
+!  a = dsqrt( sinlat*sinlat + dcos(lat1_rad) * dcos(lat2_rad) * sinlon*sinlon)
+!
+!  ! great-circle (epicentral) distance in rad
+!  c = 2.d0 * asin(a)
+!
+!  ! distance in degrees
+!  dist = c * RADIANS_TO_DEGREES
+!
+!  end subroutine get_greatcircle_distance_latlon_haversine
+
 

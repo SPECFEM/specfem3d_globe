@@ -48,7 +48,7 @@
   double precision, dimension(NSOURCES), intent(out) :: comp_dir_vect_source_Z_UP
 
   ! local variables below
-  integer :: isource,ier
+  integer :: isource,ier,ipos
   double precision :: scaleF
   double precision :: t_shift(NSOURCES)
   double precision :: length
@@ -108,7 +108,12 @@
 
     ! read time shift
     read(IIN,"(a)") string
-    read(string(12:len_trim(string)),*) t_shift(isource)
+    ipos = index(string,':')
+    if (ipos > 1 .and. ipos < len_trim(string)) then
+      read(string(ipos+1:len_trim(string)),*) t_shift(isource)
+    else
+      read(string(12:len_trim(string)),*) t_shift(isource)
+    endif
 
     ! read f0 (stored in hdur() array for convenience, to use the same array as for CMTSOLUTION)
     ! Please be careful, if you meet an error in reading the file FORCESOLUTION,
@@ -118,39 +123,84 @@
     ! to
     ! read(string(6:len_trim(string)),*) hdur(isource)
     read(IIN,"(a)") string
-    read(string(15:len_trim(string)),*) hdur(isource)
+    ipos = index(string,':')
+    if (ipos > 1 .and. ipos < len_trim(string)) then
+      read(string(ipos+1:len_trim(string)),*) hdur(isource)
+    else
+      read(string(15:len_trim(string)),*) hdur(isource)
+    endif
 
     ! read latitude
     read(IIN,"(a)") string
-    read(string(10:len_trim(string)),*) lat(isource)
+    ipos = index(string,':')
+    if (ipos > 1 .and. ipos < len_trim(string)) then
+      read(string(ipos+1:len_trim(string)),*) lat(isource)
+    else
+      read(string(10:len_trim(string)),*) lat(isource)
+    endif
 
     ! read longitude
     read(IIN,"(a)") string
-    read(string(11:len_trim(string)),*) long(isource)
+    ipos = index(string,':')
+    if (ipos > 1 .and. ipos < len_trim(string)) then
+      read(string(ipos+1:len_trim(string)),*) long(isource)
+    else
+      read(string(11:len_trim(string)),*) long(isource)
+    endif
 
     ! read depth
     read(IIN,"(a)") string
-    read(string(7:len_trim(string)),*) depth(isource)
+    ipos = index(string,':')
+    if (ipos > 1 .and. ipos < len_trim(string)) then
+      read(string(ipos+1:len_trim(string)),*) depth(isource)
+    else
+      read(string(7:len_trim(string)),*) depth(isource)
+    endif
 
-    ! source time function
+    ! source time function type
     read(IIN,"(a)") string
-    read(string(22:len_trim(string)),*) force_stf(isource)
+    ipos = index(string,':')
+    if (ipos > 1 .and. ipos < len_trim(string)) then
+      read(string(ipos+1:len_trim(string)),*) force_stf(isource)
+    else
+      read(string(22:len_trim(string)),*) force_stf(isource)
+    endif
 
     ! read magnitude
     read(IIN,"(a)") string
-    read(string(21:len_trim(string)),*) factor_force_source(isource)
+    ipos = index(string,':')
+    if (ipos > 1 .and. ipos < len_trim(string)) then
+      read(string(ipos+1:len_trim(string)),*) factor_force_source(isource)
+    else
+      read(string(21:len_trim(string)),*) factor_force_source(isource)
+    endif
 
     ! read direction vector's East component
     read(IIN,"(a)") string
-    read(string(29:len_trim(string)),*) comp_dir_vect_source_E(isource)
+    ipos = index(string,':')
+    if (ipos > 1 .and. ipos < len_trim(string)) then
+      read(string(ipos+1:len_trim(string)),*) comp_dir_vect_source_E(isource)
+    else
+      read(string(29:len_trim(string)),*) comp_dir_vect_source_E(isource)
+    endif
 
     ! read direction vector's North component
     read(IIN,"(a)") string
-    read(string(29:len_trim(string)),*) comp_dir_vect_source_N(isource)
+    ipos = index(string,':')
+    if (ipos > 1 .and. ipos < len_trim(string)) then
+      read(string(ipos+1:len_trim(string)),*) comp_dir_vect_source_N(isource)
+    else
+      read(string(29:len_trim(string)),*) comp_dir_vect_source_N(isource)
+    endif
 
     ! read direction vector's vertical component
     read(IIN,"(a)") string
-    read(string(32:len_trim(string)),*) comp_dir_vect_source_Z_UP(isource)
+    ipos = index(string,':')
+    if (ipos > 1 .and. ipos < len_trim(string)) then
+      read(string(ipos+1:len_trim(string)),*) comp_dir_vect_source_Z_UP(isource)
+    else
+      read(string(32:len_trim(string)),*) comp_dir_vect_source_Z_UP(isource)
+    endif
 
     ! checks half-duration
     select  case(force_stf(isource))
@@ -183,7 +233,7 @@
       ! replace with very short Gaussian function
       if (hdur(isource) < 5. * DT ) hdur(isource) = 5. * DT
     case default
-      stop 'unsupported force_stf value!'
+      stop 'unsupported source time function type (force_stf) value!'
     end select
 
   enddo

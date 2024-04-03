@@ -28,7 +28,6 @@
   subroutine setup_sources_receivers()
 
   use specfem_par, only: myrank,IMAIN,NSOURCES,NSTEP, &
-    theta_source,phi_source, &
     TOPOGRAPHY,ibathy_topo, &
     USE_DISTANCE_CRITERION,xyz_midpoints,xadj,adjncy
 
@@ -64,9 +63,6 @@
   endif
   call synchronize_all()
 
-  ! frees arrays
-  deallocate(theta_source,phi_source)
-
   ! topography array no more needed
   if (TOPOGRAPHY) then
     if (allocated(ibathy_topo) ) deallocate(ibathy_topo)
@@ -95,7 +91,7 @@
 
   use specfem_par, only: &
     NCHUNKS_VAL,NEX_XI_VAL,NEX_ETA_VAL,ANGULAR_WIDTH_XI_IN_DEGREES_VAL,ANGULAR_WIDTH_ETA_IN_DEGREES_VAL, &
-    LAT_LON_MARGIN,myrank
+    ELLIPTICITY_VAL,LAT_LON_MARGIN,myrank
 
   use specfem_par, only: &
     nspec => NSPEC_CRUST_MANTLE,nglob => NGLOB_CRUST_MANTLE
@@ -140,7 +136,7 @@
   ! limits receiver search
   if (USE_DISTANCE_CRITERION) then
     ! retrieves latitude/longitude range of this slice
-    call xyz_2_latlon_minmax(nspec,nglob,ibool,xstore,ystore,zstore,lat_min,lat_max,lon_min,lon_max)
+    call xyz_2_latlon_minmax(nspec,nglob,ibool,xstore,ystore,zstore,lat_min,lat_max,lon_min,lon_max,ELLIPTICITY_VAL)
 
     ! adds search margin
     lat_min = lat_min - LAT_LON_MARGIN
@@ -683,17 +679,13 @@
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating source arrays')
   tshift_src(:) = 0.d0; hdur(:) = 0.d0; hdur_Gaussian(:) = 0.d0
 
-  allocate(theta_source(NSOURCES), &
-           phi_source(NSOURCES),stat=ier)
-  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating source arrays')
-  theta_source(:) = 0.d0; phi_source(:) = 0.d0
-
   allocate(nu_source(NDIM,NDIM,NSOURCES),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating source arrays')
   nu_source(:,:,:) = 0.d0
 
   if (USE_FORCE_POINT_SOURCE) then
-    allocate(force_stf(NSOURCES),factor_force_source(NSOURCES), &
+    allocate(force_stf(NSOURCES), &
+             factor_force_source(NSOURCES), &
              comp_dir_vect_source_E(NSOURCES), &
              comp_dir_vect_source_N(NSOURCES), &
              comp_dir_vect_source_Z_UP(NSOURCES),stat=ier)
@@ -706,7 +698,7 @@
   endif
 
   ! sources
-  ! BS BS moved open statement and writing of first lines into sr.vtk before the
+  ! moved open statement and writing of first lines into sr.vtk before the
   ! call to locate_sources, where further write statements to that file follow
   if (myrank == 0) then
   ! write source and receiver VTK files for Paraview
@@ -846,10 +838,10 @@
   else
     ! moment tensors
     if (USE_MONOCHROMATIC_CMT_SOURCE) then
-    ! (based on monochromatic functions)
+      ! (based on monochromatic functions)
       t0 = 0.d0
     else
-    ! (based on Heaviside functions)
+      ! (based on Heaviside functions)
       t0 = - 1.5d0 * minval( tshift_src(:) - hdur(:) )
     endif
   endif
@@ -967,6 +959,39 @@
     endif
   endif
 
+  ! make sure NSTEP is a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE
+  ! if not, increase it a little bit, to the next multiple
+  if (mod(NSTEP,NTSTEP_BETWEEN_OUTPUT_SAMPLE) /= 0) then
+    if (NOISE_TOMOGRAPHY /= 0) then
+      if (myrank == 0) then
+        print *,'Noise simulation: Invalid number of NSTEP          = ',NSTEP
+        print *,'Must be a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE = ',NTSTEP_BETWEEN_OUTPUT_SAMPLE
+      endif
+      stop 'Error: NSTEP must be a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE'
+    else
+      NSTEP = (NSTEP/NTSTEP_BETWEEN_OUTPUT_SAMPLE + 1)*NTSTEP_BETWEEN_OUTPUT_SAMPLE
+      ! user output
+      if (myrank == 0) then
+        print *
+        print *,'NSTEP is not a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE'
+        print *,'thus increasing it automatically to the next multiple, which is ',NSTEP
+        print *
+      endif
+    endif
+  endif
+
+  ! output seismograms at least once at the end of the simulation
+  NTSTEP_BETWEEN_OUTPUT_SEISMOS = min(NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS)
+
+  ! make sure NSTEP_BETWEEN_OUTPUT_SEISMOS is a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE
+  if (mod(NTSTEP_BETWEEN_OUTPUT_SEISMOS,NTSTEP_BETWEEN_OUTPUT_SAMPLE) /= 0) then
+    if (myrank == 0) then
+      print *,'Invalid number of NTSTEP_BETWEEN_OUTPUT_SEISMOS    = ',NTSTEP_BETWEEN_OUTPUT_SEISMOS
+      print *,'Must be a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE = ',NTSTEP_BETWEEN_OUTPUT_SAMPLE
+    endif
+    stop 'Error: NTSTEP_BETWEEN_OUTPUT_SEISMOS must be a multiple of NTSTEP_BETWEEN_OUTPUT_SAMPLE'
+  endif
+
   ! time loop increments end
   it_end = NSTEP
 
@@ -1070,8 +1095,7 @@
   endif
 
   ! locate receivers in the crust in the mesh
-  call locate_receivers(yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC, &
-                        theta_source(1),phi_source(1) )
+  call locate_receivers(yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC)
 
   ! count number of receivers located in this slice
   nrec_local = 0
@@ -1206,12 +1230,23 @@
   endif
 
   ! seismograms
+  ! check if we need to save seismos
+  if (SIMULATION_TYPE == 3 .and. (.not. SAVE_SEISMOGRAMS_IN_ADJOINT_RUN)) then
+    do_save_seismograms = .false.
+  else
+    do_save_seismograms = .true.
+  endif
+
+  ! seismogram array length (to write out time portions of the full seismograms)
+  nlength_seismogram = NTSTEP_BETWEEN_OUTPUT_SEISMOS / NTSTEP_BETWEEN_OUTPUT_SAMPLE
+
   ! gather from secondary processes on main
   tmp_rec_local_all(:) = 0
   tmp_rec_local_all(0) = nrec_local
   if (NPROCTOT_VAL > 1) then
     call gather_all_singlei(nrec_local,tmp_rec_local_all,NPROCTOT_VAL)
   endif
+
   ! user output
   if (myrank == 0) then
     ! determines maximum number of local receivers and corresponding rank
@@ -1220,20 +1255,29 @@
     maxproc = maxloc(tmp_rec_local_all(:)) - 1
     ! seismograms array size in MB
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
-      ! seismograms need seismograms(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS)
-      sizeval = dble(maxrec) * dble(NDIM * NTSTEP_BETWEEN_OUTPUT_SEISMOS * CUSTOM_REAL / 1024. / 1024. )
+      ! seismograms need seismograms(NDIM,nrec_local,nlength_seismogram)
+      sizeval = dble(maxrec) * dble(NDIM * nlength_seismogram * CUSTOM_REAL / 1024. / 1024. )
     else
-      ! adjoint seismograms need seismograms(NDIM*NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS)
-      sizeval = dble(maxrec) * dble(NDIM * NDIM * NTSTEP_BETWEEN_OUTPUT_SEISMOS * CUSTOM_REAL / 1024. / 1024. )
+      ! adjoint seismograms need seismograms(NDIM*NDIM,nrec_local,nlength_seismogram)
+      sizeval = dble(maxrec) * dble(NDIM * NDIM * nlength_seismogram * CUSTOM_REAL / 1024. / 1024. )
     endif
+
     ! outputs info
     write(IMAIN,*) 'seismograms:'
-    if (WRITE_SEISMOGRAMS_BY_MAIN) then
-      write(IMAIN,*) '  seismograms written by main process only'
+    if (do_save_seismograms) then
+      if (WRITE_SEISMOGRAMS_BY_MAIN) then
+        write(IMAIN,*) '  seismograms written by main process only'
+      else
+        write(IMAIN,*) '  seismograms written by all processes'
+      endif
     else
-      write(IMAIN,*) '  seismograms written by all processes'
+      write(IMAIN,*) '  seismograms will not be saved'
     endif
+    write(IMAIN,*) '  Total number of simulation steps (NSTEP)                       = ',NSTEP
     write(IMAIN,*) '  writing out seismograms at every NTSTEP_BETWEEN_OUTPUT_SEISMOS = ',NTSTEP_BETWEEN_OUTPUT_SEISMOS
+    write(IMAIN,*) '  number of subsampling steps for seismograms                    = ',NTSTEP_BETWEEN_OUTPUT_SAMPLE
+    write(IMAIN,*) '  Total number of samples for seismograms                        = ',NSTEP/NTSTEP_BETWEEN_OUTPUT_SAMPLE
+    write(IMAIN,*)
     write(IMAIN,*) '  maximum number of local receivers is ',maxrec,' in slice ',maxproc(1)
     write(IMAIN,*) '  size of maximum seismogram array       = ', sngl(sizeval),'MB'
     write(IMAIN,*) '                                         = ', sngl(sizeval/1024.d0),'GB'
@@ -1357,7 +1401,7 @@
   "('sed -e ',a1,'s/POINTS.*/POINTS',i6,' float/',a1,'<',a,'>',a)")&
       "'",NSOURCES + nrec,"'",trim(filename),trim(filename_new)
 
-    ! note: this system() routine is non-standard Fortran
+    ! calls as system command (system needs to have `sed` command)
     call system_command(command)
 
     ! only extract receiver locations and remove temporary file
@@ -1367,7 +1411,7 @@
    &print ',a1,'POINTS',i6,' float',a1,';if (NR > 5+',i6,')print $0}',a1,'<',a,'>',a)")&
       "'",'"',nrec,'"',NSOURCES,"'",trim(filename),trim(filename_new)
 
-    ! note: this system() routine is non-standard Fortran
+    ! calls as system command (system needs to have `awk` command)
     call system_command(command)
 
     ! only extract source locations and remove temporary file
@@ -1376,7 +1420,7 @@
   "('awk ',a1,'{if (NR < 6 + ',i6,') print $0}END{print}',a1,'<',a,'>',a,'; rm -f ',a)")&
       "'",NSOURCES,"'",trim(filename),trim(filename_new),trim(filename)
 
-    ! note: this system() routine is non-standard Fortran
+    ! calls as system command (system needs to have `awk` command)
     call system_command(command)
 
   endif
@@ -1483,18 +1527,17 @@
   implicit none
 
   ! local parameters
-  integer :: isource,i,j,k,ispec !,iglob
+  integer :: isource,ispec
 
   double precision, dimension(NGLLX) :: hxis,hpxis
   double precision, dimension(NGLLY) :: hetas,hpetas
   double precision, dimension(NGLLZ) :: hgammas,hpgammas
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearray
-  double precision, dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearrayd
 
   double precision :: xi,eta,gamma
-  double precision :: hlagrange
-  double precision :: norm
+  double precision :: norm,comp_x,comp_y,comp_z
+  double precision :: factor_source
 
   do isource = 1,NSOURCES
 
@@ -1520,102 +1563,57 @@
       eta = eta_source(isource)
       gamma = gamma_source(isource)
 
-!      ! pre-computes source contribution on GLL points
-!      call compute_arrays_source(sourcearray,xi,eta,gamma, &
-!                          Mxx(isource),Myy(isource),Mzz(isource),Mxy(isource),Mxz(isource),Myz(isource), &
-!                          xix_crust_mantle(:,:,:,ispec),xiy_crust_mantle(:,:,:,ispec),xiz_crust_mantle(:,:,:,ispec), &
-!                          etax_crust_mantle(:,:,:,ispec),etay_crust_mantle(:,:,:,ispec),etaz_crust_mantle(:,:,:,ispec), &
-!                          gammax_crust_mantle(:,:,:,ispec),gammay_crust_mantle(:,:,:,ispec),gammaz_crust_mantle(:,:,:,ispec), &
-!                          xigll,yigll,zigll)
-!
-!      ! point forces, initializes sourcearray, used for simplified CUDA routines
-!    !-------------POINT FORCE-----------------------------------------------
-!      if (USE_FORCE_POINT_SOURCE) then
-!        ! note: for use_force_point_source xi/eta/gamma are in the range [1,NGLL*]
-!        iglob = ibool_crust_mantle(nint(xi),nint(eta),nint(gamma),ispec)
-!
-!        ! sets sourcearrays
-!        do k = 1,NGLLZ
-!          do j = 1,NGLLY
-!            do i = 1,NGLLX
-!              if (ibool_crust_mantle(i,j,k,ispec) == iglob) then
-!                ! elastic source components
-!                sourcearray(:,i,j,k) = nu_source(COMPONENT_FORCE_SOURCE,:,isource)
-!              endif
-!            enddo
-!          enddo
-!        enddo
-!      endif
-!    !-------------POINT FORCE-----------------------------------------------
-!
-!      ! stores source excitations
-!      sourcearrays(:,:,:,:,isource) = sourcearray(:,:,:,:)
-!    endif
-
       ! compute Lagrange polynomials at the source location
       call lagrange_any(xi,NGLLX,xigll,hxis,hpxis)
       call lagrange_any(eta,NGLLY,yigll,hetas,hpetas)
       call lagrange_any(gamma,NGLLZ,zigll,hgammas,hpgammas)
 
-      if (USE_FORCE_POINT_SOURCE) then ! use of FORCESOLUTION files
+      ! pre-computes source contribution on GLL points
+      if (USE_FORCE_POINT_SOURCE) then
+        ! use of FORCESOLUTION files
 
         ! note: for use_force_point_source xi/eta/gamma are also in the range [-1,1], for exact positioning
+        factor_source = factor_force_source(isource)
 
-        ! initializes source array
-        sourcearrayd(:,:,:,:) = 0.0d0
+        ! we use a tilted force defined by its magnitude and the projections
+        ! of an arbitrary (non-unitary) direction vector on the E/N/Z_UP basis
+        !
+        ! note: nu_source(iorientation,:,isource) is the rotation matrix from ECEF to local N-E-UP
+        !       (defined in src/specfem3D/locate_sources.f90)
 
-        ! calculates source array for interpolated location
-        do k=1,NGLLZ
-          do j=1,NGLLY
-            do i=1,NGLLX
-              hlagrange = hxis(i) * hetas(j) * hgammas(k)
+        ! length of component vector
+        norm = dsqrt( comp_dir_vect_source_E(isource)**2 &
+                    + comp_dir_vect_source_N(isource)**2 &
+                    + comp_dir_vect_source_Z_UP(isource)**2 )
 
-              ! elastic source
-              norm = sqrt( comp_dir_vect_source_E(isource)**2 &
-                         + comp_dir_vect_source_N(isource)**2 &
-                         + comp_dir_vect_source_Z_UP(isource)**2 )
+        ! checks norm of component vector
+        if (norm < TINYVAL) then
+          call exit_MPI(myrank,'error force point source: component vector has (almost) zero norm')
+        endif
 
-              ! checks norm of component vector
-              if (norm < TINYVAL) then
-                call exit_MPI(myrank,'error force point source: component vector has (almost) zero norm')
-              endif
+        ! normalizes given component vector
+        comp_x = comp_dir_vect_source_N(isource) / norm      ! N/E component changed compared to Cartesian version
+        comp_y = comp_dir_vect_source_E(isource) / norm
+        comp_z = comp_dir_vect_source_Z_UP(isource) / norm
 
-              ! normalizes vector
-              comp_dir_vect_source_E(isource) = comp_dir_vect_source_E(isource) / norm
-              comp_dir_vect_source_N(isource) = comp_dir_vect_source_N(isource) / norm
-              comp_dir_vect_source_Z_UP(isource) = comp_dir_vect_source_Z_UP(isource) / norm
+        call compute_arrays_source_forcesolution(sourcearray,hxis,hetas,hgammas,factor_source, &
+                                                 comp_x,comp_y,comp_z,nu_source(:,:,isource))
 
-              ! we use a tilted force defined by its magnitude and the projections
-              ! of an arbitrary (non-unitary) direction vector on the E/N/Z_UP basis
-              !
-              ! note: nu_source(iorientation,:,isource) is the rotation matrix from ECEF to local N-E-UP
-              !       (defined in src/specfem3D/locate_sources.f90)
-              sourcearrayd(:,i,j,k) = factor_force_source(isource) * hlagrange * &
-                                      ( nu_source(1,:,isource) * comp_dir_vect_source_N(isource) + &
-                                        nu_source(2,:,isource) * comp_dir_vect_source_E(isource) + &
-                                        nu_source(3,:,isource) * comp_dir_vect_source_Z_UP(isource) )
-            enddo
-          enddo
-        enddo
-
-        ! distinguish between single and double precision for reals
-        sourcearray(:,:,:,:) = real(sourcearrayd(:,:,:,:),kind=CUSTOM_REAL)
-
-      else ! use of CMTSOLUTION files
-
-        call compute_arrays_source(sourcearray,xi,eta,gamma, &
-                          Mxx(isource),Myy(isource),Mzz(isource),Mxy(isource), &
-                          Mxz(isource),Myz(isource), &
-                          xix_crust_mantle(:,:,:,ispec), &
-                          xiy_crust_mantle(:,:,:,ispec), &
-                          xiz_crust_mantle(:,:,:,ispec), &
-                          etax_crust_mantle(:,:,:,ispec), &
-                          etay_crust_mantle(:,:,:,ispec), &
-                          etaz_crust_mantle(:,:,:,ispec), &
-                          gammax_crust_mantle(:,:,:,ispec), &
-                          gammay_crust_mantle(:,:,:,ispec), &
-                          gammaz_crust_mantle(:,:,:,ispec), &
-                          xigll,yigll,zigll)
+      else
+        ! use of CMTSOLUTION files
+        call compute_arrays_source_cmt(sourcearray, &
+                                       hxis,hetas,hgammas,hpxis,hpetas,hpgammas, &
+                                       Mxx(isource),Myy(isource),Mzz(isource),Mxy(isource), &
+                                       Mxz(isource),Myz(isource), &
+                                       xix_crust_mantle(:,:,:,ispec), &
+                                       xiy_crust_mantle(:,:,:,ispec), &
+                                       xiz_crust_mantle(:,:,:,ispec), &
+                                       etax_crust_mantle(:,:,:,ispec), &
+                                       etay_crust_mantle(:,:,:,ispec), &
+                                       etaz_crust_mantle(:,:,:,ispec), &
+                                       gammax_crust_mantle(:,:,:,ispec), &
+                                       gammay_crust_mantle(:,:,:,ispec), &
+                                       gammaz_crust_mantle(:,:,:,ispec))
 
       endif
 
@@ -1776,11 +1774,11 @@
 
     ! allocates seismogram array
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
-      allocate(seismograms(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
+      allocate(seismograms(NDIM,nrec_local,nlength_seismogram),stat=ier)
       if (ier /= 0) stop 'Error while allocating seismograms'
     else
       ! adjoint seismograms
-      allocate(seismograms(NDIM*NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
+      allocate(seismograms(NDIM*NDIM,nrec_local,nlength_seismogram),stat=ier)
       if (ier /= 0) stop 'Error while allocating adjoint seismograms'
 
       ! allocates Frechet derivatives array
@@ -1795,15 +1793,15 @@
       stshift_der(:) = 0._CUSTOM_REAL
       shdur_der(:) = 0._CUSTOM_REAL
     endif
+
     ! initializes seismograms
     seismograms(:,:,:) = 0._CUSTOM_REAL
-    ! adjoint seismograms
-    it_adj_written = 0
+
   else
     ! dummy arrays
     ! allocates dummy array since we need it to pass as argument e.g. in write_seismograms() routine
     ! note: nrec_local is zero, Fortran 90/95 should allow zero-sized array allocation...
-    allocate(seismograms(NDIM,0,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
+    allocate(seismograms(NDIM,0,nlength_seismogram),stat=ier)
     if (ier /= 0) stop 'Error while allocating zero seismograms'
     ! dummy allocation
     allocate(hxir_store(1,1), &
@@ -1815,7 +1813,7 @@
   ! strain seismograms
   if (SAVE_SEISMOGRAMS_STRAIN) then
     if (nrec_local > 0) then
-      allocate(seismograms_eps(6,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
+      allocate(seismograms_eps(6,nrec_local,nlength_seismogram),stat=ier)
       if (ier /= 0) stop 'Error while allocating strain seismograms'
       seismograms_eps(:,:,:) = 0._CUSTOM_REAL
     else
@@ -1927,7 +1925,7 @@
 
   ! ASDF seismograms
   if (OUTPUT_SEISMOS_ASDF) then
-    if (.not. (SIMULATION_TYPE == 3 .and. (.not. SAVE_SEISMOGRAMS_IN_ADJOINT_RUN)) ) then
+    if (do_save_seismograms) then
       ! initializes the ASDF data structure by allocating arrays
       call init_asdf_data(nrec_local)
       call synchronize_all()

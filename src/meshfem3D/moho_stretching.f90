@@ -28,13 +28,11 @@
   subroutine moho_stretching_honor_crust(xelm,yelm,zelm, &
                                          elem_in_crust,elem_in_mantle)
 
-! stretching the moho according to the crust 2.0
-! input:  myrank, xelm, yelm, zelm
-! Dec, 30, 2009
+! stretches the moho according to the crustal variations (CRUST1.0, CRUST2.0, ..)
 
   use constants, only: myrank, &
     NGNOD,R_UNIT_SPHERE, &
-    PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,SMALLVAL,ONE,USE_OLD_VERSION_5_1_5_FORMAT, &
+    PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,SMALLVAL,ONE, &
     SUPPRESS_MOHO_STRETCHING,ICRUST_CRUST_SH,ICRUST_SGLOBECRUST
 
   ! Earth
@@ -44,13 +42,11 @@
   ! Moon
   use constants, only: MOON_R,MOON_R_KM
 
-  use shared_parameters, only: PLANET_TYPE,IPLANET_EARTH,IPLANET_MARS,IPLANET_MOON,R_PLANET
+  use shared_parameters, only: PLANET_TYPE,IPLANET_EARTH,IPLANET_MARS,IPLANET_MOON,R_PLANET, &
+    TOPOGRAPHY,ELLIPTICITY
 
   use meshfem_par, only: &
     RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST,REFERENCE_CRUSTAL_MODEL
-
-  use meshfem_par, only: &
-    TOPOGRAPHY
 
   implicit none
 
@@ -58,7 +54,7 @@
   logical,intent(inout) :: elem_in_crust,elem_in_mantle
 
   ! local parameters
-  double precision :: r,theta,phi,lat,lon
+  double precision :: r,lat,lon
   double precision :: vpvc,vphc,vsvc,vshc,etac,rhoc
   double precision :: c11c,c12c,c13c,c14c,c15c,c16c,c22c,c23c,c24c,c25c,c26c, &
                       c33c,c34c,c35c,c36c,c44c,c45c,c46c,c55c,c56c,c66c
@@ -82,6 +78,8 @@
   ! Moon - todo: needs better estimates
   double precision,parameter :: MOHO_MINIMUM_DEFAULT_MOON = 2.0 / MOON_R_KM
   double precision,parameter :: MOHO_MAXIMUM_DEFAULT_MOON = 100.0 / MOON_R_KM
+
+  ! note: at this point, the mesh is still perfectly spherical.
 
   ! min/max defaults
   select case(PLANET_TYPE)
@@ -132,22 +130,12 @@
     y = yelm(ia)
     z = zelm(ia)
 
+    ! note: the moho information is given in geographic latitude/longitude (with respect to a reference ellipsoid).
+    !       we need to convert the geocentric mesh positions (x/y/z) to geographic ones (lat/lon)
+    !
     ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
-    if (USE_OLD_VERSION_5_1_5_FORMAT) then
-      ! note: at this point, the mesh is still perfectly spherical, thus no need to
-      !         convert the geocentric colatitude to a geographic colatitude
-      call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
-      call reduce(theta,phi)
-      lat = (PI_OVER_TWO - theta) * RADIANS_TO_DEGREES
-      lon = phi * RADIANS_TO_DEGREES
-    else
-      ! note: the moho information is given in geographic latitude/longitude (with respect to a reference ellipsoid).
-      !       we need to convert the geocentric mesh positions (x/y/z) to geographic ones (lat/lon),
-      !       thus correcting geocentric latitude for ellipticity
-      !
-      ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
-      call xyz_2_rlatlon_dble(x,y,z,r,lat,lon)
-    endif
+    ! note: at this point, the mesh is still spherical (no need to correct latitude for ellipticity)
+    call xyz_2_rlatlon_dble(x,y,z,r,lat,lon,ELLIPTICITY)
 
     ! sets longitude bounds [-180,180]
     if (lon > 180.d0 ) lon = lon - 360.0d0
@@ -177,16 +165,14 @@
     !          nevertheless its moho depth should be set and will be used in linear stretching
     if (moho < TINYVAL ) call exit_mpi(myrank,'Error moho depth to honor')
 
-    if (.not. USE_OLD_VERSION_5_1_5_FORMAT) then
-      ! limits moho depth to a threshold value to avoid stretching problems
-      if (moho < MOHO_MINIMUM) then
-        print *,'moho value exceeds minimum (in km): ',moho*R_PLANET/1000.d0,MOHO_MINIMUM*R_PLANET/1000.d0,'lat/lon:',lat,lon
-        moho = MOHO_MINIMUM
-      endif
-      if (moho > MOHO_MAXIMUM) then
-        print *,'moho value exceeds maximum (in km): ',moho*R_PLANET/1000.d0,MOHO_MAXIMUM*R_PLANET/1000.d0,'lat/lon:',lat,lon
-        moho = MOHO_MAXIMUM
-      endif
+    ! limits moho depth to a threshold value to avoid stretching problems
+    if (moho < MOHO_MINIMUM) then
+      print *,'moho value exceeds minimum (in km): ',moho*R_PLANET/1000.d0,MOHO_MINIMUM*R_PLANET/1000.d0,'lat/lon:',lat,lon
+      moho = MOHO_MINIMUM
+    endif
+    if (moho > MOHO_MAXIMUM) then
+      print *,'moho value exceeds maximum (in km): ',moho*R_PLANET/1000.d0,MOHO_MAXIMUM*R_PLANET/1000.d0,'lat/lon:',lat,lon
+      moho = MOHO_MAXIMUM
     endif
 
     ! radius of moho depth (normalized)
@@ -301,15 +287,13 @@
 !
 ! uses a 3-layer crust region
 !
-! stretching the moho according to the crust 2.0
-! input:  myrank, xelm, yelm, zelm
-! Dec, 30, 2009
+! stretches the moho according to the crustal variations (CRUST1.0, CRUST2.0, ..)
 
   use constants, only: myrank, &
-    NGNOD,PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,ONE,USE_OLD_VERSION_5_1_5_FORMAT, &
+    NGNOD,PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,ONE, &
     SUPPRESS_MOHO_STRETCHING
 
-  use shared_parameters, only: R_PLANET,HONOR_DEEP_MOHO
+  use shared_parameters, only: R_PLANET,HONOR_DEEP_MOHO,ELLIPTICITY
 
   use meshfem_par, only: R220
 
@@ -321,13 +305,15 @@
 
   ! local parameters
   integer :: ia,count_crust,count_mantle
-  double precision :: r,theta,phi,lat,lon
+  double precision :: r,lat,lon
   double precision :: vpvc,vphc,vsvc,vshc,etac,rhoc
   double precision :: c11c,c12c,c13c,c14c,c15c,c16c,c22c,c23c,c24c,c25c,c26c, &
                       c33c,c34c,c35c,c36c,c44c,c45c,c46c,c55c,c56c,c66c
   double precision :: moho,sediment
   logical :: found_crust,moho_only
   double precision :: x,y,z
+
+  ! note: at this point, the mesh is still perfectly spherical.
 
   ! loops over element's anchor points
   count_crust = 0
@@ -339,22 +325,12 @@
     y = yelm(ia)
     z = zelm(ia)
 
+    ! note: the moho information is given in geographic latitude/longitude (with respect to a reference ellipsoid).
+    !       we need to convert the geocentric mesh positions (x/y/z) to geographic ones (lat/lon)
+    !
     ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
-    if (USE_OLD_VERSION_5_1_5_FORMAT) then
-      ! note: at this point, the mesh is still perfectly spherical, thus no need to
-      !         convert the geocentric colatitude to a geographic colatitude
-      call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
-      call reduce(theta,phi)
-      lat = (PI_OVER_TWO - theta) * RADIANS_TO_DEGREES
-      lon = phi * RADIANS_TO_DEGREES
-    else
-      ! note: the moho information is given in geographic latitude/longitude (with respect to a reference ellipsoid).
-      !       we need to convert the geocentric mesh positions (x/y/z) to geographic ones (lat/lon),
-      !       thus correcting geocentric latitude for ellipticity
-      !
-      ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
-      call xyz_2_rlatlon_dble(x,y,z,r,lat,lon)
-    endif
+    ! note: at this point, the mesh is still spherical (no need to correct latitude for ellipticity)
+    call xyz_2_rlatlon_dble(x,y,z,r,lat,lon,ELLIPTICITY)
 
     ! sets longitude bounds [-180,180]
     if (lon > 180.d0 ) lon = lon - 360.0d0
@@ -512,10 +488,10 @@
     else if (r < R35 .and. r > R60) then
       gamma = (( r - R60)/( R35 - R60)) ! keeps r60 fixed
       if (abs(gamma) < SMALLVAL) then
-        gamma=0.0d0
+        gamma = 0.0d0
       endif
     else
-      gamma=0.0d0
+      gamma = 0.0d0
     endif
     if (gamma < -0.0001d0 .or. gamma > 1.0001d0) &
       stop 'incorrect value of gamma for moho from crust 2.0'
@@ -532,10 +508,10 @@
     else if (r < R35 .and. r > R60) then
       gamma=((r-R60)/(R35-R60)) ! keeps r60 fixed
       if (abs(gamma) < SMALLVAL) then
-        gamma=0.0d0
+        gamma = 0.0d0
       endif
     else
-      gamma=0.0d0
+      gamma = 0.0d0
     endif
     if (gamma < -0.0001d0 .or. gamma > 1.0001d0) &
       stop 'incorrect value of gamma for moho from crust 2.0'
@@ -553,10 +529,10 @@
       else if (r < R60) then
         gamma=(r-R220/RSURFACE)/(R60-R220/RSURFACE)
         if (abs(gamma) < SMALLVAL) then
-          gamma=0.0d0
+          gamma = 0.0d0
         endif
       else
-        gamma=0.0d0
+        gamma = 0.0d0
       endif
 
       call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
@@ -572,10 +548,10 @@
     else if (r < R35 .and. r > R60) then
       gamma=(r-R60)/(R35-R60) ! keeps r60 fixed
       if (abs(gamma) < SMALLVAL) then
-        gamma=0.0d0
+        gamma = 0.0d0
       endif
     else
-      gamma=0.0d0
+      gamma = 0.0d0
     endif
     if (gamma < -0.0001d0 .or. gamma > 1.0001d0) &
       stop 'incorrect value of gamma for moho from crust 2.0'
@@ -593,10 +569,10 @@
       else if (r < R15 .and. R > R25) then
         gamma=(r-R25)/(R15-R25) ! keeps mesh at r25 fixed
         if (abs(gamma) < SMALLVAL) then
-          gamma=0.0d0
+          gamma = 0.0d0
         endif
       else
-        gamma=0.0d0
+        gamma = 0.0d0
       endif
 
       call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
@@ -695,10 +671,10 @@
     else if (r < R35 .and. r > R220/RSURFACE) then
       gamma = ((r-R220/RSURFACE)/(R35-R220/RSURFACE))
       if (abs(gamma) < SMALLVAL) then
-        gamma=0.0d0
+        gamma = 0.0d0
       endif
     else
-      gamma=0.0d0
+      gamma = 0.0d0
     endif
     if (gamma < -0.0001d0 .or. gamma > 1.0001d0) &
       stop 'incorrect value of gamma for moho from crust 2.0'
@@ -715,10 +691,10 @@
     else if (r < R35 .and. r > R220/RSURFACE) then
       gamma=((r-R220/RSURFACE)/(R35-R220/RSURFACE))
       if (abs(gamma) < SMALLVAL) then
-        gamma=0.0d0
+        gamma = 0.0d0
       endif
     else
-      gamma=0.0d0
+      gamma = 0.0d0
     endif
     if (gamma < -0.0001d0 .or. gamma > 1.0001d0) &
       stop 'incorrect value of gamma for moho from crust 2.0'
@@ -735,10 +711,10 @@
     else if (r < R35 .and. r > R220/RSURFACE) then
       gamma=(r-R220/RSURFACE)/(R35-R220/RSURFACE)
       if (abs(gamma) < SMALLVAL) then
-        gamma=0.0d0
+        gamma = 0.0d0
       endif
     else
-      gamma=0.0d0
+      gamma = 0.0d0
     endif
     if (gamma < -0.0001d0 .or. gamma > 1.0001d0) &
       stop 'incorrect value of gamma for moho from crust 2.0'
@@ -753,10 +729,10 @@
       else if (r < R15 .and. R > R25) then
         gamma=(r-R25)/(R15-R25)
         if (abs(gamma) < SMALLVAL) then
-          gamma=0.0d0
+          gamma = 0.0d0
         endif
       else
-        gamma=0.0d0
+        gamma = 0.0d0
       endif
 
       call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)

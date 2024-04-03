@@ -352,8 +352,8 @@
   lat=(PI_OVER_TWO-theta)*RADIANS_TO_DEGREES
   if (lat < PPM_minlat .or. lat > PPM_maxlat ) return
 
-  lon=phi*RADIANS_TO_DEGREES
-  if (lon > 180.0d0) lon=lon-360.0d0
+  lon = phi*RADIANS_TO_DEGREES
+  if (lon > 180.0d0) lon = lon-360.0d0
   if (lon < PPM_minlon .or. lon > PPM_maxlon ) return
 
   ! search location value
@@ -980,8 +980,8 @@
     lat=(PI/2.0d0-theta)*180.0d0/PI
     if (lat < minlat-margin_h .or. lat > maxlat+margin_h ) cycle
 
-    lon=phi*180.0d0/PI
-    if (lon > 180.0d0) lon=lon-360.0d0
+    lon = phi*180.0d0/PI
+    if (lon > 180.0d0) lon = lon-360.0d0
     if (lon < minlon-margin_h .or. lon > maxlon+margin_h ) cycle
 
     do k = 1, NGLLZ
@@ -1022,8 +1022,8 @@
         lat=(PI/2.0d0-theta)*180.0d0/PI
         if (lat < minlat-margin_h .or. lat > maxlat+margin_h ) cycle
 
-        lon=phi*180.0d0/PI
-        if (lon > 180.0d0) lon=lon-360.0d0
+        lon = phi*180.0d0/PI
+        if (lon > 180.0d0) lon = lon-360.0d0
         if (lon < minlon-margin_h .or. lon > maxlon+margin_h ) cycle
 
         do k = 1, NGLLZ

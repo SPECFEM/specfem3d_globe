@@ -27,7 +27,9 @@
 
   subroutine create_meshes()
 
+  use constants, only: ADD_TRINF,NLAYER_TRINF
   use shared_parameters, only: T_min_period,ATTENUATION
+
   use meshfem_par
   use regions_mesh_par2, only: NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,NSPEC2D_CMB,NSPEC2D_ICB
 
@@ -86,6 +88,17 @@
         write(IMAIN,*)
       endif
     endif
+    if (FULL_GRAVITY) then
+      write(IMAIN,*) 'Full gravity mesh:'
+      if (ADD_TRINF) then
+        write(IMAIN,*) '  adding transition-to-infinite region'
+        write(IMAIN,*) '  number of layers in transition-to-infinite = ',NLAYER_TRINF
+      else
+        write(IMAIN,*) '  no transition-to-infinite region'
+      endif
+      write(IMAIN,*) '  number of layers in infinite region        = ',1
+      write(IMAIN,*)
+    endif
     write(IMAIN,*)
     call flush_IMAIN()
   endif
@@ -122,6 +135,11 @@
   ! number of regions in full Earth
   do iregion_code = 1,MAX_NUM_REGIONS
 
+    ! checks if anything to do for full gravity regions
+    if (.not. FULL_GRAVITY) then
+      if (iregion_code == IREGION_TRINFINITE .or. iregion_code == IREGION_INFINITE) cycle
+    endif
+
     ! number of spectral elements
     nspec = NSPEC_REGIONS(iregion_code)
 
@@ -131,27 +149,37 @@
     ! compute maximum number of points
     npointot = nspec * NGLLX * NGLLY * NGLLZ
 
-    if (nspec > 0) then
-      ! user output
-      if (myrank == 0) then
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*)
+      write(IMAIN,*) '*******************************************'
+      write(IMAIN,*) 'creating mesh in region ',iregion_code
+      select case (iregion_code)
+        case (IREGION_CRUST_MANTLE)
+          write(IMAIN,*) 'this region is the crust and mantle'
+        case (IREGION_OUTER_CORE)
+          write(IMAIN,*) 'this region is the outer core'
+        case (IREGION_INNER_CORE)
+          write(IMAIN,*) 'this region is the inner core'
+        case(IREGION_TRINFINITE)
+          write(IMAIN,*) 'this region is the transition-to-infinite region'
+        case(IREGION_INFINITE)
+          write(IMAIN,*) 'this region is the infinite region'
+        case default
+          call exit_MPI(myrank,'incorrect region code')
+      end select
+      write(IMAIN,*) '*******************************************'
+      write(IMAIN,*)
+      ! check if region is empty
+      if (nspec == 0) then
+        write(IMAIN,*) 'region is empty, skipping this one..'
         write(IMAIN,*)
-        write(IMAIN,*) '*******************************************'
-        write(IMAIN,*) 'creating mesh in region ',iregion_code
-        select case (iregion_code)
-          case (IREGION_CRUST_MANTLE)
-            write(IMAIN,*) 'this region is the crust and mantle'
-          case (IREGION_OUTER_CORE)
-            write(IMAIN,*) 'this region is the outer core'
-          case (IREGION_INNER_CORE)
-            write(IMAIN,*) 'this region is the inner core'
-          case default
-            call exit_MPI(myrank,'incorrect region code')
-        end select
-        write(IMAIN,*) '*******************************************'
-        write(IMAIN,*)
-        call flush_IMAIN()
       endif
+      call flush_IMAIN()
+    endif
 
+    ! create region
+    if (nspec > 0) then
       ! use dynamic allocation to allocate memory for arrays
       allocate(idoubling(nspec), &
                ibool(NGLLX,NGLLY,NGLLZ,nspec), &
@@ -183,7 +211,6 @@
 
         ! If we're in the request stage of CEM, exit.
         if (CEM_REQUEST) exit
-
       enddo
 
       ! deallocate arrays used for that region
@@ -202,5 +229,16 @@
 
   ! end of loop on all the regions
   enddo
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'all mesh regions created - done'
+    write(IMAIN,*)
+    write(IMAIN,*) '*******************************************'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+  call synchronize_all()
 
   end subroutine create_meshes

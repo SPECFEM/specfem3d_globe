@@ -317,7 +317,7 @@
       enddo
     endif
   else if (kerstr(1:13) == 'WDC+SHSVWM20A') then
-    nspl=20
+    nspl = 20
     splpts(1)=0.0
     splpts(2)=50.0
     splpts(3)=100.0
@@ -339,14 +339,14 @@
     splpts(19)=2700.0
     splpts(20)=2891.0
     call vbspl(depth,nspl,splpts,vercof(2),dvercof(2))
-    do i=22,27
+    do i = 22,27
       vercof(i)=vercof(i-20)
       dvercof(i)=dvercof(i-20)
     enddo
     vercof(1)=1.0
   else if (kerstr(1:16) == 'WDC+XBS_362_U6L8') then
     if (upper) then
-      nspl=6
+      nspl = 6
       splpts(1)=24.4
       splpts(2)=100.0
       splpts(3)=225.0
@@ -355,7 +355,7 @@
       splpts(6)=670.0
       call vbspl(depth,nspl,splpts,vercof(2),dvercof(2))
     else if (lower) then
-      nspl=8
+      nspl = 8
       splpts(1)=670.0
       splpts(2)=820.0
       splpts(3)=1320.0
@@ -403,7 +403,7 @@
   else if ((kerstr(1:lstr) == 'WDC+ANI_362_U6L8' .and. lstr == 16) &
       .or. (kerstr(1:lstr) == 'WDC+ANI_362_U6L8_TOPO'.and.lstr == 21)) then
     if (upper) then
-      nspl=6
+      nspl = 6
       splpts(1)=24.4
       splpts(2)=100.0
       splpts(3)=225.0
@@ -411,12 +411,12 @@
       splpts(5)=500.0
       splpts(6)=670.0
       call vbspl(depth,nspl,splpts,vercof(2),dvercof(2))
-      do i=16,21
+      do i = 16,21
         vercof(i)=vercof(i-14)
         dvercof(i)=dvercof(i-14)
       enddo
     else if (lower) then
-      nspl=8
+      nspl = 8
       splpts(1)=670.0
       splpts(2)=820.0
       splpts(3)=1320.0
@@ -432,7 +432,7 @@
     vercof(23)=1.0
   else if (kerstr(1:lstr) == 'WDC+WM_362_U6L8' .and. lstr == 15) then
     if (upper) then
-      nspl=6
+      nspl = 6
       splpts(1)=24.4
       splpts(2)=100.0
       splpts(3)=225.0
@@ -440,12 +440,12 @@
       splpts(5)=500.0
       splpts(6)=670.0
       call vbspl(depth,nspl,splpts,vercof(2),dvercof(2))
-      do i=16,21
+      do i = 16,21
         vercof(i)=vercof(i-14)
         dvercof(i)=dvercof(i-14)
       enddo
     else if (lower) then
-      nspl=8
+      nspl = 8
       splpts(1)=670.0
       splpts(2)=820.0
       splpts(3)=1320.0
@@ -455,7 +455,7 @@
       splpts(7)=2791.0
       splpts(8)=2891.0
       call vbspl(depth,nspl,splpts,vercof(8),dvercof(8))
-      do i=22,29
+      do i = 22,29
         vercof(i)=vercof(i-14)
         dvercof(i)=dvercof(i-14)
       enddo
@@ -467,7 +467,7 @@
   else if ((kerstr(1:lstr) == 'WDC+ANI_362_U6L8_650' .and. lstr == 20) &
       .or. (kerstr(1:lstr) == 'WDC+ANI_362_U6L8_TOPO_650'.and.lstr == 25)) then
     if (upper_650) then
-      nspl=6
+      nspl = 6
       splpts(1)=24.4
       splpts(2)=100.0
       splpts(3)=225.0
@@ -475,12 +475,12 @@
       splpts(5)=500.0
       splpts(6)=650.0
       call vbspl(depth,nspl,splpts,vercof(2),dvercof(2))
-      do i=16,21
+      do i = 16,21
         vercof(i)=vercof(i-14)
         dvercof(i)=dvercof(i-14)
       enddo
     else if (lower_650) then
-      nspl=8
+      nspl = 8
       splpts(1)=650.0
       splpts(2)=820.0
       splpts(3)=1320.0
@@ -496,7 +496,7 @@
     vercof(23)=1.0
   else if (kerstr(1:lstr) == 'WDC+WM_362_U6L8_650' .and. lstr == 19) then
     if (upper_650) then
-      nspl=6
+      nspl = 6
       splpts(1)=24.4
       splpts(2)=100.0
       splpts(3)=225.0
@@ -504,12 +504,12 @@
       splpts(5)=500.0
       splpts(6)=650.0
       call vbspl(depth,nspl,splpts,vercof(2),dvercof(2))
-      do i=16,21
+      do i = 16,21
         vercof(i)=vercof(i-14)
         dvercof(i)=dvercof(i-14)
       enddo
     else if (lower_650) then
-      nspl=8
+      nspl = 8
       splpts(1)=650.0
       splpts(2)=820.0
       splpts(3)=1320.0
@@ -519,7 +519,7 @@
       splpts(7)=2791.0
       splpts(8)=2891.0
       call vbspl(depth,nspl,splpts,vercof(8),dvercof(8))
-      do i=22,29
+      do i = 22,29
         vercof(i)=vercof(i-14)
         dvercof(i)=dvercof(i-14)
       enddo
@@ -530,7 +530,7 @@
     vercof(32)=1.0
   else if (kerstr(1:lstr) == 'WDC+U8L8_650' .and. lstr == 12) then
     if (upper_650) then
-      nspl=8
+      nspl = 8
       splpts(1)=24.4
       splpts(2)=75.0
       splpts(3)=150.0
@@ -540,12 +540,12 @@
       splpts(7)=530.0
       splpts(8)=650.0
       call vbspl(depth,nspl,splpts,vercof(2),dvercof(2))
-      do i=18,25
+      do i = 18,25
         vercof(i)=vercof(i-16)
         dvercof(i)=dvercof(i-16)
       enddo
     else if (lower_650) then
-      nspl=8
+      nspl = 8
       splpts(1)=650.0
       splpts(2)=820.0
       splpts(3)=1320.0
@@ -555,7 +555,7 @@
       splpts(7)=2791.0
       splpts(8)=2891.0
       call vbspl(depth,nspl,splpts,vercof(10),dvercof(10))
-      do i=26,33
+      do i = 26,33
         vercof(i)=vercof(i-16)
         dvercof(i)=dvercof(i-16)
       enddo
@@ -566,7 +566,7 @@
     vercof(36)=1.0
   else if (kerstr(1:lstr) == 'WDC+U8L8_670' .and. lstr == 12) then
     if (upper) then
-      nspl=8
+      nspl = 8
       splpts(1)=24.4
       splpts(2)=75.0
       splpts(3)=150.0
@@ -576,12 +576,12 @@
       splpts(7)=530.0
       splpts(8)=670.0
       call vbspl(depth,nspl,splpts,vercof(2),dvercof(2))
-      do i=18,25
+      do i = 18,25
         vercof(i)=vercof(i-16)
         dvercof(i)=dvercof(i-16)
       enddo
     else if (lower) then
-      nspl=8
+      nspl = 8
       splpts(1)=670.0
       splpts(2)=820.0
       splpts(3)=1320.0
@@ -591,7 +591,7 @@
       splpts(7)=2791.0
       splpts(8)=2891.0
       call vbspl(depth,nspl,splpts,vercof(10),dvercof(10))
-      do i=26,33
+      do i = 26,33
         vercof(i)=vercof(i-16)
         dvercof(i)=dvercof(i-16)
       enddo
@@ -603,7 +603,7 @@
   else if ((kerstr(1:lstr) == 'WDC+U8L8_I1D_650' .and. lstr == 16) &
       .or. (kerstr(1:lstr) == 'WDC+U8L8_I3D_650'.and.lstr == 16)) then
     if (upper_650) then
-      nspl=8
+      nspl = 8
       splpts(1)=24.4
       splpts(2)=75.0
       splpts(3)=150.0
@@ -613,28 +613,28 @@
       splpts(7)=530.0
       splpts(8)=650.0
       call vbspl(depth,nspl,splpts,vercof(2),dvercof(2))
-      do i=18,25
+      do i = 18,25
         vercof(i)=vercof(i-16)
         dvercof(i)=dvercof(i-16)
       enddo
-      do i=37,40
+      do i = 37,40
         vercof(i)=vercof(i-35)
         dvercof(i)=dvercof(i-35)
       enddo
-      do i=41,44
+      do i = 41,44
         vercof(i)=vercof(i-39)
         dvercof(i)=dvercof(i-39)
       enddo
-      do i=45,48
+      do i = 45,48
         vercof(i)=vercof(i-43)
         dvercof(i)=dvercof(i-43)
       enddo
-      do i=49,52
+      do i = 49,52
         vercof(i)=vercof(i-47)
         dvercof(i)=dvercof(i-47)
       enddo
     else if (lower_650) then
-      nspl=8
+      nspl = 8
       splpts(1)=650.0
       splpts(2)=820.0
       splpts(3)=1320.0
@@ -644,7 +644,7 @@
       splpts(7)=2791.0
       splpts(8)=2891.0
       call vbspl(depth,nspl,splpts,vercof(10),dvercof(10))
-      do i=26,33
+      do i = 26,33
         vercof(i)=vercof(i-16)
         dvercof(i)=dvercof(i-16)
       enddo
@@ -656,7 +656,7 @@
   else if ((kerstr(1:lstr) == 'WDC+I1D_650' .and. lstr == 11) .or. &
           (kerstr(1:lstr) == 'WDC+I3D_650' .and. lstr == 11)) then
     if (upper_650) then
-      nspl=8
+      nspl = 8
       splpts(1)=24.4
       splpts(2)=75.0
       splpts(3)=150.0
@@ -666,28 +666,28 @@
       splpts(7)=530.0
       splpts(8)=650.0
       call vbspl(depth,nspl,splpts,vercof(2),dvercof(2))
-      do i=18,25
+      do i = 18,25
         vercof(i)=vercof(i-16)
         dvercof(i)=dvercof(i-16)
       enddo
-      do i=37,44
+      do i = 37,44
         vercof(i)=vercof(i-35)
         dvercof(i)=dvercof(i-35)
       enddo
-      do i=53,60
+      do i = 53,60
         vercof(i)=vercof(i-51)
         dvercof(i)=dvercof(i-51)
       enddo
-      do i=69,76
+      do i = 69,76
         vercof(i)=vercof(i-67)
         dvercof(i)=dvercof(i-67)
       enddo
-      do i=85,92
+      do i = 85,92
         vercof(i)=vercof(i-83)
         dvercof(i)=dvercof(i-83)
       enddo
     else if (lower_650) then
-      nspl=8
+      nspl = 8
       splpts(1)=650.0
       splpts(2)=820.0
       splpts(3)=1320.0
@@ -697,23 +697,23 @@
       splpts(7)=2791.0
       splpts(8)=2891.0
       call vbspl(depth,nspl,splpts,vercof(10),dvercof(10))
-      do i=26,33
+      do i = 26,33
         vercof(i)=vercof(i-16)
         dvercof(i)=dvercof(i-16)
       enddo
-      do i=45,52
+      do i = 45,52
         vercof(i)=vercof(i-35)
         dvercof(i)=dvercof(i-35)
       enddo
-      do i=61,68
+      do i = 61,68
         vercof(i)=vercof(i-51)
         dvercof(i)=dvercof(i-51)
       enddo
-      do i=77,84
+      do i = 77,84
         vercof(i)=vercof(i-67)
         dvercof(i)=dvercof(i-67)
       enddo
-      do i=93,100
+      do i = 93,100
         vercof(i)=vercof(i-83)
         dvercof(i)=dvercof(i-83)
       enddo
@@ -724,7 +724,7 @@
     vercof(36)=1.0
   else if (kerstr(1:lstr) == 'V16A4_V7A4' .and. lstr == 10) then
     if (upper_650) then
-      nspl=8
+      nspl = 8
       splpts(1)=24.4
       splpts(2)=75.0
       splpts(3)=150.0
@@ -734,20 +734,20 @@
       splpts(7)=530.0
       splpts(8)=650.0
       call vbspl(depth,nspl,splpts,vercof(1),dvercof(1))
-      do i=17,20
+      do i = 17,20
         vercof(i)=vercof(i-16)
         dvercof(i)=dvercof(i-16)
       enddo
-      do i=23,29
+      do i = 23,29
         vercof(i)=vercof(i-22)
         dvercof(i)=dvercof(i-22)
       enddo
-      do i=30,33
+      do i = 30,33
         vercof(i)=vercof(i-29)
         dvercof(i)=dvercof(i-29)
       enddo
     else if (lower_650) then
-      nspl=8
+      nspl = 8
       splpts(1)=650.0
       splpts(2)=820.0
       splpts(3)=1320.0
@@ -1170,7 +1170,7 @@
     if (dd(iver) >= 0.0 .and. .not. (dd(iver) > (verrad(iver))*2.d0)) then
       ncon = ncon + 1
 
-!! DK DK added this safety test
+      ! added this safety test
       if (ncon > maxver) stop 'Error: ncon > maxver in splcon() routine'
 
       icon(ncon) = iver
@@ -1490,7 +1490,7 @@
   ik = 1
   do while(interval == 0 .and. ik < np)
     ik = ik+1
-    if (x >= xarr(ik-1) .and. x <= xarr(ik)) interval=ik-1
+    if (x >= xarr(ik-1) .and. x <= xarr(ik)) interval = ik-1
   enddo
   if (x > xarr(np)) then
     interval = np

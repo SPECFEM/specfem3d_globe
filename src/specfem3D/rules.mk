@@ -137,8 +137,11 @@ specfem3D_MODULES = \
 	$(FC_MODDIR)/specfem_par_crustmantle.$(FC_MODEXT) \
 	$(FC_MODDIR)/specfem_par_innercore.$(FC_MODEXT) \
 	$(FC_MODDIR)/specfem_par_outercore.$(FC_MODEXT) \
+	$(FC_MODDIR)/specfem_par_trinfinite.$(FC_MODEXT) \
+	$(FC_MODDIR)/specfem_par_infinite.$(FC_MODEXT) \
 	$(FC_MODDIR)/specfem_par_noise.$(FC_MODEXT) \
 	$(FC_MODDIR)/specfem_par_movie.$(FC_MODEXT) \
+	$(FC_MODDIR)/specfem_par_full_gravity.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
 
 # These files come from the shared directory
@@ -277,11 +280,15 @@ else
 	specfem3D_SHARED_OBJECTS += ${asdf_specfem3D_SHARED_STUBS}
 endif
 
-#
-# conditional CEM model
+# conditional CEM or EMC model
 ifeq ($(CEM),yes)
 	specfem3D_SOLVER_OBJECTS += $O/read_write_netcdf.checknetcdf.o
+else ifeq ($(EMC),yes)
+	specfem3D_SOLVER_OBJECTS += $O/read_write_netcdf.checknetcdf.o
+else ifeq ($(NETCDF),yes)
+	specfem3D_SOLVER_OBJECTS += $O/read_write_netcdf.checknetcdf.o
 endif
+
 
 ###
 ### VTK
@@ -341,7 +348,7 @@ ${E}/xspecfem3D: $(specfem3D_OBJECTS) $(specfem3D_SHARED_OBJECTS)
 	@echo ""
 
 ## use MPI here
-## DK DK add OpenMP compiler flag here if needed
+# add OpenMP compiler flag here if needed
 #	${MPIFCCOMPILE_CHECK} -qsmp=omp -o ${E}/xspecfem3D $(specfem3D_OBJECTS) $(specfem3D_SHARED_OBJECTS) $(LDFLAGS) $(MPILIBS) $(LIBS)
 
 	${FCLINK} -o $@ $+ $(SPECFEM_LINK_FLAGS)
@@ -392,7 +399,7 @@ $O/%.solverstatic.o: $S/%.F90 $O/shared_par.shared_module.o $O/specfem3D_par.sol
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.solverstatic_openmp.o: $S/%.f90 $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o
-## DK DK add OpenMP compiler flag here if needed
+# add OpenMP compiler flag here if needed
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -qsmp=omp -o $@ $<
 
 

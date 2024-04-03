@@ -26,7 +26,7 @@ echo "combining mesh..."
 ../../xcombine_vol_data UTILS/Paraview/slices_all beta_kernel $PWD $PWD ../../OUTPUT_FILES 1 1
 
 ## echo "converting mesh to vtu..."
-#./mesh2vtu.pl -i ../../OUTPUT_FILES/reg_1_beta_kernel.mesh ../../OUTPUT_FILES/reg_1_beta_kernel.vtu
+#./mesh2vtu -i ../../OUTPUT_FILES/reg_1_beta_kernel.mesh ../../OUTPUT_FILES/reg_1_beta_kernel.vtu
 
 
 echo "done"

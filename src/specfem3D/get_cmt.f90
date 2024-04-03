@@ -51,7 +51,7 @@
 
   ! local variables below
   integer :: julian_day,isource
-  integer :: i,itype,istart,iend,ier
+  integer :: i,itype,istart,iend,ier,ipos
   double precision :: scaleM
   double precision :: t_shift(NSOURCES)
   !character(len=5) :: datasource
@@ -225,7 +225,12 @@
       write(IMAIN,*) 'Error reading time shift in source ',isource
       stop 'Error reading time shift in station in CMTSOLUTION file'
     endif
-    read(string(12:len_trim(string)),*) t_shift(isource)
+    ipos = index(string,':')
+    if (ipos > 1 .and. ipos < len_trim(string)) then
+      read(string(ipos+1:len_trim(string)),*) t_shift(isource)
+    else
+      read(string(12:len_trim(string)),*) t_shift(isource)
+    endif
 
     ! read half duration
     read(IIN,"(a)",iostat=ier) string
@@ -233,7 +238,12 @@
       write(IMAIN,*) 'Error reading half duration in source ',isource
       stop 'Error reading half duration in station in CMTSOLUTION file'
     endif
-    read(string(15:len_trim(string)),*) hdur(isource)
+    ipos = index(string,':')
+    if (ipos > 1 .and. ipos < len_trim(string)) then
+      read(string(ipos+1:len_trim(string)),*) hdur(isource)
+    else
+      read(string(15:len_trim(string)),*) hdur(isource)
+    endif
 
     ! read latitude
     read(IIN,"(a)",iostat=ier) string
@@ -241,7 +251,12 @@
       write(IMAIN,*) 'Error reading latitude in source ',isource
       stop 'Error reading latitude in station in CMTSOLUTION file'
     endif
-    read(string(10:len_trim(string)),*) lat(isource)
+    ipos = index(string,':')
+    if (ipos > 1 .and. ipos < len_trim(string)) then
+      read(string(ipos+1:len_trim(string)),*) lat(isource)
+    else
+      read(string(10:len_trim(string)),*) lat(isource)
+    endif
 
     ! read longitude
     read(IIN,"(a)",iostat=ier) string
@@ -249,7 +264,12 @@
       write(IMAIN,*) 'Error reading longitude in source ',isource
       stop 'Error reading longitude in station in CMTSOLUTION file'
     endif
-    read(string(11:len_trim(string)),*) long(isource)
+    ipos = index(string,':')
+    if (ipos > 1 .and. ipos < len_trim(string)) then
+      read(string(ipos+1:len_trim(string)),*) long(isource)
+    else
+      read(string(11:len_trim(string)),*) long(isource)
+    endif
 
     ! read depth
     read(IIN,"(a)",iostat=ier) string
@@ -257,7 +277,12 @@
       write(IMAIN,*) 'Error reading depth in source ',isource
       stop 'Error reading depth in station in CMTSOLUTION file'
     endif
-    read(string(7:len_trim(string)),*) depth(isource)
+    ipos = index(string,':')
+    if (ipos > 1 .and. ipos < len_trim(string)) then
+      read(string(ipos+1:len_trim(string)),*) depth(isource)
+    else
+      read(string(7:len_trim(string)),*) depth(isource)
+    endif
 
     ! seismic moment tensor
     ! CMTSOLUTION: components given in dyne-cm
@@ -267,7 +292,12 @@
       write(IMAIN,*) 'Error reading Mrr in source ',isource
       stop 'Error reading Mrr in station in CMTSOLUTION file'
     endif
-    read(string(5:len_trim(string)),*) moment_tensor(1,isource)
+    ipos = index(string,':')
+    if (ipos > 1 .and. ipos < len_trim(string)) then
+      read(string(ipos+1:len_trim(string)),*) moment_tensor(1,isource)
+    else
+      read(string(5:len_trim(string)),*) moment_tensor(1,isource)
+    endif
 
     ! read Mtt
     read(IIN,"(a)",iostat=ier) string
@@ -275,7 +305,12 @@
       write(IMAIN,*) 'Error reading Mtt in source ',isource
       stop 'Error reading Mtt in station in CMTSOLUTION file'
     endif
-    read(string(5:len_trim(string)),*) moment_tensor(2,isource)
+    ipos = index(string,':')
+    if (ipos > 1 .and. ipos < len_trim(string)) then
+      read(string(ipos+1:len_trim(string)),*) moment_tensor(2,isource)
+    else
+      read(string(5:len_trim(string)),*) moment_tensor(2,isource)
+    endif
 
     ! read Mpp
     read(IIN,"(a)",iostat=ier) string
@@ -283,7 +318,12 @@
       write(IMAIN,*) 'Error reading Mpp in source ',isource
       stop 'Error reading Mpp in station in CMTSOLUTION file'
     endif
-    read(string(5:len_trim(string)),*) moment_tensor(3,isource)
+    ipos = index(string,':')
+    if (ipos > 1 .and. ipos < len_trim(string)) then
+      read(string(ipos+1:len_trim(string)),*) moment_tensor(3,isource)
+    else
+      read(string(5:len_trim(string)),*) moment_tensor(3,isource)
+    endif
 
     ! read Mrt
     read(IIN,"(a)",iostat=ier) string
@@ -291,7 +331,12 @@
       write(IMAIN,*) 'Error reading Mrt in source ',isource
       stop 'Error reading Mrt in station in CMTSOLUTION file'
     endif
-    read(string(5:len_trim(string)),*) moment_tensor(4,isource)
+    ipos = index(string,':')
+    if (ipos > 1 .and. ipos < len_trim(string)) then
+      read(string(ipos+1:len_trim(string)),*) moment_tensor(4,isource)
+    else
+      read(string(5:len_trim(string)),*) moment_tensor(4,isource)
+    endif
 
     ! read Mrp
     read(IIN,"(a)",iostat=ier) string
@@ -299,7 +344,12 @@
       write(IMAIN,*) 'Error reading Mrp in source ',isource
       stop 'Error reading Mrp in station in CMTSOLUTION file'
     endif
-    read(string(5:len_trim(string)),*) moment_tensor(5,isource)
+    ipos = index(string,':')
+    if (ipos > 1 .and. ipos < len_trim(string)) then
+      read(string(ipos+1:len_trim(string)),*) moment_tensor(5,isource)
+    else
+      read(string(5:len_trim(string)),*) moment_tensor(5,isource)
+    endif
 
     ! read Mtp
     read(IIN,"(a)",iostat=ier) string
@@ -307,7 +357,12 @@
       write(IMAIN,*) 'Error reading Mtp in source ',isource
       stop 'Error reading Mtp in station in CMTSOLUTION file'
     endif
-    read(string(5:len_trim(string)),*) moment_tensor(6,isource)
+    ipos = index(string,':')
+    if (ipos > 1 .and. ipos < len_trim(string)) then
+      read(string(ipos+1:len_trim(string)),*) moment_tensor(6,isource)
+    else
+      read(string(5:len_trim(string)),*) moment_tensor(6,isource)
+    endif
 
     ! checks half-duration
     !!-------------POINT FORCE-----------------------------------------------
