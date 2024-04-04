@@ -156,7 +156,7 @@ program smooth_laplacian_sem
         print *,'Usage: mpirun -np NPROC bin/xsmooth_laplacian_sem_adios SIGMA_H SIGMA_V KERNEL_NAME', &
                ' INPUT_FILE SOLVER_DIR OUTPUT_FILE'
         print *,'   with'
-        print *,'     SIGMA_XY, SIGMA_Z - XY and Z smoothing lenghts'
+        print *,'     SIGMA_H, SIGMA_V - Horizontal and vertical smoothing lenghts'
         print *,'     KERNEL_NAME       - comma-separated kernel names (e.g., alpha_kernel,beta_kernel)'
         print *,'     INPUT_FILE        - ADIOS file with kernel values (e.g., kernels.bp)'
         print *,'     SOLVER_DIR        - directory w/ ADIOS file with mesh arrays (e.g., DATABASES_MPI/) containing', &
@@ -167,7 +167,7 @@ program smooth_laplacian_sem
 #else
         print *,'Usage: mpirun -np NPROC bin/xsmooth_laplacian_sem SIGMA_H SIGMA_V KERNEL_NAME INPUT_DIR OUPUT_DIR'
         print *,'   with'
-        print *,'     SIGMA_XY, SIGMA_Z - XY and Z smoothing lenghts'
+        print *,'     SIGMA_H, SIGMA_V - Horizontal and vertical smoothing lenghts'
         print *,'     KERNEL_NAME       - comma-separated kernel names (e.g., alpha_kernel,beta_kernel)'
         print *,'     INPUT_DIR         - directory with kernel files (e.g., proc***_alpha_kernel.bin)'
         print *,'     OUTPUT_DIR        - directory for smoothed output files'
