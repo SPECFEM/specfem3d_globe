@@ -58,7 +58,7 @@ program smooth_laplacian_sem
   integer :: nspec, nglob, nker, niter_cg_max
   integer :: iker, i, j, k, idof, iel, i1, i2, ier, sizeprocs
 
-  double precision    :: Lx, Ly, Lz, Lh, Lv, conv_crit, Lh2, Lv2
+  double precision    :: Lh, Lv, conv_crit, Lh2, Lv2
   double precision    :: x, y, z, rel_to_prem
   double precision    :: r, theta, phi
   double precision    :: rho,drhodr,vp,vs,Qkappa,Qmu
@@ -156,7 +156,7 @@ program smooth_laplacian_sem
         print *,'Usage: mpirun -np NPROC bin/xsmooth_laplacian_sem_adios SIGMA_H SIGMA_V KERNEL_NAME', &
                ' INPUT_FILE SOLVER_DIR OUTPUT_FILE'
         print *,'   with'
-        print *,'     SIGMA_XY, SIGMA_Z - XY and Z smoothing lenghts'
+        print *,'     SIGMA_H, SIGMA_V - Horizontal and vertical smoothing lenghts'
         print *,'     KERNEL_NAME       - comma-separated kernel names (e.g., alpha_kernel,beta_kernel)'
         print *,'     INPUT_FILE        - ADIOS file with kernel values (e.g., kernels.bp)'
         print *,'     SOLVER_DIR        - directory w/ ADIOS file with mesh arrays (e.g., DATABASES_MPI/) containing', &
@@ -167,7 +167,7 @@ program smooth_laplacian_sem
 #else
         print *,'Usage: mpirun -np NPROC bin/xsmooth_laplacian_sem SIGMA_H SIGMA_V KERNEL_NAME INPUT_DIR OUPUT_DIR'
         print *,'   with'
-        print *,'     SIGMA_XY, SIGMA_Z - XY and Z smoothing lenghts'
+        print *,'     SIGMA_H, SIGMA_V - Horizontal and vertical smoothing lenghts'
         print *,'     KERNEL_NAME       - comma-separated kernel names (e.g., alpha_kernel,beta_kernel)'
         print *,'     INPUT_DIR         - directory with kernel files (e.g., proc***_alpha_kernel.bin)'
         print *,'     OUTPUT_DIR        - directory for smoothed output files'
@@ -585,21 +585,18 @@ program smooth_laplacian_sem
           !   Lz = Lh2 * (1 - e2 * cos(theta) ** 2)
           !   Lx = Lh2 * (1 - e2 * (sin(theta) * cos(phi)) ** 2 )
           !   Ly = Lh2 * (1 - e2 * (sin(theta) * sin(phi)) ** 2 )
-          Lx = Lh2
-          Ly = Lh2
-          Lz = Lv2
 
           ! Apply scaling
-          dxsi_dx(i,j,k,iel)  = dxsi_dxl * Lx
-          deta_dx(i,j,k,iel)  = deta_dxl * Lx
-          dgam_dx(i,j,k,iel)  = dgam_dxl * Lx
-          dxsi_dy(i,j,k,iel)  = dxsi_dyl * Ly
-          deta_dy(i,j,k,iel)  = deta_dyl * Ly
-          dgam_dy(i,j,k,iel)  = dgam_dyl * Ly
-          dxsi_dz(i,j,k,iel)  = dxsi_dzl * Lz
-          deta_dz(i,j,k,iel)  = deta_dzl * Lz
-          dgam_dz(i,j,k,iel)  = dgam_dzl * Lz
-          jacobian(i,j,k,iel) = jacobianl / (Lx*Ly*Lz)
+          dxsi_dx(i,j,k,iel)  = dxsi_dxl * Lh2
+          deta_dx(i,j,k,iel)  = deta_dxl * Lh2
+          dgam_dx(i,j,k,iel)  = dgam_dxl * Lv2
+          dxsi_dy(i,j,k,iel)  = dxsi_dyl * Lh2
+          deta_dy(i,j,k,iel)  = deta_dyl * Lh2
+          dgam_dy(i,j,k,iel)  = dgam_dyl * Lv2
+          dxsi_dz(i,j,k,iel)  = dxsi_dzl * Lh2
+          deta_dz(i,j,k,iel)  = deta_dzl * Lh2
+          dgam_dz(i,j,k,iel)  = dgam_dzl * Lv2
+          jacobian(i,j,k,iel) = jacobianl / (Lh*Lh*Lv)
         enddo
       enddo
     enddo
