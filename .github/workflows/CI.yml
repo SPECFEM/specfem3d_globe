@@ -104,10 +104,11 @@ jobs:
         echo ""
         ## avoids sed -i '' issue on MacOS, using gnu sed to have the same sed command lines as in linux
         brew install gnu-sed
-        echo "PATH=/usr/local/opt/gnu-sed/libexec/gnubin:$PATH" >> $GITHUB_ENV
+        echo "PATH=/opt/homebrew/opt/gnu-sed/libexec/gnubin:$PATH" >> $GITHUB_ENV
         ## OpenMP
         echo "OMP_NUM_THREADS=2" >> $GITHUB_ENV
         ## MPI
+        echo
         echo "MPI environment:"
         echo "mpif90 on path: $(which mpif90)"
         echo
