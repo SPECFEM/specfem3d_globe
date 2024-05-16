@@ -61,6 +61,7 @@ specfem3D_SOLVER_OBJECTS = \
 
 specfem3D_SOLVER_OBJECTS += \
 	$O/asdf_data.solverstatic_module.o \
+	$O/bcast_mesh_databases.solverstatic.o \
 	$O/check_stability.solverstatic.o \
 	$O/comp_source_time_function.solverstatic.o \
 	$O/compute_add_sources.solverstatic.o \
@@ -113,6 +114,12 @@ specfem3D_SOLVER_OBJECTS += \
 	$O/read_mesh_parameters.solverstatic.o \
 	$O/read_mesh_databases.solverstatic.o \
 	$O/read_topography_bathymetry.solverstatic.o \
+	$O/SIEM_infinite_element.solverstatic.o \
+	$O/SIEM_math_library.solverstatic.o \
+	$O/SIEM_poisson.solverstatic.o \
+	$O/SIEM_prepare_solver.solverstatic.o \
+	$O/SIEM_solver_mpi.solverstatic.o \
+	$O/SIEM_solver_petsc.solverstatic.o \
 	$O/save_forward_arrays.solverstatic.o \
 	$O/save_kernels.solverstatic.o \
 	$O/save_regular_kernels.solverstatic.o \
