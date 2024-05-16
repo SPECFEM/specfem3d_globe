@@ -106,7 +106,7 @@
   do i = 1,NGLLX
     do j = 1,NGLLY
       do k = 1,NGLLZ
-        wgll_cube(i,j,k) = wxgll(i)*wygll(j)*wzgll(k)
+        wgll_cube(i,j,k) = real(wxgll(i)*wygll(j)*wzgll(k), kind=CUSTOM_REAL)
       enddo
     enddo
   enddo

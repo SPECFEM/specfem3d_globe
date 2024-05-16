@@ -589,8 +589,8 @@
          phi = 0.d0
       endif
 
-      cphi = cos(phi*DEGREES_TO_RADIANS)
-      sphi = sin(phi*DEGREES_TO_RADIANS)
+      cphi = real(cos(phi*DEGREES_TO_RADIANS),kind=CUSTOM_REAL)
+      sphi = real(sin(phi*DEGREES_TO_RADIANS),kind=CUSTOM_REAL)
 
       ! do the rotation of the components and put result in
       ! new variable seismogram_tmp

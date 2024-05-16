@@ -284,10 +284,10 @@
           L_dble = 0.5d0 * (d44 + d55)
           F_dble = 0.5d0 * (d13 + d23)
 
-          eta_aniso = F_dble / (A_dble - 2.d0*L_dble)   ! eta = F / (A-2L)
+          eta_aniso = real(F_dble / (A_dble - 2.d0*L_dble),kind=CUSTOM_REAL)   ! eta = F / (A-2L)
 
-          muvl = L_dble * minus_sum_beta     ! c44 - > L - > muv
-          muhl = N_dble * minus_sum_beta     ! c66 - > N - > muh
+          muvl = real(L_dble * minus_sum_beta,kind=CUSTOM_REAL)     ! c44 - > L - > muv
+          muhl = real(N_dble * minus_sum_beta,kind=CUSTOM_REAL)     ! c66 - > N - > muh
 
           d11 = d11 + FOUR_THIRDS * muhl ! * minus_sum_beta * mul
           d12 = d12 - TWO_THIRDS * muhl

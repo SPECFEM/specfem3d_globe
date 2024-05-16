@@ -1904,12 +1904,12 @@
         do k = 1,NGLLZ
           do j = 1,NGLLY
             do i = 1,NGLLX
-              hxi = hxir_adjstore(i,irec_local)
-              heta = hetar_adjstore(j,irec_local)
-              hgamma = hgammar_adjstore(k,irec_local)
+              hxi = real(hxir_adjstore(i,irec_local),kind=CUSTOM_REAL)
+              heta = real(hetar_adjstore(j,irec_local),kind=CUSTOM_REAL)
+              hgamma = real(hgammar_adjstore(k,irec_local),kind=CUSTOM_REAL)
               ! checks if array values valid
               ! Lagrange interpolators shoud be about in a range ~ [-0.2,1.2]
-              if (abs(hxi) > 2.0 .or. abs(heta) > 2.0 .or. abs(hgamma) > 2.0) then
+              if (abs(hxi) > 2.0_CUSTOM_REAL .or. abs(heta) > 2.0_CUSTOM_REAL .or. abs(hgamma) > 2.0_CUSTOM_REAL) then
                 print *,'hxi/heta/hgamma = ',hxi,heta,hgamma,irec_local,i,j,k
                 print *,'ERROR: trying to use arrays hxir_adjstore/hetar_adjstore/hgammar_adjstore with irec_local = ', &
                         irec_local,' but these array values are invalid!'

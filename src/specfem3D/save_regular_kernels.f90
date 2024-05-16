@@ -46,7 +46,7 @@
   real(kind=CUSTOM_REAL) :: alphah_kl,alphav_kl,betah_kl,betav_kl,rhonotprime_kl
   real(kind=CUSTOM_REAL) :: theta,phi
   integer :: ispec,i,j,k,iglob
-  double precision :: hlagrange
+  real(kind=CUSTOM_REAL) :: hlagrange
   integer :: ipoint
 
   ! transverse isotropic parameters
@@ -68,12 +68,12 @@
   if (.not. SAVE_REGULAR_KL) return
 
   ! scaling factors
-  scale_kl = scale_t * scale_displ_inv * 1.d9
+  scale_kl = real(scale_t * scale_displ_inv * 1.d9,kind=CUSTOM_REAL)
   ! For anisotropic kernels
   ! final unit : [s km^(-3) GPa^(-1)]
-  scale_kl_ani = scale_t**3 / (RHOAV*R_PLANET**3) * 1.d18
+  scale_kl_ani = real(scale_t**3 / (RHOAV*R_PLANET**3) * 1.d18,kind=CUSTOM_REAL)
   ! final unit : [s km^(-3) (kg/m^3)^(-1)]
-  scale_kl_rho = scale_t * scale_displ_inv / RHOAV * 1.d9
+  scale_kl_rho = real(scale_t * scale_displ_inv / RHOAV * 1.d9,kind=CUSTOM_REAL)
 
   ! allocates temporary arrays
   allocate(rho_kl_crust_mantle_reg(npoints_slice_reg), &
@@ -140,7 +140,7 @@
       do j = 1, NGLLY
         do i = 1, NGLLX
 
-          hlagrange = hxir_reg(i,ipoint) * hetar_reg(j,ipoint) * hgammar_reg(k,ipoint)
+          hlagrange = real(hxir_reg(i,ipoint) * hetar_reg(j,ipoint) * hgammar_reg(k,ipoint),kind=CUSTOM_REAL)
 
           if (ANISOTROPIC_KL) then
 

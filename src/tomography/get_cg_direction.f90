@@ -64,9 +64,9 @@ subroutine get_gradient_cg_tiso()
 
   ! normalized radii
   ! top at 50km depth
-  KERNEL_R_TOP = (R_PLANET_KM - 50.0 ) / R_PLANET_KM ! shallow depth
+  KERNEL_R_TOP = real((R_PLANET_KM - 50.0 ) / R_PLANET_KM,kind=CUSTOM_REAL) ! shallow depth
   ! bottom at 100km depth
-  KERNEL_R_BOTTOM = (R_PLANET_KM - 100.0 ) / R_PLANET_KM ! deep depth
+  KERNEL_R_BOTTOM = real((R_PLANET_KM - 100.0 ) / R_PLANET_KM,kind=CUSTOM_REAL) ! deep depth
 
   ! allocate arrays for storing gradient
   ! transversely isotropic arrays
@@ -397,7 +397,7 @@ subroutine get_gradient_cg_tiso()
       max = maxval(depthmax)
       maxindex = maxloc(depthmax)
       depthmax_depth = depthmax_radius(maxindex(1))
-      depthmax_depth = R_PLANET_KM *( 1.0 - depthmax_depth )
+      depthmax_depth = real(R_PLANET_KM *( 1.d0 - depthmax_depth ),kind=CUSTOM_REAL)
       ! maximum in given depth range
       print *,'  using depth maximum: '
       print *,'  between depths (top/bottom)   : ',KERNEL_R_top,KERNEL_R_bottom

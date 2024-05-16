@@ -357,7 +357,7 @@
           abs_boundary_normal(1,igll,iface) = nx
           abs_boundary_normal(2,igll,iface) = ny
           abs_boundary_normal(3,igll,iface) = nz
-          abs_boundary_jacobian2Dw(igll,iface) = weight
+          abs_boundary_jacobian2Dw(igll,iface) = real(weight,kind=CUSTOM_REAL)
         enddo
       enddo
       abs_boundary_npoin(iface) = igll
@@ -393,7 +393,7 @@
           abs_boundary_normal(1,igll,iface) = nx
           abs_boundary_normal(2,igll,iface) = ny
           abs_boundary_normal(3,igll,iface) = nz
-          abs_boundary_jacobian2Dw(igll,iface) = weight
+          abs_boundary_jacobian2Dw(igll,iface) = real(weight,kind=CUSTOM_REAL)
         enddo
       enddo
       abs_boundary_npoin(iface) = igll
@@ -427,7 +427,7 @@
         abs_boundary_normal(1,igll,iface) = nx
         abs_boundary_normal(2,igll,iface) = ny
         abs_boundary_normal(3,igll,iface) = nz
-        abs_boundary_jacobian2Dw(igll,iface) = weight
+        abs_boundary_jacobian2Dw(igll,iface) = real(weight,kind=CUSTOM_REAL)
       enddo
     enddo
     abs_boundary_npoin(iface) = igll
@@ -460,7 +460,7 @@
         abs_boundary_normal(1,igll,iface) = nx
         abs_boundary_normal(2,igll,iface) = ny
         abs_boundary_normal(3,igll,iface) = nz
-        abs_boundary_jacobian2Dw(igll,iface) = weight
+        abs_boundary_jacobian2Dw(igll,iface) = real(weight,kind=CUSTOM_REAL)
       enddo
     enddo
     abs_boundary_npoin(iface) = igll
@@ -492,7 +492,7 @@
           abs_boundary_normal(1,igll,iface) = nx
           abs_boundary_normal(2,igll,iface) = ny
           abs_boundary_normal(3,igll,iface) = nz
-          abs_boundary_jacobian2Dw(igll,iface) = weight
+          abs_boundary_jacobian2Dw(igll,iface) = real(weight,kind=CUSTOM_REAL)
         enddo
       enddo
       abs_boundary_npoin(iface) = igll

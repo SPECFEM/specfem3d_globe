@@ -186,8 +186,8 @@
           if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
             r = dsqrt(xstore(1,1,1,ispec)**2 + ystore(1,1,1,ispec)**2 + zstore(1,1,1,ispec)**2)
             call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-            vmax = vp
-            vmin = vp
+            vmax = real(vp,kind=CUSTOM_REAL)
+            vmin = real(vp,kind=CUSTOM_REAL)
           endif
           if (vmin == 0.0) vmin=vmax
           write(11,*) numpoin,vmin,vmax
@@ -204,8 +204,8 @@
           if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
             r = dsqrt(xstore(1,NGLLY,1,ispec)**2 + ystore(1,NGLLY,1,ispec)**2 + zstore(1,NGLLY,1,ispec)**2)
             call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-            vmax = vp
-            vmin = vp
+            vmax = real(vp,kind=CUSTOM_REAL)
+            vmin = real(vp,kind=CUSTOM_REAL)
           endif
           if (vmin == 0.0) vmin=vmax
           write(11,*) numpoin,vmin,vmax
@@ -222,8 +222,8 @@
         if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
           r = dsqrt(xstore(1,NGLLY,NGLLZ,ispec)**2 + ystore(1,NGLLY,NGLLZ,ispec)**2 + zstore(1,NGLLY,NGLLZ,ispec)**2)
           call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-          vmax = vp
-          vmin = vp
+          vmax = real(vp,kind=CUSTOM_REAL)
+          vmin = real(vp,kind=CUSTOM_REAL)
         endif
         if (vmin == 0.0) vmin=vmax
         write(11,*) numpoin,vmin,vmax
@@ -240,8 +240,8 @@
         if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
           r = dsqrt(xstore(1,1,NGLLZ,ispec)**2 + ystore(1,1,NGLLZ,ispec)**2 + zstore(1,1,NGLLZ,ispec)**2)
           call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-          vmax = vp
-          vmin = vp
+          vmax = real(vp,kind=CUSTOM_REAL)
+          vmin = real(vp,kind=CUSTOM_REAL)
         endif
         if (vmin == 0.0) vmin=vmax
         write(11,*) numpoin,vmin,vmax
@@ -267,8 +267,8 @@
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(NGLLX,1,1,ispec)**2 + ystore(NGLLX,1,1,ispec)**2 + zstore(NGLLX,1,1,ispec)**2)
     call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-    vmax = vp
-    vmin = vp
+    vmax = real(vp,kind=CUSTOM_REAL)
+    vmin = real(vp,kind=CUSTOM_REAL)
   endif
       if (vmin == 0.0) vmin=vmax
       write(11,*) numpoin,vmin,vmax
@@ -285,8 +285,8 @@
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(NGLLX,NGLLY,1,ispec)**2 + ystore(NGLLX,NGLLY,1,ispec)**2 + zstore(NGLLX,NGLLY,1,ispec)**2)
     call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-    vmax = vp
-    vmin = vp
+    vmax = real(vp,kind=CUSTOM_REAL)
+    vmin = real(vp,kind=CUSTOM_REAL)
   endif
       if (vmin == 0.0) vmin=vmax
       write(11,*) numpoin,vmin,vmax
@@ -303,8 +303,8 @@
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(NGLLX,NGLLY,NGLLZ,ispec)**2 + ystore(NGLLX,NGLLY,NGLLZ,ispec)**2 + zstore(NGLLX,NGLLY,NGLLZ,ispec)**2)
     call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-    vmax = vp
-    vmin = vp
+    vmax = real(vp,kind=CUSTOM_REAL)
+    vmin = real(vp,kind=CUSTOM_REAL)
   endif
       if (vmin == 0.0) vmin=vmax
       write(11,*) numpoin,vmin,vmax
@@ -321,8 +321,8 @@
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(NGLLX,1,NGLLZ,ispec)**2 + ystore(NGLLX,1,NGLLZ,ispec)**2 + zstore(NGLLX,1,NGLLZ,ispec)**2)
     call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-    vmax = vp
-    vmin = vp
+    vmax = real(vp,kind=CUSTOM_REAL)
+    vmin = real(vp,kind=CUSTOM_REAL)
   endif
       if (vmin == 0.0) vmin=vmax
       write(11,*) numpoin,vmin,vmax
@@ -348,8 +348,8 @@
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(1,1,1,ispec)**2 + ystore(1,1,1,ispec)**2 + zstore(1,1,1,ispec)**2)
     call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-    vmax = vp
-    vmin = vp
+    vmax = real(vp,kind=CUSTOM_REAL)
+    vmin = real(vp,kind=CUSTOM_REAL)
   endif
       if (vmin == 0.0) vmin=vmax
       write(11,*) numpoin,vmin,vmax
@@ -366,8 +366,8 @@
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(NGLLX,1,1,ispec)**2 + ystore(NGLLX,1,1,ispec)**2 + zstore(NGLLX,1,1,ispec)**2)
     call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-    vmax = vp
-    vmin = vp
+    vmax = real(vp,kind=CUSTOM_REAL)
+    vmin = real(vp,kind=CUSTOM_REAL)
   endif
       if (vmin == 0.0) vmin=vmax
       write(11,*) numpoin,vmin,vmax
@@ -384,8 +384,8 @@
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(NGLLX,1,NGLLZ,ispec)**2 + ystore(NGLLX,1,NGLLZ,ispec)**2 + zstore(NGLLX,1,NGLLZ,ispec)**2)
     call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-    vmax = vp
-    vmin = vp
+    vmax = real(vp,kind=CUSTOM_REAL)
+    vmin = real(vp,kind=CUSTOM_REAL)
   endif
       if (vmin == 0.0) vmin=vmax
       write(11,*) numpoin,vmin,vmax
@@ -402,8 +402,8 @@
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(1,1,NGLLZ,ispec)**2 + ystore(1,1,NGLLZ,ispec)**2 + zstore(1,1,NGLLZ,ispec)**2)
     call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-    vmax = vp
-    vmin = vp
+    vmax = real(vp,kind=CUSTOM_REAL)
+    vmin = real(vp,kind=CUSTOM_REAL)
   endif
       if (vmin == 0.0) vmin=vmax
       write(11,*) numpoin,vmin,vmax
@@ -429,8 +429,8 @@
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(1,NGLLY,1,ispec)**2 + ystore(1,NGLLY,1,ispec)**2 + zstore(1,NGLLY,1,ispec)**2)
     call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-    vmax = vp
-    vmin = vp
+    vmax = real(vp,kind=CUSTOM_REAL)
+    vmin = real(vp,kind=CUSTOM_REAL)
   endif
       if (vmin == 0.0) vmin=vmax
       write(11,*) numpoin,vmin,vmax
@@ -447,8 +447,8 @@
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(NGLLX,NGLLY,1,ispec)**2 + ystore(NGLLX,NGLLY,1,ispec)**2 + zstore(NGLLX,NGLLY,1,ispec)**2)
     call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-    vmax = vp
-    vmin = vp
+    vmax = real(vp,kind=CUSTOM_REAL)
+    vmin = real(vp,kind=CUSTOM_REAL)
   endif
       if (vmin == 0.0) vmin=vmax
       write(11,*) numpoin,vmin,vmax
@@ -465,8 +465,8 @@
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(NGLLX,NGLLY,NGLLZ,ispec)**2 + ystore(NGLLX,NGLLY,NGLLZ,ispec)**2 + zstore(NGLLX,NGLLY,NGLLZ,ispec)**2)
     call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-    vmax = vp
-    vmin = vp
+    vmax = real(vp,kind=CUSTOM_REAL)
+    vmin = real(vp,kind=CUSTOM_REAL)
   endif
       if (vmin == 0.0) vmin=vmax
       write(11,*) numpoin,vmin,vmax
@@ -483,8 +483,8 @@
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(1,NGLLY,NGLLZ,ispec)**2 + ystore(1,NGLLY,NGLLZ,ispec)**2 + zstore(1,NGLLY,NGLLZ,ispec)**2)
     call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-    vmax = vp
-    vmin = vp
+    vmax = real(vp,kind=CUSTOM_REAL)
+    vmin = real(vp,kind=CUSTOM_REAL)
   endif
       if (vmin == 0.0) vmin=vmax
       write(11,*) numpoin,vmin,vmax

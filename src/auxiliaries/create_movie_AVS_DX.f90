@@ -894,11 +894,11 @@
             ipoin = ipoin + 1
             ireorder(ibool_number) = ipoin
             ! point value
-            total_dat(ipoin) = field_display(ilocnum+ieoff)
+            total_dat(ipoin) = real(field_display(ilocnum+ieoff),kind=CUSTOM_REAL)
             ! point location
-            total_dat_xyz(1,ipoin) = xp_save(ilocnum+ieoff)
-            total_dat_xyz(2,ipoin) = yp_save(ilocnum+ieoff)
-            total_dat_xyz(3,ipoin) = zp_save(ilocnum+ieoff)
+            total_dat_xyz(1,ipoin) = real(xp_save(ilocnum+ieoff),kind=CUSTOM_REAL)
+            total_dat_xyz(2,ipoin) = real(yp_save(ilocnum+ieoff),kind=CUSTOM_REAL)
+            total_dat_xyz(3,ipoin) = real(zp_save(ilocnum+ieoff),kind=CUSTOM_REAL)
           endif
           mask_point(ibool_number) = .true.
         enddo

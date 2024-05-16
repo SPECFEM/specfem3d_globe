@@ -880,7 +880,7 @@
           ! adds Gaussian function value to mask
           ! (mask value becomes 0 closer to source location, 1 everywhere else )
           mask_source(i,j,k,ispec) = mask_source(i,j,k,ispec) &
-                    * ( 1.0_CUSTOM_REAL - exp( - dist_squared / sigma_squared ) )
+                    * ( 1.0_CUSTOM_REAL - real(exp( - dist_squared / sigma_squared ),kind=CUSTOM_REAL) )
         enddo
       enddo
     enddo

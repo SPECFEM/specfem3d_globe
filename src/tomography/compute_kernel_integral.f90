@@ -83,7 +83,7 @@ subroutine compute_kernel_integral_iso()
   do k = 1,NGLLZ
     do j = 1,NGLLY
       do i = 1,NGLLX
-        wgll_cube(i,j,k) = wxgll(i)*wygll(j)*wzgll(k)
+        wgll_cube(i,j,k) = real(wxgll(i)*wygll(j)*wzgll(k),kind=CUSTOM_REAL)
       enddo
     enddo
   enddo
@@ -285,7 +285,7 @@ subroutine compute_kernel_integral_tiso()
   do k = 1,NGLLZ
     do j = 1,NGLLY
       do i = 1,NGLLX
-        wgll_cube(i,j,k) = wxgll(i)*wygll(j)*wzgll(k)
+        wgll_cube(i,j,k) = real(wxgll(i)*wygll(j)*wzgll(k),kind=CUSTOM_REAL)
       enddo
     enddo
   enddo
@@ -515,7 +515,7 @@ subroutine compute_kernel_integral_tiso_iso()
   do k = 1,NGLLZ
     do j = 1,NGLLY
       do i = 1,NGLLX
-        wgll_cube(i,j,k) = wxgll(i)*wygll(j)*wzgll(k)
+        wgll_cube(i,j,k) = real(wxgll(i)*wygll(j)*wzgll(k),kind=CUSTOM_REAL)
       enddo
     enddo
   enddo

@@ -52,8 +52,8 @@
   real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: temp_store
 
   ! scaling factors to re-dimensionalize units
-  scaleval1 = sngl( sqrt(PI*GRAV*RHOAV)*(R_PLANET/1000.0d0) )
-  scaleval2 = sngl( RHOAV/1000.0d0 )
+  scaleval1 = real(sqrt(PI*GRAV*RHOAV)*(R_PLANET/1000.0d0),kind=CUSTOM_REAL)
+  scaleval2 = real(RHOAV/1000.0d0,kind=CUSTOM_REAL)
 
   ! uses temporary array
   allocate(temp_store(NGLLX,NGLLY,NGLLZ,nspec),stat=ier)
@@ -149,8 +149,8 @@
   ! anisotropic values
   if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
     ! the scale of GPa--[g/cm^3][(km/s)^2]
-    scaleval = dsqrt(PI*GRAV*RHOAV)
-    scale_GPa = (RHOAV/1000.d0)*((R_PLANET*scaleval/1000.d0)**2)
+    scaleval = real(sqrt(PI*GRAV*RHOAV),kind=CUSTOM_REAL)
+    scale_GPa = real((RHOAV/1000.d0)*((R_PLANET*scaleval/1000.d0)**2),kind=CUSTOM_REAL)
 
     ! Gc_prime
     open(unit=IOUT,file=prname(1:len_trim(prname))//'Gc_prime.bin', &

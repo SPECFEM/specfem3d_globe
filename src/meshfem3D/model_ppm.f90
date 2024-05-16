@@ -525,34 +525,35 @@
 
   implicit none
 
-  integer :: nproc_xi, nproc_eta
+  integer, intent(in) :: nproc_xi, nproc_eta
 
-  integer NEX_XI
+  integer, intent(in) :: NEX_XI
 
-  integer nspec,nspec_stacey,NCHUNKS
+  integer, intent(in) :: nspec,nspec_stacey,NCHUNKS
 
-  logical ABSORBING_CONDITIONS
+  logical, intent(in) :: ABSORBING_CONDITIONS
 
-! arrays with Jacobian matrix
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
+  ! arrays with Jacobian matrix
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec), intent(in) :: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore
 
-! arrays with mesh parameters
-  double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
+  ! arrays with mesh parameters
+  double precision, intent(in) :: xstore(NGLLX,NGLLY,NGLLZ,nspec)
+  double precision, intent(in) :: ystore(NGLLX,NGLLY,NGLLZ,nspec)
+  double precision, intent(in) :: zstore(NGLLX,NGLLY,NGLLZ,nspec)
 
-! for anisotropy
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: rhostore,kappavstore,kappahstore, &
+  ! for anisotropy
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec), intent(inout) :: rhostore,kappavstore,kappahstore, &
         muvstore,muhstore,eta_anisostore
 
-! Stacey
-  real(kind=CUSTOM_REAL) rho_vp(NGLLX,NGLLY,NGLLZ,nspec_stacey)
-  real(kind=CUSTOM_REAL) rho_vs(NGLLX,NGLLY,NGLLZ,nspec_stacey)
+  ! Stacey
+  real(kind=CUSTOM_REAL), intent(inout) :: rho_vp(NGLLX,NGLLY,NGLLZ,nspec_stacey)
+  real(kind=CUSTOM_REAL), intent(inout) :: rho_vs(NGLLX,NGLLY,NGLLZ,nspec_stacey)
+
+  integer, intent(in) :: iregion_code
 
   ! local parameters
-  integer i,j,k,ispec
-  integer iregion_code
+  integer :: i,j,k,ispec
 
   ! only include the neighboring 3 x 3 slices
   integer, parameter :: NSLICES = 3
@@ -577,7 +578,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: tk_rho,tk_kv,tk_kh,tk_muv,tk_muh,tk_eta,tk_dvp,tk_rhovp,tk_rhovs
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: bk
 
-  real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
+  real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable:: xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
 
@@ -595,21 +596,21 @@
   ! array with all the weights in the cube
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
 
-  real(kind=CUSTOM_REAL), parameter :: ZERO_ = 0.0_CUSTOM_REAL
+  real(kind=CUSTOM_REAL), parameter :: ZERO_REAL = 0.0_CUSTOM_REAL
 
-  real(kind=CUSTOM_REAL) maxlat,maxlon,maxdepth
-  real(kind=CUSTOM_REAL) minlat,minlon,mindepth
-  real(kind=CUSTOM_REAL) radius,theta,phi,lat,lon,r_depth,margin_v,margin_h
-  real(kind=CUSTOM_REAL) dist_h,dist_v
+  real(kind=CUSTOM_REAL) :: maxlat,maxlon,maxdepth
+  real(kind=CUSTOM_REAL) :: minlat,minlon,mindepth
+  real(kind=CUSTOM_REAL) :: radius,theta,phi,lat,lon,r_depth,margin_v,margin_h
+  real(kind=CUSTOM_REAL) :: dist_h,dist_v
 
   double precision,external :: wtime
 
 !----------------------------------------------------------------------------------------------------
   ! smoothing parameters
-  logical,parameter:: GAUSS_SMOOTHING = .false. ! set to true to use this smoothing routine
+  logical,parameter :: GAUSS_SMOOTHING = .false. ! set to true to use this smoothing routine
 
-  sigma_h = 100.0  ! km, horizontal
-  sigma_v = 100.0   ! km, vertical
+  sigma_h = 100.0_CUSTOM_REAL  ! km, horizontal
+  sigma_v = 100.0_CUSTOM_REAL   ! km, vertical
 
   ! check if smoothing applies
   if (.not. GAUSS_SMOOTHING ) return
@@ -620,7 +621,7 @@
 
 
   sizeprocs = NCHUNKS*NPROC_XI*NPROC_ETA
-  element_size = (TWO_PI*R_PLANET/1000.d0)/(4*NEX_XI)
+  element_size = real((TWO_PI*R_PLANET/1000.d0)/(4*NEX_XI),kind=CUSTOM_REAL)
 
   if (myrank == 0) then
     write(IMAIN, *) "model smoothing defaults:"
@@ -634,25 +635,25 @@
   if (nchunks == 0) call exit_mpi(myrank,'no chunks')
 
   element_size = element_size * 1000  ! e.g. 9 km on the surface, 36 km at CMB
-  element_size = element_size / R_PLANET
+  element_size = real(element_size / R_PLANET,kind=CUSTOM_REAL)
 
-  sigma_h = sigma_h * 1000.0 ! m
-  sigma_h = sigma_h / R_PLANET ! scale
-  sigma_v = sigma_v * 1000.0 ! m
-  sigma_v = sigma_v / R_PLANET ! scale
+  sigma_h = sigma_h * 1000.0_CUSTOM_REAL ! m
+  sigma_h = real(sigma_h / R_PLANET,kind=CUSTOM_REAL) ! scale
+  sigma_v = sigma_v * 1000.0_CUSTOM_REAL ! m
+  sigma_v = real(sigma_v / R_PLANET,kind=CUSTOM_REAL) ! scale
 
   sigma_h2 = sigma_h ** 2
   sigma_v2 = sigma_v ** 2
 
   ! search radius
-  sigma_h3 = 3.0  * sigma_h + element_size
+  sigma_h3 = 3.0_CUSTOM_REAL * sigma_h + element_size
   sigma_h3 = sigma_h3 ** 2
-  sigma_v3 = 3.0  * sigma_v + element_size
+  sigma_v3 = 3.0_CUSTOM_REAL * sigma_v + element_size
   sigma_v3 = sigma_v3 ** 2
   ! theoretic normal value
   ! (see integral over -inf to +inf of exp[- x*x/(2*sigma) ] = sigma * sqrt(2*pi) )
-  norm_h = 2.0*PI*sigma_h**2
-  norm_v = sqrt(2.0*PI) * sigma_v
+  norm_h = real(2.d0*PI*sigma_h**2,kind=CUSTOM_REAL)
+  norm_v = real(sqrt(2.d0*PI) * sigma_v,kind=CUSTOM_REAL)
   norm   = norm_h * norm_v
 
   if (myrank == 0) then
@@ -667,7 +668,7 @@
   do k = 1,NGLLZ
     do j = 1,NGLLY
       do i = 1,NGLLX
-        wgll_cube(i,j,k) = wxgll(i)*wygll(j)*wzgll(k)
+        wgll_cube(i,j,k) = real(wxgll(i)*wygll(j)*wzgll(k),kind=CUSTOM_REAL)
       enddo
     enddo
   enddo
@@ -702,9 +703,9 @@
 
   ! read in the topology files of the current and neighboring slices
   ! read in myrank slice
-  xl(:,:,:,:) = xstore(:,:,:,:)
-  yl(:,:,:,:) = ystore(:,:,:,:)
-  zl(:,:,:,:) = zstore(:,:,:,:)
+  xl(:,:,:,:) = real(xstore(:,:,:,:),kind=CUSTOM_REAL)
+  yl(:,:,:,:) = real(ystore(:,:,:,:),kind=CUSTOM_REAL)
+  zl(:,:,:,:) = real(zstore(:,:,:,:),kind=CUSTOM_REAL)
 
   ! build Jacobian
   allocate(xix(NGLLX,NGLLY,NGLLZ,nspec),xiy(NGLLX,NGLLY,NGLLZ,nspec),xiz(NGLLX,NGLLY,NGLLZ,nspec))
@@ -746,7 +747,7 @@
           if (abs(jacobianl) > 1.e-25) then
             jacobianl = 1.0_CUSTOM_REAL / jacobianl
           else
-            jacobianl = ZERO_
+            jacobianl = ZERO_REAL
           endif
 
           jacobian(i,j,k,ispec) = jacobianl
@@ -772,9 +773,9 @@
   do rank = 0,sizeprocs-1
     if (rank == myrank) then
       jacobian(:,:,:,:) = jacobian0(:,:,:,:)
-      x(:,:,:,:) = xstore(:,:,:,:)
-      y(:,:,:,:) = ystore(:,:,:,:)
-      z(:,:,:,:) = zstore(:,:,:,:)
+      x(:,:,:,:) = real(xstore(:,:,:,:),kind=CUSTOM_REAL)
+      y(:,:,:,:) = real(ystore(:,:,:,:),kind=CUSTOM_REAL)
+      z(:,:,:,:) = real(zstore(:,:,:,:),kind=CUSTOM_REAL)
     endif
     ! every process broadcasts its info
     call bcast_all_cr(x,NGLLX*NGLLY*NGLLZ*NSPEC)
@@ -957,31 +958,31 @@
   if (myrank == 0) write(IMAIN, *) 'Done with integration ...'
 
   ! gets depths (in km) of upper and lower limit
-  maxlat = PPM_maxlat
-  minlat = PPM_minlat
+  maxlat = real(PPM_maxlat,kind=CUSTOM_REAL)
+  minlat = real(PPM_minlat,kind=CUSTOM_REAL)
 
-  maxlon = PPM_maxlon
-  minlon = PPM_minlon
+  maxlon = real(PPM_maxlon,kind=CUSTOM_REAL)
+  minlon = real(PPM_minlon,kind=CUSTOM_REAL)
 
-  maxdepth = PPM_maxdepth
-  mindepth = PPM_mindepth
+  maxdepth = real(PPM_maxdepth,kind=CUSTOM_REAL)
+  mindepth = real(PPM_mindepth,kind=CUSTOM_REAL)
 
-  margin_v = sigma_v*R_PLANET/1000.0 ! in km
-  margin_h = sigma_h*R_PLANET/1000.0 * 180.0/(R_PLANET_KM*PI) ! in degree
+  margin_v = real(sigma_v*R_PLANET/1000.d0,kind=CUSTOM_REAL) ! in km
+  margin_h = real(sigma_h*R_PLANET/1000.d0 * 180.d0/(R_PLANET_KM*PI),kind=CUSTOM_REAL) ! in degree
 
   ! computes the smoothed values
   do ispec = 1, nspec
 
     ! depth of given radius (in km)
     call xyz_2_rthetaphi(cx0(ispec),cy0(ispec),cz0(ispec),radius,theta,phi)
-    r_depth = R_PLANET_KM - radius*R_PLANET_KM  ! radius is normalized between [0,1]
+    r_depth = real(R_PLANET_KM - radius*R_PLANET_KM,kind=CUSTOM_REAL)  ! radius is normalized between [0,1]
     if (r_depth >= maxdepth+margin_v .or. r_depth+margin_v < mindepth) cycle
 
-    lat=(PI/2.0d0-theta)*180.0d0/PI
+    lat = real((PI/2.0d0-theta)*180.0d0/PI,kind=CUSTOM_REAL)
     if (lat < minlat-margin_h .or. lat > maxlat+margin_h ) cycle
 
-    lon = phi*180.0d0/PI
-    if (lon > 180.0d0) lon = lon-360.0d0
+    lon = real(phi*180.0d0/PI,kind=CUSTOM_REAL)
+    if (lon > 180.0_CUSTOM_REAL) lon = lon - 360.0_CUSTOM_REAL
     if (lon < minlon-margin_h .or. lon > maxlon+margin_h ) cycle
 
     do k = 1, NGLLZ
@@ -1016,14 +1017,14 @@
 
         ! depth of given radius (in km)
         call xyz_2_rthetaphi(cx0(ispec),cy0(ispec),cz0(ispec),radius,theta,phi)
-        r_depth = R_PLANET_KM - radius*R_PLANET_KM  ! radius is normalized between [0,1]
+        r_depth = real(R_PLANET_KM - radius*R_PLANET_KM,kind=CUSTOM_REAL)  ! radius is normalized between [0,1]
         if (r_depth >= maxdepth+margin_v .or. r_depth+margin_v < mindepth) cycle
 
-        lat=(PI/2.0d0-theta)*180.0d0/PI
+        lat = real((PI/2.0d0-theta)*180.0d0/PI,kind=CUSTOM_REAL)
         if (lat < minlat-margin_h .or. lat > maxlat+margin_h ) cycle
 
-        lon = phi*180.0d0/PI
-        if (lon > 180.0d0) lon = lon-360.0d0
+        lon = real(phi*180.0d0/PI,kind=CUSTOM_REAL)
+        if (lon > 180.0_CUSTOM_REAL) lon = lon - 360.0_CUSTOM_REAL
         if (lon < minlon-margin_h .or. lon > maxlon+margin_h ) cycle
 
         do k = 1, NGLLZ

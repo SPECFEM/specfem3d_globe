@@ -365,7 +365,7 @@
   endif
 
   ! non-dimensionalize
-  adj_src(:,:) = adj_src(:,:) * scale_displ_inv
+  adj_src(:,:) = real(adj_src(:,:) * scale_displ_inv,kind=CUSTOM_REAL)
 
   ! rotates to Cartesian
   do itime = 1, NSTEP_BLOCK
@@ -379,7 +379,7 @@
 
   ! stores rotated adjoint source
   do icomp = 1, NDIM
-    source_adjoint(icomp,1:NSTEP_BLOCK) = adj_src_u(icomp,1:NSTEP_BLOCK)
+    source_adjoint(icomp,1:NSTEP_BLOCK) = real(adj_src_u(icomp,1:NSTEP_BLOCK),kind=CUSTOM_REAL)
   enddo
 
   ! free temporary arrays

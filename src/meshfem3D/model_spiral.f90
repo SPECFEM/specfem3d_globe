@@ -938,7 +938,7 @@
   ! interpolation variables
   double precision :: a,b  ! weights
   integer :: rec_read  ! position of the record to read in model.dat (direct access file)
-  double precision :: i_min, i_max, j_min, j_max ! upper and lower bound indices
+  integer :: i_min, i_max, j_min, j_max ! upper and lower bound indices
   double precision, dimension(CRUST_NP) :: thick1,thick2,thick3,thick4   ! thickness corner values in model.dat
   double precision, dimension(CRUST_NP) :: rho1,rho2,rho3,rho4   ! rho corner values in model.dat
   double precision, dimension(5,CRUST_NP) :: coef1,coef2,coef3,coef4   ! CIJ corner values in model.dat
@@ -1799,7 +1799,7 @@
   ! interpolation variables
   double precision :: a,b,c  ! weights
   integer :: rec_read  ! position of the record to read in model.dat (direct access file)
-  double precision :: i_min, i_max, j_min, j_max, k_min, k_max ! upper and lower bound indices
+  integer :: i_min, i_max, j_min, j_max, k_min, k_max ! upper and lower bound indices
   double precision :: rho1,rho2,rho3,rho4,rho5,rho6,rho7,rho8    ! rho corner values in model.dat
   double precision, dimension(5) :: coef1,coef2,coef3,coef4,coef5,coef6,coef7,coef8   ! CIJ corner values in model.dat
 
@@ -2097,7 +2097,7 @@
   ! interpolation variables
   double precision :: a,b  ! weights
   integer :: rec_read  ! position of the record to read in model.dat (direct access file)
-  double precision :: i_min, i_max, j_min, j_max ! upper and lower bound indices
+  integer :: i_min, i_max, j_min, j_max ! upper and lower bound indices
   double precision :: t410_1,t410_2,t410_3,t410_4   ! t410 corner values in model.dat
   double precision :: t660_1,t660_2,t660_3,t660_4   ! t660 corner values in model.dat
 

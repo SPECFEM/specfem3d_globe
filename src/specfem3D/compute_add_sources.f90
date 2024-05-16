@@ -214,7 +214,9 @@
           do i = 1,NGLLX
             iglob = ibool_crust_mantle(i,j,k,ispec)
 
-            hlagrange = hxir_adjstore(i,irec_local) * hetar_adjstore(j,irec_local) * hgammar_adjstore(k,irec_local)
+            hlagrange = real(hxir_adjstore(i,irec_local) &
+                           * hetar_adjstore(j,irec_local) &
+                           * hgammar_adjstore(k,irec_local),kind=CUSTOM_REAL)
 
             ! adds adjoint source acting at this time step (it):
             !

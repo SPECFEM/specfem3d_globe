@@ -297,8 +297,9 @@
     sloc_der(:,irec_local) = sloc_der(:,irec_local) + eps_m_l_s(:) * stf_deltat
 
     ! derivatives for time shift and hduration
-    Kp_deltat= -1.0d0/sqrt(PI)/hdur_Gaussian(irec) * exp(-(timeval/hdur_Gaussian(irec))**2) * deltat * scale_t
-    Hp_deltat= timeval/hdur_Gaussian(irec) * Kp_deltat
+    Kp_deltat = real(-1.0d0/sqrt(PI)/hdur_Gaussian(irec) &
+                     * exp(-(timeval/hdur_Gaussian(irec))**2) * deltat * scale_t,kind=CUSTOM_REAL)
+    Hp_deltat = real(timeval/hdur_Gaussian(irec) * Kp_deltat,kind=CUSTOM_REAL)
 
     stshift_der(irec_local) = stshift_der(irec_local) + eps_m_s * Kp_deltat
     shdur_der(irec_local) = shdur_der(irec_local) + eps_m_s * Hp_deltat
@@ -405,6 +406,8 @@
   real(kind=CUSTOM_REAL) :: hlagrange
 
   real(kind=CUSTOM_REAL),dimension(NDIM,NDIM) :: eps_loc,eps_loc_new
+  real(kind=CUSTOM_REAL),dimension(NDIM,NDIM) :: eps_loc_rot
+
   real(kind=CUSTOM_REAL),dimension(NDIM,NDIM,NGLLX,NGLLY,NGLLZ) :: eps_array
   real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: displ_elem
 
@@ -517,7 +520,7 @@
     do k = 1,NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
-          hlagrange = hxir(i)*hetar(j)*hgammar(k)
+          hlagrange = real(hxir(i)*hetar(j)*hgammar(k),kind=CUSTOM_REAL)
           eps_loc(1,1) = eps_loc(1,1) + eps_array(1,1,i,j,k)*hlagrange
           eps_loc(1,2) = eps_loc(1,2) + eps_array(1,2,i,j,k)*hlagrange
           eps_loc(1,3) = eps_loc(1,3) + eps_array(1,3,i,j,k)*hlagrange
@@ -550,7 +553,8 @@
     ! eps_xy -> eps_ne
     ! eps_xz -> eps_nz
     ! eps_yz -> eps_ez
-    eps_loc_new(:,:) = matmul(matmul(nu_rec(:,:,irec),eps_loc(:,:)), transpose(nu_rec(:,:,irec)))
+    eps_loc_rot(:,:) = real(matmul(nu_rec(:,:,irec),eps_loc(:,:)),kind=CUSTOM_REAL)
+    eps_loc_new(:,:) = real(matmul(eps_loc_rot(:,:), transpose(nu_rec(:,:,irec))),kind=CUSTOM_REAL)
 
     ! distinguish between single and double precision for reals
     !

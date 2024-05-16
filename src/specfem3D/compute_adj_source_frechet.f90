@@ -143,8 +143,8 @@
         eps_array(:,:,i,j,k) = eps(:,:)
 
         ! Mjk eps_jk
-        eps_m_array(i,j,k) = Mxx * eps(1,1) + Myy * eps(2,2) + Mzz * eps(3,3) + &
-                   2 * (Mxy * eps(1,2) + Mxz * eps(1,3) + Myz * eps(2,3))
+        eps_m_array(i,j,k) = real(Mxx * eps(1,1) + Myy * eps(2,2) + Mzz * eps(3,3) + &
+                                  2 * (Mxy * eps( 1,2) + Mxz * eps(1,3) + Myz * eps(2,3)),kind=CUSTOM_REAL)
 
       enddo
     enddo
@@ -162,7 +162,7 @@
     do j = 1,NGLLY
       do i = 1,NGLLX
 
-        hlagrange = hxir(i)*hetar(j)*hgammar(k)
+        hlagrange = real(hxir(i)*hetar(j)*hgammar(k),kind=CUSTOM_REAL)
 
         eps_s(1,1) = eps_s(1,1) + eps_array(1,1,i,j,k)*hlagrange
         eps_s(1,2) = eps_s(1,2) + eps_array(1,2,i,j,k)*hlagrange
@@ -197,9 +197,9 @@
     do j = 1,NGLLY
       do i = 1,NGLLX
 
-        hlagrange_xi = hpxir(i)*hetar(j)*hgammar(k)
-        hlagrange_eta = hxir(i)*hpetar(j)*hgammar(k)
-        hlagrange_gamma = hxir(i)*hetar(j)*hpgammar(k)
+        hlagrange_xi = real(hpxir(i)*hetar(j)*hgammar(k),kind=CUSTOM_REAL)
+        hlagrange_eta = real(hxir(i)*hpetar(j)*hgammar(k),kind=CUSTOM_REAL)
+        hlagrange_gamma = real(hxir(i)*hetar(j)*hpgammar(k),kind=CUSTOM_REAL)
 
         eps_m_l_s(1) = eps_m_l_s(1) +  eps_m_array(i,j,k) * (hlagrange_xi * xix_s &
                    + hlagrange_eta * etax_s + hlagrange_gamma * gammax_s)

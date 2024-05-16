@@ -646,7 +646,7 @@
     endif
 
     nspec1layer = NSPEC2D_TOP(iregion0)
-    nspec1d = sqrt(real(nspec1layer))
+    nspec1d = int(sqrt(real(nspec1layer)))
 
     ! checks if nspec2d top is squared
     if (nspec1d*nspec1d /= nspec1layer) then
