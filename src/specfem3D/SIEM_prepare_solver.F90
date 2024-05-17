@@ -33,6 +33,12 @@
   ! check if anything to do
   if (.not. FULL_GRAVITY) return
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) "preparing full gravity solver"
+    call flush_IMAIN()
+  endif
+
   ! safety stop
   stop 'FULL_GRAVITY not fully implemented yet'
 
@@ -407,9 +413,10 @@
 
   implicit none
 
-  if (myrank == 0 ) then
-    write(IMAIN,*) "preparing mass matrices."
-    write(IMAIN,*)
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) "  allocating poisson level-1 solver arrays"
+    call flush_IMAIN()
   endif
 
   ! indexify regions
@@ -430,103 +437,102 @@
            dprecon_infinite1(nnode_inf1))
 
   allocate(dprecon1(0:neq1),load1(0:neq1),pgrav_ic1(nnode_ic1), &
-  pgrav_oc1(nnode_oc1),pgrav_cm1(nnode_cm1),pgrav_trinf1(nnode_trinf1), &
-  pgrav_inf1(nnode_inf1))
+           pgrav_oc1(nnode_oc1),pgrav_cm1(nnode_cm1),pgrav_trinf1(nnode_trinf1), &
+           pgrav_inf1(nnode_inf1))
 
   if (SIMULATION_TYPE == 3) then
     allocate(b_load1(0:neq1), b_pgrav_ic1(nnode_ic1), b_pgrav_oc1(nnode_oc1), &
-    b_pgrav_cm1(nnode_cm1), b_pgrav_trinf1(nnode_trinf1), b_pgrav_inf1(nnode_inf1))
+             b_pgrav_cm1(nnode_cm1), b_pgrav_trinf1(nnode_trinf1), b_pgrav_inf1(nnode_inf1))
   endif
 
   ! crust mantle
   call poisson_stiffness3(IREGION_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
-  NGLOB_CRUST_MANTLE,ibool_crust_mantle,xstore_crust_mantle,ystore_crust_mantle, &
-  zstore_crust_mantle,nnode_cm1,inode_elmt_cm1,storekmat_crust_mantle1, &
-  dprecon_crust_mantle1)
+                          NGLOB_CRUST_MANTLE,ibool_crust_mantle,xstore_crust_mantle,ystore_crust_mantle, &
+                          zstore_crust_mantle,nnode_cm1,inode_elmt_cm1,storekmat_crust_mantle1, &
+                          dprecon_crust_mantle1)
 
   ! outer core
   call poisson_stiffness3(IREGION_OUTER_CORE,NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
-  ibool_outer_core,xstore_outer_core,ystore_outer_core,zstore_outer_core, &
-  nnode_oc1,inode_elmt_oc1,storekmat_outer_core1,dprecon_outer_core1)
+                          ibool_outer_core,xstore_outer_core,ystore_outer_core,zstore_outer_core, &
+                          nnode_oc1,inode_elmt_oc1,storekmat_outer_core1,dprecon_outer_core1)
 
   ! inner core
   call poisson_stiffness3(IREGION_INNER_CORE,NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-  ibool_inner_core,xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-  nnode_ic1,inode_elmt_ic1,storekmat_inner_core1,dprecon_inner_core1)
+                          ibool_inner_core,xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+                          nnode_ic1,inode_elmt_ic1,storekmat_inner_core1,dprecon_inner_core1)
 
   if (ADD_TRINF) then
     ! transition infinite
     call poisson_stiffness3(IREGION_TRINFINITE,NSPEC_TRINFINITE,NGLOB_TRINFINITE, &
-    ibool_trinfinite,xstore_trinfinite,ystore_trinfinite,zstore_trinfinite, &
-    nnode_trinf1,inode_elmt_trinf1,storekmat_trinfinite1,dprecon_trinfinite1)
+                            ibool_trinfinite,xstore_trinfinite,ystore_trinfinite,zstore_trinfinite, &
+                            nnode_trinf1,inode_elmt_trinf1,storekmat_trinfinite1,dprecon_trinfinite1)
   endif
 
   ! infinite layer
   call poisson_stiffnessINF3(NSPEC_INFINITE,NGLOB_INFINITE,ibool_infinite, &
-  xstore_infinite,ystore_infinite,zstore_infinite,nnode_inf1,inode_elmt_inf1, &
-  storekmat_infinite1,dprecon_infinite1)
+                             xstore_infinite,ystore_infinite,zstore_infinite,nnode_inf1,inode_elmt_inf1, &
+                             storekmat_infinite1,dprecon_infinite1)
 
-  call sync_all
-
+  call sync_all()
 
   ! assemble stiffness matrices
   ! assemble across the MPI processes in a region
   ! crust_mantle
   call assemble_MPI_scalar(NPROCTOT_VAL,nnode_cm1,dprecon_crust_mantle1, &
-       num_interfaces_crust_mantle1,max_nibool_interfaces_crust_mantle1, &
-       nibool_interfaces_crust_mantle1,ibool_interfaces_crust_mantle1, &
-       my_neighbors_crust_mantle1)
+                           num_interfaces_crust_mantle1,max_nibool_interfaces_crust_mantle1, &
+                           nibool_interfaces_crust_mantle1,ibool_interfaces_crust_mantle1, &
+                           my_neighbors_crust_mantle1)
 
   ! outer core
   call assemble_MPI_scalar(NPROCTOT_VAL,nnode_oc1,dprecon_outer_core1, &
-       num_interfaces_outer_core1,max_nibool_interfaces_outer_core1, &
-       nibool_interfaces_outer_core1,ibool_interfaces_outer_core1, &
-       my_neighbors_outer_core1)
+                           num_interfaces_outer_core1,max_nibool_interfaces_outer_core1, &
+                           nibool_interfaces_outer_core1,ibool_interfaces_outer_core1, &
+                           my_neighbors_outer_core1)
 
   ! inner core
   call assemble_MPI_scalar(NPROCTOT_VAL,nnode_ic1,dprecon_inner_core1, &
-       num_interfaces_inner_core1,max_nibool_interfaces_inner_core1, &
-       nibool_interfaces_inner_core1,ibool_interfaces_inner_core1, &
-       my_neighbors_inner_core1)
+                           num_interfaces_inner_core1,max_nibool_interfaces_inner_core1, &
+                           nibool_interfaces_inner_core1,ibool_interfaces_inner_core1, &
+                           my_neighbors_inner_core1)
 
   ! transition infinite
   if (ADD_TRINF) then
     call assemble_MPI_scalar(NPROCTOT_VAL,nnode_trinf1,dprecon_trinfinite1, &
-         num_interfaces_trinfinite1,max_nibool_interfaces_trinfinite1, &
-         nibool_interfaces_trinfinite1,ibool_interfaces_trinfinite1, &
-         my_neighbors_trinfinite1)
+                             num_interfaces_trinfinite1,max_nibool_interfaces_trinfinite1, &
+                             nibool_interfaces_trinfinite1,ibool_interfaces_trinfinite1, &
+                             my_neighbors_trinfinite1)
   endif
 
   ! infinite
   call assemble_MPI_scalar(NPROCTOT_VAL,nnode_inf1,dprecon_infinite1, &
-       num_interfaces_infinite1,max_nibool_interfaces_infinite1, &
-       nibool_interfaces_infinite1,ibool_interfaces_infinite1, &
-       my_neighbors_infinite1)
+                           num_interfaces_infinite1,max_nibool_interfaces_infinite1, &
+                           nibool_interfaces_infinite1,ibool_interfaces_infinite1, &
+                           my_neighbors_infinite1)
 
   call sync_all()
 
   ! assemble across the different regions in a process
   dprecon1 = zero
   ! crust_mantle
-  dprecon1(gdof_cm1)=dprecon1(gdof_cm1)+dprecon_crust_mantle1
+  dprecon1(gdof_cm1) = dprecon1(gdof_cm1)+dprecon_crust_mantle1
 
   ! outer core
-  dprecon1(gdof_oc1)=dprecon1(gdof_oc1)+dprecon_outer_core1
+  dprecon1(gdof_oc1) = dprecon1(gdof_oc1)+dprecon_outer_core1
 
   ! inner core
-  dprecon1(gdof_ic1)=dprecon1(gdof_ic1)+dprecon_inner_core1
+  dprecon1(gdof_ic1) = dprecon1(gdof_ic1)+dprecon_inner_core1
 
   ! transition infinite
   if (ADD_TRINF) then
-    dprecon1(gdof_trinf1)=dprecon1(gdof_trinf1)+dprecon_trinfinite1
+    dprecon1(gdof_trinf1) = dprecon1(gdof_trinf1)+dprecon_trinfinite1
   endif
 
   ! infinite
-  dprecon1(gdof_inf1)=dprecon1(gdof_inf1)+dprecon_infinite1
+  dprecon1(gdof_inf1) = dprecon1(gdof_inf1)+dprecon_infinite1
 
-  dprecon1(0)=0.0_CUSTOM_REAL
+  dprecon1(0) = 0.0_CUSTOM_REAL
 
-  call sync_all
+  call sync_all()
 
   ! invert preconditioner
   !dprecon1(1:)=1.0_CUSTOM_REAL/dprecon1(1:)
@@ -535,111 +541,119 @@
 
   ! Level-2 solver------------------
   if (SOLVER_5GLL) then
-  allocate(storekmat_crust_mantle(NGLLCUBE,NGLLCUBE,NSPEC_CRUST_MANTLE), &
-           dprecon_crust_mantle(NGLOB_CRUST_MANTLE))
-  allocate(storekmat_outer_core(NGLLCUBE,NGLLCUBE,NSPEC_OUTER_CORE), &
-           dprecon_outer_core(NGLOB_OUTER_CORE))
-  allocate(storekmat_inner_core(NGLLCUBE,NGLLCUBE,NSPEC_INNER_CORE), &
-           dprecon_inner_core(NGLOB_INNER_CORE))
-  if (ADD_TRINF) then
-    allocate(storekmat_trinfinite(NGLLCUBE,NGLLCUBE,NSPEC_TRINFINITE), &
-    dprecon_trinfinite(NGLOB_TRINFINITE))
-  endif
-  allocate(storekmat_infinite(NGLLCUBE,NGLLCUBE,NSPEC_INFINITE), &
-           dprecon_infinite(NGLOB_INFINITE))
-  allocate(dprecon(0:neq),load(0:neq))
 
-  ! better to make dprecon_* local rather than global
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) "  allocating poisson level-2 solver arrays"
+      call flush_IMAIN()
+    endif
 
-  ! crust mantle
-  call poisson_stiffness(IREGION_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
-  NGLOB_CRUST_MANTLE,ibool_crust_mantle,xstore_crust_mantle,ystore_crust_mantle, &
-  zstore_crust_mantle,storekmat_crust_mantle,dprecon_crust_mantle)
-  ! outer core
-  call poisson_stiffness(IREGION_OUTER_CORE,NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
-  ibool_outer_core,xstore_outer_core,ystore_outer_core,zstore_outer_core, &
-  storekmat_outer_core,dprecon_outer_core)
-  ! inner core
-  call poisson_stiffness(IREGION_INNER_CORE,NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-  ibool_inner_core,xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-  storekmat_inner_core,dprecon_inner_core)
+    allocate(storekmat_crust_mantle(NGLLCUBE,NGLLCUBE,NSPEC_CRUST_MANTLE), &
+             dprecon_crust_mantle(NGLOB_CRUST_MANTLE))
+    allocate(storekmat_outer_core(NGLLCUBE,NGLLCUBE,NSPEC_OUTER_CORE), &
+             dprecon_outer_core(NGLOB_OUTER_CORE))
+    allocate(storekmat_inner_core(NGLLCUBE,NGLLCUBE,NSPEC_INNER_CORE), &
+             dprecon_inner_core(NGLOB_INNER_CORE))
+    if (ADD_TRINF) then
+      allocate(storekmat_trinfinite(NGLLCUBE,NGLLCUBE,NSPEC_TRINFINITE), &
+      dprecon_trinfinite(NGLOB_TRINFINITE))
+    endif
+    allocate(storekmat_infinite(NGLLCUBE,NGLLCUBE,NSPEC_INFINITE), &
+             dprecon_infinite(NGLOB_INFINITE))
+    allocate(dprecon(0:neq),load(0:neq))
 
-  ! transition infinite
+    ! better to make dprecon_* local rather than global
 
-  if (ADD_TRINF) then
-    call poisson_stiffness(IREGION_TRINFINITE,NSPEC_TRINFINITE,NGLOB_TRINFINITE, &
-    ibool_trinfinite,xstore_trinfinite,ystore_trinfinite,zstore_trinfinite, &
-    storekmat_trinfinite,dprecon_trinfinite)
-  endif
+    ! crust mantle
+    call poisson_stiffness(IREGION_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
+                           NGLOB_CRUST_MANTLE,ibool_crust_mantle,xstore_crust_mantle,ystore_crust_mantle, &
+                           zstore_crust_mantle,storekmat_crust_mantle,dprecon_crust_mantle)
+    ! outer core
+    call poisson_stiffness(IREGION_OUTER_CORE,NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
+                           ibool_outer_core,xstore_outer_core,ystore_outer_core,zstore_outer_core, &
+                           storekmat_outer_core,dprecon_outer_core)
+    ! inner core
+    call poisson_stiffness(IREGION_INNER_CORE,NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
+                           ibool_inner_core,xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+                           storekmat_inner_core,dprecon_inner_core)
 
-  ! infinite layer
-  call poisson_stiffnessINF(NSPEC_INFINITE,NGLOB_INFINITE, &
-  ibool_infinite,xstore_infinite,ystore_infinite,zstore_infinite, &
-  storekmat_infinite,dprecon_infinite)
+    ! transition infinite
+    if (ADD_TRINF) then
+      call poisson_stiffness(IREGION_TRINFINITE,NSPEC_TRINFINITE,NGLOB_TRINFINITE, &
+                             ibool_trinfinite,xstore_trinfinite,ystore_trinfinite,zstore_trinfinite, &
+                             storekmat_trinfinite,dprecon_trinfinite)
+    endif
 
-  call sync_all
-  ! assemble stiffness matrices
-  ! assemble across the MPI processes in a region
-  ! crust_mantle
-  call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE,dprecon_crust_mantle, &
-  num_interfaces_crust_mantle,max_nibool_interfaces_crust_mantle, &
-  nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
-  my_neighbors_crust_mantle)
+    ! infinite layer
+    call poisson_stiffnessINF(NSPEC_INFINITE,NGLOB_INFINITE, &
+                              ibool_infinite,xstore_infinite,ystore_infinite,zstore_infinite, &
+                              storekmat_infinite,dprecon_infinite)
 
-  ! outer core
-  call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_OUTER_CORE,dprecon_outer_core, &
-  num_interfaces_outer_core,max_nibool_interfaces_outer_core, &
-  nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
-  my_neighbors_outer_core)
+    call sync_all()
 
-  ! inner core
-  call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_INNER_CORE,dprecon_inner_core, &
-  num_interfaces_inner_core,max_nibool_interfaces_inner_core, &
-  nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
-  my_neighbors_inner_core)
+    ! assemble stiffness matrices
+    ! assemble across the MPI processes in a region
+    ! crust_mantle
+    call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE,dprecon_crust_mantle, &
+                             num_interfaces_crust_mantle,max_nibool_interfaces_crust_mantle, &
+                             nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
+                             my_neighbors_crust_mantle)
 
-  ! transition infinite
+    ! outer core
+    call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_OUTER_CORE,dprecon_outer_core, &
+                             num_interfaces_outer_core,max_nibool_interfaces_outer_core, &
+                             nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
+                             my_neighbors_outer_core)
 
-  if (ADD_TRINF) then
-  call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_TRINFINITE,dprecon_trinfinite, &
-  num_interfaces_trinfinite,max_nibool_interfaces_trinfinite, &
-  nibool_interfaces_trinfinite,ibool_interfaces_trinfinite, &
-  my_neighbors_trinfinite)
-  endif
+    ! inner core
+    call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_INNER_CORE,dprecon_inner_core, &
+                             num_interfaces_inner_core,max_nibool_interfaces_inner_core, &
+                             nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
+                             my_neighbors_inner_core)
 
-  ! infinite
-  call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_INFINITE,dprecon_infinite, &
-  num_interfaces_infinite,max_nibool_interfaces_infinite, &
-  nibool_interfaces_infinite,ibool_interfaces_infinite, &
-  my_neighbors_infinite)
+    ! transition infinite
 
-  call sync_all()
+    if (ADD_TRINF) then
+      call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_TRINFINITE,dprecon_trinfinite, &
+                               num_interfaces_trinfinite,max_nibool_interfaces_trinfinite, &
+                               nibool_interfaces_trinfinite,ibool_interfaces_trinfinite, &
+                               my_neighbors_trinfinite)
+    endif
 
-  ! assemble across the different regions in a process
-  dprecon = zero
-  ! crust_mantle
-  dprecon(gdof_cm)=dprecon(gdof_cm)+dprecon_crust_mantle
+    ! infinite
+    call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_INFINITE,dprecon_infinite, &
+                             num_interfaces_infinite,max_nibool_interfaces_infinite, &
+                             nibool_interfaces_infinite,ibool_interfaces_infinite, &
+                             my_neighbors_infinite)
 
-  ! outer core
-  dprecon(gdof_oc)=dprecon(gdof_oc)+dprecon_outer_core
+    call sync_all()
 
-  ! inner core
-  dprecon(gdof_ic)=dprecon(gdof_ic)+dprecon_inner_core
+    ! assemble across the different regions in a process
+    dprecon = zero
+    ! crust_mantle
+    dprecon(gdof_cm) = dprecon(gdof_cm)+dprecon_crust_mantle
 
-  ! transition infinite
+    ! outer core
+    dprecon(gdof_oc) = dprecon(gdof_oc)+dprecon_outer_core
 
-  if (ADD_TRINF) then
-    dprecon(gdof_trinf)=dprecon(gdof_trinf)+dprecon_trinfinite
-  endif
+    ! inner core
+    dprecon(gdof_ic) = dprecon(gdof_ic)+dprecon_inner_core
 
-  ! infinite
-  dprecon(gdof_inf)=dprecon(gdof_inf)+dprecon_infinite
+    ! transition infinite
 
-  dprecon(0)=0.0_CUSTOM_REAL
+    if (ADD_TRINF) then
+      dprecon(gdof_trinf) = dprecon(gdof_trinf)+dprecon_trinfinite
+    endif
 
-  call sync_all
-  !--------------------Level-2 solver
+    ! infinite
+    dprecon(gdof_inf) = dprecon(gdof_inf)+dprecon_infinite
+
+    dprecon(0) = 0.0_CUSTOM_REAL
+
+    call sync_all()
+    !--------------------Level-2 solver
   endif ! if (SOLVER_5GLL) then
+
   return
 
   end subroutine prepare_solver_poisson
@@ -704,9 +718,10 @@
 
   ismpi = .true.
 
-  if (myrank == 0 ) then
-    write(IMAIN,*) '-------------------- Preparing sparse matrix: --------------------'
-    write(IMAIN,*)
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) "  preparing sparse matrix solver"
+    call flush_IMAIN()
   endif
 
   !===============================================================================
@@ -720,13 +735,15 @@
   nedof_inf1 = NEDOFPHI1
 
   ! Maximum DOF in array - number of elements * Element_dof^2
-  nmax1=NSPEC_INNER_CORE*(nedof_ic1*nedof_ic1)+                                &
-       NSPEC_OUTER_CORE*(nedof_oc1*nedof_oc1)+                                 &
-       NSPEC_CRUST_MANTLE*(nedof_cm1*nedof_cm1)+                               &
-       NSPEC_TRINFINITE*(nedof_trinf1*nedof_trinf1)+                           &
-       NSPEC_INFINITE*(nedof_inf1*nedof_inf1)
+  nmax1 = NSPEC_INNER_CORE*(nedof_ic1*nedof_ic1)+                                &
+          NSPEC_OUTER_CORE*(nedof_oc1*nedof_oc1)+                                 &
+          NSPEC_CRUST_MANTLE*(nedof_cm1*nedof_cm1)+                               &
+          NSPEC_TRINFINITE*(nedof_trinf1*nedof_trinf1)+                           &
+          NSPEC_INFINITE*(nedof_inf1*nedof_inf1)
 
   allocate(col0(nmax1),row0(nmax1),gcol0(nmax1),grow0(nmax1),kmat0(nmax1))
+
+  !debug
   if (myrank == 0) then
     print *,' -- Elemental DOFs for IC : ', nedof_ic1
     print *,' -- Maximum DOFs (nmax1)  : ', nmax1
@@ -734,14 +751,14 @@
 
   ! Allocate map for each region
   allocate(imap_ic(nedof_ic1),imap_oc(nedof_oc1),imap_cm(nedof_cm1), &
-  imap_trinf(nedof_trinf1),imap_inf(nedof_inf1))
+           imap_trinf(nedof_trinf1),imap_inf(nedof_inf1))
 
   ! I THINK THIS SYNTAX MEANS CREATE A RANGE?
-  imap_ic=(/ (i,i = 1,NGLLCUBE_INF) /) !(/ imapu1, imapphi1 /)
-  imap_oc=(/ (i,i = 1,NGLLCUBE_INF) /) !(/ imapchi1, imapp1, imapphi1 /)
-  imap_cm=(/ (i,i = 1,NGLLCUBE_INF) /) !(/ imapu1, imapphi1 /)
-  imap_trinf=(/ (i,i = 1,NGLLCUBE_INF) /) !(/ imapphi1 /)
-  imap_inf=(/ (i,i = 1,NGLLCUBE_INF) /) !(/ imapphi1 /)
+  imap_ic = (/ (i,i = 1,NGLLCUBE_INF) /) !(/ imapu1, imapphi1 /)
+  imap_oc = (/ (i,i = 1,NGLLCUBE_INF) /) !(/ imapchi1, imapp1, imapphi1 /)
+  imap_cm = (/ (i,i = 1,NGLLCUBE_INF) /) !(/ imapu1, imapphi1 /)
+  imap_trinf = (/ (i,i = 1,NGLLCUBE_INF) /) !(/ imapphi1 /)
+  imap_inf = (/ (i,i = 1,NGLLCUBE_INF) /) !(/ imapphi1 /)
 
   ! read global degrees of freedoms from DATABASE files
   write(spm,*)myrank
@@ -770,10 +787,11 @@
   close(10)
 
   ! Find maximum ID (dof value) for any of the regions
-  ngdof1=maxscal(maxval( (/ maxval(ggdof_ic1),maxval(ggdof_oc1), &
-         maxval(ggdof_cm1),maxval(ggdof_trinf1),maxval(ggdof_inf1) /) ))
-  if (myrank == 0) write(*,'(a,i12)')' -- Total global degrees of freedom1: ',ngdof1
+  ngdof1 = maxscal(maxval( (/ maxval(ggdof_ic1),maxval(ggdof_oc1), &
+           maxval(ggdof_cm1),maxval(ggdof_trinf1),maxval(ggdof_inf1) /) ))
 
+  !debug
+  if (myrank == 0) write(*,'(a,i12)')' -- Total global degrees of freedom1: ',ngdof1
 
   ! stage 0: store all elements
   ncount = 0
@@ -781,7 +799,6 @@
   do i_elmt = 1,NSPEC_INNER_CORE
     ! Skip fictitious inner core cube
     if (idoubling_inner_core(i_elmt) == IFLAG_IN_FICTITIOUS_CUBE)cycle
-
 
     ! Note: gdof_ic1 defined in specfem_par_innercore
     ! Fetch gdof for IC element only on NGLLCUBE_INF points
@@ -797,16 +814,16 @@
         if (igdof > 0.and.jgdof > 0.and.storekmat_inner_core1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
           ncount = ncount+1
           ! Local (MPI?) map?
-          row0(ncount)=igdof
-          col0(ncount)=jgdof
+          row0(ncount) = igdof
+          col0(ncount) = jgdof
           ! Global map?
-          grow0(ncount)=ggdof_elmt1(imap_ic(i))
-          gcol0(ncount)=ggdof_elmt1(imap_ic(j))
+          grow0(ncount) = ggdof_elmt1(imap_ic(i))
+          gcol0(ncount) = ggdof_elmt1(imap_ic(j))
         endif
       enddo
     enddo
   enddo
-  call sync_all
+  call sync_all()
 
   ! outer core
   do i_elmt = 1,NSPEC_OUTER_CORE
@@ -819,10 +836,10 @@
         if (igdof > 0.and.jgdof > 0.and.storekmat_outer_core1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
           !if (myrank==0) write(1111,*) igdof,jgdof,storekmat_outer_core1(i,j,i_elmt)
           ncount = ncount+1
-          row0(ncount)=igdof
-          col0(ncount)=jgdof
-          grow0(ncount)=ggdof_elmt1(imap_oc(i))
-          gcol0(ncount)=ggdof_elmt1(imap_oc(j))
+          row0(ncount) = igdof
+          col0(ncount) = jgdof
+          grow0(ncount) = ggdof_elmt1(imap_oc(i))
+          gcol0(ncount) = ggdof_elmt1(imap_oc(j))
         endif
       enddo
     enddo
@@ -840,10 +857,10 @@
         jgdof = gdof_elmt1(imap_cm(j))
         if (igdof > 0.and.jgdof > 0.and.storekmat_crust_mantle1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
           ncount = ncount+1
-          row0(ncount)=igdof
-          col0(ncount)=jgdof
-          grow0(ncount)=ggdof_elmt1(imap_cm(i))
-          gcol0(ncount)=ggdof_elmt1(imap_cm(j))
+          row0(ncount) = igdof
+          col0(ncount) = jgdof
+          grow0(ncount) = ggdof_elmt1(imap_cm(i))
+          gcol0(ncount) = ggdof_elmt1(imap_cm(j))
         endif
       enddo
     enddo
@@ -860,10 +877,10 @@
         jgdof = gdof_elmt1(imap_trinf(j))
         if (igdof > 0.and.jgdof > 0.and.storekmat_trinfinite1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
           ncount = ncount+1
-          row0(ncount)=igdof
-          col0(ncount)=jgdof
-          grow0(ncount)=ggdof_elmt1(imap_trinf(i))
-          gcol0(ncount)=ggdof_elmt1(imap_trinf(j))
+          row0(ncount) = igdof
+          col0(ncount) = jgdof
+          grow0(ncount) = ggdof_elmt1(imap_trinf(i))
+          gcol0(ncount) = ggdof_elmt1(imap_trinf(j))
         endif
       enddo
     enddo
@@ -880,10 +897,10 @@
         jgdof = gdof_elmt1(imap_inf(j))
         if (igdof > 0.and.jgdof > 0) then
           ncount = ncount+1
-          row0(ncount)=igdof
-          col0(ncount)=jgdof
-          grow0(ncount)=ggdof_elmt1(imap_inf(i))
-          gcol0(ncount)=ggdof_elmt1(imap_inf(j))
+          row0(ncount) = igdof
+          col0(ncount) = jgdof
+          grow0(ncount) = ggdof_elmt1(imap_inf(i))
+          gcol0(ncount) = ggdof_elmt1(imap_inf(j))
         endif
       enddo
     enddo
@@ -895,60 +912,64 @@
   allocate(ind0(ncount),iorder(ncount))
   ind0 = neq1*(row0(1:ncount)-1)+col0(1:ncount)
   call i_uniinv(ind0,iorder)
-  nsparse1=maxval(iorder)
+  nsparse1 = maxval(iorder)
+
+  !debug
   if (myrank == 0) write(*,'(a,1x,i0,1x,a,1x,i0)')'  neq1:',neq1,' Nsparse1:',nsparse1
-  call sync_all
+  call sync_all()
+
   allocate(krow_sparse1(nsparse1),kcol_sparse1(nsparse1))
   allocate(kgrow_sparse1(nsparse1),kgcol_sparse1(nsparse1))
 
   !kmat_sparse1=0.0_CUSTOM_REAL
-  krow_sparse1=-1
-  kcol_sparse1=-1
-  kgrow_sparse1=-1
-  kgcol_sparse1=-1
+  krow_sparse1 = -1
+  kcol_sparse1 = -1
+  kgrow_sparse1 = -1
+  kgcol_sparse1 = -1
   do i_count = 1,ncount!nmax
-    krow_sparse1(iorder(i_count))=row0(i_count)
-    kcol_sparse1(iorder(i_count))=col0(i_count)
-    kgrow_sparse1(iorder(i_count))=grow0(i_count)
-    kgcol_sparse1(iorder(i_count))=gcol0(i_count)
+    krow_sparse1(iorder(i_count)) = row0(i_count)
+    kcol_sparse1(iorder(i_count)) = col0(i_count)
+    kgrow_sparse1(iorder(i_count)) = grow0(i_count)
+    kgcol_sparse1(iorder(i_count)) = gcol0(i_count)
   enddo
   if (minval(krow_sparse1) < 1.or.minval(kcol_sparse1) < 1.or.                  &
-  minval(kgrow_sparse1) < 1.or.minval(kgcol_sparse1) < 1) then
+      minval(kgrow_sparse1) < 1.or.minval(kgcol_sparse1) < 1) then
     write(*,*) 'ERROR: local and global indices are less than 1!'
-    stop
+    stop 'Error local and global indices are less than 1'
   endif
 
   deallocate(row0,col0,grow0,gcol0,kmat0,ind0,iorder)
   deallocate(imap_ic,imap_oc,imap_cm,imap_trinf,imap_inf)
 
-
-
   ! stage 2: assemble across processors
 
   ! local DOF to global DOF mapping
   allocate(l2gdof1(0:neq1))
-  l2gdof1=-1
-  l2gdof1(gdof_ic1)=ggdof_ic1(1,:)
-  l2gdof1(gdof_oc1)=ggdof_oc1(1,:)
-  l2gdof1(gdof_cm1)=ggdof_cm1(1,:)
-  l2gdof1(gdof_trinf1)=ggdof_trinf1(1,:)
-  l2gdof1(gdof_inf1)=ggdof_inf1(1,:)
+  l2gdof1 = -1
+  l2gdof1(gdof_ic1) = ggdof_ic1(1,:)
+  l2gdof1(gdof_oc1) = ggdof_oc1(1,:)
+  l2gdof1(gdof_cm1) = ggdof_cm1(1,:)
+  l2gdof1(gdof_trinf1) = ggdof_trinf1(1,:)
+  l2gdof1(gdof_inf1) = ggdof_inf1(1,:)
 
   do i = 1,nsparse1
     if (kgrow_sparse1(i) /= l2gdof1(krow_sparse1(i)).or.kgcol_sparse1(i) /= l2gdof1(kcol_sparse1(i))) then
       print *,'VERY STRANGE!!!!!'
-      stop
+      stop 'Error very strange sparse dof numbers should not occur'
     endif
   enddo
 
   l2gdof1 = l2gdof1-1 ! PETSC uses 0 indexing
   gmin = minvec(l2gdof1(1:))
   gmax = maxvec(l2gdof1(1:))
+
+  !debug
   if (myrank == 0) write(*,'(a,1x,i0,1x,i0)')'  l2gdof1 range:',gmin,gmax
-  call sync_all
+  call sync_all()
+
   if (minval(l2gdof1(1:)) < 0) then
     write(*,*) 'ERROR: local-to-global indices are less than 1!'
-    stop
+    stop 'Error local-to-global indices are less than 1'
   endif
 
   !===============================================================================
@@ -961,22 +982,25 @@
     nedof_trinf = NEDOFPHI
     nedof_inf = NEDOFPHI
 
-    nmax=NSPEC_INNER_CORE*(nedof_ic*nedof_ic)+                           &
-        NSPEC_OUTER_CORE*(nedof_oc*nedof_oc)+                            &
-        NSPEC_CRUST_MANTLE*(nedof_cm*nedof_cm)+                          &
-        NSPEC_TRINFINITE*(nedof_trinf*nedof_trinf)+                      &
-        NSPEC_INFINITE*(nedof_inf*nedof_inf)
+    nmax = NSPEC_INNER_CORE*(nedof_ic*nedof_ic)+                           &
+           NSPEC_OUTER_CORE*(nedof_oc*nedof_oc)+                            &
+           NSPEC_CRUST_MANTLE*(nedof_cm*nedof_cm)+                          &
+           NSPEC_TRINFINITE*(nedof_trinf*nedof_trinf)+                      &
+           NSPEC_INFINITE*(nedof_inf*nedof_inf)
     allocate(col0(nmax),row0(nmax),gcol0(nmax),grow0(nmax),kmat0(nmax))
     !allocate(col0(nmax),row0(nmax),gcol0(nmax),grow0(nmax))
-    if (myrank == 0) print *,nedof_ic,nmax
-    allocate(imap_ic(nedof_ic),imap_oc(nedof_oc),imap_cm(nedof_cm), &
-    imap_trinf(nedof_trinf),imap_inf(nedof_inf))
 
-    imap_ic=(/ (i,i = 1,NGLLCUBE) /) !(/ imapu, imapphi /)
-    imap_oc=(/ (i,i = 1,NGLLCUBE) /) !(/ imapchi, imapp, imapphi /)
-    imap_cm=(/ (i,i = 1,NGLLCUBE) /) !(/ imapu, imapphi /)
-    imap_trinf=(/ (i,i = 1,NGLLCUBE) /) !(/ imapphi /)
-    imap_inf=(/ (i,i = 1,NGLLCUBE) /) !(/ imapphi /)
+    !debug
+    if (myrank == 0) print *,'nedof_ic = ',nedof_ic,nmax
+
+    allocate(imap_ic(nedof_ic),imap_oc(nedof_oc),imap_cm(nedof_cm), &
+             imap_trinf(nedof_trinf),imap_inf(nedof_inf))
+
+    imap_ic = (/ (i,i = 1,NGLLCUBE) /) !(/ imapu, imapphi /)
+    imap_oc = (/ (i,i = 1,NGLLCUBE) /) !(/ imapchi, imapp, imapphi /)
+    imap_cm = (/ (i,i = 1,NGLLCUBE) /) !(/ imapu, imapphi /)
+    imap_trinf = (/ (i,i = 1,NGLLCUBE) /) !(/ imapphi /)
+    imap_inf = (/ (i,i = 1,NGLLCUBE) /) !(/ imapphi /)
 
     ! read global degrees of freedoms from DATABASE files
     ! inner core
@@ -1000,8 +1024,10 @@
     read(10,*)ggdof_inf
     close(10)
 
-    ngdof=maxscal(maxval( (/ maxval(ggdof_ic),maxval(ggdof_oc),maxval(ggdof_cm), &
-    maxval(ggdof_trinf),maxval(ggdof_inf) /) ))
+    ngdof = maxscal(maxval( (/ maxval(ggdof_ic),maxval(ggdof_oc),maxval(ggdof_cm), &
+                               maxval(ggdof_trinf),maxval(ggdof_inf) /) ))
+
+    !debug
     if (myrank == 0) write(*,'(a,i12)')'  Total global degrees of freedom:',ngdof
 
     ! stage 0: store all elements
@@ -1019,10 +1045,10 @@
           jgdof = gdof_elmt(imap_ic(j))
           if (igdof > 0.and.jgdof > 0.and.storekmat_inner_core(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
             ncount = ncount+1
-            row0(ncount)=igdof
-            col0(ncount)=jgdof
-            grow0(ncount)=ggdof_elmt(imap_ic(i))
-            gcol0(ncount)=ggdof_elmt(imap_ic(j))
+            row0(ncount) = igdof
+            col0(ncount) = jgdof
+            grow0(ncount) = ggdof_elmt(imap_ic(i))
+            gcol0(ncount) = ggdof_elmt(imap_ic(j))
           endif
         enddo
       enddo
@@ -1038,10 +1064,10 @@
           jgdof = gdof_elmt(imap_oc(j))
           if (igdof > 0.and.jgdof > 0.and.storekmat_outer_core(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
             ncount = ncount+1
-            row0(ncount)=igdof
-            col0(ncount)=jgdof
-            grow0(ncount)=ggdof_elmt(imap_oc(i))
-            gcol0(ncount)=ggdof_elmt(imap_oc(j))
+            row0(ncount) = igdof
+            col0(ncount) = jgdof
+            grow0(ncount) = ggdof_elmt(imap_oc(i))
+            gcol0(ncount) = ggdof_elmt(imap_oc(j))
           endif
         enddo
       enddo
@@ -1057,10 +1083,10 @@
           jgdof = gdof_elmt(imap_cm(j))
           if (igdof > 0.and.jgdof > 0.and.storekmat_crust_mantle(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
             ncount = ncount+1
-            row0(ncount)=igdof
-            col0(ncount)=jgdof
-            grow0(ncount)=ggdof_elmt(imap_cm(i))
-            gcol0(ncount)=ggdof_elmt(imap_cm(j))
+            row0(ncount) = igdof
+            col0(ncount) = jgdof
+            grow0(ncount) = ggdof_elmt(imap_cm(i))
+            gcol0(ncount) = ggdof_elmt(imap_cm(j))
           endif
         enddo
       enddo
@@ -1076,10 +1102,10 @@
           jgdof = gdof_elmt(imap_trinf(j))
           if (igdof > 0.and.jgdof > 0.and.storekmat_trinfinite(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
             ncount = ncount+1
-            row0(ncount)=igdof
-            col0(ncount)=jgdof
-            grow0(ncount)=ggdof_elmt(imap_trinf(i))
-            gcol0(ncount)=ggdof_elmt(imap_trinf(j))
+            row0(ncount) = igdof
+            col0(ncount) = jgdof
+            grow0(ncount) = ggdof_elmt(imap_trinf(i))
+            gcol0(ncount) = ggdof_elmt(imap_trinf(j))
           endif
         enddo
       enddo
@@ -1095,10 +1121,10 @@
           jgdof = gdof_elmt(imap_inf(j))
           if (igdof > 0.and.jgdof > 0) then
             ncount = ncount+1
-            row0(ncount)=igdof
-            col0(ncount)=jgdof
-            grow0(ncount)=ggdof_elmt(imap_inf(i))
-            gcol0(ncount)=ggdof_elmt(imap_inf(j))
+            row0(ncount) = igdof
+            col0(ncount) = jgdof
+            grow0(ncount) = ggdof_elmt(imap_inf(i))
+            gcol0(ncount) = ggdof_elmt(imap_inf(j))
           endif
         enddo
       enddo
@@ -1109,53 +1135,57 @@
     allocate(ind0(ncount),iorder(ncount))
     ind0 = neq*(row0(1:ncount)-1)+col0(1:ncount)
     call i_uniinv(ind0,iorder)
-    nsparse=maxval(iorder)
+    nsparse = maxval(iorder)
+
+    !debug
     if (myrank == 0) write(*,'(a,1x,i0,1x,a,1x,i0)')'  neq:',neq,' Nsparse:',nsparse
 
     allocate(krow_sparse(nsparse),kcol_sparse(nsparse))
     allocate(kgrow_sparse(nsparse),kgcol_sparse(nsparse))
 
-    krow_sparse=-1
-    kcol_sparse=-1
-    kgrow_sparse=-1
-    kgcol_sparse=-1
+    krow_sparse = -1
+    kcol_sparse = -1
+    kgrow_sparse = -1
+    kgcol_sparse = -1
     do i_count = 1,ncount
-      krow_sparse(iorder(i_count))=row0(i_count)
-      kcol_sparse(iorder(i_count))=col0(i_count)
-      kgrow_sparse(iorder(i_count))=grow0(i_count)
-      kgcol_sparse(iorder(i_count))=gcol0(i_count)
+      krow_sparse(iorder(i_count)) = row0(i_count)
+      kcol_sparse(iorder(i_count)) = col0(i_count)
+      kgrow_sparse(iorder(i_count)) = grow0(i_count)
+      kgcol_sparse(iorder(i_count)) = gcol0(i_count)
     enddo
     if (minval(krow_sparse) < 1.or.minval(kcol_sparse) < 1.or.                  &
-    minval(kgrow_sparse) < 1.or.minval(kgcol_sparse) < 1) then
+        minval(kgrow_sparse) < 1.or.minval(kgcol_sparse) < 1) then
       write(*,*) 'ERROR: local and global indices are less than 1!'
-      stop
+      stop 'Error local and global indices are less than 1'
     endif
-
 
     deallocate(row0,col0,grow0,gcol0,kmat0,ind0,iorder)
     deallocate(imap_ic,imap_oc,imap_cm,imap_trinf,imap_inf)
-
 
     ! stage 2: assemble across processors
 
     ! local DOF to global DOF mapping
     allocate(l2gdof(0:neq))
-    l2gdof=-1
-    l2gdof(gdof_ic)=ggdof_ic(1,:)
-    l2gdof(gdof_oc)=ggdof_oc(1,:)
-    l2gdof(gdof_cm)=ggdof_cm(1,:)
-    l2gdof(gdof_trinf)=ggdof_trinf(1,:)
-    l2gdof(gdof_inf)=ggdof_inf(1,:)
+    l2gdof = -1
+    l2gdof(gdof_ic) = ggdof_ic(1,:)
+    l2gdof(gdof_oc) = ggdof_oc(1,:)
+    l2gdof(gdof_cm) = ggdof_cm(1,:)
+    l2gdof(gdof_trinf) = ggdof_trinf(1,:)
+    l2gdof(gdof_inf) = ggdof_inf(1,:)
 
     l2gdof = l2gdof-1 ! PETSC uses 0 indexing
 
+    !debug
     if (myrank == 0) write(*,'(a,1x,i0,1x,i0)')'  l2gdof range:',minval(l2gdof(1:)),maxval(l2gdof(1:))
-    call sync_all
+    call sync_all()
+
     if (minval(l2gdof(1:)) < 1) then
       write(*,*) 'ERROR: local-to-global indices are less than 1!'
-      stop
+      stop 'Error local-to-global indices are less than 1'
     endif
   endif !if (SOLVER_5GLL) then
+
+  !debug
   if (myrank == 0) write(*,'(a)')'--------------------------------------------------'
 
   return
