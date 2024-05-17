@@ -119,8 +119,12 @@ jobs:
         echo "OMPI_MCA_rmaps_base_inherit=1" >> $GITHUB_ENV
         ## avoids MPI issue when running in MacOS
         echo "OMPI_MCA_btl=self,tcp" >> $GITHUB_ENV
+        # newer OpenMPI version (5.x)
+        echo "PRTE_MCA_rmaps_default_mapping_policy=:oversubscribe" >> $GITHUB_ENV
         # exports for xterm output (for make tests)
         echo "TERM=xterm" >> $GITHUB_ENV
+        # warning: (arm64)  could not find object file symbol for symbol ___mulsc3
+        echo "LDFLAGS=-lgcc" >> $GITHUB_ENV
         echo ""
         echo "exports:"
         export
