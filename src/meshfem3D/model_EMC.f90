@@ -797,7 +797,7 @@ contains
         rho = fac1 * vp + fac2 * vp_p2 + fac3 * vp_p3 + fac4 * vp_p4 + fac5 * vp_p5
 
         ! Density
-        EMC_rho(ix,iy,iz) = rho
+        EMC_rho(ix,iy,iz) = real(rho,kind=CUSTOM_REAL)
       enddo
     enddo
   enddo
@@ -861,7 +861,7 @@ contains
         vs = fac1 + fac2 * vp + fac3 * vp_p2 + fac4 * vp_p3 + fac5 * vp_p4
 
         ! Density
-        EMC_vs(ix,iy,iz) = vs
+        EMC_vs(ix,iy,iz) = real(vs,kind=CUSTOM_REAL)
       enddo
     enddo
   enddo
@@ -872,7 +872,7 @@ contains
   ! unit scaling to convert to same unit as vp
   if (EMC_vp_unit == 3) then
     ! use same unit as vp km/s -> m/s
-    EMC_vs = EMC_vs * 1000.d0
+    EMC_vs = EMC_vs * 1000.0_CUSTOM_REAL
     EMC_vs_unit = 3
   endif
 
@@ -932,7 +932,7 @@ contains
         vp = fac1 + fac2 * vs + fac3 * vs_p2 + fac4 * vs_p3 + fac5 * vs_p4
 
         ! Vp
-        EMC_vp(ix,iy,iz) = vp
+        EMC_vp(ix,iy,iz) = real(vp,kind=CUSTOM_REAL)
       enddo
     enddo
   enddo
@@ -943,7 +943,7 @@ contains
   ! unit scaling to convert to same unit as vs
   if (EMC_vs_unit == 3) then
     ! use same unit as vp km/s -> m/s
-    EMC_vp = EMC_vp * 1000.d0
+    EMC_vp = EMC_vp * 1000.0_CUSTOM_REAL
     EMC_vp_unit = 3
   endif
 
@@ -1674,9 +1674,9 @@ contains
           end select
 
           ! stores interpolated value
-          EMC_vp(ilon,ilat,idep) = vp_interp
-          EMC_vs(ilon,ilat,idep) = vs_interp
-          EMC_rho(ilon,ilat,idep) = rho_interp
+          EMC_vp(ilon,ilat,idep) = real(vp_interp,kind=CUSTOM_REAL)
+          EMC_vs(ilon,ilat,idep) = real(vs_interp,kind=CUSTOM_REAL)
+          EMC_rho(ilon,ilat,idep) = real(rho_interp,kind=CUSTOM_REAL)
 
           ! update mask flag
           tmp_mask(ilon,ilat,idep) = .false.
@@ -2553,7 +2553,7 @@ contains
   ! units: 1==m, 2==km, 3==m/s, 4==km/s, 5==g/cm^3, 6==kg/cm^3, 7==kg/m^3
   if (EMC_dep_unit == 1) then
     ! converts to km
-    EMC_dep(:) = EMC_dep(:) / 1000.d0
+    EMC_dep(:) = EMC_dep(:) / 1000.0_CUSTOM_REAL
     EMC_dep_unit = 2    ! in km
   endif
   ! converts depth reference direction to positive being down (positive depth below sealevel, negative depth above)
@@ -3030,23 +3030,23 @@ contains
   if (EMC_rho_unit == 5) then
     ! converts to kg/m^3
     ! rho [kg/m^3] = rho * 1000 [g/cm^3]
-    EMC_rho(:,:,:) = EMC_rho(:,:,:) * 1000.d0
+    EMC_rho(:,:,:) = EMC_rho(:,:,:) * 1000.0_CUSTOM_REAL
     EMC_rho_unit = 7 ! kg/m^3
   else if (EMC_rho_unit == 6) then
     ! converts to kg/m^3
     ! rho [kg/m^3] = rho * 1000000 [kg/cm^3]
-    EMC_rho(:,:,:) = EMC_rho(:,:,:) * 1.d6
+    EMC_rho(:,:,:) = EMC_rho(:,:,:) * 1.e6_CUSTOM_REAL
     EMC_rho_unit = 7 ! kg/m^3
   endif
   ! converts velocity to default m/s
   if (EMC_vp_unit == 4) then
     ! converts to m/s
-    EMC_vp(:,:,:) = EMC_vp(:,:,:) * 1000.d0
+    EMC_vp(:,:,:) = EMC_vp(:,:,:) * 1000.0_CUSTOM_REAL
     EMC_vp_unit = 3
   endif
   if (EMC_vs_unit == 4) then
     ! converts to m/s
-    EMC_vs(:,:,:) = EMC_vs(:,:,:) * 1000.d0
+    EMC_vs(:,:,:) = EMC_vs(:,:,:) * 1000.0_CUSTOM_REAL
     EMC_vs_unit = 3
   endif
 
