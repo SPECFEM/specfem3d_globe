@@ -62,6 +62,7 @@
   ! minimum radius in inner core (to avoid zero radius)
   double precision, parameter :: MINIMUM_RADIUS_INNER_CORE = 100.d0 ! in m
 
+  ! user output
   if (myrank == 0) then
     write(IMAIN,*) "preparing gravity arrays"
     call flush_IMAIN()

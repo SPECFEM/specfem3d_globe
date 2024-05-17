@@ -27,10 +27,12 @@
 
 !===============================================================================
 !> \brief Read adios arrays created by the mesher (file: regX_solver_data.bp)
+
   subroutine read_arrays_solver_adios(iregion_code, &
                                       nspec,nglob,nglob_xy, &
                                       nspec_iso,nspec_tiso,nspec_ani, &
-                                      rho_vp,rho_vs,xstore,ystore,zstore, &
+                                      rho_vp,rho_vs, &
+                                      xstore,ystore,zstore, &
                                       xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
                                       rhostore, kappavstore,muvstore,kappahstore,muhstore,eta_anisostore, &
                                       c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
@@ -215,6 +217,23 @@
   ! perform actual reading
   call read_adios_perform(myadios_file)
 
+  ! checks if anything else to do for infinite regions
+  if (iregion_code == IREGION_TRINFINITE .or. iregion_code == IREGION_INFINITE) then
+    ! ends step for this region
+    call read_adios_end_step(myadios_file)
+
+    ! Clean everything and close the ADIOS file
+    do i = 1, sel_num
+      sel => selections(i)
+      call delete_adios_selection(sel)
+    enddo
+
+    ! closes adios file & cleans/removes group object
+    call close_file_adios_read_and_finalize_method(myadios_file)
+    call delete_adios_group(myadios_group,"SolverReader")
+    return
+  endif
+
   local_dim = NGLLX * NGLLY * NGLLZ * nspec_iso  ! see read_mesh_databases for settings of nspec_iso
   start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
   sel_num = sel_num+1
@@ -391,7 +410,6 @@
   ! perform actual reading
   call read_adios_perform(myadios_file)
 
-
   if ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
       (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL .and. iregion_code == IREGION_INNER_CORE)) then
     local_dim = nglob_xy
@@ -418,13 +436,12 @@
 
     call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
                                    trim(region_name) // "rmass_ocean_load/array", rmass_ocean_load)
+    ! perform actual reading
+    call read_adios_perform(myadios_file)
   endif
 
   ! ends step for this region
   call read_adios_end_step(myadios_file)
-
-  ! perform actual reading
-  call read_adios_perform(myadios_file)
 
   ! Clean everything and close the ADIOS file
   do i = 1, sel_num

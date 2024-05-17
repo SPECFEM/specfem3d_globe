@@ -142,7 +142,7 @@ xadd_model_iso_OBJECTS = \
 	$(EMPTY_MACRO)
 
 ${E}/xadd_model_iso: $(xadd_model_iso_OBJECTS) $(xadd_model_SHARED_OBJECTS)
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(LDFLAGS) $(MPILIBS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 
 ##
@@ -154,7 +154,7 @@ xadd_model_tiso_OBJECTS = \
 	$(EMPTY_MACRO)
 
 ${E}/xadd_model_tiso: $(xadd_model_tiso_OBJECTS) $(xadd_model_SHARED_OBJECTS)
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(LDFLAGS) $(MPILIBS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 ##
 ## xadd_model_tiso_cg
@@ -165,7 +165,7 @@ xadd_model_tiso_cg_OBJECTS = \
 	$(EMPTY_MACRO)
 
 ${E}/xadd_model_tiso_cg: $(xadd_model_tiso_cg_OBJECTS) $(xadd_model_SHARED_OBJECTS)
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(LDFLAGS) $(MPILIBS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 
 ##
@@ -177,7 +177,7 @@ xadd_model_tiso_iso_OBJECTS = \
 	$(EMPTY_MACRO)
 
 ${E}/xadd_model_tiso_iso: $(xadd_model_tiso_iso_OBJECTS) $(xadd_model_SHARED_OBJECTS)
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(LDFLAGS) $(MPILIBS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 
 ##
@@ -201,7 +201,7 @@ xsum_kernels_SHARED_OBJECTS = \
 	$(EMPTY_MACRO)
 
 ${E}/xsum_kernels: $(xsum_kernels_OBJECTS) $(xsum_kernels_SHARED_OBJECTS)
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(LDFLAGS) $(MPILIBS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 ##
 ## xsum_kernels_adios
@@ -225,7 +225,7 @@ xsum_kernels_adios_SHARED_OBJECTS = \
 $O/sum_kernels.tomo_adios.o: $O/adios_manager.shared_adios_module.o
 
 ${E}/xsum_kernels_adios: $(xsum_kernels_adios_OBJECTS) $(xsum_kernels_adios_SHARED_OBJECTS)
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(LDFLAGS) $(MPILIBS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 
 ##
@@ -249,7 +249,7 @@ xsum_preconditioned_kernels_SHARED_OBJECTS = \
 	$(EMPTY_MACRO)
 
 ${E}/xsum_preconditioned_kernels: $(xsum_preconditioned_kernels_OBJECTS) $(xsum_preconditioned_kernels_SHARED_OBJECTS)
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(LDFLAGS) $(MPILIBS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 #######################################
 

@@ -703,39 +703,41 @@
 
   implicit none
 
-  integer :: NGLOB_OC
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OC) :: accel_outer_core
+  integer, intent(in) :: NGLOB_OC
+  real(kind=CUSTOM_REAL), dimension(NGLOB_OC), intent(in) :: accel_outer_core
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY) :: wgllwgll_xy
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: ibool_outer_core
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY), intent(in) :: wgllwgll_xy
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE), intent(in) :: ibool_outer_core
 
   ! crust/mantel
-  integer :: NGLOB_CM
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CM) :: displ_crust_mantle,accel_crust_mantle
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
-  integer, dimension(NSPEC2D_BOTTOM_CM) :: ibelm_bottom_crust_mantle
+  integer, intent(in) :: NGLOB_CM
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CM), intent(in) :: displ_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CM), intent(inout) :: accel_crust_mantle
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE), intent(in) :: ibool_crust_mantle
+  integer, dimension(NSPEC2D_BOTTOM_CM), intent(in) :: ibelm_bottom_crust_mantle
 
   ! inner core
-  integer :: NGLOB_IC
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_IC) :: displ_inner_core,accel_inner_core
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool_inner_core
-  integer, dimension(NSPEC2D_TOP_IC) :: ibelm_top_inner_core
+  integer, intent(in) :: NGLOB_IC
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_IC), intent(in) :: displ_inner_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_IC), intent(inout) :: accel_inner_core
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE), intent(in) :: ibool_inner_core
+  integer, dimension(NSPEC2D_TOP_IC), intent(in) :: ibelm_top_inner_core
 
   ! outer core
-  double precision :: RHO_TOP_OC
-  real(kind=CUSTOM_REAL) :: minus_g_cmb
-  double precision :: RHO_BOTTOM_OC
-  real(kind=CUSTOM_REAL) :: minus_g_icb
+  double precision, intent(in) :: RHO_TOP_OC
+  real(kind=CUSTOM_REAL), intent(in) :: minus_g_cmb
+  double precision, intent(in) :: RHO_BOTTOM_OC
+  real(kind=CUSTOM_REAL), intent(in) :: minus_g_icb
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_TOP_OC) :: normal_top_outer_core
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP_OC) :: jacobian2D_top_outer_core
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM_OC) :: normal_bottom_outer_core
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_BOTTOM_OC) :: jacobian2D_bottom_outer_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_TOP_OC), intent(in) :: normal_top_outer_core
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP_OC), intent(in) :: jacobian2D_top_outer_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM_OC), intent(in) :: normal_bottom_outer_core
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_BOTTOM_OC), intent(in) :: jacobian2D_bottom_outer_core
 
-  integer, dimension(NSPEC2D_TOP_OC) :: ibelm_top_outer_core
-  integer :: nspec_bottom
-  integer, dimension(NSPEC2D_BOTTOM_OC) :: ibelm_bottom_outer_core
-  integer :: nspec2D_top
+  integer, dimension(NSPEC2D_TOP_OC), intent(in) :: ibelm_top_outer_core
+  integer, intent(in) :: nspec_bottom
+  integer, dimension(NSPEC2D_BOTTOM_OC), intent(in) :: ibelm_bottom_outer_core
+  integer, intent(in) :: nspec2D_top
 
   ! local parameters
   real(kind=CUSTOM_REAL) :: pressure,nx,ny,nz,weight
@@ -777,12 +779,12 @@
 
         ! compute pressure, taking gravity into account
         if (GRAVITY_VAL) then
-          pressure = RHO_TOP_OC * (- accel_outer_core(iglob) &
+          pressure = real(RHO_TOP_OC,kind=CUSTOM_REAL) * (- accel_outer_core(iglob) &
              + minus_g_cmb *(displ_crust_mantle(1,iglob_mantle)*nx &
                             + displ_crust_mantle(2,iglob_mantle)*ny &
                             + displ_crust_mantle(3,iglob_mantle)*nz))
         else
-          pressure = - RHO_TOP_OC * accel_outer_core(iglob)
+          pressure = - real(RHO_TOP_OC,kind=CUSTOM_REAL) * accel_outer_core(iglob)
         endif
 
         ! formulation with generalized potential
@@ -824,12 +826,12 @@
 
         ! compute pressure, taking gravity into account
         if (GRAVITY_VAL) then
-          pressure = RHO_BOTTOM_OC * (- accel_outer_core(iglob) &
+          pressure = real(RHO_BOTTOM_OC,kind=CUSTOM_REAL) * (- accel_outer_core(iglob) &
              + minus_g_icb *(displ_inner_core(1,iglob_inner_core)*nx &
                              + displ_inner_core(2,iglob_inner_core)*ny &
                              + displ_inner_core(3,iglob_inner_core)*nz))
         else
-          pressure = - RHO_BOTTOM_OC * accel_outer_core(iglob)
+          pressure = - real(RHO_BOTTOM_OC,kind=CUSTOM_REAL) * accel_outer_core(iglob)
         endif
 
         ! formulation with generalized potential
@@ -867,26 +869,27 @@
 
   implicit none
 
-  integer :: NGLOB_CM
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CM) :: displ_crust_mantle,accel_crust_mantle
+  integer, intent(in) :: NGLOB_CM
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CM), intent(in) :: displ_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CM), intent(inout) :: accel_crust_mantle
 
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
-  integer, dimension(NSPEC2D_BOTTOM_CM) :: ibelm_bottom_crust_mantle
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE), intent(in) :: ibool_crust_mantle
+  integer, dimension(NSPEC2D_BOTTOM_CM), intent(in) :: ibelm_bottom_crust_mantle
 
-  integer :: NGLOB_OC
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OC) :: accel_outer_core
+  integer, intent(in) :: NGLOB_OC
+  real(kind=CUSTOM_REAL), dimension(NGLOB_OC), intent(in) :: accel_outer_core
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_TOP_OC) :: normal_top_outer_core
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP_OC) :: jacobian2D_top_outer_core
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY) :: wgllwgll_xy
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_TOP_OC), intent(in) :: normal_top_outer_core
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP_OC), intent(in) :: jacobian2D_top_outer_core
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY), intent(in) :: wgllwgll_xy
 
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: ibool_outer_core
-  integer, dimension(NSPEC2D_TOP_OC) :: ibelm_top_outer_core
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE), intent(in) :: ibool_outer_core
+  integer, dimension(NSPEC2D_TOP_OC), intent(in) :: ibelm_top_outer_core
 
-  double precision :: RHO_TOP_OC
-  real(kind=CUSTOM_REAL) :: minus_g_cmb
+  double precision, intent(in) :: RHO_TOP_OC
+  real(kind=CUSTOM_REAL), intent(in) :: minus_g_cmb
 
-  integer :: nspec_bottom
+  integer, intent(in) :: nspec_bottom
 
   ! local parameters
   real(kind=CUSTOM_REAL) :: pressure,nx,ny,nz,weight
@@ -928,12 +931,12 @@
 
         ! compute pressure, taking gravity into account
         if (GRAVITY_VAL) then
-          pressure = RHO_TOP_OC * (- accel_outer_core(iglob) &
+          pressure = real(RHO_TOP_OC,kind=CUSTOM_REAL) * (- accel_outer_core(iglob) &
              + minus_g_cmb *(displ_crust_mantle(1,iglob_mantle)*nx &
                             + displ_crust_mantle(2,iglob_mantle)*ny &
                             + displ_crust_mantle(3,iglob_mantle)*nz))
         else
-          pressure = - RHO_TOP_OC * accel_outer_core(iglob)
+          pressure = - real(RHO_TOP_OC,kind=CUSTOM_REAL) * accel_outer_core(iglob)
         endif
 
         ! formulation with generalized potential
@@ -970,26 +973,27 @@
 
   implicit none
 
-  integer :: NGLOB_IC
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_IC) :: displ_inner_core,accel_inner_core
+  integer, intent(in) :: NGLOB_IC
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_IC), intent(in) :: displ_inner_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_IC), intent(inout) :: accel_inner_core
 
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool_inner_core
-  integer, dimension(NSPEC2D_TOP_IC) :: ibelm_top_inner_core
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE), intent(in) :: ibool_inner_core
+  integer, dimension(NSPEC2D_TOP_IC), intent(in) :: ibelm_top_inner_core
 
   integer :: NGLOB_OC
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OC) :: accel_outer_core
+  real(kind=CUSTOM_REAL), dimension(NGLOB_OC), intent(in) :: accel_outer_core
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM_OC) :: normal_bottom_outer_core
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_BOTTOM_OC) :: jacobian2D_bottom_outer_core
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY) :: wgllwgll_xy
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM_OC), intent(in) :: normal_bottom_outer_core
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_BOTTOM_OC), intent(in) :: jacobian2D_bottom_outer_core
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY), intent(in) :: wgllwgll_xy
 
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: ibool_outer_core
-  integer, dimension(NSPEC2D_BOTTOM_OC) :: ibelm_bottom_outer_core
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE), intent(in) :: ibool_outer_core
+  integer, dimension(NSPEC2D_BOTTOM_OC), intent(in) :: ibelm_bottom_outer_core
 
-  double precision :: RHO_BOTTOM_OC
-  real(kind=CUSTOM_REAL) :: minus_g_icb
+  double precision, intent(in) :: RHO_BOTTOM_OC
+  real(kind=CUSTOM_REAL), intent(in) :: minus_g_icb
 
-  integer :: nspec2D_top
+  integer, intent(in) :: nspec2D_top
 
   ! local parameters
   real(kind=CUSTOM_REAL) :: pressure,nx,ny,nz,weight
@@ -1031,12 +1035,12 @@
 
         ! compute pressure, taking gravity into account
         if (GRAVITY_VAL) then
-          pressure = RHO_BOTTOM_OC * (- accel_outer_core(iglob) &
+          pressure = real(RHO_BOTTOM_OC,kind=CUSTOM_REAL) * (- accel_outer_core(iglob) &
              + minus_g_icb *(displ_inner_core(1,iglob_inner_core)*nx &
                              + displ_inner_core(2,iglob_inner_core)*ny &
                              + displ_inner_core(3,iglob_inner_core)*nz))
         else
-          pressure = - RHO_BOTTOM_OC * accel_outer_core(iglob)
+          pressure = - real(RHO_BOTTOM_OC,kind=CUSTOM_REAL) * accel_outer_core(iglob)
         endif
 
         ! formulation with generalized potential
@@ -1068,8 +1072,8 @@
 
   implicit none
 
-  integer,intent(in) :: NGLOB
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB),intent(inout) :: accel_crust_mantle
+  integer, intent(in) :: NGLOB
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB), intent(inout) :: accel_crust_mantle
 
   ! mass matrices
   !
@@ -1079,15 +1083,15 @@
   !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be pointers to it
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE),intent(in) :: rmassx_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE),intent(in) :: rmassy_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE),intent(in) :: rmassz_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE), intent(in) :: rmassx_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE), intent(in) :: rmassy_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE), intent(in) :: rmassz_crust_mantle
 
   ! oceans arrays
-  integer,intent(in) :: npoin_oceans
-  real(kind=CUSTOM_REAL), dimension(npoin_oceans) :: rmass_ocean_load_selected
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin_oceans) :: normal_ocean_load
-  integer, dimension(npoin_oceans) :: ibool_ocean_load
+  integer, intent(in) :: npoin_oceans
+  real(kind=CUSTOM_REAL), dimension(npoin_oceans), intent(in) :: rmass_ocean_load_selected
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin_oceans), intent(in) :: normal_ocean_load
+  integer, dimension(npoin_oceans), intent(in) :: ibool_ocean_load
 
   ! local parameters
   real(kind=CUSTOM_REAL) :: force_normal_comp,rmass

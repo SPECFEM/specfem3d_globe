@@ -157,7 +157,7 @@
         !ival = ishftc(ival, 8, 16)
         ! work-around
         itmp = ival
-        ival = ishftc(itmp, 8, 16)
+        ival = int(ishftc(itmp, 8, 16),kind=2)
 
         ! stores in array
         ibathy_topo(itopo_x,itopo_y) = ival

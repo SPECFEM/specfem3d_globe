@@ -46,9 +46,9 @@ subroutine get_gradient_steepest_iso()
 
   ! normalized radii
   ! top at 50km depth
-  KERNEL_R_TOP = (R_PLANET_KM - 50.0 ) / R_PLANET_KM ! shallow depth
+  KERNEL_R_TOP = real((R_PLANET_KM - 50.0 ) / R_PLANET_KM,kind=CUSTOM_REAL) ! shallow depth
   ! bottom at 100km depth
-  KERNEL_R_BOTTOM = (R_PLANET_KM - 100.0 ) / R_PLANET_KM ! deep depth
+  KERNEL_R_BOTTOM = real((R_PLANET_KM - 100.0 ) / R_PLANET_KM,kind=CUSTOM_REAL) ! deep depth
 
   ! allocate arrays for storing gradient
   ! isotropic arrays
@@ -136,7 +136,7 @@ subroutine get_gradient_steepest_iso()
     ! maximum of all processes stored in max_vsv
     call max_all_cr(max,max_beta)
     max = max_beta
-    depth_max = R_PLANET_KM *( 1.0 - depth_max )
+    depth_max = real(R_PLANET_KM *( 1.d0 - depth_max ),kind=CUSTOM_REAL)
   endif
 
   ! determines step length based on maximum gradient value (either shear or bulk)
@@ -263,9 +263,9 @@ subroutine get_gradient_steepest_tiso()
 
   ! normalized radii
   ! top at 50km depth
-  KERNEL_R_TOP = (R_PLANET_KM - 50.0 ) / R_PLANET_KM ! shallow depth
+  KERNEL_R_TOP = real((R_PLANET_KM - 50.0 ) / R_PLANET_KM,kind=CUSTOM_REAL) ! shallow depth
   ! bottom at 100km depth
-  KERNEL_R_BOTTOM = (R_PLANET_KM - 100.0 ) / R_PLANET_KM ! deep depth
+  KERNEL_R_BOTTOM = real((R_PLANET_KM - 100.0 ) / R_PLANET_KM,kind=CUSTOM_REAL) ! deep depth
 
   ! allocate arrays for storing gradient
   ! transversely isotropic arrays
@@ -352,7 +352,7 @@ subroutine get_gradient_steepest_tiso()
     ! maximum of all processes stored in max_vsv
     call max_all_cr(max,max_vsv)
     max = max_vsv
-    depth_max = R_PLANET_KM *( 1.0 - depth_max )
+    depth_max = real(R_PLANET_KM *( 1.d0 - depth_max ),kind=CUSTOM_REAL)
   endif
 
   ! determines step length

@@ -48,8 +48,9 @@
 
   !statistics
   logical,parameter :: DEBUG_STATISTICS = .false.
-  real(kind=CUSTOM_REAL),save :: min_410 = HUGEVAL,max_410 = - HUGEVAL
-  real(kind=CUSTOM_REAL),save :: min_650 = HUGEVAL,max_650 = - HUGEVAL
+  real(kind=CUSTOM_REAL), parameter :: HUGEVAL_REAL = real(HUGEVAL,kind=CUSTOM_REAL)
+  real(kind=CUSTOM_REAL),save :: min_410 = HUGEVAL_REAL,max_410 = - HUGEVAL_REAL
+  real(kind=CUSTOM_REAL),save :: min_650 = HUGEVAL_REAL,max_650 = - HUGEVAL_REAL
   real(kind=CUSTOM_REAL) :: min_410_all,max_410_all
   real(kind=CUSTOM_REAL) :: min_650_all,max_650_all
 

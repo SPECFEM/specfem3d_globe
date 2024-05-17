@@ -37,6 +37,9 @@ subroutine read_mesh_databases_coupling_adios()
   use specfem_par_innercore
   use specfem_par_outercore
 
+  use specfem_par_trinfinite
+  use specfem_par_infinite
+
   use adios_helpers_mod
   use manager_adios
 
@@ -407,6 +410,118 @@ subroutine read_mesh_databases_coupling_adios()
     call delete_adios_selection(sel)
   endif
 
+  ! transition-to-infinite
+  if (NSPEC_TRINFINITE > 0) then
+    write(region_name,"('reg',i1, '/')") IREGION_TRINFINITE
+
+    ! number of elements
+    call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "nspec2D_xmin",nspec2D_xmin_trinfinite)
+    call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "nspec2D_xmax",nspec2D_xmax_trinfinite)
+    call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "nspec2D_ymin",nspec2D_ymin_trinfinite)
+    call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "nspec2D_ymax",nspec2D_ymax_trinfinite)
+
+    ! boundary elements
+    local_dim = NSPEC2DMAX_XMIN_XMAX_TRINF
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
+
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "ibelm_xmin/array", ibelm_xmin_trinfinite)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "ibelm_xmax/array", ibelm_xmax_trinfinite)
+
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
+
+    local_dim = NSPEC2DMAX_YMIN_YMAX_TRINF
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
+
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "ibelm_ymin/array", ibelm_ymin_trinfinite)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "ibelm_ymax/array", ibelm_ymax_trinfinite)
+
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
+
+    local_dim = NSPEC2D_BOTTOM_TRINF
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
+
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "ibelm_bottom/array", ibelm_bottom_trinfinite)
+
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
+
+    local_dim = NSPEC2D_TOP_TRINF
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
+
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "ibelm_top/array", ibelm_top_trinfinite)
+
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
+  endif
+
+  ! infinite
+  if (NSPEC_INFINITE > 0) then
+    write(region_name,"('reg',i1, '/')") IREGION_INFINITE
+
+    ! number of elements
+    call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "nspec2D_xmin",nspec2D_xmin_infinite)
+    call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "nspec2D_xmax",nspec2D_xmax_infinite)
+    call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "nspec2D_ymin",nspec2D_ymin_infinite)
+    call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "nspec2D_ymax",nspec2D_ymax_infinite)
+
+    ! boundary elements
+    local_dim = NSPEC2DMAX_XMIN_XMAX_INF
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
+
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "ibelm_xmin/array", ibelm_xmin_infinite)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "ibelm_xmax/array", ibelm_xmax_infinite)
+
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
+
+    local_dim = NSPEC2DMAX_YMIN_YMAX_INF
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
+
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "ibelm_ymin/array", ibelm_ymin_infinite)
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "ibelm_ymax/array", ibelm_ymax_infinite)
+
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
+
+    local_dim = NSPEC2D_BOTTOM_INF
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
+
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "ibelm_bottom/array", ibelm_bottom_infinite)
+
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
+
+    local_dim = NSPEC2D_TOP_INF
+    start(1) = local_dim * int(myrank,kind=8); count(1) = local_dim
+    call set_selection_boundingbox(sel, start, count)
+
+    call read_adios_schedule_array(myadios_file, myadios_group, sel, start, count, &
+                                   trim(region_name) // "ibelm_top/array", ibelm_top_infinite)
+
+    call read_adios_perform(myadios_file)
+    call delete_adios_selection(sel)
+  endif
+
   ! closes adios file
   call close_file_adios_read_and_finalize_method(myadios_file)
   call delete_adios_group(myadios_group,"BoundaryReader")
@@ -624,6 +739,10 @@ subroutine read_mesh_databases_MPI_adios(iregion_code)
   use specfem_par_outercore
   use specfem_par_innercore
 
+  use specfem_par_trinfinite
+  use specfem_par_infinite
+  use specfem_par_full_gravity
+
   use adios_helpers_mod
   use manager_adios
 
@@ -683,16 +802,26 @@ subroutine read_mesh_databases_MPI_adios(iregion_code)
   call read_adios_scalar(myadios_file,myadios_group,myrank,trim(region_name) // "num_colors_inner",num_colors_inner)
 
   ! checks
-  if (iregion_code == IREGION_CRUST_MANTLE) then
+  select case(iregion_code)
+  case (IREGION_CRUST_MANTLE)
     nglob_tmp = NGLOB_CRUST_MANTLE
     nspec_tmp = NSPEC_CRUST_MANTLE
-  else if (iregion_code == IREGION_OUTER_CORE) then
+  case (IREGION_OUTER_CORE)
     nglob_tmp = NGLOB_OUTER_CORE
     nspec_tmp = NSPEC_OUTER_CORE
-  else
+  case (IREGION_INNER_CORE)
     nglob_tmp = NGLOB_INNER_CORE
     nspec_tmp = NSPEC_INNER_CORE
-  endif
+  case (IREGION_TRINFINITE)
+    nglob_tmp = NGLOB_TRINFINITE
+    nspec_tmp = NSPEC_TRINFINITE
+  case (IREGION_INFINITE)
+    nglob_tmp = NGLOB_INFINITE
+    nspec_tmp = NSPEC_INFINITE
+  case default
+    call exit_mpi(myrank,'Error invalid iregion_code in read_mesh_databases_MPI_adios() routine')
+  end select
+
   if (num_interfaces < 0) then
     print *,'Error: adios rank ',myrank,' num_interfaces: ',num_interfaces,'should be positive'
     call exit_mpi(myrank,'Error invalid value reading num_interfaces')
@@ -952,6 +1081,100 @@ subroutine read_mesh_databases_MPI_adios(iregion_code)
     if (USE_MESH_COLORING_GPU) then
       ! colors
       num_elem_colors_inner_core(1:(num_colors_outer + num_colors_inner)) = &
+              tmp_num_elem_colors(1:(num_colors_outer + num_colors_inner))
+    endif
+
+  case (IREGION_TRINFINITE)
+    ! transition-to-infinite
+    num_interfaces_trinfinite = num_interfaces
+    max_nibool_interfaces_trinfinite = max_nibool_interfaces
+    num_phase_ispec_trinfinite = num_phase_ispec
+    nspec_inner_trinfinite = nspec_inner
+    nspec_outer_trinfinite = nspec_outer
+    num_colors_outer_trinfinite = num_colors_outer
+    num_colors_inner_trinfinite = num_colors_inner
+
+    ! MPI arrays
+    allocate(my_neighbors_trinfinite(num_interfaces), &
+             nibool_interfaces_trinfinite(num_interfaces),stat=ierr)
+    if (ierr /= 0 ) call exit_mpi(myrank,'Error allocating array my_neighbors_trinfinite etc.')
+    if (num_interfaces > 0) then
+      my_neighbors_trinfinite(1:num_interfaces) = tmp_my_neighbors(1:num_interfaces)
+      nibool_interfaces_trinfinite(1:num_interfaces) = tmp_nibool_interfaces(1:num_interfaces)
+    endif
+
+    allocate(ibool_interfaces_trinfinite(max_nibool_interfaces,num_interfaces), stat=ierr)
+    if (ierr /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_trinfinite')
+    if (num_interfaces > 0) then
+      ibool_interfaces_trinfinite(:,:) = 0
+      do i = 1,num_interfaces
+        ibool_interfaces_trinfinite(1:max_nibool_interfaces,i) = tmp_ibool_interfaces(1:max_nibool_interfaces,i)
+      enddo
+    endif
+
+    allocate(phase_ispec_inner_trinfinite(num_phase_ispec,2),stat=ierr)
+    if (ierr /= 0 ) call exit_mpi(myrank,'Error allocating array phase_ispec_inner_trinfinite')
+    if (num_phase_ispec > 0) then
+      phase_ispec_inner_trinfinite(:,:) = 0
+      ! fills actual values
+      do i = 1,2
+        phase_ispec_inner_trinfinite(1:num_phase_ispec,i) = tmp_phase_ispec_inner(1:num_phase_ispec,i)
+      enddo
+    endif
+
+    ! mesh coloring for GPUs
+    allocate(num_elem_colors_trinfinite(num_colors_outer + num_colors_inner), stat=ierr)
+    if (ierr /= 0 ) call exit_mpi(myrank,'Error allocating num_elem_colors_trinfinite array')
+    if (USE_MESH_COLORING_GPU) then
+      ! colors
+      num_elem_colors_trinfinite(1:(num_colors_outer + num_colors_inner)) = &
+              tmp_num_elem_colors(1:(num_colors_outer + num_colors_inner))
+    endif
+
+  case (IREGION_INFINITE)
+    ! infinite
+    num_interfaces_infinite = num_interfaces
+    max_nibool_interfaces_infinite = max_nibool_interfaces
+    num_phase_ispec_infinite = num_phase_ispec
+    nspec_inner_infinite = nspec_inner
+    nspec_outer_infinite = nspec_outer
+    num_colors_outer_infinite = num_colors_outer
+    num_colors_inner_infinite = num_colors_inner
+
+    ! MPI arrays
+    allocate(my_neighbors_infinite(num_interfaces), &
+             nibool_interfaces_infinite(num_interfaces),stat=ierr)
+    if (ierr /= 0 ) call exit_mpi(myrank,'Error allocating array my_neighbors_infinite etc.')
+    if (num_interfaces > 0) then
+      my_neighbors_infinite(1:num_interfaces) = tmp_my_neighbors(1:num_interfaces)
+      nibool_interfaces_infinite(1:num_interfaces) = tmp_nibool_interfaces(1:num_interfaces)
+    endif
+
+    allocate(ibool_interfaces_infinite(max_nibool_interfaces,num_interfaces), stat=ierr)
+    if (ierr /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_infinite')
+    if (num_interfaces > 0) then
+      ibool_interfaces_infinite(:,:) = 0
+      do i = 1,num_interfaces
+        ibool_interfaces_infinite(1:max_nibool_interfaces,i) = tmp_ibool_interfaces(1:max_nibool_interfaces,i)
+      enddo
+    endif
+
+    allocate(phase_ispec_inner_infinite(num_phase_ispec,2),stat=ierr)
+    if (ierr /= 0 ) call exit_mpi(myrank,'Error allocating array phase_ispec_inner_infinite')
+    if (num_phase_ispec > 0) then
+      phase_ispec_inner_infinite(:,:) = 0
+      ! fills actual values
+      do i = 1,2
+        phase_ispec_inner_infinite(1:num_phase_ispec,i) = tmp_phase_ispec_inner(1:num_phase_ispec,i)
+      enddo
+    endif
+
+    ! mesh coloring for GPUs
+    allocate(num_elem_colors_infinite(num_colors_outer + num_colors_inner), stat=ierr)
+    if (ierr /= 0 ) call exit_mpi(myrank,'Error allocating num_elem_colors_infinite array')
+    if (USE_MESH_COLORING_GPU) then
+      ! colors
+      num_elem_colors_infinite(1:(num_colors_outer + num_colors_inner)) = &
               tmp_num_elem_colors(1:(num_colors_outer + num_colors_inner))
     endif
 

@@ -483,7 +483,8 @@
              model2(nglob_target),stat=ier)
     if (ier /= 0) stop 'Error allocating target model point arrays'
     x2(:) = 0.0_CUSTOM_REAL; y2(:) = 0.0_CUSTOM_REAL; z2(:) = 0.0_CUSTOM_REAL
-    model_distance2(:) = HUGEVAL; model2(:) = 0.0_CUSTOM_REAL
+    model_distance2(:) = real(HUGEVAL,kind=CUSTOM_REAL)
+    model2(:) = 0.0_CUSTOM_REAL
 
     ! creates cross-section points
     call set_horiz_cross_section_points(myrank,nglob_target,x2,y2,z2, &
@@ -555,7 +556,8 @@
              model2(nglob_target),stat=ier)
     if (ier /= 0) stop 'Error allocating target model point arrays'
     x2(:) = 0.0_CUSTOM_REAL; y2(:) = 0.0_CUSTOM_REAL; z2(:) = 0.0_CUSTOM_REAL
-    model_distance2(:) = HUGEVAL; model2(:) = 0.0_CUSTOM_REAL
+    model_distance2(:) = real(HUGEVAL,kind=CUSTOM_REAL)
+    model2(:) = 0.0_CUSTOM_REAL
 
     ! creates cross-section points
     call set_vertical_cross_section_points(myrank,nglob_target,x2,y2,z2, &
@@ -992,9 +994,9 @@
         iglob = iglob + 1
         if (iglob > nglob_target) stop 'Error iglob exceeds total size'
 
-        x2(iglob) = x_target
-        y2(iglob) = y_target
-        z2(iglob) = z_target
+        x2(iglob) = real(x_target,kind=CUSTOM_REAL)
+        y2(iglob) = real(y_target,kind=CUSTOM_REAL)
+        z2(iglob) = real(z_target,kind=CUSTOM_REAL)
       enddo
     enddo
   enddo
@@ -1304,9 +1306,9 @@
       iglob = iglob + 1
       if (iglob > nglob_target) stop 'Error iglob exceeds total size'
 
-      x2(iglob) = x_target
-      y2(iglob) = y_target
-      z2(iglob) = z_target
+      x2(iglob) = real(x_target,kind=CUSTOM_REAL)
+      y2(iglob) = real(y_target,kind=CUSTOM_REAL)
+      z2(iglob) = real(z_target,kind=CUSTOM_REAL)
     enddo
   enddo
   ! checks point count
@@ -1470,7 +1472,7 @@
   call synchronize_all()
 
   ! initializes closest distance
-  model_distance2(:) = HUGEVAL
+  model_distance2(:) = real(HUGEVAL,kind=CUSTOM_REAL)
 
   ! normalized search radius (around target)
   r_search = 1.d0 * typical_size
@@ -1830,7 +1832,7 @@
   if (dist_min < model_distance2(iglob)) then
 
     ! sets new minimum distance
-    model_distance2(iglob) = dist_min
+    model_distance2(iglob) = real(dist_min,kind=CUSTOM_REAL)
 
     ! interpolate model values
     call interpolate_element_value(xi,eta,gamma,ispec_selected, &
@@ -2188,7 +2190,7 @@
   logical, parameter :: PLOT_ALL_POINTS = .false.
 
   ! minimum distance allowed
-  distance_limit = 1.0 * typical_size
+  distance_limit = real(1.d0 * typical_size,kind=CUSTOM_REAL)
 
   ! opens file
   open(IOUT,file=trim(filename),status='unknown', action='write',iostat=ier)
@@ -2320,7 +2322,7 @@
   ipoints_integral = 0
 
   ! minimum distance allowed
-  distance_limit = 1.0 * typical_size
+  distance_limit = real(1.d0 * typical_size,kind=CUSTOM_REAL)
 
   ! loops over all cross-section points
   do iglob = 1,nglob_target
@@ -2335,9 +2337,9 @@
 
     ! stores lat/lon/r in x2,y2,z2 arrays
     ! such that we don't need to recompute these when writing out
-    x2(iglob) = lat
-    y2(iglob) = lon
-    z2(iglob) = r
+    x2(iglob) = real(lat,kind=CUSTOM_REAL)
+    y2(iglob) = real(lon,kind=CUSTOM_REAL)
+    z2(iglob) = real(r,kind=CUSTOM_REAL)
 
     ! distance to closest mesh point
     dist_min = model_distance2(iglob)
@@ -2407,7 +2409,7 @@
 
     ! difference
     diff = m_val - m_avg_total
-    model_diff(iglob) = diff
+    model_diff(iglob) = real(diff,kind=CUSTOM_REAL)
 
     ! relative perturbations
     ! logarithmic perturbation: log( m_new) - log( m_avg) = log( m_new / m_avg )
@@ -2423,7 +2425,7 @@
         pert = (m_val - m_avg_total) / abs(m_avg_total)
       endif
     endif
-    model_pert(iglob) = pert
+    model_pert(iglob) = real(pert,kind=CUSTOM_REAL)
 
     ! only points within close distance to mesh points will be considered for statistics
     if (dist_min < distance_limit) then

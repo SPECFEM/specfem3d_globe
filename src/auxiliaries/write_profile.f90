@@ -1211,8 +1211,8 @@
   integer,save :: slice_proc_old = 0
 
   ! converts to lat/lon
-  lat = 90.0 - theta_degrees
-  lon = phi_degrees
+  lat = real(90.d0 - theta_degrees,kind=CUSTOM_REAL)
+  lon = real(phi_degrees,kind=CUSTOM_REAL)
   ! limits value range
   if (lat < -90.0) lat = -90.0
   if (lat > 90.0) lat = 90.0
@@ -1226,8 +1226,8 @@
     xi_width = 90.0
     eta_width = 90.0
   else
-    xi_width = ANGULAR_WIDTH_XI_IN_DEGREES
-    eta_width = ANGULAR_WIDTH_ETA_IN_DEGREES
+    xi_width = real(ANGULAR_WIDTH_XI_IN_DEGREES,kind=CUSTOM_REAL)
+    eta_width = real(ANGULAR_WIDTH_ETA_IN_DEGREES,kind=CUSTOM_REAL)
   endif
 
   ! converts chunk width to radians
@@ -1306,8 +1306,8 @@
   integer :: k
 
   ! converts lat/lon from degrees to radians (colatitute/longitude)
-  theta = (90.0 - lat)/180.0 * PI
-  phi = lon/180.0 * PI
+  theta = real((90.d0 - lat)/180.d0 * PI,kind=CUSTOM_REAL)
+  phi = real(lon/180.d0 * PI,kind=CUSTOM_REAL)
 
   ! converts (r,theta,phi) to (x,y,z) on unit sphere
   r = 1.0_CUSTOM_REAL
@@ -1317,9 +1317,9 @@
     ! compute rotation matrix from Euler angles
     call euler_angles(rotation_matrix,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH)
 
-    xn = x * rotation_matrix(1,1) + y * rotation_matrix(2,1) + z * rotation_matrix(3,1)
-    yn = x * rotation_matrix(1,2) + y * rotation_matrix(2,2) + z * rotation_matrix(3,2)
-    zn = x * rotation_matrix(1,3) + y * rotation_matrix(2,3) + z * rotation_matrix(3,3)
+    xn = real(x * rotation_matrix(1,1) + y * rotation_matrix(2,1) + z * rotation_matrix(3,1),kind=CUSTOM_REAL)
+    yn = real(x * rotation_matrix(1,2) + y * rotation_matrix(2,2) + z * rotation_matrix(3,2),kind=CUSTOM_REAL)
+    zn = real(x * rotation_matrix(1,3) + y * rotation_matrix(2,3) + z * rotation_matrix(3,3),kind=CUSTOM_REAL)
 
     x = xn; y = yn; z = zn
   endif
@@ -1513,8 +1513,8 @@
   integer :: proc_xi,proc_eta
 
   ! converts chunk width to radians
-  xi_width_rad = xi_width/180.0 * PI
-  eta_width_rad = eta_width/180.0 * PI
+  xi_width_rad = real(xi_width/180.d0 * PI,kind=CUSTOM_REAL)
+  eta_width_rad = real(eta_width/180.d0 * PI,kind=CUSTOM_REAL)
 
   ! gets process/slice number
   xi1 = xi / xi_width_rad * 2.0

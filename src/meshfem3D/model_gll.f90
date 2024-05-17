@@ -41,7 +41,7 @@
   type model_gll_variables
     sequence
     ! tomographic iteration model on GLL points
-    double precision :: scale_velocity,scale_density,scale_GPa
+    real(kind=CUSTOM_REAL) :: scale_velocity,scale_density,scale_GPa
 
     ! isotropic model
     real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: vs_new,vp_new,rho_new
@@ -239,10 +239,11 @@
   ! scaling values
   ! (model velocities must be given as km/s)
   scaleval = dsqrt(PI*GRAV*RHOAV)
-  MGLL_V%scale_velocity = 1000.0d0/(R_PLANET*scaleval)
-  MGLL_V%scale_density  =  1000.0d0/RHOAV
+  MGLL_V%scale_velocity = real(1000.0d0/(R_PLANET*scaleval),kind=CUSTOM_REAL)
+  MGLL_V%scale_density  = real(1000.0d0/RHOAV,kind=CUSTOM_REAL)
   ! non-dimensionalize the elastic coefficients using the scale of GPa--[g/cm^3][(km/s)^2]
-  MGLL_V%scale_GPa      = 1.d0/( (RHOAV/1000.d0)*((R_PLANET*scaleval/1000.d0)**2) )  ! equal to scale_density * scale_velocity**2
+  ! equal to scale_density * scale_velocity**2
+  MGLL_V%scale_GPa      = real(1.d0/( (RHOAV/1000.d0)*((R_PLANET*scaleval/1000.d0)**2) ),kind=CUSTOM_REAL)
 
   select case(MGLL_TYPE)
   case (1)
@@ -288,8 +289,9 @@
       call flush_IMAIN()
     endif
     ! non-dimensionalizes
-    MGLL_V_IC%scale_velocity = 1000.0d0/(R_PLANET*scaleval)
-    MGLL_V_IC%scale_density  =  1000.0d0/RHOAV
+    MGLL_V_IC%scale_velocity = real(1000.0d0/(R_PLANET*scaleval),kind=CUSTOM_REAL)
+    MGLL_V_IC%scale_density  = real(1000.0d0/RHOAV,kind=CUSTOM_REAL)
+
     MGLL_V_IC%vp_new = MGLL_V_IC%vp_new * MGLL_V_IC%scale_velocity
     MGLL_V_IC%vs_new = MGLL_V_IC%vs_new * MGLL_V_IC%scale_velocity
     MGLL_V_IC%rho_new = MGLL_V_IC%rho_new * MGLL_V_IC%scale_density

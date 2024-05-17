@@ -67,7 +67,7 @@
   do k = 1, NGLLZ
     do j = 1, NGLLY
       do i = 1, NGLLX
-          val = val +  hxir(i) * hetar(j) * hgammar(k) * model_elem(i,j,k)
+          val = val +  real(hxir(i) * hetar(j) * hgammar(k) * model_elem(i,j,k),kind=CUSTOM_REAL)
       enddo
     enddo
   enddo
@@ -131,7 +131,7 @@
   do k = 1, NGLLZ
     do j = 1, NGLLY
       do i = 1, NGLLX
-        val = val + hxir(i) * hetar(j) * hgammar(k) * model_elem(i,j,k)
+        val = val + real(hxir(i) * hetar(j) * hgammar(k) * model_elem(i,j,k),kind=CUSTOM_REAL)
       enddo
     enddo
   enddo

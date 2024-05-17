@@ -144,8 +144,8 @@
   real(kind=CUSTOM_REAL) :: a,H,sigma
   real(kind=CUSTOM_REAL) :: g1,g2,amp,k,psd
 
-  real(kind=CUSTOM_REAL), parameter :: PI = acos(-1.d0)
-  real(kind=CUSTOM_REAL), parameter :: CONST_3HALF = 3.0 / 2.0
+  real(kind=CUSTOM_REAL), parameter :: PI = real(acos(-1.d0),kind=CUSTOM_REAL)
+  real(kind=CUSTOM_REAL), parameter :: CONST_3HALF = real(3.d0 / 2.d0,kind=CUSTOM_REAL)
 
   a = a_in    ! correlation length
   H = 0.3     ! Hurst exponent: Imperatori & Mai use H = 0.1 and 0.3
@@ -238,13 +238,13 @@
   time_start = wtime()
 
   ! estimated minimum wavelength resolved by mesh
-  lambda_min = estimated_min_wavelength
+  lambda_min = real(estimated_min_wavelength,kind=CUSTOM_REAL)
 
   ! normalized wavelength
-  lambda_min_norm = lambda_min / R_PLANET_KM
+  lambda_min_norm = real(lambda_min / R_PLANET_KM,kind=CUSTOM_REAL)
 
   ! quarter of wavelength for grid estimate (at least 5 grid points per wavelength)
-  min_length = lambda_min_norm / 4.0
+  min_length = lambda_min_norm / 4.0_CUSTOM_REAL
 
   ! total length
   length = grid_length
@@ -291,21 +291,22 @@
 
   ! wavenumbers
   ! min/max: k_max = 2 pi / (2 dx)
-  k_min = 2.0 * PI / (N * dx)
-  k_max = 2.0 * PI / (2.0 * dx)
+  k_min = real(2.d0 * PI / (N * dx),kind=CUSTOM_REAL)
+  k_max = real(2.d0 * PI / (2.0 * dx),kind=CUSTOM_REAL)
 
   ! wavenumber increment
-  dk = 2.0 * PI / (N * dx)
+  dk = real(2.d0 * PI / (N * dx),kind=CUSTOM_REAL)
 
   ! maximum index for k_max
   !index_k_max = N / 2 # k_max / dk = (2 pi / (2 dx) ) / (2 pi / (N dx) ) = (N * dx) / (2 * dx) = N / 2
 
   ! index for k_lambda_min
-  k_lambda = 2.0 * PI / (lambda_min_norm)
+  k_lambda = real(2.d0 * PI / (lambda_min_norm),kind=CUSTOM_REAL)
   index_k_lambda = int(k_lambda / dk)
 
   ! correlation length
-  a_corr = lambda_min_norm / (2.0 * PI) * SCATTERING_CORRELATION    ! such that k * a ~ 1 (for correlation factor == 1)
+  ! such that k * a ~ 1 (for correlation factor == 1)
+  a_corr = real(lambda_min_norm / (2.d0 * PI) * SCATTERING_CORRELATION,kind=CUSTOM_REAL)
 
   ! user output
   if (myrank == 0) then
@@ -401,7 +402,7 @@
           ! random phase
           call random_number(rand_phase)
           ! range [0,2pi]
-          rand_phase = rand_phase * 2.0 * PI
+          rand_phase = real(rand_phase * 2.d0 * PI,kind=CUSTOM_REAL)
           k_random = cmplx( cos(rand_phase), sin(rand_phase) )
 
           ! stores wavenumber distribution
@@ -456,7 +457,7 @@
       do j = 1,N
         do i = 1,N
           ! stores perturbations array
-          perturbation_grid(i,j,k) = real(kxyz_dist(i,j,k))
+          perturbation_grid(i,j,k) = real(kxyz_dist(i,j,k),kind=CUSTOM_REAL)
         enddo
       enddo
     enddo
@@ -478,12 +479,12 @@
 
     ! normalizes to range [-1,1]
     val_max = maxval(abs(perturbation_grid))
-    if (val_max > 0.00_CUSTOM_REAL) then
+    if (val_max > 0.0_CUSTOM_REAL) then
       perturbation_grid(:,:,:) = perturbation_grid(:,:,:) / val_max
     endif
 
     ! scales with maximum strength
-    perturbation_grid(:,:,:) = perturbation_grid(:,:,:) * SCATTERING_STRENGTH
+    perturbation_grid(:,:,:) = real(perturbation_grid(:,:,:) * SCATTERING_STRENGTH,kind=CUSTOM_REAL)
 
     ! debug
     !print *,'scattering perturbation: min/max = ',minval(perturbation_grid),'/',maxval(perturbation_grid)

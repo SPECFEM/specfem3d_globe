@@ -267,6 +267,17 @@
     COMPUTE_AND_STORE_STRAIN = .false.
   endif
 
+  ! no full gravity
+  if (.not. FULL_GRAVITY) then
+    ! zero-out region sizes
+    ! transition-to-infinite
+    NSPEC_TRINFINITE = 0
+    NGLOB_TRINFINITE = 0
+    ! infinite
+    NSPEC_INFINITE = 0
+    NGLOB_INFINITE = 0
+  endif
+
   ! checks flags
   call initialize_simulation_check()
 
@@ -595,8 +606,6 @@
         .or. NGLOB_INFINITE_ADJOINT /= NGLOB_INFINITE) &
         call exit_MPI(myrank, 'improper dimensions of adjoint arrays for infinite regions, please recompile solver')
     endif
-    ! safety stop
-    stop 'FULL_GRAVITY is not fully implemented yet, please set it to .false. for now...'
   endif
 
   end subroutine initialize_simulation_check

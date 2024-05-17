@@ -179,17 +179,18 @@
           numpoin = numpoin + 1
           num_ibool_AVS_DX(iglobval(1)) = numpoin
           write(10,*) numpoin,sngl(xstore(1,1,1,ispec)), &
-                  sngl(ystore(1,1,1,ispec)),sngl(zstore(1,1,1,ispec))
-          vmax = sqrt((kappavstore(1,1,1,ispec)+4.*muvstore(1,1,1,ispec)/3.)/rhostore(1,1,1,ispec))
+                      sngl(ystore(1,1,1,ispec)),sngl(zstore(1,1,1,ispec))
+          vmax = sqrt((kappavstore(1,1,1,ispec) &
+                       +4.*muvstore(1,1,1,ispec)/3.)/rhostore(1,1,1,ispec))
           vmin = sqrt(muvstore(1,1,1,ispec)/rhostore(1,1,1,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
           if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
             r = dsqrt(xstore(1,1,1,ispec)**2 + ystore(1,1,1,ispec)**2 + zstore(1,1,1,ispec)**2)
             call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-            vmax = vp
-            vmin = vp
+            vmax = real(vp,kind=CUSTOM_REAL)
+            vmin = real(vp,kind=CUSTOM_REAL)
           endif
-          if (vmin == 0.0) vmin=vmax
+          if (vmin == 0.0) vmin = vmax
           write(11,*) numpoin,vmin,vmax
         endif
 
@@ -197,17 +198,18 @@
           numpoin = numpoin + 1
           num_ibool_AVS_DX(iglobval(4)) = numpoin
           write(10,*) numpoin,sngl(xstore(1,NGLLY,1,ispec)), &
-                  sngl(ystore(1,NGLLY,1,ispec)),sngl(zstore(1,NGLLY,1,ispec))
-          vmax = sqrt((kappavstore(1,NGLLY,1,ispec)+4.*muvstore(1,NGLLY,1,ispec)/3.)/rhostore(1,NGLLY,1,ispec))
+                      sngl(ystore(1,NGLLY,1,ispec)),sngl(zstore(1,NGLLY,1,ispec))
+          vmax = sqrt((kappavstore(1,NGLLY,1,ispec) &
+                       +4.*muvstore(1,NGLLY,1,ispec)/3.)/rhostore(1,NGLLY,1,ispec))
           vmin = sqrt(muvstore(1,NGLLY,1,ispec)/rhostore(1,NGLLY,1,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
           if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
             r = dsqrt(xstore(1,NGLLY,1,ispec)**2 + ystore(1,NGLLY,1,ispec)**2 + zstore(1,NGLLY,1,ispec)**2)
             call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-            vmax = vp
-            vmin = vp
+            vmax = real(vp,kind=CUSTOM_REAL)
+            vmin = real(vp,kind=CUSTOM_REAL)
           endif
-          if (vmin == 0.0) vmin=vmax
+          if (vmin == 0.0) vmin = vmax
           write(11,*) numpoin,vmin,vmax
         endif
 
@@ -215,17 +217,18 @@
           numpoin = numpoin + 1
           num_ibool_AVS_DX(iglobval(8)) = numpoin
           write(10,*) numpoin,sngl(xstore(1,NGLLY,NGLLZ,ispec)), &
-                  sngl(ystore(1,NGLLY,NGLLZ,ispec)),sngl(zstore(1,NGLLY,NGLLZ,ispec))
-          vmax = sqrt((kappavstore(1,NGLLY,NGLLZ,ispec)+4.*muvstore(1,NGLLY,NGLLZ,ispec)/3.)/rhostore(1,NGLLY,NGLLZ,ispec))
+                      sngl(ystore(1,NGLLY,NGLLZ,ispec)),sngl(zstore(1,NGLLY,NGLLZ,ispec))
+          vmax = sqrt((kappavstore(1,NGLLY,NGLLZ,ispec) &
+                       +4.*muvstore(1,NGLLY,NGLLZ,ispec)/3.)/rhostore(1,NGLLY,NGLLZ,ispec))
           vmin = sqrt(muvstore(1,NGLLY,NGLLZ,ispec)/rhostore(1,NGLLY,NGLLZ,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
         if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
           r = dsqrt(xstore(1,NGLLY,NGLLZ,ispec)**2 + ystore(1,NGLLY,NGLLZ,ispec)**2 + zstore(1,NGLLY,NGLLZ,ispec)**2)
           call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-          vmax = vp
-          vmin = vp
+          vmax = real(vp,kind=CUSTOM_REAL)
+          vmin = real(vp,kind=CUSTOM_REAL)
         endif
-        if (vmin == 0.0) vmin=vmax
+        if (vmin == 0.0) vmin = vmax
         write(11,*) numpoin,vmin,vmax
       endif
 
@@ -233,17 +236,18 @@
         numpoin = numpoin + 1
         num_ibool_AVS_DX(iglobval(5)) = numpoin
         write(10,*) numpoin,sngl(xstore(1,1,NGLLZ,ispec)), &
-                sngl(ystore(1,1,NGLLZ,ispec)),sngl(zstore(1,1,NGLLZ,ispec))
-        vmax = sqrt((kappavstore(1,1,NGLLZ,ispec)+4.*muvstore(1,1,NGLLZ,ispec)/3.)/rhostore(1,1,NGLLZ,ispec))
+                    sngl(ystore(1,1,NGLLZ,ispec)),sngl(zstore(1,1,NGLLZ,ispec))
+        vmax = sqrt((kappavstore(1,1,NGLLZ,ispec) &
+                     +4.*muvstore(1,1,NGLLZ,ispec)/3.)/rhostore(1,1,NGLLZ,ispec))
         vmin = sqrt(muvstore(1,1,NGLLZ,ispec)/rhostore(1,1,NGLLZ,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
         if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
           r = dsqrt(xstore(1,1,NGLLZ,ispec)**2 + ystore(1,1,NGLLZ,ispec)**2 + zstore(1,1,NGLLZ,ispec)**2)
           call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-          vmax = vp
-          vmin = vp
+          vmax = real(vp,kind=CUSTOM_REAL)
+          vmin = real(vp,kind=CUSTOM_REAL)
         endif
-        if (vmin == 0.0) vmin=vmax
+        if (vmin == 0.0) vmin = vmax
         write(11,*) numpoin,vmin,vmax
       endif
 
@@ -260,17 +264,18 @@
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglobval(2)) = numpoin
       write(10,*) numpoin,sngl(xstore(NGLLX,1,1,ispec)), &
-              sngl(ystore(NGLLX,1,1,ispec)),sngl(zstore(NGLLX,1,1,ispec))
-      vmax = sqrt((kappavstore(NGLLX,1,1,ispec)+4.*muvstore(NGLLX,1,1,ispec)/3.)/rhostore(NGLLX,1,1,ispec))
+                  sngl(ystore(NGLLX,1,1,ispec)),sngl(zstore(NGLLX,1,1,ispec))
+      vmax = sqrt((kappavstore(NGLLX,1,1,ispec) &
+                   +4.*muvstore(NGLLX,1,1,ispec)/3.)/rhostore(NGLLX,1,1,ispec))
       vmin = sqrt(muvstore(NGLLX,1,1,ispec)/rhostore(NGLLX,1,1,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(NGLLX,1,1,ispec)**2 + ystore(NGLLX,1,1,ispec)**2 + zstore(NGLLX,1,1,ispec)**2)
     call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-    vmax = vp
-    vmin = vp
+    vmax = real(vp,kind=CUSTOM_REAL)
+    vmin = real(vp,kind=CUSTOM_REAL)
   endif
-      if (vmin == 0.0) vmin=vmax
+      if (vmin == 0.0) vmin = vmax
       write(11,*) numpoin,vmin,vmax
     endif
 
@@ -278,17 +283,18 @@
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglobval(3)) = numpoin
       write(10,*) numpoin,sngl(xstore(NGLLX,NGLLY,1,ispec)), &
-              sngl(ystore(NGLLX,NGLLY,1,ispec)),sngl(zstore(NGLLX,NGLLY,1,ispec))
-      vmax = sqrt((kappavstore(NGLLX,NGLLY,1,ispec)+4.*muvstore(NGLLX,NGLLY,1,ispec)/3.)/rhostore(NGLLX,NGLLY,1,ispec))
+                  sngl(ystore(NGLLX,NGLLY,1,ispec)),sngl(zstore(NGLLX,NGLLY,1,ispec))
+      vmax = sqrt((kappavstore(NGLLX,NGLLY,1,ispec) &
+                   +4.*muvstore(NGLLX,NGLLY,1,ispec)/3.)/rhostore(NGLLX,NGLLY,1,ispec))
       vmin = sqrt(muvstore(NGLLX,NGLLY,1,ispec)/rhostore(NGLLX,NGLLY,1,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(NGLLX,NGLLY,1,ispec)**2 + ystore(NGLLX,NGLLY,1,ispec)**2 + zstore(NGLLX,NGLLY,1,ispec)**2)
     call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-    vmax = vp
-    vmin = vp
+    vmax = real(vp,kind=CUSTOM_REAL)
+    vmin = real(vp,kind=CUSTOM_REAL)
   endif
-      if (vmin == 0.0) vmin=vmax
+      if (vmin == 0.0) vmin = vmax
       write(11,*) numpoin,vmin,vmax
     endif
 
@@ -296,17 +302,18 @@
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglobval(7)) = numpoin
       write(10,*) numpoin,sngl(xstore(NGLLX,NGLLY,NGLLZ,ispec)), &
-              sngl(ystore(NGLLX,NGLLY,NGLLZ,ispec)),sngl(zstore(NGLLX,NGLLY,NGLLZ,ispec))
-      vmax = sqrt((kappavstore(NGLLX,NGLLY,NGLLZ,ispec)+4.*muvstore(NGLLX,NGLLY,NGLLZ,ispec)/3.)/rhostore(NGLLX,NGLLY,NGLLZ,ispec))
+                  sngl(ystore(NGLLX,NGLLY,NGLLZ,ispec)),sngl(zstore(NGLLX,NGLLY,NGLLZ,ispec))
+      vmax = sqrt((kappavstore(NGLLX,NGLLY,NGLLZ,ispec) &
+                   +4.*muvstore(NGLLX,NGLLY,NGLLZ,ispec)/3.)/rhostore(NGLLX,NGLLY,NGLLZ,ispec))
       vmin = sqrt(muvstore(NGLLX,NGLLY,NGLLZ,ispec)/rhostore(NGLLX,NGLLY,NGLLZ,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(NGLLX,NGLLY,NGLLZ,ispec)**2 + ystore(NGLLX,NGLLY,NGLLZ,ispec)**2 + zstore(NGLLX,NGLLY,NGLLZ,ispec)**2)
     call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-    vmax = vp
-    vmin = vp
+    vmax = real(vp,kind=CUSTOM_REAL)
+    vmin = real(vp,kind=CUSTOM_REAL)
   endif
-      if (vmin == 0.0) vmin=vmax
+      if (vmin == 0.0) vmin = vmax
       write(11,*) numpoin,vmin,vmax
     endif
 
@@ -314,17 +321,18 @@
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglobval(6)) = numpoin
       write(10,*) numpoin,sngl(xstore(NGLLX,1,NGLLZ,ispec)), &
-              sngl(ystore(NGLLX,1,NGLLZ,ispec)),sngl(zstore(NGLLX,1,NGLLZ,ispec))
-      vmax = sqrt((kappavstore(NGLLX,1,NGLLZ,ispec)+4.*muvstore(NGLLX,1,NGLLZ,ispec)/3.)/rhostore(NGLLX,1,NGLLZ,ispec))
+                  sngl(ystore(NGLLX,1,NGLLZ,ispec)),sngl(zstore(NGLLX,1,NGLLZ,ispec))
+      vmax = sqrt((kappavstore(NGLLX,1,NGLLZ,ispec) &
+                   +4.*muvstore(NGLLX,1,NGLLZ,ispec)/3.)/rhostore(NGLLX,1,NGLLZ,ispec))
       vmin = sqrt(muvstore(NGLLX,1,NGLLZ,ispec)/rhostore(NGLLX,1,NGLLZ,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(NGLLX,1,NGLLZ,ispec)**2 + ystore(NGLLX,1,NGLLZ,ispec)**2 + zstore(NGLLX,1,NGLLZ,ispec)**2)
     call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-    vmax = vp
-    vmin = vp
+    vmax = real(vp,kind=CUSTOM_REAL)
+    vmin = real(vp,kind=CUSTOM_REAL)
   endif
-      if (vmin == 0.0) vmin=vmax
+      if (vmin == 0.0) vmin = vmax
       write(11,*) numpoin,vmin,vmax
     endif
 
@@ -341,17 +349,18 @@
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglobval(1)) = numpoin
       write(10,*) numpoin,sngl(xstore(1,1,1,ispec)), &
-              sngl(ystore(1,1,1,ispec)),sngl(zstore(1,1,1,ispec))
-      vmax = sqrt((kappavstore(1,1,1,ispec)+4.*muvstore(1,1,1,ispec)/3.)/rhostore(1,1,1,ispec))
+                  sngl(ystore(1,1,1,ispec)),sngl(zstore(1,1,1,ispec))
+      vmax = sqrt((kappavstore(1,1,1,ispec) &
+                   +4.*muvstore(1,1,1,ispec)/3.)/rhostore(1,1,1,ispec))
       vmin = sqrt(muvstore(1,1,1,ispec)/rhostore(1,1,1,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(1,1,1,ispec)**2 + ystore(1,1,1,ispec)**2 + zstore(1,1,1,ispec)**2)
     call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-    vmax = vp
-    vmin = vp
+    vmax = real(vp,kind=CUSTOM_REAL)
+    vmin = real(vp,kind=CUSTOM_REAL)
   endif
-      if (vmin == 0.0) vmin=vmax
+      if (vmin == 0.0) vmin = vmax
       write(11,*) numpoin,vmin,vmax
     endif
 
@@ -359,17 +368,18 @@
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglobval(2)) = numpoin
       write(10,*) numpoin,sngl(xstore(NGLLX,1,1,ispec)), &
-              sngl(ystore(NGLLX,1,1,ispec)),sngl(zstore(NGLLX,1,1,ispec))
-      vmax = sqrt((kappavstore(NGLLX,1,1,ispec)+4.*muvstore(NGLLX,1,1,ispec)/3.)/rhostore(NGLLX,1,1,ispec))
+                  sngl(ystore(NGLLX,1,1,ispec)),sngl(zstore(NGLLX,1,1,ispec))
+      vmax = sqrt((kappavstore(NGLLX,1,1,ispec) &
+                   +4.*muvstore(NGLLX,1,1,ispec)/3.)/rhostore(NGLLX,1,1,ispec))
       vmin = sqrt(muvstore(NGLLX,1,1,ispec)/rhostore(NGLLX,1,1,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(NGLLX,1,1,ispec)**2 + ystore(NGLLX,1,1,ispec)**2 + zstore(NGLLX,1,1,ispec)**2)
     call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-    vmax = vp
-    vmin = vp
+    vmax = real(vp,kind=CUSTOM_REAL)
+    vmin = real(vp,kind=CUSTOM_REAL)
   endif
-      if (vmin == 0.0) vmin=vmax
+      if (vmin == 0.0) vmin = vmax
       write(11,*) numpoin,vmin,vmax
     endif
 
@@ -377,17 +387,18 @@
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglobval(6)) = numpoin
       write(10,*) numpoin,sngl(xstore(NGLLX,1,NGLLZ,ispec)), &
-              sngl(ystore(NGLLX,1,NGLLZ,ispec)),sngl(zstore(NGLLX,1,NGLLZ,ispec))
-      vmax = sqrt((kappavstore(NGLLX,1,NGLLZ,ispec)+4.*muvstore(NGLLX,1,NGLLZ,ispec)/3.)/rhostore(NGLLX,1,NGLLZ,ispec))
+                  sngl(ystore(NGLLX,1,NGLLZ,ispec)),sngl(zstore(NGLLX,1,NGLLZ,ispec))
+      vmax = sqrt((kappavstore(NGLLX,1,NGLLZ,ispec) &
+                   +4.*muvstore(NGLLX,1,NGLLZ,ispec)/3.)/rhostore(NGLLX,1,NGLLZ,ispec))
       vmin = sqrt(muvstore(NGLLX,1,NGLLZ,ispec)/rhostore(NGLLX,1,NGLLZ,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(NGLLX,1,NGLLZ,ispec)**2 + ystore(NGLLX,1,NGLLZ,ispec)**2 + zstore(NGLLX,1,NGLLZ,ispec)**2)
     call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-    vmax = vp
-    vmin = vp
+    vmax = real(vp,kind=CUSTOM_REAL)
+    vmin = real(vp,kind=CUSTOM_REAL)
   endif
-      if (vmin == 0.0) vmin=vmax
+      if (vmin == 0.0) vmin = vmax
       write(11,*) numpoin,vmin,vmax
     endif
 
@@ -395,17 +406,18 @@
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglobval(5)) = numpoin
       write(10,*) numpoin,sngl(xstore(1,1,NGLLZ,ispec)), &
-              sngl(ystore(1,1,NGLLZ,ispec)),sngl(zstore(1,1,NGLLZ,ispec))
-      vmax = sqrt((kappavstore(1,1,NGLLZ,ispec)+4.*muvstore(1,1,NGLLZ,ispec)/3.)/rhostore(1,1,NGLLZ,ispec))
+                  sngl(ystore(1,1,NGLLZ,ispec)),sngl(zstore(1,1,NGLLZ,ispec))
+      vmax = sqrt((kappavstore(1,1,NGLLZ,ispec) &
+                   +4.*muvstore(1,1,NGLLZ,ispec)/3.)/rhostore(1,1,NGLLZ,ispec))
       vmin = sqrt(muvstore(1,1,NGLLZ,ispec)/rhostore(1,1,NGLLZ,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(1,1,NGLLZ,ispec)**2 + ystore(1,1,NGLLZ,ispec)**2 + zstore(1,1,NGLLZ,ispec)**2)
     call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-    vmax = vp
-    vmin = vp
+    vmax = real(vp,kind=CUSTOM_REAL)
+    vmin = real(vp,kind=CUSTOM_REAL)
   endif
-      if (vmin == 0.0) vmin=vmax
+      if (vmin == 0.0) vmin = vmax
       write(11,*) numpoin,vmin,vmax
     endif
 
@@ -423,16 +435,17 @@
       num_ibool_AVS_DX(iglobval(4)) = numpoin
       write(10,*) numpoin,sngl(xstore(1,NGLLY,1,ispec)), &
               sngl(ystore(1,NGLLY,1,ispec)),sngl(zstore(1,NGLLY,1,ispec))
-      vmax = sqrt((kappavstore(1,NGLLY,1,ispec)+4.*muvstore(1,NGLLY,1,ispec)/3.)/rhostore(1,NGLLY,1,ispec))
+      vmax = sqrt((kappavstore(1,NGLLY,1,ispec) &
+                   +4.*muvstore(1,NGLLY,1,ispec)/3.)/rhostore(1,NGLLY,1,ispec))
       vmin = sqrt(muvstore(1,NGLLY,1,ispec)/rhostore(1,NGLLY,1,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(1,NGLLY,1,ispec)**2 + ystore(1,NGLLY,1,ispec)**2 + zstore(1,NGLLY,1,ispec)**2)
     call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-    vmax = vp
-    vmin = vp
+    vmax = real(vp,kind=CUSTOM_REAL)
+    vmin = real(vp,kind=CUSTOM_REAL)
   endif
-      if (vmin == 0.0) vmin=vmax
+      if (vmin == 0.0) vmin = vmax
       write(11,*) numpoin,vmin,vmax
     endif
 
@@ -440,17 +453,18 @@
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglobval(3)) = numpoin
       write(10,*) numpoin,sngl(xstore(NGLLX,NGLLY,1,ispec)), &
-              sngl(ystore(NGLLX,NGLLY,1,ispec)),sngl(zstore(NGLLX,NGLLY,1,ispec))
-      vmax = sqrt((kappavstore(NGLLX,NGLLY,1,ispec)+4.*muvstore(NGLLX,NGLLY,1,ispec)/3.)/rhostore(NGLLX,NGLLY,1,ispec))
+                  sngl(ystore(NGLLX,NGLLY,1,ispec)),sngl(zstore(NGLLX,NGLLY,1,ispec))
+      vmax = sqrt((kappavstore(NGLLX,NGLLY,1,ispec) &
+                   +4.*muvstore(NGLLX,NGLLY,1,ispec)/3.)/rhostore(NGLLX,NGLLY,1,ispec))
       vmin = sqrt(muvstore(NGLLX,NGLLY,1,ispec)/rhostore(NGLLX,NGLLY,1,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(NGLLX,NGLLY,1,ispec)**2 + ystore(NGLLX,NGLLY,1,ispec)**2 + zstore(NGLLX,NGLLY,1,ispec)**2)
     call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-    vmax = vp
-    vmin = vp
+    vmax = real(vp,kind=CUSTOM_REAL)
+    vmin = real(vp,kind=CUSTOM_REAL)
   endif
-      if (vmin == 0.0) vmin=vmax
+      if (vmin == 0.0) vmin = vmax
       write(11,*) numpoin,vmin,vmax
     endif
 
@@ -458,17 +472,18 @@
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglobval(7)) = numpoin
       write(10,*) numpoin,sngl(xstore(NGLLX,NGLLY,NGLLZ,ispec)), &
-              sngl(ystore(NGLLX,NGLLY,NGLLZ,ispec)),sngl(zstore(NGLLX,NGLLY,NGLLZ,ispec))
-      vmax = sqrt((kappavstore(NGLLX,NGLLY,NGLLZ,ispec)+4.*muvstore(NGLLX,NGLLY,NGLLZ,ispec)/3.)/rhostore(NGLLX,NGLLY,NGLLZ,ispec))
+                  sngl(ystore(NGLLX,NGLLY,NGLLZ,ispec)),sngl(zstore(NGLLX,NGLLY,NGLLZ,ispec))
+      vmax = sqrt((kappavstore(NGLLX,NGLLY,NGLLZ,ispec) &
+                   +4.*muvstore(NGLLX,NGLLY,NGLLZ,ispec)/3.)/rhostore(NGLLX,NGLLY,NGLLZ,ispec))
       vmin = sqrt(muvstore(NGLLX,NGLLY,NGLLZ,ispec)/rhostore(NGLLX,NGLLY,NGLLZ,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(NGLLX,NGLLY,NGLLZ,ispec)**2 + ystore(NGLLX,NGLLY,NGLLZ,ispec)**2 + zstore(NGLLX,NGLLY,NGLLZ,ispec)**2)
     call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-    vmax = vp
-    vmin = vp
+    vmax = real(vp,kind=CUSTOM_REAL)
+    vmin = real(vp,kind=CUSTOM_REAL)
   endif
-      if (vmin == 0.0) vmin=vmax
+      if (vmin == 0.0) vmin = vmax
       write(11,*) numpoin,vmin,vmax
     endif
 
@@ -477,16 +492,17 @@
       num_ibool_AVS_DX(iglobval(8)) = numpoin
       write(10,*) numpoin,sngl(xstore(1,NGLLY,NGLLZ,ispec)), &
               sngl(ystore(1,NGLLY,NGLLZ,ispec)),sngl(zstore(1,NGLLY,NGLLZ,ispec))
-      vmax = sqrt((kappavstore(1,NGLLY,NGLLZ,ispec)+4.*muvstore(1,NGLLY,NGLLZ,ispec)/3.)/rhostore(1,NGLLY,NGLLZ,ispec))
+      vmax = sqrt((kappavstore(1,NGLLY,NGLLZ,ispec) &
+                   +4.*muvstore(1,NGLLY,NGLLZ,ispec)/3.)/rhostore(1,NGLLY,NGLLZ,ispec))
       vmin = sqrt(muvstore(1,NGLLY,NGLLZ,ispec)/rhostore(1,NGLLY,NGLLZ,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(1,NGLLY,NGLLZ,ispec)**2 + ystore(1,NGLLY,NGLLZ,ispec)**2 + zstore(1,NGLLY,NGLLZ,ispec)**2)
     call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-    vmax = vp
-    vmin = vp
+    vmax = real(vp,kind=CUSTOM_REAL)
+    vmin = real(vp,kind=CUSTOM_REAL)
   endif
-      if (vmin == 0.0) vmin=vmax
+      if (vmin == 0.0) vmin = vmax
       write(11,*) numpoin,vmin,vmax
     endif
 
@@ -582,7 +598,8 @@
               print *,' attention: vs close to zero',sngl(vs),r,i,j,k,ispec
               dvs = 0.0
             else
-              dvp = dvp + (sqrt((kappavstore(i,j,k,ispec)+4.*muvstore(i,j,k,ispec)/3.)/rhostore(i,j,k,ispec)) - sngl(vp))/sngl(vp)
+              dvp = dvp + (sqrt((kappavstore(i,j,k,ispec) &
+                                 +4.*muvstore(i,j,k,ispec)/3.)/rhostore(i,j,k,ispec)) - sngl(vp))/sngl(vp)
               dvs = dvs + (sqrt(muvstore(i,j,k,ispec)/rhostore(i,j,k,ispec)) - sngl(vs))/sngl(vs)
             endif
 

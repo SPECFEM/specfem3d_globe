@@ -142,7 +142,7 @@
     call exit_MPI(myrank, 'Only deal with 6 chunks at this moment')
   endif
 
-  xi_width = PI/2; eta_width = PI/2
+  xi_width = real(PI/2.d0,kind=CUSTOM_REAL); eta_width = real(PI/2.d0,kind=CUSTOM_REAL)
   nproc = NPROC_XI_VAL
   ilayer = 0
 
@@ -153,9 +153,9 @@
 
     ! (lat,lon,radius) for isp point
     lat = KL_REG_MIN_LAT + ilat * GRID%dlat * GRID%ndoubling(ilayer)
-    th = (90 - lat) * DEGREES_TO_RADIANS
+    th = real((90 - lat) * DEGREES_TO_RADIANS)
     lon = KL_REG_MIN_LON + (ilon - 1) * GRID%dlon * GRID%ndoubling(ilayer)
-    ph = lon * DEGREES_TO_RADIANS
+    ph = real(lon * DEGREES_TO_RADIANS)
     x = sin(th) * cos(ph); y = sin(th) * sin(ph); z = cos(th)
 
     ! figure out slice number
@@ -378,9 +378,9 @@
     call lagrange_any2(eta, NGLLY, yigll, hetar)
     call lagrange_any2(gamma, NGLLZ, zigll, hgammar)
 
-    hxir_reg(:,ipoint) = hxir(:)
-    hetar_reg(:,ipoint) = hetar(:)
-    hgammar_reg(:,ipoint) = hgammar(:)
+    hxir_reg(:,ipoint) = real(hxir(:),kind=CUSTOM_REAL)
+    hetar_reg(:,ipoint) = real(hetar(:),kind=CUSTOM_REAL)
+    hgammar_reg(:,ipoint) = real(hgammar(:),kind=CUSTOM_REAL)
 
   enddo ! ipoint
 

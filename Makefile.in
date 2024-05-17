@@ -54,6 +54,10 @@ CXXFLAGS = -I${SETUP} @CXXFLAGS@
 
 FCLINK = $(MPIFCCOMPILE_CHECK)
 
+# all linker flags
+LDFLAGS = @LDFLAGS@
+MPILIBS += $(LDFLAGS) @LIBS@
+
 #######################################
 ####
 #### MPI

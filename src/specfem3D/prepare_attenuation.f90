@@ -277,10 +277,10 @@
             L_dble = 0.5d0 * (d44 + d55)
             F_dble = 0.5d0 * (d13 + d23)
 
-            eta_aniso = F_dble / (A_dble - 2.d0*L_dble)   ! eta = F / (A-2L)
+            eta_aniso = real(F_dble / (A_dble - 2.d0*L_dble),kind=CUSTOM_REAL)   ! eta = F / (A-2L)
 
-            muvl = L_dble * scale_factor_minus_one     ! c44 - > L - > muv
-            muhl = N_dble * scale_factor_minus_one     ! c66 - > N - > muh
+            muvl = real(L_dble * scale_factor_minus_one,kind=CUSTOM_REAL)     ! c44 - > L - > muv
+            muhl = real(N_dble * scale_factor_minus_one,kind=CUSTOM_REAL)     ! c66 - > N - > muh
 
             d11 = d11 + FOUR_THIRDS * muhl ! * minus_sum_beta * mul
             d12 = d12 - TWO_THIRDS * muhl
@@ -327,7 +327,7 @@
             c66store_crust_mantle(i,j,k,ispec) = real(g66,kind=CUSTOM_REAL)
 
             ! for attenuation
-            muvstore_crust_mantle(i,j,k,ispec) = L_dble * scale_factor
+            muvstore_crust_mantle(i,j,k,ispec) = real(L_dble * scale_factor,kind=CUSTOM_REAL)
 
           else
             ! isotropic or transverse isotropic element
@@ -336,11 +336,11 @@
               muvstore_crust_mantle_3dmovie(i,j,k,ispec) = muvstore_crust_mantle(i,j,k,ispec)
             endif
 
-            muvstore_crust_mantle(i,j,k,ispec) = muvstore_crust_mantle(i,j,k,ispec) * scale_factor
+            muvstore_crust_mantle(i,j,k,ispec) = real(muvstore_crust_mantle(i,j,k,ispec) * scale_factor,kind=CUSTOM_REAL)
 
             ! scales transverse isotropic values for mu_h
             if (ispec_is_tiso_crust_mantle(ispec)) then
-              muhstore_crust_mantle(i,j,k,ispec) = muhstore_crust_mantle(i,j,k,ispec) * scale_factor
+              muhstore_crust_mantle(i,j,k,ispec) = real(muhstore_crust_mantle(i,j,k,ispec) * scale_factor,kind=CUSTOM_REAL)
             endif
           endif
 
@@ -369,19 +369,19 @@
 
             mul = c44store_inner_core(i,j,k,ispec)
             c11store_inner_core(i,j,k,ispec) = c11store_inner_core(i,j,k,ispec) &
-                    + FOUR_THIRDS * scale_factor_minus_one * mul
+                    + real(FOUR_THIRDS * scale_factor_minus_one * mul,kind=CUSTOM_REAL)
             c12store_inner_core(i,j,k,ispec) = c12store_inner_core(i,j,k,ispec) &
-                    - TWO_THIRDS * scale_factor_minus_one * mul
+                    - real(TWO_THIRDS * scale_factor_minus_one * mul,kind=CUSTOM_REAL)
             c13store_inner_core(i,j,k,ispec) = c13store_inner_core(i,j,k,ispec) &
-                    - TWO_THIRDS * scale_factor_minus_one * mul
+                    - real(TWO_THIRDS * scale_factor_minus_one * mul,kind=CUSTOM_REAL)
             c33store_inner_core(i,j,k,ispec) = c33store_inner_core(i,j,k,ispec) &
-                    + FOUR_THIRDS * scale_factor_minus_one * mul
+                    + real(FOUR_THIRDS * scale_factor_minus_one * mul,kind=CUSTOM_REAL)
             c44store_inner_core(i,j,k,ispec) = c44store_inner_core(i,j,k,ispec) &
-                    + scale_factor_minus_one * mul
+                    + real(scale_factor_minus_one * mul,kind=CUSTOM_REAL)
             ! for attenuation
-            muvstore_inner_core(i,j,k,ispec) = mul * scale_factor
+            muvstore_inner_core(i,j,k,ispec) = real(mul * scale_factor,kind=CUSTOM_REAL)
           else
-            muvstore_inner_core(i,j,k,ispec) = muvstore_inner_core(i,j,k,ispec) * scale_factor
+            muvstore_inner_core(i,j,k,ispec) = real(muvstore_inner_core(i,j,k,ispec) * scale_factor,kind=CUSTOM_REAL)
           endif
         enddo
       enddo

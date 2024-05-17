@@ -32,5 +32,5 @@ OBJECTS = \
 	$(EMPTY_MACRO)
 
 test_models:
-	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -o ./bin/test_models test_models.f90 -I./obj $(OBJECTS) $(LDFLAGS) $(MPILIBS) $(LIBS)
+	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -o ./bin/test_models test_models.f90 -I./obj $(OBJECTS) $(MPILIBS)
 

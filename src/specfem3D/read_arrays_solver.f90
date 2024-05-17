@@ -30,7 +30,8 @@
   subroutine read_arrays_solver(iregion_code, &
                                 nspec,nglob,nglob_xy, &
                                 nspec_iso,nspec_tiso,nspec_ani, &
-                                rho_vp,rho_vs,xstore,ystore,zstore, &
+                                rho_vp,rho_vs, &
+                                xstore,ystore,zstore, &
                                 xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
                                 rhostore, kappavstore,muvstore,kappahstore,muhstore,eta_anisostore, &
                                 c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
@@ -141,6 +142,12 @@
   read(IIN) gammax
   read(IIN) gammay
   read(IIN) gammaz
+
+  ! checks if anything else to do for infinite regions
+  if (iregion_code == IREGION_TRINFINITE .or. iregion_code == IREGION_INFINITE) then
+    close(IIN)
+    return
+  endif
 
   ! model arrays
   read(IIN) rhostore

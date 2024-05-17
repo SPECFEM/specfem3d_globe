@@ -619,9 +619,9 @@
 
   ! rotates to Cartesian
   do itime = 1, NSTEP
-    noise_src_u(:,itime) = nu_single(1,:) * noise_src(itime) * nu_main(1) &
-                         + nu_single(2,:) * noise_src(itime) * nu_main(2) &
-                         + nu_single(3,:) * noise_src(itime) * nu_main(3)
+    noise_src_u(:,itime) = real(nu_single(1,:) * noise_src(itime) * nu_main(1) &
+                              + nu_single(2,:) * noise_src(itime) * nu_main(2) &
+                              + nu_single(3,:) * noise_src(itime) * nu_main(3),kind=CUSTOM_REAL)
   enddo
 
   ! receiver interpolators
@@ -634,7 +634,7 @@
     do j = 1, NGLLY
       do i = 1, NGLLX
         do itime = 1, NSTEP
-          noise_sourcearray(:,i,j,k,itime) = hxir(i) * hetar(j) * hgammar(k) * noise_src_u(:,itime)
+          noise_sourcearray(:,i,j,k,itime) = real(hxir(i) * hetar(j) * hgammar(k),kind=CUSTOM_REAL) * noise_src_u(:,itime)
         enddo
       enddo
     enddo
@@ -1175,7 +1175,7 @@
   real(kind=CUSTOM_REAL) :: scale_kl
 
   ! scaling factor for kernel units [ s / km^3 ]
-  scale_kl = scale_t * scale_displ_inv * 1.d9
+  scale_kl = real(scale_t * scale_displ_inv * 1.d9,kind=CUSTOM_REAL)
 
   sigma_kl_crust_mantle(:,:,:,:) = sigma_kl_crust_mantle(:,:,:,:) * scale_kl
 
