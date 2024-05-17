@@ -216,7 +216,7 @@ xcombine_paraview_strain_data_SHARED_OBJECTS = \
 	$(EMPTY_MACRO)
 
 ${E}/xcombine_paraview_strain_data: $(xcombine_paraview_strain_data_OBJECTS) $(xcombine_paraview_strain_data_SHARED_OBJECTS)
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(LDFLAGS) $(MPILIBS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 ### additional dependencies
 $O/combine_paraview_strain_data.auxsolver.o: $O/specfem3D_par.solverstatic_module.o
@@ -240,7 +240,7 @@ xcombine_surf_data_SHARED_OBJECTS = \
 	$(EMPTY_MACRO)
 
 ${E}/xcombine_surf_data: $(xcombine_surf_data_OBJECTS) $(xcombine_surf_data_SHARED_OBJECTS)
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(LDFLAGS) $(MPILIBS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 ### additional dependencies
 $O/combine_surf_data.auxsolver.o: $O/specfem3D_par.solverstatic_module.o
@@ -267,7 +267,7 @@ xcombine_surf_data_vtk_SHARED_OBJECTS = \
 	$(EMPTY_MACRO)
 
 ${E}/xcombine_surf_data_vtk: $(xcombine_surf_data_vtk_OBJECTS) $(xcombine_surf_data_vtk_SHARED_OBJECTS)
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(LDFLAGS) $(MPILIBS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 ### additional dependencies
 $O/combine_surf_data.auxsolver_vtk.o: $O/specfem3D_par.solverstatic_module.o
@@ -282,7 +282,7 @@ xcombine_surf_data_vtu_OBJECTS = \
 xcombine_surf_data_vtu_SHARED_OBJECTS = $(xcombine_surf_data_vtk_SHARED_OBJECTS)
 
 ${E}/xcombine_surf_data_vtu: $(xcombine_surf_data_vtu_OBJECTS) $(xcombine_surf_data_vtu_SHARED_OBJECTS)
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(LDFLAGS) $(MPILIBS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 ### additional dependencies
 $O/combine_surf_data.auxsolver_vtu.o: $O/specfem3D_par.solverstatic_module.o
@@ -317,7 +317,7 @@ xcombine_vol_data_SHARED_OBJECTS = \
 	$(EMPTY_MACRO)
 
 ${E}/xcombine_vol_data: $(xcombine_vol_data_OBJECTS) $(xcombine_vol_data_SHARED_OBJECTS)
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(LDFLAGS) $(MPILIBS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 ### additional dependencies
 $O/combine_vol_data.auxsolver.o: $O/specfem3D_par.solverstatic_module.o
@@ -360,7 +360,7 @@ xcombine_vol_data_adios_SHARED_OBJECTS = \
 $O/combine_vol_data.auxadios.o: $O/combine_vol_data_adios_impl.auxadios.o
 
 ${E}/xcombine_vol_data_adios: $(xcombine_vol_data_adios_OBJECTS) $(xcombine_vol_data_adios_SHARED_OBJECTS)
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(LDFLAGS) $(MPILIBS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 ### additional dependencies
 $O/combine_vol_data.auxadios.o: $O/specfem3D_par.solverstatic_module.o
@@ -396,7 +396,7 @@ xcombine_vol_data_vtk_SHARED_OBJECTS = \
 	$(EMPTY_MACRO)
 
 ${E}/xcombine_vol_data_vtk: $(xcombine_vol_data_vtk_OBJECTS) $(xcombine_vol_data_vtk_SHARED_OBJECTS)
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(LDFLAGS) $(MPILIBS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 ### additional dependencies
 $O/combine_vol_data.auxsolver_vtk.o: $O/specfem3D_par.solverstatic_module.o
@@ -438,7 +438,7 @@ xcombine_vol_data_vtk_adios_SHARED_OBJECTS = \
 	$(EMPTY_MACRO)
 
 ${E}/xcombine_vol_data_vtk_adios: $(xcombine_vol_data_vtk_adios_OBJECTS) $(xcombine_vol_data_vtk_adios_SHARED_OBJECTS)
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(LDFLAGS) $(MPILIBS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 ### additional dependencies
 $O/combine_vol_data.auxadios_vtk.o: $O/combine_vol_data_adios_impl.auxadios.o
@@ -454,7 +454,7 @@ xcombine_vol_data_vtu_OBJECTS = \
 xcombine_vol_data_vtu_SHARED_OBJECTS = $(xcombine_vol_data_vtk_SHARED_OBJECTS)
 
 ${E}/xcombine_vol_data_vtu: $(xcombine_vol_data_vtu_OBJECTS) $(xcombine_vol_data_vtu_SHARED_OBJECTS)
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(LDFLAGS) $(MPILIBS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 ### additional dependencies
 $O/combine_vol_data.auxsolver_vtu.o: $O/specfem3D_par.solverstatic_module.o
@@ -469,7 +469,7 @@ xcombine_vol_data_vtu_adios_OBJECTS = \
 xcombine_vol_data_vtu_adios_SHARED_OBJECTS = $(xcombine_vol_data_vtk_adios_SHARED_OBJECTS)
 
 ${E}/xcombine_vol_data_vtu_adios: $(xcombine_vol_data_vtu_adios_OBJECTS) $(xcombine_vol_data_vtu_adios_SHARED_OBJECTS)
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(LDFLAGS) $(MPILIBS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 ### additional dependencies
 $O/combine_vol_data.auxadios_vtu.o: $O/combine_vol_data_adios_impl.auxadios.o
@@ -561,7 +561,7 @@ xextract_database_SHARED_OBJECTS = \
 	$(EMPTY_MACRO)
 
 ${E}/xextract_database: $(xextract_database_OBJECTS) $(xextract_database_SHARED_OBJECTS)
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(LDFLAGS) $(MPILIBS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 ### additional dependencies
 $O/extract_database.aux.o: $O/specfem3D_par.solverstatic_module.o
@@ -704,7 +704,7 @@ endif
 
 
 ${E}/xwrite_profile: $(xwrite_profile_OBJECTS) $(xwrite_profile_SHARED_OBJECTS)
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(LDFLAGS) $(MPILIBS) $(LIBS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 ## additional module dependencies
 $O/write_profile.aux.o: $O/meshfem3D_models.check.o

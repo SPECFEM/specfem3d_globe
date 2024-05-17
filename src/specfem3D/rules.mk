@@ -338,7 +338,7 @@ endif
 #### rules for executables
 ####
 
-SPECFEM_LINK_FLAGS = $(LDFLAGS) $(MPILIBS) $(LIBS)
+SPECFEM_LINK_FLAGS = $(MPILIBS)
 
 # cuda/opencl/hip
 SPECFEM_LINK_FLAGS += $(GPU_LINK)

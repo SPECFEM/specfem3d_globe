@@ -16,5 +16,5 @@ OBJECTS = \
 OBJECTS += $(specfem3D_SHARED_OBJECTS)
 
 test_read:
-	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -o ./bin/test_read test_read.f90 -I./obj $(OBJECTS) $(LDFLAGS) $(MPILIBS) $(LIBS)
+	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -o ./bin/test_read test_read.f90 -I./obj $(OBJECTS) $(MPILIBS)
 

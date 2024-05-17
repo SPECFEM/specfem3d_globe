@@ -141,7 +141,7 @@ xconvert_model_file_adios_SHARED_OBJECTS = \
 	$(EMPTY_MACRO)
 
 ${E}/xconvert_model_file_adios: $(xconvert_model_file_adios_OBJECTS) $(xconvert_model_file_adios_SHARED_OBJECTS)
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(LDFLAGS) $(MPILIBS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 ##
 ## xaddition_sem
@@ -186,7 +186,7 @@ xclip_sem_SHARED_OBJECTS = \
 	$(EMPTY_MACRO)
 
 ${E}/xclip_sem: $(xclip_sem_OBJECTS) $(xclip_sem_SHARED_OBJECTS)
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(LDFLAGS) $(MPILIBS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 
 ##
@@ -210,7 +210,7 @@ xcombine_sem_SHARED_OBJECTS = \
 	$(EMPTY_MACRO)
 
 ${E}/xcombine_sem: $(xcombine_sem_OBJECTS) $(xcombine_sem_SHARED_OBJECTS)
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(LDFLAGS) $(MPILIBS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 
 ##
@@ -266,7 +266,7 @@ $O/interpolate_model.postprocess.o: $O/search_kdtree.shared.o
 
 
 ${E}/xinterpolate_model: $(xinterpolate_model_OBJECTS) $(xinterpolate_model_SHARED_OBJECTS)
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(LDFLAGS) $(MPILIBS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 ##
 ## xinterpolate_model_adios
@@ -292,7 +292,7 @@ xinterpolate_model_adios_SHARED_OBJECTS += \
 $O/interpolate_model.postprocess_adios.o: $O/search_kdtree.shared.o $O/adios_manager.shared_adios_module.o
 
 ${E}/xinterpolate_model_adios: $(xinterpolate_model_adios_OBJECTS) $(xinterpolate_model_adios_SHARED_OBJECTS)
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(LDFLAGS) $(MPILIBS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 
 ##
@@ -407,7 +407,7 @@ gpu_smooth_OBJECTS += $(cuda_smooth_DEVICE_OBJ) $(cuda_smooth_kernels_OBJS)
 ## compilation
 ##
 xsmooth_sem_SHARED_OBJECTS += $(gpu_xs_OBJECTS)
-xsmooth_sem_LIBS = $(LDFLAGS) $(MPILIBS)  # $(LDFLAGS) $(MPILIBS) $(LIBS)
+xsmooth_sem_LIBS = $(MPILIBS)  # $(LDFLAGS) $(MPILIBS) $(LIBS)
 xsmooth_sem_LIBS += $(GPU_LINK)
 
 INFO_SMOOTH="building xsmooth_sem $(BUILD_VERSION_TXT)"
@@ -450,7 +450,7 @@ xsmooth_sem_adios_SHARED_OBJECTS += \
 ##
 ## compilation
 ##
-xsmooth_sem_adios_LIBS = $(LDFLAGS) $(MPILIBS)  # $(LDFLAGS) $(MPILIBS) $(LIBS)
+xsmooth_sem_adios_LIBS = $(MPILIBS)  # $(LDFLAGS) $(MPILIBS) $(LIBS)
 xsmooth_sem_adios_LIBS += $(GPU_LINK)
 
 INFO_SMOOTH_ADIOS="building xsmooth_sem_adios $(BUILD_VERSION_TXT)"
@@ -504,7 +504,7 @@ xsmooth_laplacian_sem_SHARED_OBJECTS = \
 	$(EMPTY_MACRO)
 
 ${E}/xsmooth_laplacian_sem: $(xsmooth_laplacian_sem_OBJECTS) $(xsmooth_laplacian_sem_SHARED_OBJECTS)
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(LDFLAGS) $(MPILIBS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 
 ##
@@ -529,7 +529,7 @@ xsmooth_laplacian_sem_adios_SHARED_OBJECTS += \
 	$(EMPTY_MACRO)
 
 ${E}/xsmooth_laplacian_sem_adios: $(xsmooth_laplacian_sem_adios_OBJECTS) $(xsmooth_laplacian_sem_adios_SHARED_OBJECTS)
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(LDFLAGS) $(MPILIBS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 
 ##
@@ -583,7 +583,7 @@ xcreate_cross_section_SHARED_OBJECTS = \
 $O/create_cross_section.postprocess.o: $O/search_kdtree.shared.o
 
 ${E}/xcreate_cross_section: $(xcreate_cross_section_OBJECTS) $(xcreate_cross_section_SHARED_OBJECTS)
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(LDFLAGS) $(MPILIBS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 
 #######################################

@@ -314,7 +314,7 @@ endif
 ####
 
 ${E}/xmeshfem3D: $(meshfem3D_SHARED_OBJECTS) $(meshfem3D_OBJECTS)
-	${FCLINK} -o $@ $+ $(LDFLAGS) $(MPILIBS) $(LIBS)
+	${FCLINK} -o $@ $+ $(MPILIBS)
 
 #######################################
 

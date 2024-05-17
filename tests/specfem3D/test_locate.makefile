@@ -13,5 +13,5 @@ OBJECTS = \
 	$(EMPTY_MACRO)
 
 test_locate:
-	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -o ./bin/test_locate test_locate.f90 -I./obj $(OBJECTS) $(LDFLAGS) $(MPILIBS) $(LIBS)
+	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -o ./bin/test_locate test_locate.f90 -I./obj $(OBJECTS) $(MPILIBS)
 

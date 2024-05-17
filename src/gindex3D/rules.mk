@@ -32,9 +32,9 @@ gindex3D_TARGETS = \
 	$(EMPTY_MACRO)
 
 gindex3D_OBJECTS = \
+	$O/create_gindex.gindex.o \
 	$O/gindex3D.gindex.o \
 	$O/gindex3D_par.gindex_module.o \
-	$O/create_gindex.gindex.o \
 	$O/initialize_gindex.gindex.o \
 	$(EMPTY_MACRO)
 
@@ -44,18 +44,18 @@ gindex3D_MODULES = \
 
 # These files come from the specfem3D directory
 gindex3D_SHARED_OBJECTS = \
-	$O/specfem3D_par.solverstatic_module.o \
+	$O/asdf_data.solverstatic_module.o \
 	$O/bcast_mesh_databases.solverstatic.o \
 	$O/locate_regular_points.solverstatic.o \
 	$O/read_arrays_solver.solverstatic.o \
 	$O/read_mesh_parameters.solverstatic.o \
 	$O/read_mesh_databases.solverstatic.o \
+	$O/specfem3D_par.solverstatic_module.o \
 	$(EMPTY_MACRO)
 
 # These files come from the shared directory
 gindex3D_SHARED_OBJECTS += \
 	$O/adios_manager.shared_adios_module.o \
-	$O/shared_par.shared_module.o \
 	$O/auto_ner.shared.o \
 	$O/broadcast_computed_parameters.shared.o \
 	$O/count_elements.shared.o \
@@ -79,6 +79,7 @@ gindex3D_SHARED_OBJECTS += \
 	$O/rotate_tensor.shared.o \
 	$O/rthetaphi_xyz.shared.o \
 	$O/save_header_file.shared.o \
+	$O/shared_par.shared_module.o \
 	$O/ylm.shared.o \
 	$(EMPTY_MACRO)
 
@@ -124,7 +125,16 @@ else ifeq ($(NETCDF),yes)
 	gindex3D_SHARED_OBJECTS += $O/read_write_netcdf.checknetcdf.o
 endif
 
+###
+### VTK
+###
 
+# conditional vtk linking
+ifeq ($(VTK),yes)
+	gindex3D_SHARED_OBJECTS += $(vtk_specfem3D_OBJECTS)
+else
+	gindex3D_SHARED_OBJECTS += $(vtk_specfem3D_STUBS)
+endif
 
 #######################################
 
