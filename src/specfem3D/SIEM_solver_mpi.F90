@@ -481,20 +481,20 @@ contains
   if (ADD_TRINF) then
   kp_trinf = zero
   do i_elmt = 1,NSPEC_TRINFINITE
-    inode_trinf=inode_elmt_trinf(:,i_elmt)
-    igdof_trinf=gdof_trinf(inode_trinf)
-    km_trinf=storekmat_trinfinite(:,:,i_elmt)
-    kp_trinf(inode_trinf)=kp_trinf(inode_trinf)+matmul(km_trinf,p_g(igdof_trinf))
+    inode_trinf = inode_elmt_trinf(:,i_elmt)
+    igdof_trinf = gdof_trinf(inode_trinf)
+    km_trinf = storekmat_trinfinite(:,:,i_elmt)
+    kp_trinf(inode_trinf) = kp_trinf(inode_trinf)+matmul(km_trinf,p_g(igdof_trinf))
   enddo
   endif
 
   ! infinite
   kp_inf = zero
   do i_elmt = 1,NSPEC_INFINITE
-    inode_inf=inode_elmt_inf(:,i_elmt)
-    igdof_inf=gdof_inf(inode_inf)
-    km_inf=storekmat_infinite(:,:,i_elmt)
-    kp_inf(inode_inf)=kp_inf(inode_inf)+matmul(km_inf,p_g(igdof_inf))
+    inode_inf = inode_elmt_inf(:,i_elmt)
+    igdof_inf = gdof_inf(inode_inf)
+    km_inf = storekmat_infinite(:,:,i_elmt)
+    kp_inf(inode_inf) = kp_inf(inode_inf)+matmul(km_inf,p_g(igdof_inf))
   enddo
 
   ! assemble acroos the regions but not across the MPIs
@@ -682,20 +682,20 @@ contains
   if (ADD_TRINF) then
   kp_trinf = zero
   do i_elmt = 1,NSPEC_TRINFINITE
-    inode_trinf=inode_elmt_trinf1(:,i_elmt)
-    igdof_trinf=gdof_trinf1(inode_trinf)
-    km_trinf=storekmat_trinfinite1(:,:,i_elmt)
-    kp_trinf(inode_trinf)=kp_trinf(inode_trinf)+matmul(km_trinf,p_g(igdof_trinf))
+    inode_trinf = inode_elmt_trinf1(:,i_elmt)
+    igdof_trinf = gdof_trinf1(inode_trinf)
+    km_trinf = storekmat_trinfinite1(:,:,i_elmt)
+    kp_trinf(inode_trinf) = kp_trinf(inode_trinf)+matmul(km_trinf,p_g(igdof_trinf))
   enddo
   endif
 
   ! infinite
   kp_inf = zero
   do i_elmt = 1,NSPEC_INFINITE
-    inode_inf=inode_elmt_inf1(:,i_elmt)
-    igdof_inf=gdof_inf1(inode_inf)
-    km_inf=storekmat_infinite1(:,:,i_elmt)
-    kp_inf(inode_inf)=kp_inf(inode_inf)+matmul(km_inf,p_g(igdof_inf))
+    inode_inf = inode_elmt_inf1(:,i_elmt)
+    igdof_inf = gdof_inf1(inode_inf)
+    km_inf = storekmat_infinite1(:,:,i_elmt)
+    kp_inf(inode_inf) = kp_inf(inode_inf)+matmul(km_inf,p_g(igdof_inf))
   enddo
 
   ! assemble acroos the regions but not across the MPIs

@@ -35,6 +35,7 @@
 
   ! local parameters
   character(len = 20) :: snproc
+  integer :: number_of_solver_processes
   ! mpi
   integer :: sizeprocs
   integer :: ier
@@ -70,7 +71,7 @@
   endif
 
   call get_command_argument(1,snproc)
-  read(snproc,*) nproc
+  read(snproc,*) number_of_solver_processes
 
   ! open main output file, only written to by process 0
   if (myrank == 0) then
@@ -94,11 +95,50 @@
   !allocate(ndof_p2p(nproc,nproc))
   !ndof_p2p=0
 
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'input number of solver processes: ',number_of_solver_processes
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
   ! initializes simulation parameters
-  if (myrank == 0) write(IMAIN,'(a)',advance='no') '   initialising...'
+  !if (myrank == 0) write(IMAIN,'(a)',advance='no') '   initialising...'
 
   ! reads in Par_file and sets compute parameters
   call read_compute_parameters()
+
+  ! check if anything to do, full gravity flag must be set
+  if (.not. FULL_GRAVITY) then
+    print *,'Error: FULL_GRAVITY flag must be set to .true. in Par_file for xgindex3D!'
+    print *
+    print *,'Please edit your DATA/Par_file accordingly and re-run xgindex3D.'
+    print *
+    print *,'nothing to do, exiting...'
+    call exit_MPI(myrank,'FULL_GRAVITY flag must be turned on for xgindex3D')
+  endif
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) 'Par_file setting:'
+    write(IMAIN,*) '  NPROC_ETA / NPROC_XI = ',NPROC_ETA,'/',NPROC_XI
+    write(IMAIN,*) '  NCHUNKS              = ',NCHUNKS
+    write(IMAIN,*) '  NPROCTOT             = ',NPROCTOT
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  ! check if desired number of solver processes matches Par_file setting
+  if (number_of_solver_processes /= NPROCTOT) then
+    print *,'Error: Input number of solver processes =',number_of_solver_processes,', must match Par_file setting!'
+    print *,'       Par_file requires ',NPROCTOT,' solver processes.'
+    print *
+    print *,'Please edit either your DATA/Par_file accordingly and re-run the mesher,'
+    print *,'or update your input processes and re-run xgindex3D.'
+    print *
+    print *,'exiting...'
+    call exit_MPI(myrank,'Invalid input number of solver processes for DATA/Par_file')
+  endif
 
   ! read the mesh parameters for all array setup
   call read_mesh_parameters()

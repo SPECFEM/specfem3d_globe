@@ -956,16 +956,16 @@ contains
 
   use math_library_mpi, only: maxscal,minscal
   use specfem_par, only: IFLAG_IN_FICTITIOUS_CUBE,NSPEC_INNER_CORE, &
-  NSPEC_OUTER_CORE,NSPEC_CRUST_MANTLE,NSPEC_TRINFINITE,NSPEC_INFINITE
+    NSPEC_OUTER_CORE,NSPEC_CRUST_MANTLE,NSPEC_TRINFINITE,NSPEC_INFINITE
   use specfem_par, only: NEDOF
   use specfem_par, only: NGLLCUBE_INF,NEDOF1
   use specfem_par_innercore, only: ggdof_ic1,storekmat_inner_core1, &
-  idoubling_inner_core,inode_elmt_ic1
+    idoubling_inner_core,inode_elmt_ic1
   use specfem_par_outercore, only: ggdof_oc1,storekmat_outer_core1,inode_elmt_oc1
   use specfem_par_crustmantle, only: ggdof_cm1,storekmat_crust_mantle1, &
-  inode_elmt_cm1
+    inode_elmt_cm1
   use specfem_par_trinfinite, only: ggdof_trinf1,storekmat_trinfinite1, &
-  inode_elmt_trinf1
+    inode_elmt_trinf1
   use specfem_par_infinite, only: ggdof_inf1,storekmat_infinite1,inode_elmt_inf1
 
   implicit none
@@ -1250,19 +1250,20 @@ contains
 
   use specfem_par, only: l2gdof1
   use specfem_par, only: IFLAG_IN_FICTITIOUS_CUBE,NSPEC_INNER_CORE, &
-  NSPEC_OUTER_CORE,NSPEC_CRUST_MANTLE,NSPEC_TRINFINITE,NSPEC_INFINITE
+    NSPEC_OUTER_CORE,NSPEC_CRUST_MANTLE,NSPEC_TRINFINITE,NSPEC_INFINITE
   use specfem_par, only: NEDOF
   use specfem_par, only: NGLLCUBE_INF,NEDOF1
   use specfem_par_innercore, only: ggdof_ic1,storekmat_inner_core1, &
-  idoubling_inner_core,inode_elmt_ic1
+    idoubling_inner_core,inode_elmt_ic1
   use specfem_par_outercore, only: ggdof_oc1,storekmat_outer_core1, &
-  inode_elmt_oc1
+    inode_elmt_oc1
   use specfem_par_crustmantle, only: ggdof_cm1,storekmat_crust_mantle1, &
-  inode_elmt_cm1
+    inode_elmt_cm1
   use specfem_par_trinfinite, only: ggdof_trinf1,storekmat_trinfinite1, &
-  inode_elmt_trinf1
+    inode_elmt_trinf1
   use specfem_par_infinite, only: ggdof_inf1,storekmat_infinite1,inode_elmt_inf1
   implicit none
+
   PetscScalar,intent(in) :: rload1(0:)
   PetscScalar      zero
 
@@ -1651,9 +1652,9 @@ contains
   subroutine petsc_set_matrix()
 
   use specfem_par, only: NEDOF,IFLAG_IN_FICTITIOUS_CUBE,NSPEC_INNER_CORE, &
-  NSPEC_OUTER_CORE,NSPEC_CRUST_MANTLE,NSPEC_TRINFINITE,NSPEC_INFINITE
+    NSPEC_OUTER_CORE,NSPEC_CRUST_MANTLE,NSPEC_TRINFINITE,NSPEC_INFINITE
   use specfem_par_innercore, only: ggdof_ic,storekmat_inner_core, &
-  idoubling_inner_core,inode_elmt_ic
+    idoubling_inner_core,inode_elmt_ic
   use specfem_par_outercore, only: ggdof_oc,storekmat_outer_core,inode_elmt_oc
   use specfem_par_crustmantle, only: ggdof_cm,storekmat_crust_mantle,inode_elmt_cm
   use specfem_par_trinfinite, only: ggdof_trinf,storekmat_trinfinite,inode_elmt_trinf

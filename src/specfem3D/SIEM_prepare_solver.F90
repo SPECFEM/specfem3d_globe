@@ -422,6 +422,22 @@
   ! indexify regions
   call get_index_region()
 
+  ! allocate inode arrays
+  allocate(inode_elmt_cm(NGLLCUBE,NSPEC_CRUST_MANTLE))
+  allocate(inode_elmt_cm1(NGLLCUBE_INF,NSPEC_CRUST_MANTLE))
+  allocate(inode_elmt_ic(NGLLCUBE,NSPEC_INNER_CORE))
+  allocate(inode_elmt_ic1(NGLLCUBE_INF,NSPEC_INNER_CORE))
+  allocate(inode_elmt_oc(NGLLCUBE,NSPEC_OUTER_CORE))
+  allocate(inode_elmt_oc1(NGLLCUBE_INF,NSPEC_OUTER_CORE))
+  ! trinfinite arrays
+  if (ADD_TRINF) then
+    allocate(inode_elmt_trinf(NGLLCUBE,NSPEC_TRINFINITE))
+    allocate(inode_elmt_trinf1(NGLLCUBE_INF,NSPEC_TRINFINITE))
+  endif
+  ! infinite arrays
+  allocate(inode_elmt_inf(NGLLCUBE,NSPEC_INFINITE))
+  allocate(inode_elmt_inf1(NGLLCUBE_INF,NSPEC_INFINITE))
+
   ! Level-1 solver-------------------
   allocate(storekmat_crust_mantle1(NGLLCUBE_INF,NGLLCUBE_INF,NSPEC_CRUST_MANTLE), &
            dprecon_crust_mantle1(nnode_cm1))

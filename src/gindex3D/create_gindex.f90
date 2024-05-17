@@ -39,11 +39,25 @@
   gnf_end = 0    ! global gdof for NGLLX = 5
   gnf_end1 = 0   ! global gdof for NGLLX_INF = 3
 
+  !debug
+  print *,'Number of solver processes: ',NPROCTOT
+
+  ! folder for temporary files created by gindex3D
+   if (myrank == 0) then
+    write(IMAIN,*) 'creating temporary directory: tmp_gindex3D/'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+  call execute_command_line('mkdir -p tmp_gindex3D/')
+
   ! loop through the processors
-  do i_proc = 0,nproc-1
+  do i_proc = 0,NPROCTOT-1
     ! creates global DOFs for this process
     call create_gindex_for_process(i_proc)
   enddo
+
+  !debug
+  print *,'all done'
 
   ! closes the main output file
   if (myrank == 0) then
@@ -112,7 +126,7 @@
   integer,allocatable :: gghost(:,:),ighost(:)
   character(len = 20) :: fhead
   character(len = 12) :: spm,spn
-  character(len = 60) :: fname
+  character(len = 128) :: fname
 
   integer,allocatable :: nmir(:)
   integer,allocatable :: gdf_ic1(:,:),gdf_oc1(:,:),gdf_cm1(:,:),gdf_trinf1(:,:), &
@@ -142,6 +156,9 @@
   ! set new process id
   myrank = i_proc
 
+  !debug
+  print *,'Process: ',i_proc
+
   ! starts reading the databases
   call read_mesh_databases()
 
@@ -149,42 +166,128 @@
   myrank = myrank_org
 
   !deallocate unnecessary arrays
+  ! inner core
   if (allocated(rmassz_inner_core)) then
     deallocate(rmassz_inner_core)
+    if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
+      deallocate(rmassx_inner_core,rmassy_inner_core)
+    else
+      nullify(rmassx_inner_core,rmassy_inner_core)
+    endif
+    deallocate(xstore_inner_core,ystore_inner_core,zstore_inner_core)
+    deallocate(xix_inner_core,xiy_inner_core,xiz_inner_core, &
+               etax_inner_core,etay_inner_core,etaz_inner_core, &
+               gammax_inner_core,gammay_inner_core,gammaz_inner_core)
+    deallocate(rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core)
+    deallocate(c11store_inner_core,c33store_inner_core,c12store_inner_core, &
+               c13store_inner_core,c44store_inner_core)
+
     deallocate(phase_ispec_inner_inner_core)
     deallocate(num_elem_colors_inner_core)
     deallocate(buffer_send_vector_inner_core,buffer_recv_vector_inner_core, &
                request_send_vector_ic,request_recv_vector_ic)
   endif
 
+  ! outer core
   if (allocated(rmass_outer_core)) then
     deallocate(rmass_outer_core)
+    deallocate(xstore_outer_core,ystore_outer_core,zstore_outer_core)
+    deallocate(xix_outer_core,xiy_outer_core,xiz_outer_core, &
+               etax_outer_core,etay_outer_core,etaz_outer_core, &
+               gammax_outer_core,gammay_outer_core,gammaz_outer_core)
+    deallocate(rhostore_outer_core,kappavstore_outer_core)
+    deallocate(vp_outer_core)
+
     deallocate(phase_ispec_inner_outer_core)
     deallocate(num_elem_colors_outer_core)
     deallocate(buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core, &
                request_send_scalar_oc,request_recv_scalar_oc)
   endif
 
+  ! crust/mantle
   if (allocated(rmassz_crust_mantle)) then
     deallocate(rmassz_crust_mantle)
+    if ((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &
+        (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL)) then
+      deallocate(rmassx_crust_mantle,rmassy_crust_mantle)
+    else
+      nullify(rmassx_crust_mantle,rmassy_crust_mantle)
+    endif
+    deallocate(rmass_ocean_load)
+    deallocate(xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle)
+    deallocate(xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+               etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+               gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle)
+    deallocate(rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle)
+    deallocate(kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle)
+    deallocate(c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
+               c14store_crust_mantle,c15store_crust_mantle,c16store_crust_mantle, &
+               c22store_crust_mantle,c23store_crust_mantle,c24store_crust_mantle, &
+               c25store_crust_mantle,c26store_crust_mantle,c33store_crust_mantle, &
+               c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
+               c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
+               c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle)
+    if (allocated(mu0store_crust_mantle)) deallocate(mu0store_crust_mantle)
+    deallocate(ispec_is_tiso_crust_mantle)
+    deallocate(rho_vp_crust_mantle,rho_vs_crust_mantle)
+
     deallocate(phase_ispec_inner_crust_mantle)
     deallocate(num_elem_colors_crust_mantle)
     deallocate(buffer_send_vector_crust_mantle,buffer_recv_vector_crust_mantle, &
                request_send_vector_cm,request_recv_vector_cm)
   endif
 
-  if (allocated(phase_ispec_inner_trinfinite)) then
+  ! trinfinite
+  if (allocated(xstore_trinfinite)) then
+    deallocate(xstore_trinfinite,ystore_trinfinite,zstore_trinfinite)
+    deallocate(xix_trinfinite,xiy_trinfinite,xiz_trinfinite, &
+               etax_trinfinite,etay_trinfinite,etaz_trinfinite, &
+               gammax_trinfinite,gammay_trinfinite,gammaz_trinfinite)
+
     deallocate(phase_ispec_inner_trinfinite)
     deallocate(num_elem_colors_trinfinite)
     deallocate(buffer_send_scalar_trinfinite,buffer_recv_scalar_trinfinite, &
                request_send_scalar_trinfinite,request_recv_scalar_trinfinite)
   endif
 
-  if (allocated(phase_ispec_inner_infinite)) then
+  ! infinite
+  if (allocated(xstore_infinite)) then
+    deallocate(xstore_infinite,ystore_infinite,zstore_infinite)
+    deallocate(xix_infinite,xiy_infinite,xiz_infinite, &
+               etax_infinite,etay_infinite,etaz_infinite, &
+               gammax_infinite,gammay_infinite,gammaz_infinite)
+  
     deallocate(phase_ispec_inner_infinite)
     deallocate(num_elem_colors_infinite)
     deallocate(buffer_send_scalar_infinite,buffer_recv_scalar_infinite, &
                request_send_scalar_infinite,request_recv_scalar_infinite)
+  endif
+
+  ! coupling
+  if (allocated(ibelm_moho_top)) then
+    deallocate(ibelm_moho_top,ibelm_moho_bot, &
+               ibelm_400_top,ibelm_400_bot, &
+               ibelm_670_top,ibelm_670_bot, &
+               normal_moho,normal_400,normal_670)
+    deallocate(ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle, &
+               ibelm_ymin_crust_mantle,ibelm_ymax_crust_mantle, &
+               normal_xmin_crust_mantle,normal_xmax_crust_mantle, &
+               normal_ymin_crust_mantle,normal_ymax_crust_mantle, &
+               normal_bottom_crust_mantle,normal_top_crust_mantle, &
+               jacobian2D_bottom_crust_mantle,jacobian2D_top_crust_mantle, &
+               jacobian2D_xmin_crust_mantle,jacobian2D_xmax_crust_mantle, &
+               jacobian2D_ymin_crust_mantle,jacobian2D_ymax_crust_mantle)
+    deallocate(ibelm_xmin_outer_core,ibelm_xmax_outer_core, &
+               ibelm_ymin_outer_core,ibelm_ymax_outer_core, &
+               normal_xmin_outer_core,normal_xmax_outer_core, &
+               normal_ymin_outer_core,normal_ymax_outer_core, &
+               normal_bottom_outer_core,normal_top_outer_core, &
+               jacobian2D_bottom_outer_core,jacobian2D_top_outer_core, &
+               jacobian2D_xmin_outer_core,jacobian2D_xmax_outer_core, &
+               jacobian2D_ymin_outer_core,jacobian2D_ymax_outer_core)
+    deallocate(ibelm_xmin_inner_core,ibelm_xmax_inner_core, &
+               ibelm_ymin_inner_core,ibelm_ymax_inner_core, &
+               ibelm_bottom_inner_core)
   endif
 
   !debug
@@ -209,20 +312,30 @@
   ignode_inf(:) = -1;   isgnode_inf(:) = .false.
 
   ! allocate necessary arrays
+  if (.not. allocated(inode_elmt_cm)) then
+    allocate(inode_elmt_cm(NGLLCUBE,NSPEC_CRUST_MANTLE))
+    allocate(inode_elmt_cm1(NGLLCUBE_INF,NSPEC_CRUST_MANTLE))
+  endif
+  if (.not. allocated(inode_elmt_ic)) then
+    allocate(inode_elmt_ic(NGLLCUBE,NSPEC_INNER_CORE))
+    allocate(inode_elmt_ic1(NGLLCUBE_INF,NSPEC_INNER_CORE))
+  endif
+  if (.not. allocated(inode_elmt_oc)) then
+    allocate(inode_elmt_oc(NGLLCUBE,NSPEC_OUTER_CORE))
+    allocate(inode_elmt_oc1(NGLLCUBE_INF,NSPEC_OUTER_CORE))
+  endif
   ! trinfinite arrays
   if (ADD_TRINF) then
-    allocate(ibool_trinfinite(NGLLX,NGLLY,NGLLZ,NSPEC_TRINFINITE))
-    allocate(ibelm_bottom_trinfinite(NSPEC2D_BOTTOM_TRINF))
-    allocate(ibelm_top_trinfinite(NSPEC2D_TOP_TRINF))
-    allocate(inode_elmt_trinf(NGLLCUBE,NSPEC_TRINFINITE))
-    allocate(inode_elmt_trinf1(NGLLCUBE_INF,NSPEC_TRINFINITE))
+    if (.not. allocated(inode_elmt_trinf)) then
+      allocate(inode_elmt_trinf(NGLLCUBE,NSPEC_TRINFINITE))
+      allocate(inode_elmt_trinf1(NGLLCUBE_INF,NSPEC_TRINFINITE))
+    endif
   endif
   ! infinite arrays
-  allocate(ibool_infinite(NGLLX,NGLLY,NGLLZ,NSPEC_INFINITE))
-  allocate(ibelm_bottom_infinite(NSPEC2D_BOTTOM_INF))
-  allocate(ibelm_top_infinite(NSPEC2D_TOP_INF))
-  allocate(inode_elmt_inf(NGLLCUBE,NSPEC_INFINITE))
-  allocate(inode_elmt_inf1(NGLLCUBE_INF,NSPEC_INFINITE))
+  if (.not. allocated(inode_elmt_inf)) then
+    allocate(inode_elmt_inf(NGLLCUBE,NSPEC_INFINITE))
+    allocate(inode_elmt_inf1(NGLLCUBE_INF,NSPEC_INFINITE))
+  endif
 
   ! count global node numbers
   nnode = NGLOB_INNER_CORE + NGLOB_OUTER_CORE + NGLOB_CRUST_MANTLE + NGLOB_TRINFINITE + NGLOB_INFINITE
@@ -491,7 +604,7 @@
     j_proc = my_neighbors_inner_core(i)
     if (j_proc < i_proc) then
       write(spn,*) j_proc
-      fname = 'tmp/'//trim(fhead)//trim(adjustl(spn))//'to'//trim(adjustl(spm))
+      fname = 'tmp_gindex3D/'//trim(fhead)//trim(adjustl(spn))//'to'//trim(adjustl(spm))
       !print *,fname
       open(10,file=fname,action='read',status='old')
       read(10,*) nibool
@@ -512,7 +625,7 @@
     j_proc = my_neighbors_outer_core(i)
     if (j_proc < i_proc) then
       write(spn,*) j_proc
-      fname = 'tmp/'//trim(fhead)//trim(adjustl(spn))//'to'//trim(adjustl(spm))
+      fname = 'tmp_gindex3D/'//trim(fhead)//trim(adjustl(spn))//'to'//trim(adjustl(spm))
       !print *,fname
       open(10,file=fname,action='read',status='old')
       read(10,*) nibool
@@ -533,7 +646,7 @@
     j_proc = my_neighbors_crust_mantle(i)
     if (j_proc < i_proc) then
       write(spn,*) j_proc
-      fname = 'tmp/'//trim(fhead)//trim(adjustl(spn))//'to'//trim(adjustl(spm))
+      fname = 'tmp_gindex3D/'//trim(fhead)//trim(adjustl(spn))//'to'//trim(adjustl(spm))
       !print *,fname
       open(10,file=fname,action='read',status='old')
       read(10,*) nibool
@@ -555,7 +668,7 @@
       j_proc = my_neighbors_trinfinite(i)
       if (j_proc < i_proc) then
         write(spn,*) j_proc
-        fname = 'tmp/'//trim(fhead)//trim(adjustl(spn))//'to'//trim(adjustl(spm))
+        fname = 'tmp_gindex3D/'//trim(fhead)//trim(adjustl(spn))//'to'//trim(adjustl(spm))
         !print *,fname
         open(10,file=fname,action='read',status='old')
         read(10,*) nibool
@@ -577,7 +690,7 @@
     j_proc = my_neighbors_infinite(i)
     if (j_proc < i_proc) then
       write(spn,*) j_proc
-      fname = 'tmp/'//trim(fhead)//trim(adjustl(spn))//'to'//trim(adjustl(spm))
+      fname = 'tmp_gindex3D/'//trim(fhead)//trim(adjustl(spn))//'to'//trim(adjustl(spm))
       !print *,fname
       open(10,file=fname,action='read',status='old')
       read(10,*) nibool
@@ -793,7 +906,7 @@
     j_proc = my_neighbors_inner_core(i)
     if (j_proc > i_proc) then
       write(spn,*) j_proc
-      fname = 'tmp/'//trim(fhead)//trim(adjustl(spm))//'to'//trim(adjustl(spn))
+      fname = 'tmp_gindex3D/'//trim(fhead)//trim(adjustl(spm))//'to'//trim(adjustl(spn))
       !print *,fname !,i_proc,j_proc
       open(10,file=fname,action='write',status='replace')
       write(10,*) nibool_interfaces_inner_core(i)
@@ -813,7 +926,7 @@
     j_proc = my_neighbors_outer_core(i)
     if (j_proc > i_proc) then
       write(spn,*) j_proc
-      fname = 'tmp/'//trim(fhead)//trim(adjustl(spm))//'to'//trim(adjustl(spn))
+      fname = 'tmp_gindex3D/'//trim(fhead)//trim(adjustl(spm))//'to'//trim(adjustl(spn))
       !print *,fname
       open(10,file=fname,action='write',status='replace')
       write(10,*) nibool_interfaces_outer_core(i)
@@ -833,7 +946,7 @@
     j_proc = my_neighbors_crust_mantle(i)
     if (j_proc > i_proc) then
       write(spn,*) j_proc
-      fname = 'tmp/'//trim(fhead)//trim(adjustl(spm))//'to'//trim(adjustl(spn))
+      fname = 'tmp_gindex3D/'//trim(fhead)//trim(adjustl(spm))//'to'//trim(adjustl(spn))
       !print *,fname
       open(10,file=fname,action='write',status='replace')
       write(10,*) nibool_interfaces_crust_mantle(i)
@@ -854,7 +967,7 @@
       j_proc = my_neighbors_trinfinite(i)
       if (j_proc > i_proc) then
         write(spn,*) j_proc
-        fname = 'tmp/'//trim(fhead)//trim(adjustl(spm))//'to'//trim(adjustl(spn))
+        fname = 'tmp_gindex3D/'//trim(fhead)//trim(adjustl(spm))//'to'//trim(adjustl(spn))
         !print *,fname
         open(10,file=fname,action='write',status='replace')
         write(10,*) nibool_interfaces_trinfinite(i)
@@ -875,7 +988,7 @@
     j_proc = my_neighbors_infinite(i)
     if (j_proc > i_proc) then
       write(spn,*) j_proc
-      fname = 'tmp/'//trim(fhead)//trim(adjustl(spm))//'to'//trim(adjustl(spn))
+      fname = 'tmp_gindex3D/'//trim(fhead)//trim(adjustl(spm))//'to'//trim(adjustl(spn))
       !print *,fname
       open(10,file=fname,action='write',status='replace')
       write(10,*) nibool_interfaces_infinite(i)
@@ -964,7 +1077,7 @@
     j_proc = my_neighbors_inner_core(i)
     if (j_proc < i_proc) then
       write(spn,*) j_proc
-      fname = 'tmp/'//trim(fhead)//trim(adjustl(spn))//'to'//trim(adjustl(spm))
+      fname = 'tmp_gindex3D/'//trim(fhead)//trim(adjustl(spn))//'to'//trim(adjustl(spm))
       !print *,fname
       open(10,file=fname,action='read',status='old')
       read(10,*) nibool
@@ -985,7 +1098,7 @@
     j_proc = my_neighbors_outer_core(i)
     if (j_proc < i_proc) then
       write(spn,*) j_proc
-      fname = 'tmp/'//trim(fhead)//trim(adjustl(spn))//'to'//trim(adjustl(spm))
+      fname = 'tmp_gindex3D/'//trim(fhead)//trim(adjustl(spn))//'to'//trim(adjustl(spm))
       !print *,fname
       open(10,file=fname,action='read',status='old')
       read(10,*) nibool
@@ -1006,7 +1119,7 @@
     j_proc = my_neighbors_crust_mantle(i)
     if (j_proc < i_proc) then
       write(spn,*) j_proc
-      fname = 'tmp/'//trim(fhead)//trim(adjustl(spn))//'to'//trim(adjustl(spm))
+      fname = 'tmp_gindex3D/'//trim(fhead)//trim(adjustl(spn))//'to'//trim(adjustl(spm))
       !print *,fname
       open(10,file=fname,action='read',status='old')
       read(10,*) nibool
@@ -1028,7 +1141,7 @@
       j_proc = my_neighbors_trinfinite(i)
       if (j_proc < i_proc) then
         write(spn,*) j_proc
-        fname = 'tmp/'//trim(fhead)//trim(adjustl(spn))//'to'//trim(adjustl(spm))
+        fname = 'tmp_gindex3D/'//trim(fhead)//trim(adjustl(spn))//'to'//trim(adjustl(spm))
         !print *,fname
         open(10,file=fname,action='read',status='old')
         read(10,*) nibool
@@ -1050,7 +1163,7 @@
     j_proc = my_neighbors_infinite(i)
     if (j_proc < i_proc) then
       write(spn,*) j_proc
-      fname = 'tmp/'//trim(fhead)//trim(adjustl(spn))//'to'//trim(adjustl(spm))
+      fname = 'tmp_gindex3D/'//trim(fhead)//trim(adjustl(spn))//'to'//trim(adjustl(spm))
       !print *,fname
       open(10,file=fname,action='read',status='old')
       read(10,*) nibool
@@ -1096,7 +1209,7 @@
     j_proc = my_neighbors_inner_core(i)
     if (j_proc > i_proc) then
       write(spn,*) j_proc
-      fname = 'tmp/'//trim(fhead)//trim(adjustl(spm))//'to'//trim(adjustl(spn))
+      fname = 'tmp_gindex3D/'//trim(fhead)//trim(adjustl(spm))//'to'//trim(adjustl(spn))
       !print *,fname !,i_proc,j_proc
       open(10,file=fname,action='write',status='replace')
       write(10,*) nibool_interfaces_inner_core(i)
@@ -1116,7 +1229,7 @@
     j_proc = my_neighbors_outer_core(i)
     if (j_proc > i_proc) then
       write(spn,*) j_proc
-      fname = 'tmp/'//trim(fhead)//trim(adjustl(spm))//'to'//trim(adjustl(spn))
+      fname = 'tmp_gindex3D/'//trim(fhead)//trim(adjustl(spm))//'to'//trim(adjustl(spn))
       !print *,fname
       open(10,file=fname,action='write',status='replace')
       write(10,*)nibool_interfaces_outer_core(i)
@@ -1136,7 +1249,7 @@
     j_proc = my_neighbors_crust_mantle(i)
     if (j_proc > i_proc) then
       write(spn,*) j_proc
-      fname = 'tmp/'//trim(fhead)//trim(adjustl(spm))//'to'//trim(adjustl(spn))
+      fname = 'tmp_gindex3D/'//trim(fhead)//trim(adjustl(spm))//'to'//trim(adjustl(spn))
       !print *,fname
       open(10,file=fname,action='write',status='replace')
       write(10,*) nibool_interfaces_crust_mantle(i)
@@ -1157,7 +1270,7 @@
       j_proc = my_neighbors_trinfinite(i)
       if (j_proc > i_proc) then
         write(spn,*) j_proc
-        fname = 'tmp/'//trim(fhead)//trim(adjustl(spm))//'to'//trim(adjustl(spn))
+        fname = 'tmp_gindex3D/'//trim(fhead)//trim(adjustl(spm))//'to'//trim(adjustl(spn))
         !print *,fname
         open(10,file=fname,action='write',status='replace')
         write(10,*) nibool_interfaces_trinfinite(i)
@@ -1178,7 +1291,7 @@
     j_proc = my_neighbors_infinite(i)
     if (j_proc > i_proc) then
       write(spn,*) j_proc
-      fname = 'tmp/'//trim(fhead)//trim(adjustl(spm))//'to'//trim(adjustl(spn))
+      fname = 'tmp_gindex3D/'//trim(fhead)//trim(adjustl(spm))//'to'//trim(adjustl(spn))
       !print *,fname
       open(10,file=fname,action='write',status='replace')
       write(10,*) nibool_interfaces_infinite(i)
@@ -1453,9 +1566,9 @@
 
   ! transtion infinite
   if (ADD_TRINF) then
-  do i_elmt = 1,NSPEC_TRINFINITE
-    inode_elmt_trinf1(:,i_elmt) = nmir_trinf(inode_elmt_trinf(igll_on,i_elmt))
-  enddo
+    do i_elmt = 1,NSPEC_TRINFINITE
+      inode_elmt_trinf1(:,i_elmt) = nmir_trinf(inode_elmt_trinf(igll_on,i_elmt))
+    enddo
   endif
 
   ! infinite
@@ -1714,7 +1827,7 @@
     j_proc = my_neighbors_inner_core(i)
     if (j_proc < i_proc) then
       write(spn,*)j_proc
-      fname='tmp/'//trim(fhead)//trim(adjustl(spn))//'to'//trim(adjustl(spm))
+      fname='tmp_gindex3D/'//trim(fhead)//trim(adjustl(spn))//'to'//trim(adjustl(spm))
       open(10,file=fname,action='read',status='old')
       read(10,*)nibool
       allocate(gghost(NNDOF,nibool))
@@ -1736,7 +1849,7 @@
     j_proc = my_neighbors_outer_core(i)
     if (j_proc < i_proc) then
       write(spn,*)j_proc
-      fname='tmp/'//trim(fhead)//trim(adjustl(spn))//'to'//trim(adjustl(spm))
+      fname='tmp_gindex3D/'//trim(fhead)//trim(adjustl(spn))//'to'//trim(adjustl(spm))
       open(10,file=fname,action='read',status='old')
       read(10,*)nibool
       allocate(gghost(NNDOF,nibool))
@@ -1758,7 +1871,7 @@
     j_proc = my_neighbors_crust_mantle(i)
     if (j_proc < i_proc) then
       write(spn,*)j_proc
-      fname='tmp/'//trim(fhead)//trim(adjustl(spn))//'to'//trim(adjustl(spm))
+      fname='tmp_gindex3D/'//trim(fhead)//trim(adjustl(spn))//'to'//trim(adjustl(spm))
       open(10,file=fname,action='read',status='old')
       read(10,*)nibool
       allocate(gghost(NNDOF,nibool))
@@ -1781,7 +1894,7 @@
       j_proc = my_neighbors_trinfinite(i)
       if (j_proc < i_proc) then
         write(spn,*)j_proc
-        fname='tmp/'//trim(fhead)//trim(adjustl(spn))//'to'//trim(adjustl(spm))
+        fname='tmp_gindex3D/'//trim(fhead)//trim(adjustl(spn))//'to'//trim(adjustl(spm))
         open(10,file=fname,action='read',status='old')
         read(10,*)nibool
         allocate(gghost(NNDOF,nibool))
@@ -1804,7 +1917,7 @@
     j_proc = my_neighbors_infinite(i)
     if (j_proc < i_proc) then
       write(spn,*)j_proc
-      fname='tmp/'//trim(fhead)//trim(adjustl(spn))//'to'//trim(adjustl(spm))
+      fname='tmp_gindex3D/'//trim(fhead)//trim(adjustl(spn))//'to'//trim(adjustl(spm))
       open(10,file=fname,action='read',status='old')
       read(10,*)nibool
       allocate(gghost(NNDOF,nibool))
@@ -1851,7 +1964,7 @@
     j_proc = my_neighbors_inner_core(i)
     if (j_proc > i_proc) then
       write(spn,*)j_proc
-      fname='tmp/'//trim(fhead)//trim(adjustl(spm))//'to'//trim(adjustl(spn))
+      fname='tmp_gindex3D/'//trim(fhead)//trim(adjustl(spm))//'to'//trim(adjustl(spn))
       open(10,file=fname,action='write',status='replace')
       write(10,*)nibool_interfaces_inner_core1(i)
       allocate(tmpmat(NNDOF,nibool_interfaces_inner_core1(i)))
@@ -1870,7 +1983,7 @@
     j_proc = my_neighbors_outer_core(i)
     if (j_proc > i_proc) then
       write(spn,*)j_proc
-      fname='tmp/'//trim(fhead)//trim(adjustl(spm))//'to'//trim(adjustl(spn))
+      fname='tmp_gindex3D/'//trim(fhead)//trim(adjustl(spm))//'to'//trim(adjustl(spn))
       open(10,file=fname,action='write',status='replace')
       write(10,*)nibool_interfaces_outer_core1(i)
       allocate(tmpmat(NNDOF,nibool_interfaces_outer_core1(i)))
@@ -1889,7 +2002,7 @@
     j_proc = my_neighbors_crust_mantle(i)
     if (j_proc > i_proc) then
       write(spn,*)j_proc
-      fname='tmp/'//trim(fhead)//trim(adjustl(spm))//'to'//trim(adjustl(spn))
+      fname='tmp_gindex3D/'//trim(fhead)//trim(adjustl(spm))//'to'//trim(adjustl(spn))
       open(10,file=fname,action='write',status='replace')
       write(10,*)nibool_interfaces_crust_mantle1(i)
       allocate(tmpmat(NNDOF,nibool_interfaces_crust_mantle1(i)))
@@ -1910,7 +2023,7 @@
       j_proc = my_neighbors_trinfinite(i)
       if (j_proc > i_proc) then
         write(spn,*)j_proc
-        fname='tmp/'//trim(fhead)//trim(adjustl(spm))//'to'//trim(adjustl(spn))
+        fname='tmp_gindex3D/'//trim(fhead)//trim(adjustl(spm))//'to'//trim(adjustl(spn))
         !print *,fname
         open(10,file=fname,action='write',status='replace')
         write(10,*)nibool_interfaces_trinfinite1(i)
@@ -1932,7 +2045,7 @@
     j_proc = my_neighbors_infinite(i)
     if (j_proc > i_proc) then
       write(spn,*)j_proc
-      fname='tmp/'//trim(fhead)//trim(adjustl(spm))//'to'//trim(adjustl(spn))
+      fname='tmp_gindex3D/'//trim(fhead)//trim(adjustl(spm))//'to'//trim(adjustl(spn))
       !print *,fname
       open(10,file=fname,action='write',status='replace')
       write(10,*)nibool_interfaces_infinite1(i)
@@ -1947,6 +2060,7 @@
 
   gnf_end1 = maxval(gnf1)
   print *,'Largest gnf1 ID:',gnf_end1
+
   write(spm,*)i_proc
 
   fname='DATABASES_MPI/gdof1_proc'//trim(adjustl(spm))
@@ -1963,49 +2077,54 @@
   write(10,*)gdf_inf1
   close(10)
 
+  ! debug
+  print *,'done'
   print *,'*********************************************************'
 
   ! deallocate variables
   ! for NGLL=5
   deallocate(gnf,isgnf)
   deallocate(gdf_ic,gdf_oc,gdf_cm,gdf_trinf,gdf_inf)
-  !  deallocate(rmass_inner_core)
+
+  ! deallocate arrays before re-allocating in read_mesh_databases()
+  ! inner core
   deallocate(my_neighbors_inner_core,nibool_interfaces_inner_core)
   deallocate(ibool_interfaces_inner_core)
-  !  deallocate(phase_ispec_inner_inner_core)
-  !  deallocate(num_elem_colors_inner_core)
-  !  deallocate(buffer_send_vector_inner_core,buffer_recv_vector_inner_core, &
-  !  request_send_vector_inner_core,request_recv_vector_inner_core)
+  deallocate(ibool_inner_core)
+  deallocate(idoubling_inner_core)
 
-  !  deallocate(rmass_outer_core)
+  ! outer core
   deallocate(my_neighbors_outer_core,nibool_interfaces_outer_core)
   deallocate(ibool_interfaces_outer_core)
-  !  deallocate(phase_ispec_inner_outer_core)
-  !  deallocate(num_elem_colors_outer_core)
-  !  deallocate(buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core, &
-  !  request_send_scalar_outer_core,request_recv_scalar_outer_core)
+  deallocate(ibool_outer_core)
 
-  !  deallocate(rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle)
+  ! crust/mantle
   deallocate(my_neighbors_crust_mantle,nibool_interfaces_crust_mantle)
   deallocate(ibool_interfaces_crust_mantle)
-  !  deallocate(phase_ispec_inner_crust_mantle)
-  !  deallocate(num_elem_colors_crust_mantle)
-  !  deallocate(buffer_send_vector_crust_mantle,buffer_recv_vector_crust_mantle, &
-  !  request_send_vector_crust_mantle,request_recv_vector_crust_mantle)
+  deallocate(ibool_crust_mantle)
 
-  deallocate(my_neighbors_trinfinite,nibool_interfaces_trinfinite)
-  deallocate(ibool_interfaces_trinfinite)
-  !  deallocate(phase_ispec_inner_trinfinite)
-  !  deallocate(num_elem_colors_trinfinite)
-  !  deallocate(buffer_send_scalar_trinfinite,buffer_recv_scalar_trinfinite, &
-  !  request_send_scalar_trinfinite,request_recv_scalar_trinfinite)
+  ! trinfinite
+  if (allocated(ibool_trinfinite)) then
+    deallocate(my_neighbors_trinfinite,nibool_interfaces_trinfinite)
+    deallocate(ibool_interfaces_trinfinite)
+    deallocate(ibool_trinfinite)
+    deallocate(ibelm_bottom_trinfinite,ibelm_top_trinfinite)
+    deallocate(ibelm_xmin_trinfinite,ibelm_xmax_trinfinite)
+    deallocate(ibelm_ymin_trinfinite,ibelm_ymax_trinfinite)
+  endif
 
+  ! infinite
   deallocate(my_neighbors_infinite,nibool_interfaces_infinite)
   deallocate(ibool_interfaces_infinite)
-  !  deallocate(phase_ispec_inner_infinite)
-  !  deallocate(num_elem_colors_infinite)
-  !  deallocate(buffer_send_scalar_infinite,buffer_recv_scalar_infinite, &
-  !  request_send_scalar_infinite,request_recv_scalar_infinite)
+  deallocate(ibool_infinite)
+  deallocate(ibelm_bottom_infinite,ibelm_top_infinite)
+  deallocate(ibelm_xmin_infinite,ibelm_xmax_infinite)
+  deallocate(ibelm_ymin_infinite,ibelm_ymax_infinite)
+
+  ! coupling
+  deallocate(ibelm_top_inner_core)
+  deallocate(ibelm_bottom_outer_core,ibelm_top_outer_core)
+  deallocate(ibelm_bottom_crust_mantle,ibelm_top_crust_mantle)
 
   ! for NGLL=3
   deallocate(gnf1,isgnf1)

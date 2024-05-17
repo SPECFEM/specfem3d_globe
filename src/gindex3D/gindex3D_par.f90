@@ -29,7 +29,7 @@ module gindex_par
 
   use constants, only: myrank,NGLLX,NGLLY,NGLLZ
 
-  use shared_parameters, only: NPROC
+  use shared_parameters, only: NPROCTOT
 
   use specfem_par
 
