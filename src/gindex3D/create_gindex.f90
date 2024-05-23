@@ -892,12 +892,6 @@
   endif
   if (i_proc == 1) print *,'INF:',ignode
 
-  !  if (ignode /= nnode) then
-  !    write(*,*) 'ERROR: numbers of global nodes mismatch!',ignode,nnode
-  !    call sync_all
-  !    call close_process
-  !  endif
-
   ! save global indices for neighboring partitions
   ! inner core
   fhead = 'ic'

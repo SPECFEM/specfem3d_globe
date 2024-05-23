@@ -410,8 +410,8 @@
 ! TODO: full gravity is not working yet, needs to fully implement solver...
 #ifdef USE_PETSC_NOT_WORKING_YET
 
-  use poisson, only: poisson_stiffness,poisson_stiffnessINF,poisson_stiffness3, &
-                     poisson_stiffnessINF3
+  use siem_poisson, only: poisson_stiffness,poisson_stiffnessINF,poisson_stiffness3, &
+                          poisson_stiffnessINF3
 #endif
 
   implicit none
@@ -738,9 +738,9 @@
   ! Level-1 solver
   !===============================================================================
   ! Number of DOFs per element in each region
-  nedof_ic1 = NEDOFU1+NEDOFPHI1
-  nedof_oc1 = NEDOFCHI1+NEDOFP1+NEDOFPHI1
-  nedof_cm1 = NEDOFU1+NEDOFPHI1
+  nedof_ic1 = NEDOFU1 + NEDOFPHI1
+  nedof_oc1 = NEDOFCHI1 + NEDOFP1 + NEDOFPHI1
+  nedof_cm1 = NEDOFU1 + NEDOFPHI1
   nedof_trinf1 = NEDOFPHI1
   nedof_inf1 = NEDOFPHI1
 
@@ -820,7 +820,7 @@
         igdof = gdof_elmt1(imap_ic(i))
         jgdof = gdof_elmt1(imap_ic(j))
         ! If a degree of freedom and a non-zero kmat:
-        if (igdof > 0.and.jgdof > 0.and.storekmat_inner_core1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
+        if (igdof > 0 .and. jgdof > 0 .and. storekmat_inner_core1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
           ncount = ncount+1
           ! Local (MPI?) map?
           row0(ncount) = igdof
@@ -842,7 +842,7 @@
       do j = 1,nedof_oc1
         igdof = gdof_elmt1(imap_oc(i))
         jgdof = gdof_elmt1(imap_oc(j))
-        if (igdof > 0.and.jgdof > 0.and.storekmat_outer_core1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
+        if (igdof > 0 .and. jgdof > 0 .and. storekmat_outer_core1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
           !if (myrank==0) write(1111,*) igdof,jgdof,storekmat_outer_core1(i,j,i_elmt)
           ncount = ncount+1
           row0(ncount) = igdof
@@ -864,7 +864,7 @@
       do j = 1,nedof_cm1
         igdof = gdof_elmt1(imap_cm(i))
         jgdof = gdof_elmt1(imap_cm(j))
-        if (igdof > 0.and.jgdof > 0.and.storekmat_crust_mantle1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
+        if (igdof > 0 .and. jgdof > 0 .and. storekmat_crust_mantle1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
           ncount = ncount+1
           row0(ncount) = igdof
           col0(ncount) = jgdof
@@ -884,7 +884,7 @@
       do j = 1,nedof_trinf1
         igdof = gdof_elmt1(imap_trinf(i))
         jgdof = gdof_elmt1(imap_trinf(j))
-        if (igdof > 0.and.jgdof > 0.and.storekmat_trinfinite1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
+        if (igdof > 0 .and. jgdof > 0 .and. storekmat_trinfinite1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
           ncount = ncount+1
           row0(ncount) = igdof
           col0(ncount) = jgdof
@@ -904,7 +904,7 @@
       do j = 1,nedof_inf1
         igdof = gdof_elmt1(imap_inf(i))
         jgdof = gdof_elmt1(imap_inf(j))
-        if (igdof > 0.and.jgdof > 0) then
+        if (igdof > 0 .and. jgdof > 0) then
           ncount = ncount+1
           row0(ncount) = igdof
           col0(ncount) = jgdof
@@ -1047,12 +1047,12 @@
       gdof_elmt = reshape(gdof_ic(inode_elmt_ic(:,i_elmt)),(/NEDOF/))
       ggdof_elmt = reshape(ggdof_ic(:,inode_elmt_ic(:,i_elmt)),(/NEDOF/))
       !if (myrank==0) print *,'ICkmat zeros:',count(storekmat_inner_core(:,:,i_elmt)==0.0_CUSTOM_REAL)
-      !if (myrank==0.and.i_elmt==1)print *,'kmat:',storekmat_inner_core(1,:,i_elmt)
+      !if (myrank==0 .and. i_elmt==1)print *,'kmat:',storekmat_inner_core(1,:,i_elmt)
       do i = 1,nedof_ic
         do j = 1,nedof_ic
           igdof = gdof_elmt(imap_ic(i))
           jgdof = gdof_elmt(imap_ic(j))
-          if (igdof > 0.and.jgdof > 0.and.storekmat_inner_core(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
+          if (igdof > 0 .and. jgdof > 0 .and. storekmat_inner_core(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
             ncount = ncount+1
             row0(ncount) = igdof
             col0(ncount) = jgdof
@@ -1072,7 +1072,7 @@
         do j = 1,nedof_oc
           igdof = gdof_elmt(imap_oc(i))
           jgdof = gdof_elmt(imap_oc(j))
-          if (igdof > 0.and.jgdof > 0.and.storekmat_outer_core(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
+          if (igdof > 0 .and. jgdof > 0 .and. storekmat_outer_core(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
             ncount = ncount+1
             row0(ncount) = igdof
             col0(ncount) = jgdof
@@ -1091,7 +1091,7 @@
         do j = 1,nedof_cm
           igdof = gdof_elmt(imap_cm(i))
           jgdof = gdof_elmt(imap_cm(j))
-          if (igdof > 0.and.jgdof > 0.and.storekmat_crust_mantle(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
+          if (igdof > 0 .and. jgdof > 0 .and. storekmat_crust_mantle(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
             ncount = ncount+1
             row0(ncount) = igdof
             col0(ncount) = jgdof
@@ -1110,7 +1110,7 @@
         do j = 1,nedof_trinf
           igdof = gdof_elmt(imap_trinf(i))
           jgdof = gdof_elmt(imap_trinf(j))
-          if (igdof > 0.and.jgdof > 0.and.storekmat_trinfinite(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
+          if (igdof > 0 .and. jgdof > 0 .and. storekmat_trinfinite(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
             ncount = ncount+1
             row0(ncount) = igdof
             col0(ncount) = jgdof
@@ -1129,7 +1129,7 @@
         do j = 1,nedof_inf
           igdof = gdof_elmt(imap_inf(i))
           jgdof = gdof_elmt(imap_inf(j))
-          if (igdof > 0.and.jgdof > 0) then
+          if (igdof > 0 .and. jgdof > 0) then
             ncount = ncount+1
             row0(ncount) = igdof
             col0(ncount) = jgdof

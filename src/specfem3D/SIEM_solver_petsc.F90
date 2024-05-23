@@ -218,34 +218,20 @@ contains
       ig1 = ig0+ng1-1
     endif
   else
-  ! Error
+    ! Error
     write(*,*) 'ERROR: illegal value of "np0"!'
     stop
   endif
-  !if (myrank==0) write(*,*) 'OK0:',ng0,ng1,ng,ig0,ig1
-  !call sync_all
+
   allocate(nzeros_row(ng))
   nzeros_row = 0
-  !if (myrank==0) then
-  !  open(1,file='test_file_proc1',action='write',status='replace')
-  !  write(1,*)ng,ig0,ig1
-  !endif
   do i = 1,nsparse1
     if (kgrow_sparse1(i)-1 >= ig0 .and. kgrow_sparse1(i)-1 <= ig1) then
       ind=kgrow_sparse1(i)-ig0 ! Fortran indexing
-      !if (myrank==0) write(1,*) ind,kgrow_sparse1(i)
       nzeros_row(ind)=nzeros_row(ind)+1
     endif
   enddo
-  !if (myrank==0) close(1)
-  !nzeros_row=2*nzeros_row
-  !if (myrank==0) write(*,*) 'OK1:',nzeros_row(1),minval(nzeros_row),maxval(nzeros_row)
-  !call sync_all
   write(char_myrank,'(i4)')myrank
-  !outf_name='precomp_nonzeros'//trim(adjustl(char_myrank))
-  !open(1,file=outf_name,action='write',status='replace')
-  !write(1,'(i4)')nzeros_row
-  !close(1)
 
   call VecCreateMPI(PETSC_COMM_WORLD,PETSC_DECIDE,ngdof1,xvec1,ierr)
   CHKERRA(ierr)
@@ -332,19 +318,17 @@ contains
   CHKERRA(ierr)
   call VecMin(iproc_gvec1,PETSC_NULL_INTEGER,pmin,ierr)
   call VecMax(iproc_gvec1,PETSC_NULL_INTEGER,pmax,ierr)
-  if (myrank == 0) write(*,*) 'iproc range',pmin,pmax; call sync_all
-  !call VecGetArrayF90(iproc_gvec1,rproc_array,ierr)
-  !CHKERRA(ierr)
-  !allocate(iproc_array(ng))
-  !iproc_array=int(rproc_array(1:n))
-  !call VecRestoreArrayF90(iproc_gvec1,rproc_array,ierr)
-  !CHKERRA(ierr)
+  if (myrank == 0) write(*,*) 'iproc range',pmin,pmax; call synchronize_all()
+
   ! copy solution to local array
   allocate(iproc_array1(neq1),rproc_array1(neq1))
   call scatter_globalvec1(iproc_gvec1, rproc_array1)
+
   iproc_array1=int(rproc_array1)
+
   if (myrank == 0) write(*,*) 'vector3 iproc',minval(iproc_array1),maxval(iproc_array1)
-  call sync_all
+  call synchronize_all()
+
   !!TODO: use local scatter
   !call VecScatterCreateToAll(iproc_gvec1,pscat1,iproc_garray,ierr);
   !call VecScatterBegin(pscat1,iproc_gvec1,iproc_garray,INSERT_VALUES,SCATTER_FORWARD,ierr);
@@ -355,118 +339,74 @@ contains
   rval = 1.0
   ! inner core
   do i = 1,num_interfaces_inner_core1
-      nibool=nibool_interfaces_inner_core1(i)
-      allocate(ibool_interface(nibool))
-      ibool_interface=ibool_interfaces_inner_core1(1:nibool,i)
-      !ng_interface=nibool*NNDOF
-      !allocate(ig_interface(ng_interface),rg_interface(ng_interface))
-      !ig_interface=reshape(ggdof_ic1(1,ibool_interface), (/ ng_interface /) )
-      !ig_interface=ig_interface-1
-      !rg_interface=1.0
-      !call VecSetValues(interface_gvec1,ng_interface,ig_interface,rg_interface,INSERT_VALUES,ierr);
-      !deallocate(ibool_interface,ig_interface,rg_interface)
-      do i_bool = 1,nibool
-        do i_ndof = 1,NNDOF
-          igdof = ggdof_ic1(i_ndof,ibool_interface(i_bool))-1
-          if (igdof >= 0) call VecSetValues(interface_gvec1,1,igdof,rval, &
-          INSERT_VALUES,ierr);
-        enddo
+    nibool=nibool_interfaces_inner_core1(i)
+    allocate(ibool_interface(nibool))
+    ibool_interface=ibool_interfaces_inner_core1(1:nibool,i)
+    do i_bool = 1,nibool
+      do i_ndof = 1,NNDOF
+        igdof = ggdof_ic1(i_ndof,ibool_interface(i_bool))-1
+        if (igdof >= 0) call VecSetValues(interface_gvec1,1,igdof,rval,INSERT_VALUES,ierr)
       enddo
-      deallocate(ibool_interface)
+    enddo
+    deallocate(ibool_interface)
   enddo
-  !if (myrank==0) write(*,*) 'OK'
-  !call sync_all
-  !! stop all the MPI processes, and exit
-  !call MPI_FINALIZE(ierr)
 
   ! outer core
   do i = 1,num_interfaces_outer_core1
-      nibool=nibool_interfaces_outer_core1(i)
-      allocate(ibool_interface(nibool))
-      ibool_interface=ibool_interfaces_outer_core1(1:nibool,i)
-      !ng_interface=nibool*NNDOF
-      !allocate(ig_interface(ng_interface),rg_interface(ng_interface))
-      !ig_interface=reshape(ggdof_ic1(1,ibool_interface), (/ ng_interface /) )
-      !ig_interface=ig_interface-1
-      !rg_interface=1.0
-      !call VecSetValues(interface_gvec1,ng_interface,ig_interface,rg_interface,INSERT_VALUES,ierr);
-      !deallocate(ibool_interface,ig_interface,rg_interface)
-      do i_bool = 1,nibool
-        do i_ndof = 1,NNDOF
-          igdof = ggdof_oc1(i_ndof,ibool_interface(i_bool))-1
-          if (igdof >= 0) call VecSetValues(interface_gvec1,1,igdof,rval, &
-          INSERT_VALUES,ierr);
-        enddo
+    nibool=nibool_interfaces_outer_core1(i)
+    allocate(ibool_interface(nibool))
+    ibool_interface=ibool_interfaces_outer_core1(1:nibool,i)
+    do i_bool = 1,nibool
+      do i_ndof = 1,NNDOF
+        igdof = ggdof_oc1(i_ndof,ibool_interface(i_bool))-1
+        if (igdof >= 0) call VecSetValues(interface_gvec1,1,igdof,rval,INSERT_VALUES,ierr)
       enddo
-      deallocate(ibool_interface)
+    enddo
+    deallocate(ibool_interface)
   enddo
 
   ! crust mantle
   do i = 1,num_interfaces_crust_mantle1
-      nibool=nibool_interfaces_crust_mantle1(i)
-      allocate(ibool_interface(nibool))
-      ibool_interface=ibool_interfaces_crust_mantle1(1:nibool,i)
-      !ng_interface=nibool*NNDOF
-      !allocate(ig_interface(ng_interface),rg_interface(ng_interface))
-      !ig_interface=reshape(ggdof_ic1(1,ibool_interface), (/ ng_interface /) )
-      !ig_interface=ig_interface-1
-      !rg_interface=1.0
-      !call VecSetValues(interface_gvec1,ng_interface,ig_interface,rg_interface,INSERT_VALUES,ierr);
-      !deallocate(ibool_interface,ig_interface,rg_interface)
-      do i_bool = 1,nibool
-        do i_ndof = 1,NNDOF
-          igdof = ggdof_cm1(i_ndof,ibool_interface(i_bool))-1
-          if (igdof >= 0) call VecSetValues(interface_gvec1,1,igdof,rval, &
-          INSERT_VALUES,ierr);
-        enddo
+    nibool=nibool_interfaces_crust_mantle1(i)
+    allocate(ibool_interface(nibool))
+    ibool_interface=ibool_interfaces_crust_mantle1(1:nibool,i)
+    do i_bool = 1,nibool
+      do i_ndof = 1,NNDOF
+        igdof = ggdof_cm1(i_ndof,ibool_interface(i_bool))-1
+        if (igdof >= 0) call VecSetValues(interface_gvec1,1,igdof,rval,INSERT_VALUES,ierr)
       enddo
-      deallocate(ibool_interface)
+    enddo
+    deallocate(ibool_interface)
   enddo
 
   ! transition infinite
   if (ADD_TRINF) then
-  do i = 1,num_interfaces_trinfinite1
+    do i = 1,num_interfaces_trinfinite1
       nibool=nibool_interfaces_trinfinite1(i)
       allocate(ibool_interface(nibool))
       ibool_interface=ibool_interfaces_trinfinite1(1:nibool,i)
-      !ng_interface=nibool*NNDOF
-      !allocate(ig_interface(ng_interface),rg_interface(ng_interface))
-      !ig_interface=reshape(ggdof_ic1(1,ibool_interface), (/ ng_interface /) )
-      !ig_interface=ig_interface-1
-      !rg_interface=1.0
-      !call VecSetValues(interface_gvec1,ng_interface,ig_interface,rg_interface,INSERT_VALUES,ierr);
-      !deallocate(ibool_interface,ig_interface,rg_interface)
       do i_bool = 1,nibool
         do i_ndof = 1,NNDOF
           igdof = ggdof_trinf1(i_ndof,ibool_interface(i_bool))-1
-          if (igdof >= 0) call VecSetValues(interface_gvec1,1,igdof,rval, &
-          INSERT_VALUES,ierr);
+          if (igdof >= 0) call VecSetValues(interface_gvec1,1,igdof,rval,INSERT_VALUES,ierr)
         enddo
       enddo
       deallocate(ibool_interface)
-  enddo
+    enddo
   endif
 
   ! infinite
   do i = 1,num_interfaces_infinite1
-      nibool=nibool_interfaces_infinite1(i)
-      allocate(ibool_interface(nibool))
-      ibool_interface=ibool_interfaces_infinite1(1:nibool,i)
-      !ng_interface=nibool*NNDOF
-      !allocate(ig_interface(ng_interface),rg_interface(ng_interface))
-      !ig_interface=reshape(ggdof_ic1(1,ibool_interface), (/ ng_interface /) )
-      !ig_interface=ig_interface-1
-      !rg_interface=1.0
-      !call VecSetValues(interface_gvec1,ng_interface,ig_interface,rg_interface,INSERT_VALUES,ierr);
-      !deallocate(ibool_interface,ig_interface,rg_interface)
-      do i_bool = 1,nibool
-        do i_ndof = 1,NNDOF
-          igdof = ggdof_inf1(i_ndof,ibool_interface(i_bool))-1
-          if (igdof >= 0) call VecSetValues(interface_gvec1,1,igdof,rval, &
-          INSERT_VALUES,ierr);
-        enddo
+    nibool=nibool_interfaces_infinite1(i)
+    allocate(ibool_interface(nibool))
+    ibool_interface=ibool_interfaces_infinite1(1:nibool,i)
+    do i_bool = 1,nibool
+      do i_ndof = 1,NNDOF
+        igdof = ggdof_inf1(i_ndof,ibool_interface(i_bool))-1
+        if (igdof >= 0) call VecSetValues(interface_gvec1,1,igdof,rval,INSERT_VALUES,ierr)
       enddo
-      deallocate(ibool_interface)
+    enddo
+    deallocate(ibool_interface)
   enddo
 
   call VecAssemblyBegin(interface_gvec1,ierr)
@@ -474,17 +414,12 @@ contains
   call VecAssemblyEnd(interface_gvec1,ierr)
   CHKERRA(ierr)
 
-  !call sync_all
-  !! stop all the MPI processes, and exit
-  !call MPI_FINALIZE(ierr)
-
   ! copy solution to local array
   allocate(isg_interface(neq1),rg_interface(neq1))
   call scatter_globalvec1(interface_gvec1,rg_interface)
   isg_interface=int(rg_interface)
 
-  ! estimate correction for the number of nonzero entries in the diagonal and
-  ! nondiagonal portion
+  ! estimate correction for the number of nonzero entries in the diagonal and nondiagonal portion
   ! self interface
   !rval=-1.0
   !call VecSet(nself_gvec1,rval,ierr) ! subtract self
@@ -510,23 +445,8 @@ contains
   call VecDestroy(nself_gvec1,ierr)
 
   if (myrank == 0) write(*,*) 'maximum value of nself:',maxval(nself_array1)
-  !call sync_all
-  !! stop all the MPI processes, and exit
-  !call MPI_FINALIZE(ierr)
-  !stop
-  !! count nonzero entries in the diagonal and nondiagonal portion
-  !zero=0.
-  !call VecSet(nzeror_dvec1,zero,ierr)
-  !call VecSet(nzeror_ovec1,zero,ierr)
 
-  !outf_name='isg_interface'//trim(adjustl(char_myrank))
-  !open(1,file=outf_name,action='write',status='replace')
-  !write(1,'(i4)')isg_interface
-  !close(1)
-
-  !if (myrank==0) open(11,file='test_interface',action='write',status='replace')
-  ! factor for maximum number of interfaces for each nondiagonal entry of the
-  ! stiffness matrix
+  ! factor for maximum number of interfaces for each nondiagonal entry of the stiffness matrix
   ! the factor below is valid ONLY for rectagular partitioning of the global model
   max_ni = 8.0
   fac_ni = 0.0
@@ -649,7 +569,7 @@ contains
 
   if (myrank == 0) write(*,*) n,minval(nzeror_darray1),maxval(nzeror_darray1), &
   minval(nnzero_diag1),maxval(nnzero_diag1)
-  call sync_all
+  call synchronize_all()
 
   call VecRestoreArrayF90(nzeror_dvec1,nzeror_darray1,ierr)
   call VecDestroy(nzeror_dvec1,ierr)
@@ -673,7 +593,6 @@ contains
   where(ninterface_darray1 > 0)ninterface_darray1=ninterface_darray1-4
   where(ninterface_darray1 < 0)ninterface_darray1=0
 
-
   call VecGetArrayF90(ninterface_ovec1,rninterface_oarray1,ierr)
   !where(rninterface_oarray1>0.0 .and. rninterface_oarray1 < 1.0)rninterface_oarray1=1.0
   allocate(ninterface_oarray1(n))
@@ -682,7 +601,6 @@ contains
   call VecDestroy(ninterface_ovec1,ierr)
   where(ninterface_oarray1 > 0)ninterface_oarray1=ninterface_oarray1-8
   where(ninterface_oarray1 < 0)ninterface_oarray1=0
-
 
   nnzero_diag1 = nnzero_diag1-ninterface_darray1
   nnzero_offdiag1 = nnzero_offdiag1-ninterface_oarray1
@@ -726,7 +644,8 @@ contains
 
   call MatGetOwnershipRange(Amat1,istart,iend,ierr)
   CHKERRA(ierr)
-  call sync_all
+  call synchronize_all()
+
   if (istart /= ig0 .or. iend-1 /= ig1) then
     write(*,*) 'ERROR: ownership range mismatch!'
     write(*,*) 'ownership range:',myrank,istart,ig0,iend-1,ig1,nzeros_row(1)
@@ -748,7 +667,6 @@ contains
   !  routines.
   !call KSPSetFromOptions(ksp1,ierr)
 
-
   ! Create adjoint solver:
   !if (SIMULATION_TYPE==3) then
   !  call create_linear_solver(solver_type1, b_ksp1, Amat1, pc1, Fmat1)
@@ -759,9 +677,6 @@ contains
   !    write(*,*) ' Created adjoint linear KSP solver...'
   !  endif
   !endif
-
-
-
 
   !-------------------------------------------------------------------------------
   ! Create the linear solver and set various options
@@ -837,13 +752,10 @@ contains
   use specfem_par, only: myrank, SIMULATION_TYPE
   implicit none
 
-
-
   PetscInt     stype
   KSP          l_ksp
   Mat          l_Amat, l_fmat
   PC           l_pc
-
 
   ! Create linear solver context
   call KSPCreate(PETSC_COMM_WORLD,l_ksp,ierr)
@@ -998,59 +910,16 @@ contains
     ncount = 0; idof=-1; igdof=-1
     do i = 1,NEDOF1
       do j = 1,NEDOF1
-      if (ggdof_elmt(i) >= 0.and.ggdof_elmt(j) >= 0.and.                          &
-      storekmat_inner_core1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
-        !ncount=ncount+1
-        !idof(ncount)=i
-        !igdof(ncount)=ggdof_elmt(i)
+      if (ggdof_elmt(i) >= 0 .and. ggdof_elmt(j) >= 0 .and. &
+          storekmat_inner_core1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
         call MatSetValues(Amat1,1,ggdof_elmt(i),1,ggdof_elmt(j), &
         storekmat_inner_core1(i,j,i_elmt),ADD_VALUES,ierr)
         CHKERRA(ierr)
       endif
       enddo
     enddo
-    !call MatSetValues(Amat,ncount,igdof(1:ncount),ncount,igdof(1:ncount), &
-    !storekmat_inner_core(idof(1:ncount),idof(1:ncount),i_elmt),ADD_VALUES,ierr)
-    !CHKERRA(ierr)
   enddo
-  !! inner core
-  !do i_elmt=1,NSPEC_INNER_CORE
-  !  if (idoubling_inner_core(i_elmt)==IFLAG_IN_FICTITIOUS_CUBE)cycle
-  !  ggdof_elmt=reshape(ggdof_ic(:,inode_elmt_ic(:,i_elmt)),(/NEDOF/))
-  !  ggdof_elmt=ggdof_elmt-1 ! petsc index starts from 0
-  !  ncount=0; idof=-1; igdof=-1
-  !  do i=1,NEDOF
-  !    if (ggdof_elmt(i) >= 0) then
-  !      ncount=ncount+1
-  !      idof(ncount)=i
-  !      igdof(ncount)=ggdof_elmt(i)
-  !    endif
-  !  enddo
-  !  call MatSetValues(Amat,ncount,igdof(1:ncount),ncount,igdof(1:ncount), &
-  !  storekmat_inner_core(idof(1:ncount),idof(1:ncount),i_elmt),ADD_VALUES,ierr)
-  !  CHKERRA(ierr)
-  !enddo
   deallocate(storekmat_inner_core1)
-  !if (myrank==0) write(*,*) 'IC kmat done1!'; call sync_all
-  !if (myrank==0) then
-  !  open(1111,file='debug.log',action='write')
-  !  write(1111,*)ggdof_oc1
-  !  !do i_elmt=1,NSPEC_OUTER_CORE
-  !  !  ggdof_elmt=reshape(ggdof_oc1(:,inode_elmt_oc1(:,i_elmt)),(/NEDOF1/))
-  !  !  ggdof_elmt=ggdof_elmt-1 ! petsc index starts from 0
-  !  !  ncount=0; idof=-1; igdof=-1
-  !  !  do i=1,NEDOF1
-  !  !    do j=1,NEDOF1
-  !  !    if (ggdof_elmt(i) >= 0.and.ggdof_elmt(j) >= 0.and.                          &
-  !  !    storekmat_outer_core1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
-  !  !      write(1111,*)ggdof_elmt(i),ggdof_elmt(j)
-  !  !    endif
-  !  !    enddo
-  !  !  enddo
-  !  !enddo
-  !  close(1111)
-  !endif
-  !call sync_all
 
   ! outer core
   do i_elmt = 1,NSPEC_OUTER_CORE
@@ -1059,8 +928,8 @@ contains
     ncount = 0; idof=-1; igdof=-1
     do i = 1,NEDOF1
       do j = 1,NEDOF1
-      if (ggdof_elmt(i) >= 0.and.ggdof_elmt(j) >= 0.and.                          &
-      storekmat_outer_core1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
+      if (ggdof_elmt(i) >= 0 .and. ggdof_elmt(j) >= 0 .and. &
+          storekmat_outer_core1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
         call MatSetValues(Amat1,1,ggdof_elmt(i),1,ggdof_elmt(j), &
         storekmat_outer_core1(i,j,i_elmt),ADD_VALUES,ierr)
         CHKERRA(ierr)
@@ -1068,24 +937,8 @@ contains
       enddo
     enddo
   enddo
-  !! outer core
-  !do i_elmt=1,NSPEC_OUTER_CORE
-  !  ggdof_elmt=reshape(ggdof_oc(:,inode_elmt_oc(:,i_elmt)),(/NEDOF/))
-  !  ggdof_elmt=ggdof_elmt-1 ! petsc index starts from 0
-  !  ncount=0; idof=-1; igdof=-1
-  !  do i=1,NEDOF
-  !    if (ggdof_elmt(i) >= 0) then
-  !      ncount=ncount+1
-  !      idof(ncount)=i
-  !      igdof(ncount)=ggdof_elmt(i)
-  !    endif
-  !  enddo
-  !  call MatSetValues(Amat,ncount,igdof(1:ncount),ncount,igdof(1:ncount), &
-  !  storekmat_outer_core(idof(1:ncount),idof(1:ncount),i_elmt),ADD_VALUES,ierr)
-  !  CHKERRA(ierr)
-  !enddo
   deallocate(storekmat_outer_core1)
-  !if (myrank==0) write(*,*) 'OC kmat done1!'; call sync_all
+
   ! crust mantle
   do i_elmt = 1,NSPEC_CRUST_MANTLE
     ggdof_elmt = reshape(ggdof_cm1(:,inode_elmt_cm1(:,i_elmt)),(/NEDOF1/))
@@ -1093,8 +946,8 @@ contains
     ncount = 0; idof=-1; igdof=-1
     do i = 1,NEDOF1
       do j = 1,NEDOF1
-      if (ggdof_elmt(i) >= 0.and.ggdof_elmt(j) >= 0.and.                          &
-      storekmat_crust_mantle1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
+      if (ggdof_elmt(i) >= 0 .and. ggdof_elmt(j) >= 0 .and. &
+          storekmat_crust_mantle1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
         call MatSetValues(Amat1,1,ggdof_elmt(i),1,ggdof_elmt(j), &
         storekmat_crust_mantle1(i,j,i_elmt),ADD_VALUES,ierr)
         CHKERRA(ierr)
@@ -1102,25 +955,8 @@ contains
       enddo
     enddo
   enddo
-  !do i_elmt=1,NSPEC_CRUST_MANTLE
-  !  ggdof_elmt=reshape(ggdof_cm1(:,inode_elmt_cm1(:,i_elmt)),(/NEDOF1/))
-  !  ggdof_elmt=ggdof_elmt-1 ! petsc index starts from 0
-  !  ncount=0; idof=-1; igdof=-1
-  !  do i=1,NEDOF1
-  !    if (ggdof_elmt(i) >= 0) then
-  !      ncount=ncount+1
-  !      idof(ncount)=i
-  !      igdof(ncount)=ggdof_elmt(i)
-  !    endif
-  !  enddo
-  !  !if (myrank==0) write(*,*) 'hi homnath3in!',i_elmt,minval(igdof(1:ncount)), &
-  !  !maxval(igdof(1:ncount)) !,storekmat_crust_mantle(idof(1:ncount),idof(1:ncount),i_elmt)
-  !  call MatSetValues(Amat1,ncount,igdof(1:ncount),ncount,igdof(1:ncount), &
-  !  storekmat_crust_mantle1(idof(1:ncount),idof(1:ncount),i_elmt),ADD_VALUES,ierr)
-  !  CHKERRA(ierr)
-  !enddo
   deallocate(storekmat_crust_mantle1)
-  !if (myrank==0) write(*,*) 'CM kmat done1!'; call sync_all
+
   ! trinfinite
   do i_elmt = 1,NSPEC_TRINFINITE
     ggdof_elmt = reshape(ggdof_trinf1(:,inode_elmt_trinf1(:,i_elmt)),(/NEDOF1/))
@@ -1128,8 +964,8 @@ contains
     ncount = 0; idof=-1; igdof=-1
     do i = 1,NEDOF1
       do j = 1,NEDOF1
-      if (ggdof_elmt(i) >= 0.and.ggdof_elmt(j) >= 0.and.                          &
-      storekmat_trinfinite1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
+      if (ggdof_elmt(i) >= 0 .and. ggdof_elmt(j) >= 0 .and. &
+          storekmat_trinfinite1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
         call MatSetValues(Amat1,1,ggdof_elmt(i),1,ggdof_elmt(j), &
         storekmat_trinfinite1(i,j,i_elmt),ADD_VALUES,ierr)
         CHKERRA(ierr)
@@ -1137,23 +973,8 @@ contains
       enddo
     enddo
   enddo
-  !do i_elmt=1,NSPEC_TRINFINITE
-  !  ggdof_elmt=reshape(ggdof_trinf1(:,inode_elmt_trinf1(:,i_elmt)),(/NEDOF1/))
-  !  ggdof_elmt=ggdof_elmt-1 ! petsc index starts from 0
-  !  ncount=0; idof=-1; igdof=-1
-  !  do i=1,NEDOF1
-  !    if (ggdof_elmt(i) >= 0) then
-  !      ncount=ncount+1
-  !      idof(ncount)=i
-  !      igdof(ncount)=ggdof_elmt(i)
-  !    endif
-  !  enddo
-  !  call MatSetValues(Amat1,ncount,igdof(1:ncount),ncount,igdof(1:ncount), &
-  !  storekmat_trinfinite1(idof(1:ncount),idof(1:ncount),i_elmt),ADD_VALUES,ierr)
-  !  CHKERRA(ierr)
-  !enddo
   deallocate(storekmat_trinfinite1)
-  !if (myrank==0) write(*,*) 'TRINF kmat done1!'; call sync_all
+
   ! infinite
   do i_elmt = 1,NSPEC_INFINITE
     ggdof_elmt = reshape(ggdof_inf1(:,inode_elmt_inf1(:,i_elmt)),(/NEDOF1/))
@@ -1161,30 +982,18 @@ contains
     ncount = 0; idof=-1; igdof=-1
     do i = 1,NEDOF1
       do j = 1,NEDOF1
-      if (ggdof_elmt(i) >= 0.and.ggdof_elmt(j) >= 0.and.                          &
-      storekmat_infinite1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
+      if (ggdof_elmt(i) >= 0 .and. ggdof_elmt(j) >= 0 .and. &
+          storekmat_infinite1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
         call MatSetValues(Amat1,1,ggdof_elmt(i),1,ggdof_elmt(j), &
         storekmat_infinite1(i,j,i_elmt),ADD_VALUES,ierr)
         CHKERRA(ierr)
-        !if (myrank==0) write(*,*) 'hello in INF1:',i_elmt,'/',NSPEC_INFINITE,i,j,NGLLCUBE_INF,NEDOF1!ggdof_elmt(i),ggdof_elmt(j)
       endif
       enddo
     enddo
-  !  do i=1,NEDOF1
-  !    if (ggdof_elmt(i) >= 0) then
-  !      ncount=ncount+1
-  !      idof(ncount)=i
-  !      igdof(ncount)=ggdof_elmt(i)
-  !    endif
-  !  enddo
-  !  call MatSetValues(Amat1,ncount,igdof(1:ncount),ncount,igdof(1:ncount), &
-  !  storekmat_infinite1(idof(1:ncount),idof(1:ncount),i_elmt),ADD_VALUES,ierr)
-  !  CHKERRA(ierr)
   enddo
-  call sync_all
-  !if (myrank==0) write(*,*) 'INF kmat done1:0!'; call sync_all
   deallocate(storekmat_infinite1)
-  !if (myrank==0) write(*,*) 'INF kmat done1!'; call sync_all
+
+  call synchronize_all()
 
   call MatAssemblyBegin(Amat1,MAT_FINAL_ASSEMBLY,ierr)
   CHKERRA(ierr)
@@ -1192,56 +1001,30 @@ contains
   CHKERRA(ierr)
   call MatSetOption(Amat1,MAT_SYMMETRIC,PETSC_TRUE,ierr);
   CHKERRA(ierr)
-  !if (myrank==0) write(*,*) 'matrix setting & assembly complete11!'
-  call sync_all
+
+  call synchronize_all()
+
   call MatGetOwnershipRange(Amat1,istart,iend,ierr)
   CHKERRA(ierr)
 
-  !! check diagonal of the matrix
-  !call MatCreateVecs(Amat1,Adiag1,PETSC_NULL_OBJECT,ierr)
-  !call MatGetDiagonal(Amat1,Adiag1,ierr)
-  !
-  !call VecCreateSeq(PETSC_COMM_SELF,neq1,lAdiag1,ierr)
-  !
-  !call VecScatterBegin(vscat1,Adiag1,lAdiag1,INSERT_VALUES,SCATTER_FORWARD,ierr)
-  !CHKERRA(ierr)
-  !call VecScatterEnd(vscat1,Adiag1,lAdiag1,INSERT_VALUES,SCATTER_FORWARD,ierr)
-  !CHKERRA(ierr)
-  !call VecGetSize(lAdiag1,n,ierr)
-  !call VecGetArrayF90(lAdiag1,arrayAdiag1,ierr)
-  !CHKERRA(ierr)
-  !maxdiag1=maxscal(maxval(arrayAdiag1))
-  !mindiag1=minscal(minval(arrayAdiag1))
-  !write(*,*) 'maxdiag1 in petsc:',mindiag1,maxdiag1
-  !call VecRestoreArrayF90(lAdiag1,arrayAdiag1,ierr)
-  !CHKERRA(ierr)
-
-
-  !allocate(cols(nzeros_max),vals(nzeros_max))
   allocate(cols(nzeros_max))
-  !call MatGetRow(Amat1,istart,ncols,cols,vals,ierr);
+
   write(char_myrank,'(i4)')myrank
   outf_name='tmp/nonzeros'//trim(adjustl(char_myrank))
   open(1,file=outf_name,action='write',status='replace')
   do i = istart,iend-1
     cols=-1
-    !call MatGetRow(Amat1,i,ncols,PETSC_NULL_INTEGER,PETSC_NULL_SCALAR,ierr);
     call MatGetRow(Amat1,i,ncols,cols,PETSC_NULL_SCALAR,ierr);
     CHKERRA(ierr)
-    !ncols_val=ncols
-    !if (myrank==0) then
-    !write(*,*) 'nzeros in 0th row:',myrank,istart,ncols
     ndiag=count(cols >= ig0.and.cols <= ig1)
     noffdiag = ncols-ndiag
     write(1,*)ndiag,noffdiag,ncols
-    !endif
-    !call MatRestoreRow(Amat1,istart,ncols,cols,vals,ierr);
-    !call sync_all
     call MatRestoreRow(Amat1,i,ncols,PETSC_NULL_INTEGER,PETSC_NULL_SCALAR,ierr);
     CHKERRA(ierr)
   enddo
   close(1)
-  call sync_all()
+
+  call synchronize_all()
 
   end subroutine petsc_set_matrix1
 
@@ -1548,9 +1331,11 @@ contains
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   call PetscInitialize(PETSC_NULL_CHARACTER,ierr)
+
   !call PetscOptionsGetInt(PETSC_NULL_CHARACTER,'-n',ngdof,flg,ierr)
   !if (myrank==0) write(*,*) 'hi0!'
-  !call sync_all
+  !call synchronize_all()
+
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   ! Compute the matrix and right-hand-side vector that define
   ! the linear system, Ax = b.
@@ -1565,47 +1350,32 @@ contains
   nzeros(krow_sparse)=nzeros(krow_sparse)+1
   nzeros_max=maxvec(nzeros)
   nzeros_min=minvec(nzeros)
-  !nzeros_max=2*nzeros_max
-  !nzeros=nzeros
+
   if (myrank == 0) write(*,*) 'ngdof:',ngdof,' nzeros_max:',nzeros_max,' nzeros_min:',nzeros_min
+
   call MatCreate(PETSC_COMM_WORLD,Amat,ierr)
   call MatSetType(Amat,MATMPIAIJ,ierr)
   CHKERRA(ierr)
   call MatSetSizes(Amat,PETSC_DECIDE,PETSC_DECIDE,ngdof,ngdof,ierr)
   CHKERRA(ierr)
+
   ! preallocation
-  !call MatMPIAIJSetPreallocation(Amat,nzeros_max,PETSC_NULL_INTEGER,nzeros_max, &
-  !PETSC_NULL_INTEGER,ierr)
-  call MatMPIAIJSetPreallocation(Amat,nzeros_max,nzeros,nzeros_max, &
-  20*nzeros,ierr)
+  call MatMPIAIJSetPreallocation(Amat,nzeros_max,nzeros,nzeros_max,20*nzeros,ierr)
   CHKERRA(ierr)
-  !call MatSeqAIJSetPreallocation(Amat,nzeros_max,nzeros,ierr)
-  !CHKERRA(ierr)
-
-  !call MatCreateMPIAIJ(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,ngdof,ngdof, &
-  !nzeros_max,PETSC_NULL_INTEGER,nzeros_max,PETSC_NULL_INTEGER,Amat,ierr)
-
-  !if (myrank==0) write(*,*) 'Matrix size:',size(Amat,1),size(Amat,2)
   call MatSetFromOptions(Amat,ierr)
   CHKERRA(ierr)
-  !call MatSetUp(Amat,ierr)
-  !if (myrank==0) write(*,*) 'ierr1:',ierr
-
   call MatGetOwnershipRange(Amat,istart,iend,ierr)
   CHKERRA(ierr)
 
-  !if (myrank==0) write(*,*) 'ierr2:',ierr,istart,iend,iend-istart,minval(nzeros),maxval(nzeros)
   if (myrank == 0) write(*,*) 'actual global index range:',minval(kgrow_sparse),maxval(kgrow_sparse)
   write(*,*) 'global index:',myrank,istart,iend,iend-istart
-  call sync_all
-  !if (myrank==0) write(*,*) 'ierr3:',(iend-istart)*nzeros
-  !if (myrank==0) write(*,*) 'ierr4:',iend,sum(nzeros),sum((iend-istart)*nzeros)
-  deallocate(nzeros)
-  !call sync_all
-  call sync_all
-  if (myrank == 0) write(*,*) 'matrix'
-  !call sync_all
+  call synchronize_all()
 
+  deallocate(nzeros)
+  call synchronize_all()
+
+  if (myrank == 0) write(*,*) 'matrix'
+  synchronize_all()
 
   ! Create vectors.  Note that we form 1 vector from scratch and
   ! then duplicate as needed.
@@ -1685,40 +1455,17 @@ contains
     ncount = 0; idof=-1; igdof=-1
     do i = 1,NEDOF
       do j = 1,NEDOF
-      if (ggdof_elmt(i) >= 0.and.ggdof_elmt(j) >= 0.and.                          &
-      storekmat_inner_core(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
-        !ncount=ncount+1
-        !idof(ncount)=i
-        !igdof(ncount)=ggdof_elmt(i)
+      if (ggdof_elmt(i) >= 0 .and. ggdof_elmt(j) >= 0 .and. &
+          storekmat_inner_core(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
         call MatSetValues(Amat,1,ggdof_elmt(i),1,ggdof_elmt(j), &
-        storekmat_inner_core(i,j,i_elmt),ADD_VALUES,ierr)
+                          storekmat_inner_core(i,j,i_elmt),ADD_VALUES,ierr)
         CHKERRA(ierr)
       endif
       enddo
     enddo
-    !call MatSetValues(Amat,ncount,igdof(1:ncount),ncount,igdof(1:ncount), &
-    !storekmat_inner_core(idof(1:ncount),idof(1:ncount),i_elmt),ADD_VALUES,ierr)
-    !CHKERRA(ierr)
   enddo
-  !! inner core
-  !do i_elmt=1,NSPEC_INNER_CORE
-  !  if (idoubling_inner_core(i_elmt)==IFLAG_IN_FICTITIOUS_CUBE)cycle
-  !  ggdof_elmt=reshape(ggdof_ic(:,inode_elmt_ic(:,i_elmt)),(/NEDOF/))
-  !  ggdof_elmt=ggdof_elmt-1 ! petsc index starts from 0
-  !  ncount=0; idof=-1; igdof=-1
-  !  do i=1,NEDOF
-  !    if (ggdof_elmt(i) >= 0) then
-  !      ncount=ncount+1
-  !      idof(ncount)=i
-  !      igdof(ncount)=ggdof_elmt(i)
-  !    endif
-  !  enddo
-  !  call MatSetValues(Amat,ncount,igdof(1:ncount),ncount,igdof(1:ncount), &
-  !  storekmat_inner_core(idof(1:ncount),idof(1:ncount),i_elmt),ADD_VALUES,ierr)
-  !  CHKERRA(ierr)
-  !enddo
   deallocate(storekmat_inner_core)
-  !if (myrank==0) write(*,*) 'IC kmat done!'; call sync_all
+
   ! outer core
   do i_elmt = 1,NSPEC_OUTER_CORE
     ggdof_elmt = reshape(ggdof_oc(:,inode_elmt_oc(:,i_elmt)),(/NEDOF/))
@@ -1726,35 +1473,17 @@ contains
     ncount = 0; idof=-1; igdof=-1
     do i = 1,NEDOF
       do j = 1,NEDOF
-      if (ggdof_elmt(i) >= 0.and.ggdof_elmt(j) >= 0.and.                          &
-      storekmat_outer_core(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
-        if (myrank == 0) write(*,*) 'hello in OC:',i_elmt,ggdof_elmt(i),ggdof_elmt(j)
-        call sync_all
+      if (ggdof_elmt(i) >= 0 .and. ggdof_elmt(j) >= 0 .and. &
+          storekmat_outer_core(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
         call MatSetValues(Amat,1,ggdof_elmt(i),1,ggdof_elmt(j), &
-        storekmat_outer_core(i,j,i_elmt),ADD_VALUES,ierr)
+                          storekmat_outer_core(i,j,i_elmt),ADD_VALUES,ierr)
         CHKERRA(ierr)
       endif
       enddo
     enddo
   enddo
-  !! outer core
-  !do i_elmt=1,NSPEC_OUTER_CORE
-  !  ggdof_elmt=reshape(ggdof_oc(:,inode_elmt_oc(:,i_elmt)),(/NEDOF/))
-  !  ggdof_elmt=ggdof_elmt-1 ! petsc index starts from 0
-  !  ncount=0; idof=-1; igdof=-1
-  !  do i=1,NEDOF
-  !    if (ggdof_elmt(i) >= 0) then
-  !      ncount=ncount+1
-  !      idof(ncount)=i
-  !      igdof(ncount)=ggdof_elmt(i)
-  !    endif
-  !  enddo
-  !  call MatSetValues(Amat,ncount,igdof(1:ncount),ncount,igdof(1:ncount), &
-  !  storekmat_outer_core(idof(1:ncount),idof(1:ncount),i_elmt),ADD_VALUES,ierr)
-  !  CHKERRA(ierr)
-  !enddo
   deallocate(storekmat_outer_core)
-  !if (myrank==0) write(*,*) 'OC kmat done!'; call sync_all
+
   ! crust mantle
   do i_elmt = 1,NSPEC_CRUST_MANTLE
     ggdof_elmt = reshape(ggdof_cm(:,inode_elmt_cm(:,i_elmt)),(/NEDOF/))
@@ -1767,14 +1496,12 @@ contains
         igdof(ncount)=ggdof_elmt(i)
       endif
     enddo
-    !if (myrank==0) write(*,*) 'hi homnath3in!',i_elmt,minval(igdof(1:ncount)), &
-    !maxval(igdof(1:ncount)) !,storekmat_crust_mantle(idof(1:ncount),idof(1:ncount),i_elmt)
     call MatSetValues(Amat,ncount,igdof(1:ncount),ncount,igdof(1:ncount), &
-    storekmat_crust_mantle(idof(1:ncount),idof(1:ncount),i_elmt),ADD_VALUES,ierr)
+                      storekmat_crust_mantle(idof(1:ncount),idof(1:ncount),i_elmt),ADD_VALUES,ierr)
     CHKERRA(ierr)
   enddo
   deallocate(storekmat_crust_mantle)
-  !if (myrank==0) write(*,*) 'CM kmat done!'; call sync_all
+
   ! trinfinite
   do i_elmt = 1,NSPEC_TRINFINITE
     ggdof_elmt = reshape(ggdof_trinf(:,inode_elmt_trinf(:,i_elmt)),(/NEDOF/))
@@ -1792,7 +1519,7 @@ contains
     CHKERRA(ierr)
   enddo
   deallocate(storekmat_trinfinite)
-  !if (myrank==0) write(*,*) 'TRINF kmat done!'; call sync_all
+
   ! infinite
   do i_elmt = 1,NSPEC_INFINITE
     ggdof_elmt = reshape(ggdof_inf(:,inode_elmt_inf(:,i_elmt)),(/NEDOF/))
@@ -1810,11 +1537,9 @@ contains
     CHKERRA(ierr)
   enddo
   deallocate(storekmat_infinite)
-  !if (myrank==0) write(*,*) 'INF kmat done!'; call sync_all
 
   call MatAssemblyBegin(Amat,MAT_FINAL_ASSEMBLY,ierr)
   call MatAssemblyEnd(Amat,MAT_FINAL_ASSEMBLY,ierr)
-  !if (myrank==0) write(*,*) 'matrix setting & assembly complete!'; call sync_all
 
   end subroutine petsc_set_matrix
 

@@ -108,7 +108,7 @@ contains
     p = z+beta*p
   enddo pcg
   if (myid == 0) write(*,'(a)')'ERROR: PCG solver doesn''t converge!'
-  call sync_all
+  call synchronize_all()
   call close_process
 
   return
@@ -181,9 +181,8 @@ contains
     p = r+beta*p
     !if (myid==1) write(*,'(i3,f25.18,f25.18,f25.18)') cg_iter,alpha,beta,rz
   enddo pcg
-  if (myid == 0) write(*,'(a,e14.6)')'ERROR: CG solver doesn''t converge! &
-  &Tolerance:',abs(alpha)*maxp/maxu
-  call sync_all
+  if (myid == 0) write(*,'(a,e14.6)')'ERROR: CG solver doesn''t converge! Tolerance:',abs(alpha)*maxp/maxu
+  call synchronize_all()
   call close_process
   !close(1111)
 
@@ -259,9 +258,8 @@ contains
     !beta=dot_product_par(r-r0,r_g)/rz !PR: Polak–Ribière
     p = r+beta*p
   enddo pcg
-  if (myid == 0) write(*,'(a,e14.6)')'ERROR: CG solver doesn''t converge! &
-  &Tolerance:',abs(alpha)*maxp/maxu
-  call sync_all
+  if (myid == 0) write(*,'(a,e14.6)')'ERROR: CG solver doesn''t converge! Tolerance:',abs(alpha)*maxp/maxu
+  call synchronize_all()
   call close_process
 
   return
@@ -334,7 +332,7 @@ contains
     p = z+beta*p
   enddo pcg
   if (myid == 0) write(*,'(a)')'ERROR: PCG solver doesn''t converge!'
-  call sync_all
+  call synchronize_all()
   call close_process
 
   return
@@ -410,7 +408,7 @@ contains
     p = z+beta*p
   enddo pcg
   if (myid == 0) write(*,'(a)')'ERROR: PCG solver doesn''t converge!'
-  call sync_all
+  call synchronize_all()
   call close_process
 
   return
