@@ -38,187 +38,6 @@ module infinite_element
 
 contains
 
-  !! this subroutine add a layer of infinite mesh outside the model given the
-  !! reference surface and infinite element information.
-  !! REVISION
-  !!   HNG, Jul 12,2011; ; HNG, Apr 09,2010
-  !subroutine add_infmesh(ismpi,myid,nproc,errcode,errtag)
-  !use global
-  !use math_constants, only: zero
-  !use math_library, only: distance,i_uniinv
-  !implicit none
-  !logical,intent(in) :: ismpi
-  !integer,intent(in) :: myid,nproc
-  !integer,intent(out) :: errcode
-  !character(len=250),intent(out) :: errtag
-  !integer :: bctype,i,ios
-  !integer :: ielmt,iface,nelpart,i_elpart
-  !integer,dimension(6,4) :: node_face ! local node numbers in each face
-  !
-  !real(kind=kdble) :: gaminf,x0(ndim),val
-  !real(kind=kdble),parameter :: one=1.0_kdble
-  !integer :: g_numOLD(8,nelmt),mat_idOLD(nelmt),nelmtOLD,nnodeOLD
-  !real(kind=kdble) :: r1,g_coordOLD(ndim,nnode)
-  !real(kind=kdble),allocatable :: xs(:,:),mirxs(:,:)
-  !
-  !integer :: n1,n2,nelmtINF,nnode_inf,nsnode,nsnode_all
-  !integer,allocatable :: nodelist(:),inode_order(:),g_numinf(:),iface_elmt(:)
-  !logical,allocatable :: isnode(:)
-  !
-  !character(len=20) :: format_str,ptail
-  !character(len=250) :: fname
-  !character(len=150) :: data_path,strline
-  !
-  !integer :: ipart ! partition ID
-  !
-  !errtag="ERROR: unknown!"
-  !errcode=-1
-  !! set data path
-  !if (ismpi) then
-  !  data_path=trim(part_path)
-  !else
-  !  data_path=trim(inp_path)
-  !endif
-  !
-  !ipart=myid-1 ! partition ID starts from 0
-  !if (ismpi) then
-  !  write(format_str,*)ceiling(log10(real(nproc)+1))
-  !  format_str='(a,i'//trim(adjustl(format_str))//'.'//trim(adjustl(format_str))//')'
-  !  write(ptail, fmt=format_str)'_proc',ipart
-  !else
-  !  ptail=""
-  !endif
-  !
-  !! local node numbering in each face CUBIT/EXODUS convention
-  !node_face(1,:)=(/1,2,6,5/) ! counterclockwise w.r.t. outer normal
-  !node_face(2,:)=(/2,3,7,6/) ! counterclockwise w.r.t. outer normal
-  !node_face(3,:)=(/4,3,7,8/) ! clockwise w.r.t. outer normal
-  !node_face(4,:)=(/1,4,8,5/) ! clockwise w.r.t. outer normal
-  !node_face(5,:)=(/1,2,3,4/) ! clockwise w.r.t. outer normal
-  !node_face(6,:)=(/5,6,7,8/) ! counterclockwise w.r.t. outer normal
-  !
-  !fname=trim(data_path)//trim(infrfile)//trim(ptail)
-  !!print *,fname
-  !open(unit=11,file=trim(fname),status='old',action='read',iostat = ios)
-  !if (ios /= 0) then
-  !  write(errtag,*)'ERROR: file "'//trim(fname)//'" cannot be opened!'
-  !  return
-  !endif
-  !
-  !read(11,*,iostat=ios)nelpart
-  !if (ios /= 0) then
-  !  write(errtag,*)'ERROR: bad infrfile!'
-  !  return
-  !endif
-  !nelmtINF=nelpart
-  !allocate(iface_elmt(nelmtINF))
-  !nsnode_all=4*nelmtINF
-  !allocate(nodelist(nsnode_all),inode_order(nsnode_all))
-  !n1=1; n2=4
-  !do i_elpart=1,nelpart
-  !  !print *,n1,n2
-  !  read(11,*)ielmt,iface ! This will read a line and proceed to next line
-  !  iface_elmt(i_elpart)=iface
-  !  nodelist(n1:n2)=g_num(node_face(iface,:),ielmt)
-  !  n1=n2+1; n2=n1+3
-  !enddo
-  !close(11)
-  !!stop
-  !!print *,n2,nsnode_all;! stop
-  !call i_uniinv(nodelist,inode_order)
-  !
-  !!print *,inode_order;
-  !!print *,minval(nodelist),maxval(nodelist);
-  !!print *,minval(abs(inode_order)),maxval(abs(inode_order)); stop
-  !
-  !nsnode=maxval(inode_order)
-  !allocate(isnode(nsnode),xs(ndim,nsnode),mirxs(ndim,nsnode),g_numinf(nsnode))
-  !
-  !isnode=.false.
-  !! assign xs
-  !xs(:,inode_order(1))=g_coord(:,nodelist(1))
-  !isnode(inode_order(1))=.true.
-  !do i=2,nsnode_all
-  !  if (.not.isnode(inode_order(i))) then
-  !     xs(:,inode_order(i))=g_coord(:,nodelist(i))
-  !     isnode(inode_order(i))=.true.
-  !  endif
-  !enddo
-  !deallocate(isnode)
-  !!print *,'Hi:',inod,nsnode_all
-  !!stop
-  !! pole specific to the spherical body which has the center at (0,0,0)
-  !x0=zero
-  !
-  !! compute mirror nodes
-  !do i=1,nsnode
-  !  r1=distance(x0,xs(:,i),ndim)
-  !  if (rinf <= r1) then
-  !    write(errtag,*)'ERROR: reference infinite radius is smaller than the model!'
-  !    return
-  !  endif
-  !  gaminf=r1/(rinf-r1)
-  !  !print *,one+one/gaminf
-  !  ! division formula
-  !  mirxs(:,i)=((gaminf+one)*xs(:,i)-x0)/gaminf
-  !  g_numinf(i)=nnode+i
-  !enddo
-  !!stop
-  !deallocate(xs)
-  !g_numOLD=g_num;
-  !g_coordOLD=g_coord;
-  !mat_idOLD=mat_id
-  !deallocate(g_num,g_coord,mat_id)
-  !
-  !nelmtOLD=nelmt; nnodeOLD=nnode
-  !
-  !nelmt=nelmtOLD+nelmtINF
-  !nnode=nnodeOLD+nsnode
-  !
-  !! reallocate global node - and element-arrays
-  !allocate(g_num(8,nelmt),g_coord(ndim,nnode),mat_id(nelmt))
-  !
-  !! update connectivity, coordinates, and material IDs
-  !g_num(:,1:nelmtOLD)=g_numOLD
-  !g_coord(:,1:nnodeOLD)=g_coordOLD
-  !mat_id(1:nelmtOLD)=mat_idOLD
-  !! add to material list
-  !mat_id(nelmtOLD+1:nelmt)=mat_idINF
-  !!print *,mat_id,'infmat:',mat_idINF; stop
-  !! add to global node list
-  !g_coord(:,nnodeOLD+1:nnode)=mirxs
-  !deallocate(mirxs)
-  !
-  !! add to global element list
-  !! to have face 5 of new element always clockwise w.r.t. outer normal
-  !! face 3 or 4 or 5 of reference element has to be reordered
-  !n1=1; n2=4
-  !do i=1,nelmtINF
-  !  if (iface_elmt(i)==3.or.iface_elmt(i)==4.or.iface_elmt(i)==5) then
-  !    g_num(1:4,nelmtOLD+i)=nodelist(n2:n1:-1)
-  !    g_num(5:8,nelmtOLD+i)=g_numinf(inode_order(n2:n1:-1))
-  !  else
-  !    g_num(1:4,nelmtOLD+i)=nodelist(n1:n2)
-  !    g_num(5:8,nelmtOLD+i)=g_numinf(inode_order(n1:n2))
-  !  endif
-  !  n1=n2+1; n2=n1+3
-  !enddo
-  !deallocate(nodelist,inode_order,g_numinf,iface_elmt)
-  !
-  !ielmtINF1=nelmtOLD+1; ielmtINF2=nelmt
-  !ifaceINF=6
-  !!sync all
-  !!call stop_all()
-  !
-  !! compute nodal to global
-  !errcode=0
-  !return
-  !
-  !end subroutine add_infmesh
-
-!
-!===========================================
-!
 
 ! TODO: compute 1D lagrange shape function iusing GEN rotuine since we take
 ! equidistant interpolation points along infinite direction. But now I have
@@ -229,7 +48,7 @@ contains
   subroutine shape_function_infiniteGLHEX8ZW_GLLR(ndim,ngllx,nglly,ngllz,ngll,nip, &
                                                   iface,gam,a,shape_infinite,dshape_infinite,lagrange_gl,dlagrange_gl,GLw)
 
-  use gll_library1, only: lagrange1dGLLAS,lagrange1dGENAS,zwgljd
+  use siem_gll_library, only: lagrange1dGLLAS,lagrange1dGENAS,zwgljd
   implicit none
   integer,intent(in) :: ndim,ngllx,nglly,ngllz,ngll,nip,iface
   !of decay
@@ -405,7 +224,7 @@ contains
   subroutine shape_function_infiniteGLHEX8ZW_GQ(ndim,ngllx,nglly,ngllz,ngll,nipx, &
                                                 nip,iface,nd,gam,a,shape_infinite,dshape_infinite,lagrange_gl,dlagrange_gl,GLw)
 
-  use gll_library1, only: lagrange1dGLL,lagrange1dGEN,zwgjd,zwgljd
+  use siem_gll_library, only: lagrange1dGLL,lagrange1dGEN,zwgjd,zwgljd
   implicit none
   integer,intent(in) :: ndim,ngllx,nglly,ngllz,ngll,nipx,nip,iface
   real(kind=kdble),intent(in) :: gam,a,nd !nd: order

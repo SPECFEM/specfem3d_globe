@@ -1212,10 +1212,10 @@ module specfem_par_full_gravity
   ! parameters for Poisson's equation
   integer :: neq, neq1, b_neq, b_neq1, nnode, nnode1
 
+  double precision,dimension(NGLLCUBE,NGLLCUBE) :: lagrange_gll
+
 ! TODO: full gravity is not working yet, needs to fully implement solver...
 #ifdef USE_PETSC_NOT_WORKING_YET
-
-  double precision,dimension(NGLLCUBE,NGLLCUBE) :: lagrange_gll
 
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_ic       ! pgrav_ic(NGLOB_INNER_CORE)
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_oc       ! pgrav_oc(NGLOB_OUTER_CORE)
@@ -1238,6 +1238,8 @@ module specfem_par_full_gravity
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_ic1, b_pgrav_oc1, b_pgrav_cm1, b_pgrav_trinf1, b_pgrav_inf1
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_dprecon1, b_load1, b_pgrav1
 
+#endif
+
   ! number of global degrees of freedom
   integer :: ngdof,nsparse
   integer,dimension(:),allocatable :: l2gdof, krow_sparse, kcol_sparse, kgrow_sparse, kgcol_sparse
@@ -1250,7 +1252,6 @@ module specfem_par_full_gravity
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: kmat_sparse1
 
   double precision,dimension(NGLLCUBE_INF,NGLLCUBE_INF) :: lagrange_gll1
-#endif
 
   integer :: nnode_ic1,nnode_oc1,nnode_cm1,nnode_trinf1,nnode_inf1
 
@@ -1276,13 +1277,20 @@ module specfem_par_full_gravity
   ! crust/mantle
   real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: g_cm     ! (NDIM,NGLOB_CRUST_MANTLE)
   real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: gradg_cm ! (6,NGLOB_CRUST_MANTLE)
+  ! inner core
+  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: g_ic       ! g_ic(NDIM,NGLOB_INNER_CORE)
+  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: gradg_ic   ! gradg_ic(6,NGLOB_INNER_CORE)
+  ! outer core
+  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: g_oc ! (NDIM,NGLOB_OUTER_CORE)
+
   ! parameters for Poisson's solver
+  ! crust/mantle
   integer,dimension(:,:),allocatable :: inode_elmt_cm   ! (NGLLCUBE,NSPEC_CRUST_MANTLE)
   integer,dimension(:,:),allocatable :: inode_elmt_cm1  ! (NGLLCUBE_INF,NSPEC_CRUST_MANTLE)
-  integer,dimension(:),allocatable :: gdof_cm, gdof_cm1
 
-! TODO: full gravity is not working yet, needs to fully implement solver...
-#ifdef USE_PETSC_NOT_WORKING_YET
+  integer,dimension(:),allocatable :: gdof_cm, gdof_cm1
+  integer,dimension(:,:),allocatable :: ggdof_cm, ggdof_cm1
+
   real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable :: storekmat_crust_mantle   ! (NGLLCUBE,NGLLCUBE,NSPEC_CRUST_MANTLE)
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon_crust_mantle         ! (NGLOB_CRUST_MANTLE)
   real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable :: storekmat_crust_mantle1
@@ -1291,40 +1299,15 @@ module specfem_par_full_gravity
   real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: storederiv_cm        ! (NDIM,NGLLCUBE,NGLLCUBE,NSPEC_CRUST_MANTLE)
   real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: storerhojw_cm            ! (NGLLCUBE,NSPEC_CRUST_MANTLE)
   real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: storederiv_cm1       ! (NDIM,NGLLCUBE_INF,NGLLCUBE_INF,NSPEC_CRUST_MANTLE)
-  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: storerhojw_cm1           ! (NGLLCUBE_INF,NSPEC_CRUST_MANTLE)
-#endif
-
-  ! inner core
-  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: g_ic       ! g_ic(NDIM,NGLOB_INNER_CORE)
-  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: gradg_ic   ! gradg_ic(6,NGLOB_INNER_CORE)
-  ! parameters for Poisson's solver
-  integer,dimension(:,:),allocatable :: inode_elmt_ic     ! inode_elmt_ic(NGLLCUBE,NSPEC_INNER_CORE)
-  integer,dimension(:,:),allocatable :: inode_elmt_ic1    ! inode_elmt_ic1(NGLLCUBE_INF,NSPEC_INNER_CORE)
-  integer,dimension(:),allocatable :: gdof_ic,gdof_ic1
-
-! TODO: full gravity is not working yet, needs to fully implement solver...
-#ifdef USE_PETSC_NOT_WORKING_YET
-  real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable :: storekmat_inner_core   ! (NGLLCUBE,NGLLCUBE,NSPEC_INNER_CORE)
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon_inner_core         ! (NGLOB_INNER_CORE)
-  real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable ::  storekmat_inner_core1
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon_inner_core1
-
-  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: storederiv_ic        ! (NDIM,NGLLCUBE,NGLLCUBE,NSPEC_INNER_CORE)
-  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: storerhojw_ic            ! (NGLLCUBE,NSPEC_INNER_CORE)
-  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: storederiv_ic1       ! (NDIM,NGLLCUBE_INF,NGLLCUBE_INF,NSPEC_INNER_CORE)
-  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: storerhojw_ic1           ! (NGLLCUBE_INF,NSPEC_INNER_CORE)
-#endif
+  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: storerhojw_cm1,storejw_cm1  ! (NGLLCUBE_INF,NSPEC_CRUST_MANTLE)
 
   ! outer core
-  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: g_oc ! (NDIM,NGLOB_OUTER_CORE)
-
-  ! parameters for Poisson's solver
   integer,dimension(:,:),allocatable :: inode_elmt_oc   ! (NGLLCUBE,NSPEC_OUTER_CORE)
   integer,dimension(:,:),allocatable :: inode_elmt_oc1  ! (NGLLCUBE_INF,NSPEC_OUTER_CORE)
-  integer,dimension(:),allocatable :: gdof_oc,gdof_oc1
 
-! TODO: full gravity is not working yet, needs to fully implement solver...
-#ifdef USE_PETSC_NOT_WORKING_YET
+  integer,dimension(:),allocatable :: gdof_oc, gdof_oc1
+  integer,dimension(:,:),allocatable :: ggdof_oc, ggdof_oc1
+
   real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable :: storekmat_outer_core ! (NGLLCUBE,NGLLCUBE,NSPEC_OUTER_CORE)
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon_outer_core   ! (NGLOB_OUTER_CORE)
   real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable :: storekmat_outer_core1
@@ -1334,7 +1317,47 @@ module specfem_par_full_gravity
   real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: storerhojw_oc      ! (NGLLCUBE,NSPEC_OUTER_CORE)
   real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: storederiv_oc1 ! (NDIM,NGLLCUBE_INF,NGLLCUBE_INF,NSPEC_OUTER_CORE)
   real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: storerhojw_oc1     ! (NGLLCUBE_INF,NSPEC_OUTER_CORE)
-#endif
+
+  ! inner core
+  integer,dimension(:,:),allocatable :: inode_elmt_ic     ! inode_elmt_ic(NGLLCUBE,NSPEC_INNER_CORE)
+  integer,dimension(:,:),allocatable :: inode_elmt_ic1    ! inode_elmt_ic1(NGLLCUBE_INF,NSPEC_INNER_CORE)
+
+  integer,dimension(:),allocatable :: gdof_ic, gdof_ic1
+  integer,dimension(:,:),allocatable :: ggdof_ic, ggdof_ic1
+
+  real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable :: storekmat_inner_core   ! (NGLLCUBE,NGLLCUBE,NSPEC_INNER_CORE)
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon_inner_core         ! (NGLOB_INNER_CORE)
+  real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable ::  storekmat_inner_core1
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon_inner_core1
+
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: storederiv_ic        ! (NDIM,NGLLCUBE,NGLLCUBE,NSPEC_INNER_CORE)
+  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: storerhojw_ic            ! (NGLLCUBE,NSPEC_INNER_CORE)
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: storederiv_ic1       ! (NDIM,NGLLCUBE_INF,NGLLCUBE_INF,NSPEC_INNER_CORE)
+  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: storerhojw_ic1           ! (NGLLCUBE_INF,NSPEC_INNER_CORE)
+
+  ! transition-to-infinite
+  integer,dimension(:,:),allocatable :: inode_elmt_trinf  ! inode_elmt_trinf(NGLLCUBE,NSPEC_TRINFINITE)
+  integer,dimension(:,:),allocatable :: inode_elmt_trinf1 ! inode_elmt_trinf1(NGLLCUBE_INF,NSPEC_TRINFINITE)
+
+  integer,dimension(:),allocatable :: gdof_trinf, gdof_trinf1
+  integer,dimension(:,:),allocatable :: ggdof_trinf, ggdof_trinf1
+
+  real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable :: storekmat_trinfinite
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon_trinfinite
+  real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable :: storekmat_trinfinite1
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon_trinfinite1
+
+  ! infinite
+  integer,dimension(:,:),allocatable :: inode_elmt_inf    ! inode_elmt_inf(NGLLCUBE,NSPEC_INFINITE)
+  integer,dimension(:,:),allocatable :: inode_elmt_inf1   ! inode_elmt_inf1(NGLLCUBE_INF,NSPEC_INFINITE)
+
+  integer,dimension(:),allocatable :: gdof_inf, gdof_inf1
+  integer,dimension(:,:),allocatable :: ggdof_inf, ggdof_inf1
+
+  real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable :: storekmat_infinite
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon_infinite
+  real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable :: storekmat_infinite1
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon_infinite1
 
 end module specfem_par_full_gravity
 
@@ -1421,23 +1444,6 @@ module specfem_par_trinfinite
   ! mesh coloring
   integer :: num_colors_outer_trinfinite,num_colors_inner_trinfinite
   integer,dimension(:),allocatable :: num_elem_colors_trinfinite
-
-  ! parameters for Poisson's solver
-  integer,dimension(:,:),allocatable :: inode_elmt_trinf  ! inode_elmt_trinf(NGLLCUBE,NSPEC_TRINFINITE)
-  integer,dimension(:,:),allocatable :: inode_elmt_trinf1 ! inode_elmt_trinf1(NGLLCUBE_INF,NSPEC_TRINFINITE)
-
-! TODO: full gravity is not working yet, needs to fully implement solver...
-#ifdef USE_PETSC_NOT_WORKING_YET
-
-  integer,dimension(:),allocatable :: gdof_trinf, gdof_trinf1
-  integer,dimension(:,:),allocatable :: ggdof_trinf, ggdof_trinf1
-
-  real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable :: storekmat_trinfinite
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon_trinfinite
-  real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable :: storekmat_trinfinite1
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon_trinfinite1
-
-#endif
 
 end module specfem_par_trinfinite
 
@@ -1526,23 +1532,6 @@ module specfem_par_infinite
   ! mesh coloring
   integer :: num_colors_outer_infinite,num_colors_inner_infinite
   integer,dimension(:),allocatable :: num_elem_colors_infinite
-
-  ! parameters for Poisson's solver
-  integer,dimension(:,:),allocatable :: inode_elmt_inf    ! inode_elmt_inf(NGLLCUBE,NSPEC_INFINITE)
-  integer,dimension(:,:),allocatable :: inode_elmt_inf1   ! inode_elmt_inf1(NGLLCUBE_INF,NSPEC_INFINITE)
-
-! TODO: full gravity is not working yet, needs to fully implement solver...
-#ifdef USE_PETSC_NOT_WORKING_YET
-
-  integer,dimension(:),allocatable :: gdof_inf, gdof_inf1
-  integer,dimension(:,:),allocatable :: ggdof_inf, ggdof_inf1
-
-  real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable :: storekmat_infinite
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon_infinite
-  real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable :: storekmat_infinite1
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon_infinite1
-
-#endif
 
 end module specfem_par_infinite
 

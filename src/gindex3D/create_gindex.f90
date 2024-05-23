@@ -256,7 +256,7 @@
     deallocate(xix_infinite,xiy_infinite,xiz_infinite, &
                etax_infinite,etay_infinite,etaz_infinite, &
                gammax_infinite,gammay_infinite,gammaz_infinite)
-  
+
     deallocate(phase_ispec_inner_infinite)
     deallocate(num_elem_colors_infinite)
     deallocate(buffer_send_scalar_infinite,buffer_recv_scalar_infinite, &

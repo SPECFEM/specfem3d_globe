@@ -44,16 +44,18 @@ module solver_petsc
   #include "petsc/finclude/petscksp.h"
   !#include "petsc/finclude/petscpc.h"
 
-  use constants_solver, only: kreal => CUSTOM_REAL,nproc => NPROCTOT_VAL, &
-    KSP_ATOL,KSP_DTOL,KSP_RTOL,KSP_MAXITER, &
-    KSP_ATOL1,KSP_DTOL1,KSP_RTOL1,KSP_MAXITER1
+  use constants, only: KSP_ATOL,KSP_DTOL,KSP_RTOL,KSP_MAXITER, &
+                       KSP_ATOL1,KSP_DTOL1,KSP_RTOL1,KSP_MAXITER1
+
+  use constants_solver, only: nproc => NPROCTOT_VAL
+
   use specfem_par, only: myrank
   use specfem_par, only: neq,ngdof,nsparse,kmat_sparse,krow_sparse,kcol_sparse, &
     kgrow_sparse,kgcol_sparse
   use specfem_par, only: neq1,ngdof1,nsparse1,kmat_sparse1,krow_sparse1, &
     kcol_sparse1,kgrow_sparse1,kgcol_sparse1,l2gdof1
 
-  use math_library_mpi, only: maxvec,minvec
+  use siem_math_library_mpi, only: maxvec,minvec
 
   use specfem_par, only: num_interfaces_inner_core1, &
     max_nibool_interfaces_inner_core1, &
@@ -954,19 +956,20 @@ contains
 
   subroutine petsc_set_matrix1()
 
-  use math_library_mpi, only: maxscal,minscal
+  use siem_math_library_mpi, only: maxscal,minscal
+  use constants, only: NGLLCUBE_INF
+
   use specfem_par, only: IFLAG_IN_FICTITIOUS_CUBE,NSPEC_INNER_CORE, &
     NSPEC_OUTER_CORE,NSPEC_CRUST_MANTLE,NSPEC_TRINFINITE,NSPEC_INFINITE
-  use specfem_par, only: NEDOF
-  use specfem_par, only: NGLLCUBE_INF,NEDOF1
-  use specfem_par_innercore, only: ggdof_ic1,storekmat_inner_core1, &
-    idoubling_inner_core,inode_elmt_ic1
-  use specfem_par_outercore, only: ggdof_oc1,storekmat_outer_core1,inode_elmt_oc1
-  use specfem_par_crustmantle, only: ggdof_cm1,storekmat_crust_mantle1, &
-    inode_elmt_cm1
-  use specfem_par_trinfinite, only: ggdof_trinf1,storekmat_trinfinite1, &
-    inode_elmt_trinf1
-  use specfem_par_infinite, only: ggdof_inf1,storekmat_infinite1,inode_elmt_inf1
+
+  use specfem_par_innercore, only: idoubling_inner_core
+
+  use specfem_par_full_gravity, only: NEDOF,NEDOF1, &
+    ggdof_ic1,storekmat_inner_core1,inode_elmt_ic1, &
+    ggdof_oc1,storekmat_outer_core1,inode_elmt_oc1, &
+    ggdof_cm1,storekmat_crust_mantle1,inode_elmt_cm1, &
+    ggdof_trinf1,storekmat_trinfinite1,inode_elmt_trinf1, &
+    ggdof_inf1,storekmat_infinite1,inode_elmt_inf1
 
   implicit none
   integer :: i,i_elmt,j,ncount
@@ -996,7 +999,7 @@ contains
     do i = 1,NEDOF1
       do j = 1,NEDOF1
       if (ggdof_elmt(i) >= 0.and.ggdof_elmt(j) >= 0.and.                          &
-      storekmat_inner_core1(i,j,i_elmt) /= 0.0_kreal) then
+      storekmat_inner_core1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
         !ncount=ncount+1
         !idof(ncount)=i
         !igdof(ncount)=ggdof_elmt(i)
@@ -1039,7 +1042,7 @@ contains
   !  !  do i=1,NEDOF1
   !  !    do j=1,NEDOF1
   !  !    if (ggdof_elmt(i) >= 0.and.ggdof_elmt(j) >= 0.and.                          &
-  !  !    storekmat_outer_core1(i,j,i_elmt) /= 0.0_kreal) then
+  !  !    storekmat_outer_core1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
   !  !      write(1111,*)ggdof_elmt(i),ggdof_elmt(j)
   !  !    endif
   !  !    enddo
@@ -1057,7 +1060,7 @@ contains
     do i = 1,NEDOF1
       do j = 1,NEDOF1
       if (ggdof_elmt(i) >= 0.and.ggdof_elmt(j) >= 0.and.                          &
-      storekmat_outer_core1(i,j,i_elmt) /= 0.0_kreal) then
+      storekmat_outer_core1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
         call MatSetValues(Amat1,1,ggdof_elmt(i),1,ggdof_elmt(j), &
         storekmat_outer_core1(i,j,i_elmt),ADD_VALUES,ierr)
         CHKERRA(ierr)
@@ -1091,7 +1094,7 @@ contains
     do i = 1,NEDOF1
       do j = 1,NEDOF1
       if (ggdof_elmt(i) >= 0.and.ggdof_elmt(j) >= 0.and.                          &
-      storekmat_crust_mantle1(i,j,i_elmt) /= 0.0_kreal) then
+      storekmat_crust_mantle1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
         call MatSetValues(Amat1,1,ggdof_elmt(i),1,ggdof_elmt(j), &
         storekmat_crust_mantle1(i,j,i_elmt),ADD_VALUES,ierr)
         CHKERRA(ierr)
@@ -1126,7 +1129,7 @@ contains
     do i = 1,NEDOF1
       do j = 1,NEDOF1
       if (ggdof_elmt(i) >= 0.and.ggdof_elmt(j) >= 0.and.                          &
-      storekmat_trinfinite1(i,j,i_elmt) /= 0.0_kreal) then
+      storekmat_trinfinite1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
         call MatSetValues(Amat1,1,ggdof_elmt(i),1,ggdof_elmt(j), &
         storekmat_trinfinite1(i,j,i_elmt),ADD_VALUES,ierr)
         CHKERRA(ierr)
@@ -1159,7 +1162,7 @@ contains
     do i = 1,NEDOF1
       do j = 1,NEDOF1
       if (ggdof_elmt(i) >= 0.and.ggdof_elmt(j) >= 0.and.                          &
-      storekmat_infinite1(i,j,i_elmt) /= 0.0_kreal) then
+      storekmat_infinite1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
         call MatSetValues(Amat1,1,ggdof_elmt(i),1,ggdof_elmt(j), &
         storekmat_infinite1(i,j,i_elmt),ADD_VALUES,ierr)
         CHKERRA(ierr)
@@ -1248,20 +1251,20 @@ contains
 
   subroutine petsc_set_vector1(rload1)
 
-  use specfem_par, only: l2gdof1
+  use constants, only: NGLLCUBE_INF
+
   use specfem_par, only: IFLAG_IN_FICTITIOUS_CUBE,NSPEC_INNER_CORE, &
     NSPEC_OUTER_CORE,NSPEC_CRUST_MANTLE,NSPEC_TRINFINITE,NSPEC_INFINITE
-  use specfem_par, only: NEDOF
-  use specfem_par, only: NGLLCUBE_INF,NEDOF1
-  use specfem_par_innercore, only: ggdof_ic1,storekmat_inner_core1, &
-    idoubling_inner_core,inode_elmt_ic1
-  use specfem_par_outercore, only: ggdof_oc1,storekmat_outer_core1, &
-    inode_elmt_oc1
-  use specfem_par_crustmantle, only: ggdof_cm1,storekmat_crust_mantle1, &
-    inode_elmt_cm1
-  use specfem_par_trinfinite, only: ggdof_trinf1,storekmat_trinfinite1, &
-    inode_elmt_trinf1
-  use specfem_par_infinite, only: ggdof_inf1,storekmat_infinite1,inode_elmt_inf1
+
+  use specfem_par_innercore, only: idoubling_inner_core
+
+  use specfem_par_full_gravity, only: NEDOF,NEDOF1,l2gdof1, &
+    ggdof_ic1,storekmat_inner_core1,inode_elmt_ic1, &
+    ggdof_oc1,storekmat_outer_core1,,inode_elmt_oc1, &
+    ggdof_cm1,storekmat_crust_mantle1,inode_elmt_cm1, &
+    ggdof_trinf1,storekmat_trinfinite1,inode_elmt_trinf1, &
+    ggdof_inf1,storekmat_infinite1,inode_elmt_inf1
+
   implicit none
 
   PetscScalar,intent(in) :: rload1(0:)
@@ -1653,12 +1656,15 @@ contains
 
   use specfem_par, only: NEDOF,IFLAG_IN_FICTITIOUS_CUBE,NSPEC_INNER_CORE, &
     NSPEC_OUTER_CORE,NSPEC_CRUST_MANTLE,NSPEC_TRINFINITE,NSPEC_INFINITE
-  use specfem_par_innercore, only: ggdof_ic,storekmat_inner_core, &
-    idoubling_inner_core,inode_elmt_ic
-  use specfem_par_outercore, only: ggdof_oc,storekmat_outer_core,inode_elmt_oc
-  use specfem_par_crustmantle, only: ggdof_cm,storekmat_crust_mantle,inode_elmt_cm
-  use specfem_par_trinfinite, only: ggdof_trinf,storekmat_trinfinite,inode_elmt_trinf
-  use specfem_par_infinite, only: ggdof_inf,storekmat_infinite,inode_elmt_inf
+
+  use specfem_par_innercore, only: idoubling_inner_core
+
+  use specfem_par_full_gravity, only: &
+    ggdof_oc,storekmat_outer_core,inode_elmt_oc, &
+    ggdof_ic,storekmat_inner_core,inode_elmt_ic, &
+    ggdof_cm,storekmat_crust_mantle,inode_elmt_cm, &
+    ggdof_trinf,storekmat_trinfinite,inode_elmt_trinf, &
+    ggdof_inf,storekmat_infinite,inode_elmt_inf, &
 
   implicit none
   integer :: i,i_elmt,j,ncount
@@ -1680,7 +1686,7 @@ contains
     do i = 1,NEDOF
       do j = 1,NEDOF
       if (ggdof_elmt(i) >= 0.and.ggdof_elmt(j) >= 0.and.                          &
-      storekmat_inner_core(i,j,i_elmt) /= 0.0_kreal) then
+      storekmat_inner_core(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
         !ncount=ncount+1
         !idof(ncount)=i
         !igdof(ncount)=ggdof_elmt(i)
@@ -1721,7 +1727,7 @@ contains
     do i = 1,NEDOF
       do j = 1,NEDOF
       if (ggdof_elmt(i) >= 0.and.ggdof_elmt(j) >= 0.and.                          &
-      storekmat_outer_core(i,j,i_elmt) /= 0.0_kreal) then
+      storekmat_outer_core(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
         if (myrank == 0) write(*,*) 'hello in OC:',i_elmt,ggdof_elmt(i),ggdof_elmt(j)
         call sync_all
         call MatSetValues(Amat,1,ggdof_elmt(i),1,ggdof_elmt(j), &

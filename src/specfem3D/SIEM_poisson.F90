@@ -36,8 +36,7 @@
 
 module poisson
 
-  use constants_solver, only: CUSTOM_REAL,SIZE_REAL
-  integer,parameter :: kreal = CUSTOM_REAL
+  use constants, only: CUSTOM_REAL,SIZE_REAL
 
 contains
 
@@ -45,21 +44,21 @@ contains
                                storekmat,dprecon)
 
   use constants_solver, only: IFLAG_IN_FICTITIOUS_CUBE,IREGION_INNER_CORE,NGLLX,NGLLY,NGLLZ,NGLLCUBE
-  use gll_library1
-  use math_library, only: determinant,invert
+  use siem_gll_library
+  use siem_math_library, only: determinant,invert
   use specfem_par_innercore, only: idoubling_inner_core
   !use specfem_par_crustmantle, only: rmassz_crust_mantle !TODO: remove this
   implicit none
   integer,intent(in) :: iregion,nelmt,nnode
   integer,intent(in) :: ibool(NGLLX,NGLLY,NGLLZ,nelmt)
-  real(kind=kreal),intent(in) ::  xstore(nnode),ystore(nnode),zstore(nnode)
-  real(kind=kreal),intent(out) :: storekmat(NGLLCUBE,NGLLCUBE,nelmt),dprecon(nnode)
+  real(kind=CUSTOM_REAL),intent(in) ::  xstore(nnode),ystore(nnode),zstore(nnode)
+  real(kind=CUSTOM_REAL),intent(out) :: storekmat(NGLLCUBE,NGLLCUBE,nelmt),dprecon(nnode)
 
   integer,parameter :: ndim = 3,ngnod = 8
 
   integer :: i,k,i_elmt
   integer :: dnx,dny,dnz,egdof(NGLLCUBE),ignod(ngnod)
-  real(kind=kreal) :: detjac
+  real(kind=CUSTOM_REAL) :: detjac
 
   real(kind=kdble),parameter :: jalpha=0.0_kdble,jbeta=0.0_kdble,zero=0.0_kdble
   real(kind=kdble) :: xigll(NGLLX),wxgll(NGLLX),etagll(NGLLY),wygll(NGLLY), &
@@ -68,8 +67,8 @@ contains
                       gll_points(ndim,NGLLCUBE), &
                       lagrange_gll(NGLLCUBE,NGLLCUBE),dlagrange_gll(ndim,NGLLCUBE,NGLLCUBE)
 
-  real(kind=kreal) :: coord(ngnod,ndim),deriv(ndim,NGLLCUBE),jac(ndim,ndim), &
-                      kmat(NGLLCUBE,NGLLCUBE)
+  real(kind=CUSTOM_REAL) :: coord(ngnod,ndim),deriv(ndim,NGLLCUBE),jac(ndim,ndim), &
+                            kmat(NGLLCUBE,NGLLCUBE)
 
   call zwgljd(xigll,wxgll,NGLLX,jalpha,jbeta)
   call zwgljd(etagll,wygll,NGLLY,jalpha,jbeta)
@@ -126,12 +125,12 @@ contains
 
   use constants_solver, only: NGLLX,NGLLY,NGLLZ,NGLLCUBE
   use infinite_element
-  use math_library, only: determinant,invert
+  use siem_math_library, only: determinant,invert
   implicit none
   integer,intent(in) :: nelmt,nnode
   integer,intent(in) :: ibool(NGLLX,NGLLY,NGLLZ,nelmt)
-  real(kind=kreal),intent(in) ::  xstore(nnode),ystore(nnode),zstore(nnode)
-  real(kind=kreal),intent(out) :: storekmat(NGLLCUBE,NGLLCUBE,nelmt),dprecon(nnode)
+  real(kind=CUSTOM_REAL),intent(in) ::  xstore(nnode),ystore(nnode),zstore(nnode)
+  real(kind=CUSTOM_REAL),intent(out) :: storekmat(NGLLCUBE,NGLLCUBE,nelmt),dprecon(nnode)
 
   integer,parameter :: iface = 6,ndim = 3,ngnod = 8,nginf = 8
   ! GLL-Radau quadrature
@@ -142,10 +141,10 @@ contains
 
   integer :: i,k,i_elmt
   integer :: egdof(NGLLCUBE),ignod(ngnod) !dnx,dny,dnz,
-  real(kind=kreal),parameter :: one=1.0_kreal,zero=0.0_kreal
-  real(kind=kreal) :: detjac
-  real(kind=kreal) :: coordinf(nginf,ndim),deriv(ndim,NGLLCUBE)
-  real(kind=kreal) :: jac(ndim,ndim),kmat(NGLLCUBE,NGLLCUBE),x0(ndim)
+  real(kind=CUSTOM_REAL),parameter :: one=1.0_CUSTOM_REAL,zero=0.0_CUSTOM_REAL
+  real(kind=CUSTOM_REAL) :: detjac
+  real(kind=CUSTOM_REAL) :: coordinf(nginf,ndim),deriv(ndim,NGLLCUBE)
+  real(kind=CUSTOM_REAL) :: jac(ndim,ndim),kmat(NGLLCUBE,NGLLCUBE),x0(ndim)
 
   real(kind=kdble),parameter :: done=1.0_kdble
   real(kind=kdble) :: ainf,gaminf,GLw(nipinf)
@@ -218,21 +217,21 @@ contains
 
   use constants_solver, only: IFLAG_IN_FICTITIOUS_CUBE,IREGION_INNER_CORE,NGLLX,NGLLY,NGLLZ,NGLLCUBE, &
                               NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF
-  use gll_library1
-  use math_library, only: determinant,invert
+  use siem_gll_library
+  use siem_math_library, only: determinant,invert
   use specfem_par_innercore, only: idoubling_inner_core
   !use specfem_par_crustmantle, only: rmassz_crust_mantle !TODO: remove this
   implicit none
   integer,intent(in) :: iregion,nelmt,nnode,nnode1
   integer,intent(in) :: ibool(NGLLX,NGLLY,NGLLZ,nelmt),ibool1(NGLLCUBE_INF,nelmt)
-  real(kind=kreal),intent(in) ::  xstore(nnode),ystore(nnode),zstore(nnode)
-  real(kind=kreal),intent(out) :: storekmat(NGLLCUBE_INF,NGLLCUBE_INF,nelmt),dprecon(nnode1)
+  real(kind=CUSTOM_REAL),intent(in) ::  xstore(nnode),ystore(nnode),zstore(nnode)
+  real(kind=CUSTOM_REAL),intent(out) :: storekmat(NGLLCUBE_INF,NGLLCUBE_INF,nelmt),dprecon(nnode1)
 
   integer,parameter :: ndim = 3,ngnod = 8
 
   integer :: i,k,i_elmt
   integer :: dnx,dny,dnz,egdof(NGLLCUBE_INF),ignod(ngnod)
-  real(kind=kreal) :: detjac
+  real(kind=CUSTOM_REAL) :: detjac
 
   real(kind=kdble),parameter :: jalpha=0.0_kdble,jbeta=0.0_kdble,zero=0.0_kdble
   real(kind=kdble) :: xigll1(NGLLX_INF),wxgll1(NGLLX_INF),etagll1(NGLLY_INF), &
@@ -241,7 +240,7 @@ contains
                       gll_points(ndim,NGLLCUBE_INF), &
                       lagrange_gll(NGLLCUBE_INF,NGLLCUBE_INF),dlagrange_gll(ndim,NGLLCUBE_INF,NGLLCUBE_INF)
 
-  real(kind=kreal) :: coord(ngnod,ndim),deriv(ndim,NGLLCUBE_INF),jac(ndim,ndim), &
+  real(kind=CUSTOM_REAL) :: coord(ngnod,ndim),deriv(ndim,NGLLCUBE_INF),jac(ndim,ndim), &
                       kmat(NGLLCUBE_INF,NGLLCUBE_INF)
 
   call zwgljd(xigll1,wxgll1,NGLLX_INF,jalpha,jbeta)
@@ -299,12 +298,12 @@ contains
 
   use constants_solver, only: NGLLX,NGLLY,NGLLZ,NGLLCUBE,NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF
   use infinite_element
-  use math_library, only: determinant,invert
+  use siem_math_library, only: determinant,invert
   implicit none
   integer,intent(in) :: nelmt,nnode,nnode1
   integer,intent(in) :: ibool(NGLLX,NGLLY,NGLLZ,nelmt),ibool1(NGLLCUBE_INF,nelmt)
-  real(kind=kreal),intent(in) ::  xstore(nnode),ystore(nnode),zstore(nnode)
-  real(kind=kreal),intent(out) :: storekmat(NGLLCUBE_INF,NGLLCUBE_INF,nelmt),dprecon(nnode1)
+  real(kind=CUSTOM_REAL),intent(in) ::  xstore(nnode),ystore(nnode),zstore(nnode)
+  real(kind=CUSTOM_REAL),intent(out) :: storekmat(NGLLCUBE_INF,NGLLCUBE_INF,nelmt),dprecon(nnode1)
 
   integer,parameter :: iface = 6,ndim = 3,ngnod = 8,nginf = 8
   ! GLL-Radau quadrature
@@ -315,10 +314,10 @@ contains
 
   integer :: i,k,i_elmt
   integer :: egdof(NGLLCUBE_INF),ignod(ngnod) !dnx,dny,dnz,
-  real(kind=kreal),parameter :: one=1.0_kreal,zero=0.0_kreal
-  real(kind=kreal) :: detjac
-  real(kind=kreal) :: coordinf(nginf,ndim),deriv(ndim,NGLLCUBE_INF)
-  real(kind=kreal) :: jac(ndim,ndim),kmat(NGLLCUBE_INF,NGLLCUBE_INF),x0(ndim)
+  real(kind=CUSTOM_REAL),parameter :: one=1.0_CUSTOM_REAL,zero=0.0_CUSTOM_REAL
+  real(kind=CUSTOM_REAL) :: detjac
+  real(kind=CUSTOM_REAL) :: coordinf(nginf,ndim),deriv(ndim,NGLLCUBE_INF)
+  real(kind=CUSTOM_REAL) :: jac(ndim,ndim),kmat(NGLLCUBE_INF,NGLLCUBE_INF),x0(ndim)
 
   real(kind=kdble),parameter :: done=1.0_kdble
   real(kind=kdble) :: ainf,gaminf,GLw(nipinf)
@@ -568,14 +567,14 @@ contains
   use specfem_par_crustmantle, only: displ_crust_mantle,ibool_crust_mantle, &
                                     storejw_cm1,gdof_cm1,inode_elmt_cm1, &
                                     rho1siem_kl_crust_mantle
-  use gll_library1
+  use siem_gll_library
   implicit none
 
   ! IO:
   integer :: component ! the component of the kernel to be calculated
 
   integer,parameter :: ndim = 3,ngnod = 8
-  real(kind=kreal),parameter :: zero=0.0_kreal
+  real(kind=CUSTOM_REAL),parameter :: zero=0.0_CUSTOM_REAL
 
   real(kind=kdble) :: gll_weights(NGLLCUBE_INF),gll_points(ndim,NGLLCUBE_INF),lagrange_gll(NGLLCUBE_INF,NGLLCUBE_INF), &
   dlagrange_gll(ndim,NGLLCUBE_INF,NGLLCUBE_INF),dshape_hex8(ndim,ngnod,NGLLCUBE_INF)
@@ -583,7 +582,7 @@ contains
   real(kind=CUSTOM_REAL) :: load_cm(nnode_cm1), evalue(NGLLCUBE_INF), eload(NGLLCUBE_INF)
   integer :: i,i_elmt
   integer :: egdof(NGLLCUBE_INF),ignod(ngnod) !dnx,dny,dnz,
-  real(kind=kreal) :: detjac,eld(NGLLCUBE_INF),rho(NGLLCUBE_INF)
+  real(kind=CUSTOM_REAL) :: detjac,eld(NGLLCUBE_INF),rho(NGLLCUBE_INF)
 
   ! Based off of poisson_load_solid3FAST
   load1 = 0.0_CUSTOM_REAL
@@ -600,7 +599,7 @@ contains
 
   ! assemble across the regions but not MPI
   ! crust_mantle -  multiply by 4*PI*G! or scaled
-  load1(gdof_cm1)=load1(gdof_cm1) + 4.0_kreal*load_cm
+  load1(gdof_cm1)=load1(gdof_cm1) + 4.0_CUSTOM_REAL*load_cm
   load1(0)=0.0_CUSTOM_REAL
   return
 
@@ -619,14 +618,14 @@ contains
   use specfem_par_crustmantle, only: displ_crust_mantle,ibool_crust_mantle, &
           storejw_cm1,gdof_cm1,inode_elmt_cm1, &
           rho2siem_kl_crust_mantle
-  use gll_library1
+  use siem_gll_library
 
   implicit none
   ! IO variables
   integer :: icomp,jcomp, i_elmt, i
   !Local
   integer,parameter :: ndim = 3,ngnod = 8
-  real(kind=kreal),parameter :: zero=0.0_kreal
+  real(kind=CUSTOM_REAL),parameter :: zero=0.0_CUSTOM_REAL
   integer :: egdof(NGLLCUBE_INF),ignod(ngnod)
   real(kind=CUSTOM_REAL) :: load_cm(nnode_cm1), evalue(NGLLCUBE_INF), eload(NGLLCUBE_INF)
 
@@ -646,7 +645,7 @@ contains
   enddo
   ! assemble across the regions but not MPI
   ! crust_mantle -  multiply by 4*PI*G! or scaled
-  load1(gdof_cm1)=load1(gdof_cm1) + 4.0_kreal*load_cm
+  load1(gdof_cm1)=load1(gdof_cm1) + 4.0_CUSTOM_REAL*load_cm
   load1(0)=0.0_CUSTOM_REAL
   return
 
@@ -662,13 +661,16 @@ contains
     NGLLX,NGLLY,NGLLZ,NGLLCUBE,NSPEC_INNER_CORE, &
     NSPEC_OUTER_CORE,NSPEC_CRUST_MANTLE,NGLOB_INNER_CORE,NGLOB_OUTER_CORE, &
     NGLOB_CRUST_MANTLE
+
   use specfem_par, only: A_array_rotationL,B_array_rotationL,deltat,it,DT,t0, &
     scale_t_inv,two_omega_earth,load
-  use specfem_par_crustmantle, only: displ_crust_mantle,ibool_crust_mantle, &
-    storederiv_cm,storerhojw_cm,gdof_cm
-  use specfem_par_outercore, only: displ_outer_core,ibool_outer_core, &
-    storederiv_oc,storerhojw_oc,gdof_oc
-  use specfem_par_innercore, only: displ_inner_core,ibool_inner_core, &
+
+  use specfem_par_crustmantle, only: displ_crust_mantle,ibool_crust_mantle
+  use specfem_par_outercore, only: displ_outer_core,ibool_outer_core
+  use specfem_par_innercore, only: displ_inner_core,ibool_inner_core
+
+  use specfem_par_full_gravity, only: storederiv_cm,storerhojw_cm,gdof_cm, &
+    storederiv_oc,storerhojw_oc,gdof_oc, &
     storederiv_ic,storerhojw_ic,gdof_ic
 
   implicit none
@@ -749,14 +751,17 @@ contains
     NGLLX,NGLLY,NGLLZ,NGLLCUBE,NSPEC_INNER_CORE, &
     NSPEC_OUTER_CORE,NSPEC_CRUST_MANTLE,NGLOB_INNER_CORE,NGLOB_OUTER_CORE, &
     NGLOB_CRUST_MANTLE
+
   use specfem_par, only: A_array_rotationL3,B_array_rotationL3,deltat,it,DT,t0, &
-  scale_t_inv,two_omega_earth,load1,nnode_ic1,nnode_oc1,nnode_cm1,nnode_inf1
-  use specfem_par_crustmantle, only: displ_crust_mantle,ibool_crust_mantle, &
-  storederiv_cm1,storerhojw_cm1,gdof_cm1,inode_elmt_cm1
-  use specfem_par_outercore, only: displ_outer_core,ibool_outer_core, &
-  storederiv_oc1,storerhojw_oc1,gdof_oc1,inode_elmt_oc1
-  use specfem_par_innercore, only: displ_inner_core,ibool_inner_core, &
-  storederiv_ic1,storerhojw_ic1,gdof_ic1,inode_elmt_ic1
+    scale_t_inv,two_omega_earth,load1,nnode_ic1,nnode_oc1,nnode_cm1,nnode_inf1
+
+  use specfem_par_crustmantle, only: displ_crust_mantle,ibool_crust_mantle
+  use specfem_par_outercore, only: displ_outer_core,ibool_outer_core
+  use specfem_par_innercore, only: displ_inner_core,ibool_inner_core
+
+  use specfem_par_full_gravity, only: storederiv_cm1,storerhojw_cm1,gdof_cm1,inode_elmt_cm1, &
+    storederiv_oc1,storerhojw_oc1,gdof_oc1,inode_elmt_oc1, &
+    storederiv_ic1,storerhojw_ic1,gdof_ic1,inode_elmt_ic1
 
   implicit none
   real(kind=CUSTOM_REAL) :: time
@@ -818,14 +823,17 @@ contains
     NGLLX,NGLLY,NGLLZ,NGLLCUBE,NSPEC_INNER_CORE, &
     NSPEC_OUTER_CORE,NSPEC_CRUST_MANTLE,NGLOB_INNER_CORE,NGLOB_OUTER_CORE, &
     NGLOB_CRUST_MANTLE
+
   use specfem_par, only: b_A_array_rotationL3,b_B_array_rotationL3,deltat,it,DT,t0, &
-  scale_t_inv,two_omega_earth,b_load1,nnode_ic1,nnode_oc1,nnode_cm1,nnode_inf1,b_deltat
-  use specfem_par_crustmantle, only: b_displ_crust_mantle,ibool_crust_mantle, &
-  storederiv_cm1,storerhojw_cm1,gdof_cm1,inode_elmt_cm1
-  use specfem_par_outercore, only: b_displ_outer_core,ibool_outer_core, &
-  storederiv_oc1,storerhojw_oc1,gdof_oc1,inode_elmt_oc1
-  use specfem_par_innercore, only: b_displ_inner_core,ibool_inner_core, &
-  storederiv_ic1,storerhojw_ic1,gdof_ic1,inode_elmt_ic1
+    scale_t_inv,two_omega_earth,b_load1,nnode_ic1,nnode_oc1,nnode_cm1,nnode_inf1,b_deltat
+
+  use specfem_par_crustmantle, only: b_displ_crust_mantle,ibool_crust_mantle
+  use specfem_par_outercore, only: b_displ_outer_core,ibool_outer_core
+  use specfem_par_innercore, only: b_displ_inner_core,ibool_inner_core
+
+  use specfem_par_full_gravity, only: storederiv_cm1,storerhojw_cm1,gdof_cm1,inode_elmt_cm1, &
+    storederiv_oc1,storerhojw_oc1,gdof_oc1,inode_elmt_oc1, &
+    storederiv_ic1,storerhojw_ic1,gdof_ic1,inode_elmt_ic1
 
   implicit none
   real(kind=CUSTOM_REAL) :: time
@@ -889,23 +897,23 @@ contains
                                 xstore,ystore,zstore,rhostore,disp,load)
 
   use constants_solver, only: IFLAG_IN_FICTITIOUS_CUBE,IREGION_INNER_CORE,NDIM
-  use gll_library1
-  use math_library, only: determinant,dotmat,invert
+  use siem_gll_library
+  use siem_math_library, only: determinant,dotmat,invert
   use specfem_par_innercore, only: idoubling_inner_core
   implicit none
 
   integer,intent(in) :: iregion,NGLLX,NGLLY,NGLLZ,NGLL,nelmt,nnode
   integer,intent(in) :: ibool(NGLLX,NGLLY,NGLLZ,nelmt)
-  real(kind=kreal),intent(in) ::  xstore(nnode),ystore(nnode),zstore(nnode)
-  real(kind=kreal),intent(in) :: rhostore(NGLLX,NGLLY,NGLLZ,nelmt)
-  real(kind=kreal),intent(in) :: disp(NDIM,nnode)
-  real(kind=kreal),intent(out) :: load(nnode)
+  real(kind=CUSTOM_REAL),intent(in) ::  xstore(nnode),ystore(nnode),zstore(nnode)
+  real(kind=CUSTOM_REAL),intent(in) :: rhostore(NGLLX,NGLLY,NGLLZ,nelmt)
+  real(kind=CUSTOM_REAL),intent(in) :: disp(NDIM,nnode)
+  real(kind=CUSTOM_REAL),intent(out) :: load(nnode)
 
   integer,parameter :: ngnod = 8
 
   integer :: i,i_elmt
   integer :: egdof(NGLL),ignod(ngnod) !dnx,dny,dnz,
-  real(kind=kreal) :: detjac,rho(NGLL)
+  real(kind=CUSTOM_REAL) :: detjac,rho(NGLL)
 
   real(kind=kdble),parameter :: jalpha=0.0_kdble,jbeta=0.0_kdble,zero=0.0_kdble
   real(kind=kdble) :: xigll(NGLLX),wxgll(NGLLX),etagll(NGLLY),wygll(NGLLY), &
@@ -915,9 +923,9 @@ contains
   lagrange_gll(NGLL,NGLL),dlagrange_gll(ndim,NGLL,NGLL), &
   dshape_hex8(ndim,ngnod,NGLL)
 
-  real(kind=kreal) :: coord(ngnod,ndim),deriv(ndim,NGLL),jac(ndim,ndim)
+  real(kind=CUSTOM_REAL) :: coord(ngnod,ndim),deriv(ndim,NGLL),jac(ndim,ndim)
 
-  real(kind=kreal) :: edisp(NDIM,NGLL),eload(NGLL)
+  real(kind=CUSTOM_REAL) :: edisp(NDIM,NGLL),eload(NGLL)
 
   call zwgljd(xigll,wxgll,NGLLX,jalpha,jbeta)
   call zwgljd(etagll,wygll,NGLLY,jalpha,jbeta)
@@ -932,7 +940,7 @@ contains
   lagrange_gll,dlagrange_gll)
 
   !TODO: can store deriv, and detjac*gll_weights(i) for speeding up
-  load = 0.0_kreal
+  load = 0.0_CUSTOM_REAL
   do i_elmt = 1,nelmt
     ! suppress fictitious elements in central cube
     if (iregion == IREGION_INNER_CORE) then
@@ -965,7 +973,7 @@ contains
     load(egdof)=load(egdof)+eload
   enddo
   ! multiply by 4*PI*G! or scaled
-  load=-4.0_kreal*load
+  load=-4.0_CUSTOM_REAL*load
   end subroutine poisson_load_solid
 
 !
@@ -976,23 +984,23 @@ contains
                                  xstore,ystore,zstore,rhostore,disp,nnode1,ibool1,load)
 
   use constants_solver, only: IFLAG_IN_FICTITIOUS_CUBE,IREGION_INNER_CORE,NDIM,NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF
-  use gll_library1
-  use math_library, only: determinant,dotmat,invert
+  use siem_gll_library
+  use siem_math_library, only: determinant,dotmat,invert
   use specfem_par_innercore, only: idoubling_inner_core
   implicit none
 
   integer,intent(in) :: iregion,NGLLX,NGLLY,NGLLZ,NGLL,nelmt,nnode,nnode1
   integer,intent(in) :: ibool(NGLLX,NGLLY,NGLLZ,nelmt),ibool1(NGLLCUBE_INF,nelmt)
-  real(kind=kreal),intent(in) ::  xstore(nnode),ystore(nnode),zstore(nnode)
-  real(kind=kreal),intent(in) :: rhostore(NGLLX,NGLLY,NGLLZ,nelmt)
-  real(kind=kreal),intent(in) :: disp(NDIM,nnode)
-  real(kind=kreal),intent(out) :: load(nnode1)
+  real(kind=CUSTOM_REAL),intent(in) ::  xstore(nnode),ystore(nnode),zstore(nnode)
+  real(kind=CUSTOM_REAL),intent(in) :: rhostore(NGLLX,NGLLY,NGLLZ,nelmt)
+  real(kind=CUSTOM_REAL),intent(in) :: disp(NDIM,nnode)
+  real(kind=CUSTOM_REAL),intent(out) :: load(nnode1)
 
   integer,parameter :: ngnod = 8
 
   integer :: i,i_elmt
   integer :: egdof(NGLLCUBE_INF),egdof1(NGLLCUBE_INF),ignod(ngnod) !dnx,dny,dnz,
-  real(kind=kreal) :: detjac,rho(NGLLCUBE_INF)
+  real(kind=CUSTOM_REAL) :: detjac,rho(NGLLCUBE_INF)
 
   real(kind=kdble),parameter :: jalpha=0.0_kdble,jbeta=0.0_kdble,zero=0.0_kdble
   real(kind=kdble) :: xigll(NGLLX_INF),wxgll(NGLLX_INF),etagll(NGLLY_INF),wygll(NGLLY_INF), &
@@ -1001,9 +1009,9 @@ contains
   real(kind=kdble) :: gll_weights(NGLLCUBE_INF),gll_points(ndim,NGLLCUBE_INF),lagrange_gll(NGLLCUBE_INF,NGLLCUBE_INF), &
   dlagrange_gll(ndim,NGLLCUBE_INF,NGLLCUBE_INF),dshape_hex8(ndim,ngnod,NGLLCUBE_INF)
 
-  real(kind=kreal) :: coord(ngnod,ndim),deriv(ndim,NGLLCUBE_INF),jac(ndim,ndim)
+  real(kind=CUSTOM_REAL) :: coord(ngnod,ndim),deriv(ndim,NGLLCUBE_INF),jac(ndim,ndim)
 
-  real(kind=kreal) :: edisp(NDIM,NGLLCUBE_INF),eload(NGLLCUBE_INF)
+  real(kind=CUSTOM_REAL) :: edisp(NDIM,NGLLCUBE_INF),eload(NGLLCUBE_INF)
 
   call zwgljd(xigll,wxgll,NGLLX_INF,jalpha,jbeta)
   call zwgljd(etagll,wygll,NGLLY_INF,jalpha,jbeta)
@@ -1020,7 +1028,7 @@ contains
   !dnx=NGLLX-1; dny=NGLLY-1; dnz=NGLLZ-1
 
   !TODO: can store deriv, and detjac*gll_weights(i) for speeding up
-  load = 0.0_kreal
+  load = 0.0_CUSTOM_REAL
   do i_elmt = 1,nelmt
     ! suppress fictitious elements in central cube
     if (iregion == IREGION_INNER_CORE) then
@@ -1054,7 +1062,7 @@ contains
     load(egdof)=load(egdof)+eload
   enddo
   ! multiply by 4*PI*G! or scaled
-  load=-4.0_kreal*load
+  load=-4.0_CUSTOM_REAL*load
   end subroutine poisson_load_solid3
 
 !
@@ -1066,8 +1074,8 @@ contains
   subroutine poisson_load_solidFAST(iregion,NGLLX,NGLLY,NGLLZ,NGLL,nelmt,nnode,ibool, &
                                     storederiv,storerhojw,disp,load)
 
-  use math_library, only: dotmat
-  use gll_library1
+  use siem_math_library, only: dotmat
+  use siem_gll_library
   use specfem_par, only: NDIM
   use constants_solver, only: IFLAG_IN_FICTITIOUS_CUBE,IREGION_INNER_CORE
   use specfem_par_innercore, only: idoubling_inner_core
@@ -1075,15 +1083,15 @@ contains
 
   integer,intent(in) :: iregion,NGLLX,NGLLY,NGLLZ,NGLL,nelmt,nnode
   integer,intent(in) :: ibool(NGLLX,NGLLY,NGLLZ,nelmt)
-  real(kind=kreal),intent(in) ::  storederiv(NDIM,NGLL,NGLL,nelmt),storerhojw(NGLL,nelmt)
-  real(kind=kreal),intent(in) :: disp(NDIM,nnode)
-  real(kind=kreal),intent(out) :: load(nnode)
+  real(kind=CUSTOM_REAL),intent(in) ::  storederiv(NDIM,NGLL,NGLL,nelmt),storerhojw(NGLL,nelmt)
+  real(kind=CUSTOM_REAL),intent(in) :: disp(NDIM,nnode)
+  real(kind=CUSTOM_REAL),intent(out) :: load(nnode)
 
   integer,parameter :: ngnod = 8
   integer :: i,i_elmt
   integer :: egdof(NGLL)
-  real(kind=kreal) :: deriv(ndim,NGLL),edisp(NDIM,NGLL),eload(NGLL)
-  real(kind=kreal),parameter :: zero=0.0_kreal
+  real(kind=CUSTOM_REAL) :: deriv(ndim,NGLL),edisp(NDIM,NGLL),eload(NGLL)
+  real(kind=CUSTOM_REAL),parameter :: zero=0.0_CUSTOM_REAL
 
   load = zero
   do i_elmt = 1,nelmt
@@ -1104,7 +1112,7 @@ contains
     load(egdof)=load(egdof)+eload
   enddo
   ! multiply by 4*PI*G! or scaled
-  load=-4.0_kreal*load
+  load=-4.0_CUSTOM_REAL*load
   return
   end subroutine poisson_load_solidFAST
 
@@ -1115,8 +1123,8 @@ contains
   subroutine poisson_load_solid3FAST1(iregion,NGLLX,NGLLY,NGLLZ,NGLL,nelmt,nnode, &
                                       ibool,storederiv,storerhojw,disp,nnode1,ibool1,load)
 
-  use math_library, only: dotmat
-  use gll_library1
+  use siem_math_library, only: dotmat
+  use siem_gll_library
   use specfem_par, only: NDIM,lagrange_gll1
   use constants_solver, only: IFLAG_IN_FICTITIOUS_CUBE,IREGION_INNER_CORE,NGLLX_INF, &
   NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF
@@ -1125,16 +1133,16 @@ contains
 
   integer,intent(in) :: iregion,NGLLX,NGLLY,NGLLZ,NGLL,nelmt,nnode,nnode1
   integer,intent(in) :: ibool(NGLLX,NGLLY,NGLLZ,nelmt),ibool1(NGLLCUBE_INF,nelmt)
-  real(kind=kreal),intent(in) ::  storederiv(NDIM,NGLLCUBE_INF,NGLLCUBE_INF,nelmt), &
+  real(kind=CUSTOM_REAL),intent(in) ::  storederiv(NDIM,NGLLCUBE_INF,NGLLCUBE_INF,nelmt), &
   storerhojw(NGLLCUBE_INF,nelmt)
-  real(kind=kreal),intent(in) :: disp(NDIM,nnode)
-  real(kind=kreal),intent(out) :: load(nnode1)
+  real(kind=CUSTOM_REAL),intent(in) :: disp(NDIM,nnode)
+  real(kind=CUSTOM_REAL),intent(out) :: load(nnode1)
 
   integer,parameter :: ngnod = 8
   integer :: i,i_elmt
   integer :: egdof(NGLLCUBE_INF),egdof1(NGLLCUBE_INF)
-  real(kind=kreal) :: divs,deriv(ndim,NGLLCUBE_INF),edisp(NDIM,NGLLCUBE_INF),eload(NGLLCUBE_INF)
-  real(kind=kreal),parameter :: zero=0.0_kreal
+  real(kind=CUSTOM_REAL) :: divs,deriv(ndim,NGLLCUBE_INF),edisp(NDIM,NGLLCUBE_INF),eload(NGLLCUBE_INF)
+  real(kind=CUSTOM_REAL),parameter :: zero=0.0_CUSTOM_REAL
 
   load = zero
   do i_elmt = 1,nelmt
@@ -1158,7 +1166,7 @@ contains
     load(egdof)=load(egdof)+eload
   enddo
   ! multiply by 4*PI*G! or scaled
-  load=-4.0_kreal*load
+  load=-4.0_CUSTOM_REAL*load
   return
   end subroutine poisson_load_solid3FAST1
 
@@ -1169,8 +1177,8 @@ contains
   subroutine poisson_load_solid3FAST(iregion,NGLLX,NGLLY,NGLLZ,NGLL,nelmt,nnode,ibool, &
                                      storederiv,storerhojw,disp,nnode1,ibool1,load)
 
-  use math_library, only: dotmat
-  use gll_library1
+  use siem_math_library, only: dotmat
+  use siem_gll_library
   use specfem_par, only: NDIM
   use constants_solver, only: IFLAG_IN_FICTITIOUS_CUBE,IREGION_INNER_CORE,NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF
   use specfem_par_innercore, only: idoubling_inner_core
@@ -1178,15 +1186,15 @@ contains
 
   integer,intent(in) :: iregion,NGLLX,NGLLY,NGLLZ,NGLL,nelmt,nnode,nnode1
   integer,intent(in) :: ibool(NGLLX,NGLLY,NGLLZ,nelmt),ibool1(NGLLCUBE_INF,nelmt)
-  real(kind=kreal),intent(in) ::  storederiv(NDIM,NGLLCUBE_INF,NGLLCUBE_INF,nelmt),storerhojw(NGLLCUBE_INF,nelmt)
-  real(kind=kreal),intent(in) :: disp(NDIM,nnode)
-  real(kind=kreal),intent(out) :: load(nnode1)
+  real(kind=CUSTOM_REAL),intent(in) ::  storederiv(NDIM,NGLLCUBE_INF,NGLLCUBE_INF,nelmt),storerhojw(NGLLCUBE_INF,nelmt)
+  real(kind=CUSTOM_REAL),intent(in) :: disp(NDIM,nnode)
+  real(kind=CUSTOM_REAL),intent(out) :: load(nnode1)
 
   integer,parameter :: ngnod = 8
   integer :: i,i_elmt
   integer :: egdof(NGLLCUBE_INF),egdof1(NGLLCUBE_INF)
-  real(kind=kreal) :: deriv(ndim,NGLLCUBE_INF),edisp(NDIM,NGLLCUBE_INF),eload(NGLLCUBE_INF)
-  real(kind=kreal),parameter :: zero=0.0_kreal
+  real(kind=CUSTOM_REAL) :: deriv(ndim,NGLLCUBE_INF),edisp(NDIM,NGLLCUBE_INF),eload(NGLLCUBE_INF)
+  real(kind=CUSTOM_REAL),parameter :: zero=0.0_CUSTOM_REAL
 
   load = zero
   do i_elmt = 1,nelmt
@@ -1208,7 +1216,7 @@ contains
     load(egdof)=load(egdof)+eload
   enddo
   ! multiply by 4*PI*G! or scaled
-  load=-4.0_kreal*load
+  load=-4.0_CUSTOM_REAL*load
   return
   end subroutine poisson_load_solid3FAST
 
@@ -1556,26 +1564,26 @@ contains
   use specfem_par, only: 
   use constants_solver, only: NGLLX,NGLLY,NGLLZ,NGLL,ROTATION_VAL
 
-  use gll_library1
-  use math_library, only: determinant,dotmat,invert
+  use siem_gll_library
+  use siem_math_library, only: determinant,dotmat,invert
 
   implicit none
 
   integer,intent(in) :: nelmt,nnode
   integer,intent(in) :: ibool(NGLLX,NGLLY,NGLLZ,nelmt)
-  real(kind=kreal),intent(in) :: xstore(nnode),ystore(nnode),zstore(nnode), &
+  real(kind=CUSTOM_REAL),intent(in) :: xstore(nnode),ystore(nnode),zstore(nnode), &
   rhostore(NGLLX,NGLLY,NGLLZ,nelmt)
   real(kind=CUSTOM_REAL),intent(in) :: time,deltat,two_omega_earth
   real(kind=CUSTOM_REAL),dimension(NGLL,nelmt),intent(inout) :: A_array_rot, &
   B_array_rot
-  real(kind=kreal),intent(in) :: dispf(1,nnode) !\chi
-  real(kind=kreal),intent(out) :: load(nnode)
+  real(kind=CUSTOM_REAL),intent(in) :: dispf(1,nnode) !\chi
+  real(kind=CUSTOM_REAL),intent(out) :: load(nnode)
 
   integer,parameter :: ndim = 3,ngnod = 8
 
   integer :: i,i_elmt
   integer :: egdof(NGLL),ignod(ngnod) !dnx,dny,dnz,
-  real(kind=kreal) :: detjac(NGLL),rho(NGLL)
+  real(kind=CUSTOM_REAL) :: detjac(NGLL),rho(NGLL)
 
   real(kind=kdble),parameter :: jalpha=0.0_kdble,jbeta=0.0_kdble,zero=0.0_kdble
   real(kind=kdble) :: xigll(NGLLX),wxgll(NGLLX),etagll(NGLLY),wygll(NGLLY), &
@@ -1585,12 +1593,12 @@ contains
   lagrange_gll(NGLL,NGLL),dlagrange_gll(ndim,NGLL,NGLL), &
   dshape_hex8(ndim,ngnod,NGLL)
 
-  real(kind=kreal) :: coord(ngnod,ndim),deriv(ndim,NGLL,NGLL),jac(ndim,ndim)
+  real(kind=CUSTOM_REAL) :: coord(ngnod,ndim),deriv(ndim,NGLL,NGLL),jac(ndim,ndim)
 
-  real(kind=kreal) :: echi(NGLL,1),edisp(ndim,NGLL),eload(NGLL),gradchi(ndim,1)
-  real(kind=kreal) :: two_omega_deltat,cos_two_omega_t,sin_two_omega_t,A_rot, &
+  real(kind=CUSTOM_REAL) :: echi(NGLL,1),edisp(ndim,NGLL),eload(NGLL),gradchi(ndim,1)
+  real(kind=CUSTOM_REAL) :: two_omega_deltat,cos_two_omega_t,sin_two_omega_t,A_rot, &
   B_rot,ux_rot,uy_rot
-  real(kind=kreal),dimension(NGLL) :: source_euler_A,source_euler_B
+  real(kind=CUSTOM_REAL),dimension(NGLL) :: source_euler_A,source_euler_B
 
   call zwgljd(xigll,wxgll,NGLLX,jalpha,jbeta)
   call zwgljd(etagll,wygll,NGLLY,jalpha,jbeta)
@@ -1676,7 +1684,7 @@ contains
 
   enddo
   ! multiply by 4*PI*G! or scaled
-  load=-4.0_kreal*load
+  load=-4.0_CUSTOM_REAL*load
   end subroutine poisson_load_fluidNEW
 
 !
@@ -1691,26 +1699,26 @@ contains
   use constants_solver, only: NGLLX,NGLLY,NGLLZ,NGLL,NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF, &
   ROTATION_VAL
 
-  use gll_library1
-  use math_library, only: determinant,dotmat,invert
+  use siem_gll_library
+  use siem_math_library, only: determinant,dotmat,invert
 
   implicit none
 
   integer,intent(in) :: nelmt,nnode,nnode1
   integer,intent(in) :: ibool(NGLLX,NGLLY,NGLLZ,nelmt),ibool1(NGLLCUBE_INF,nelmt)
-  real(kind=kreal),intent(in) :: xstore(nnode),ystore(nnode),zstore(nnode), &
+  real(kind=CUSTOM_REAL),intent(in) :: xstore(nnode),ystore(nnode),zstore(nnode), &
   rhostore(NGLLX,NGLLY,NGLLZ,nelmt)
   real(kind=CUSTOM_REAL),intent(in) :: time,deltat,two_omega_earth
   real(kind=CUSTOM_REAL),dimension(NGLLCUBE_INF,nelmt),intent(inout) :: A_array_rot, &
   B_array_rot
-  real(kind=kreal),intent(in) :: dispf(1,nnode) !\chi
-  real(kind=kreal),intent(out) :: load(nnode1)
+  real(kind=CUSTOM_REAL),intent(in) :: dispf(1,nnode) !\chi
+  real(kind=CUSTOM_REAL),intent(out) :: load(nnode1)
 
   integer,parameter :: ndim = 3,ngnod = 8
 
   integer :: i,i_elmt
   integer :: egdof(NGLLCUBE_INF),egdof1(NGLLCUBE_INF),ignod(ngnod) !dnx,dny,dnz,
-  real(kind=kreal) :: detjac(NGLLCUBE_INF),rho(NGLLCUBE_INF)
+  real(kind=CUSTOM_REAL) :: detjac(NGLLCUBE_INF),rho(NGLLCUBE_INF)
 
   real(kind=kdble),parameter :: jalpha=0.0_kdble,jbeta=0.0_kdble,zero=0.0_kdble
   real(kind=kdble) :: xigll(NGLLX_INF),wxgll(NGLLX_INF),etagll(NGLLY_INF),wygll(NGLLY_INF), &
@@ -1720,12 +1728,12 @@ contains
   lagrange_gll(NGLLCUBE_INF,NGLLCUBE_INF),dlagrange_gll(ndim,NGLLCUBE_INF,NGLLCUBE_INF), &
   dshape_hex8(ndim,ngnod,NGLLCUBE_INF)
 
-  real(kind=kreal) :: coord(ngnod,ndim),deriv(ndim,NGLLCUBE_INF,NGLLCUBE_INF),jac(ndim,ndim)
+  real(kind=CUSTOM_REAL) :: coord(ngnod,ndim),deriv(ndim,NGLLCUBE_INF,NGLLCUBE_INF),jac(ndim,ndim)
 
-  real(kind=kreal) :: echi(NGLLCUBE_INF,1),edisp(ndim,NGLLCUBE_INF),eload(NGLLCUBE_INF),gradchi(ndim,1)
-  real(kind=kreal) :: two_omega_deltat,cos_two_omega_t,sin_two_omega_t,A_rot, &
+  real(kind=CUSTOM_REAL) :: echi(NGLLCUBE_INF,1),edisp(ndim,NGLLCUBE_INF),eload(NGLLCUBE_INF),gradchi(ndim,1)
+  real(kind=CUSTOM_REAL) :: two_omega_deltat,cos_two_omega_t,sin_two_omega_t,A_rot, &
   B_rot,ux_rot,uy_rot
-  real(kind=kreal),dimension(NGLLCUBE_INF) :: source_euler_A,source_euler_B
+  real(kind=CUSTOM_REAL),dimension(NGLLCUBE_INF) :: source_euler_A,source_euler_B
 
   call zwgljd(xigll,wxgll,NGLLX_INF,jalpha,jbeta)
   call zwgljd(etagll,wygll,NGLLY_INF,jalpha,jbeta)
@@ -1813,7 +1821,7 @@ contains
 
   enddo
   ! multiply by 4*PI*G! or scaled
-  load=-4.0_kreal*load
+  load=-4.0_CUSTOM_REAL*load
   end subroutine poisson_load_fluidNEW3
 
 !
@@ -1823,8 +1831,8 @@ contains
   subroutine poisson_load_fluidNEWFAST(nelmt,nnode,ibool,storederiv,storerhojw, &
                                        time,deltat,two_omega_earth,A_array_rot,B_array_rot,dispf,load)
 
-  use math_library, only: dotmat
-  use gll_library1
+  use siem_math_library, only: dotmat
+  use siem_gll_library
   use specfem_par, only: NDIM
   use constants_solver, only: NGLLX,NGLLY,NGLLZ,NGLL,ROTATION_VAL
 
@@ -1832,26 +1840,26 @@ contains
 
   integer,intent(in) :: nelmt,nnode
   integer,intent(in) :: ibool(NGLLX,NGLLY,NGLLZ,nelmt)
-  real(kind=kreal),intent(in) :: storederiv(NDIM,NGLL,NGLL,nelmt), &
+  real(kind=CUSTOM_REAL),intent(in) :: storederiv(NDIM,NGLL,NGLL,nelmt), &
   storerhojw(NGLL,nelmt)
   real(kind=CUSTOM_REAL),intent(in) :: time,deltat,two_omega_earth
   real(kind=CUSTOM_REAL),dimension(NGLL,nelmt),intent(inout) :: A_array_rot, &
   B_array_rot
-  real(kind=kreal),intent(in) :: dispf(1,nnode) !\chi
-  real(kind=kreal),intent(out) :: load(nnode)
+  real(kind=CUSTOM_REAL),intent(in) :: dispf(1,nnode) !\chi
+  real(kind=CUSTOM_REAL),intent(out) :: load(nnode)
 
   integer,parameter :: ngnod = 8
 
   integer :: i,i_elmt
   integer :: egdof(NGLL),ignod(ngnod) !dnx,dny,dnz,
-  real(kind=kreal) :: detjac(NGLL),rho(NGLL)
-  real(kind=kreal) :: deriv(ndim,NGLL,NGLL),echi(NGLL,1),edisp(ndim,NGLL), &
+  real(kind=CUSTOM_REAL) :: detjac(NGLL),rho(NGLL)
+  real(kind=CUSTOM_REAL) :: deriv(ndim,NGLL,NGLL),echi(NGLL,1),edisp(ndim,NGLL), &
   eload(NGLL),gradchi(ndim,1)
-  real(kind=kreal) :: two_omega_deltat,cos_two_omega_t,sin_two_omega_t,A_rot, &
+  real(kind=CUSTOM_REAL) :: two_omega_deltat,cos_two_omega_t,sin_two_omega_t,A_rot, &
   B_rot,ux_rot,uy_rot
-  real(kind=kreal),dimension(NGLL) :: source_euler_A,source_euler_B
+  real(kind=CUSTOM_REAL),dimension(NGLL) :: source_euler_A,source_euler_B
 
-  real(kind=kreal),parameter :: zero=0.0_kreal
+  real(kind=CUSTOM_REAL),parameter :: zero=0.0_CUSTOM_REAL
 
   load = zero
   do i_elmt = 1,nelmt
@@ -1908,7 +1916,7 @@ contains
   enddo !i_elmt = 1,nelmt
 
   ! multiply by 4*PI*G! or scaled
-  load=-4.0_kreal*load
+  load=-4.0_CUSTOM_REAL*load
   return
   end subroutine poisson_load_fluidNEWFAST
 
@@ -1919,8 +1927,8 @@ contains
   subroutine poisson_load_fluidNEW3FAST(nelmt,nnode,ibool,storederiv,storerhojw, &
                                         time,deltat,two_omega_earth,A_array_rot,B_array_rot,dispf,nnode1,ibool1,load)
 
-  use math_library, only: dotmat
-  use gll_library1
+  use siem_math_library, only: dotmat
+  use siem_gll_library
   use specfem_par, only: NDIM
   use constants_solver, only: NGLLX,NGLLY,NGLLZ,NGLL,NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF, &
   ROTATION_VAL
@@ -1929,27 +1937,27 @@ contains
 
   integer,intent(in) :: nelmt,nnode,nnode1
   integer,intent(in) :: ibool(NGLLX,NGLLY,NGLLZ,nelmt),ibool1(NGLLCUBE_INF,nelmt)
-  real(kind=kreal),intent(in) :: storederiv(NDIM,NGLLCUBE_INF,NGLLCUBE_INF,nelmt),storerhojw(NGLLCUBE_INF,nelmt)
+  real(kind=CUSTOM_REAL),intent(in) :: storederiv(NDIM,NGLLCUBE_INF,NGLLCUBE_INF,nelmt),storerhojw(NGLLCUBE_INF,nelmt)
   real(kind=CUSTOM_REAL),intent(in) :: time,deltat,two_omega_earth
   real(kind=CUSTOM_REAL),dimension(NGLLCUBE_INF,nelmt),intent(inout) :: A_array_rot, &
   B_array_rot
-  real(kind=kreal),intent(in) :: dispf(1,nnode) !\chi
-  real(kind=kreal),intent(out) :: load(nnode1)
+  real(kind=CUSTOM_REAL),intent(in) :: dispf(1,nnode) !\chi
+  real(kind=CUSTOM_REAL),intent(out) :: load(nnode1)
 
   integer,parameter :: ngnod = 8
 
   integer :: i,i_elmt
   integer :: egdof(NGLLCUBE_INF),egdof1(NGLLCUBE_INF),ignod(ngnod) !dnx,dny,dnz,
-  real(kind=kreal) :: detjac(NGLLCUBE_INF),rho(NGLLCUBE_INF)
+  real(kind=CUSTOM_REAL) :: detjac(NGLLCUBE_INF),rho(NGLLCUBE_INF)
   !real(kind=kdble) :: gll_weights(NGLLCUBE_INF),gll_points(ndim,NGLLCUBE_INF),lagrange_gll(NGLLCUBE_INF,NGLLCUBE_INF), &
   !dlagrange_gll(ndim,NGLLCUBE_INF,NGLLCUBE_INF),dshape_hex8(ndim,ngnod,NGLLCUBE_INF)
-  real(kind=kreal) :: deriv(ndim,NGLLCUBE_INF,NGLLCUBE_INF),echi(NGLLCUBE_INF,1),edisp(ndim,NGLLCUBE_INF), &
+  real(kind=CUSTOM_REAL) :: deriv(ndim,NGLLCUBE_INF,NGLLCUBE_INF),echi(NGLLCUBE_INF,1),edisp(ndim,NGLLCUBE_INF), &
   eload(NGLLCUBE_INF),gradchi(ndim,1)
-  real(kind=kreal) :: two_omega_deltat,cos_two_omega_t,sin_two_omega_t,A_rot,B_rot, &
+  real(kind=CUSTOM_REAL) :: two_omega_deltat,cos_two_omega_t,sin_two_omega_t,A_rot,B_rot, &
   ux_rot,uy_rot
-  real(kind=kreal),dimension(NGLLCUBE_INF) :: source_euler_A,source_euler_B
+  real(kind=CUSTOM_REAL),dimension(NGLLCUBE_INF) :: source_euler_A,source_euler_B
 
-  real(kind=kreal),parameter :: zero=0.0_kreal
+  real(kind=CUSTOM_REAL),parameter :: zero=0.0_CUSTOM_REAL
 
   !! compute gauss-lobatto-legendre quadrature information
   !call gll_quadrature(ndim,NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF,gll_points,gll_weights, &
@@ -2011,7 +2019,7 @@ contains
   enddo !i_elmt = 1,nelmt
 
   ! multiply by 4*PI*G! or scaled
-  load=-4.0_kreal*load
+  load=-4.0_CUSTOM_REAL*load
   return
   end subroutine poisson_load_fluidNEW3FAST
 
@@ -2023,22 +2031,22 @@ contains
                                   ibool,xstore,ystore,zstore,rhostore,load)
 
   use constants_solver, only: IFLAG_IN_FICTITIOUS_CUBE,IREGION_INNER_CORE
-  use gll_library1
-  use math_library, only: determinant,dotmat,invert
+  use siem_gll_library
+  use siem_math_library, only: determinant,dotmat,invert
   use specfem_par_innercore, only: idoubling_inner_core
   implicit none
 
   integer,intent(in) :: iregion,NGLLX,NGLLY,NGLLZ,NGLL,nelmt,nnode
   integer,intent(in) :: ibool(NGLLX,NGLLY,NGLLZ,nelmt)
-  real(kind=kreal),intent(in) ::  xstore(nnode),ystore(nnode),zstore(nnode)
-  real(kind=kreal),intent(in) :: rhostore(NGLLX,NGLLY,NGLLZ,nelmt)
-  real(kind=kreal),intent(out) :: load(nnode)
+  real(kind=CUSTOM_REAL),intent(in) ::  xstore(nnode),ystore(nnode),zstore(nnode)
+  real(kind=CUSTOM_REAL),intent(in) :: rhostore(NGLLX,NGLLY,NGLLZ,nelmt)
+  real(kind=CUSTOM_REAL),intent(out) :: load(nnode)
 
   integer,parameter :: ndim = 3,ngnod = 8
 
   integer :: i,i_elmt
   integer :: egdof(NGLL),ignod(ngnod) !dnx,dny,dnz,
-  real(kind=kreal) :: detjac,eld(NGLL),rho(NGLL)
+  real(kind=CUSTOM_REAL) :: detjac,eld(NGLL),rho(NGLL)
 
   real(kind=kdble),parameter :: jalpha=0.0_kdble,jbeta=0.0_kdble,zero=0.0_kdble
   real(kind=kdble) :: xigll(NGLLX),wxgll(NGLLX),etagll(NGLLY),wygll(NGLLY), &
@@ -2047,7 +2055,7 @@ contains
   real(kind=kdble) :: gll_weights(NGLL),gll_points(ndim,NGLL),lagrange_gll(NGLL,NGLL), &
   dlagrange_gll(ndim,NGLL,NGLL),dshape_hex8(ndim,ngnod,NGLL)
 
-  real(kind=kreal) :: coord(ngnod,ndim),deriv(ndim,NGLL),jac(ndim,ndim)
+  real(kind=CUSTOM_REAL) :: coord(ngnod,ndim),deriv(ndim,NGLL),jac(ndim,ndim)
 
   call zwgljd(xigll,wxgll,NGLLX,jalpha,jbeta)
   call zwgljd(etagll,wygll,NGLLY,jalpha,jbeta)
@@ -2094,7 +2102,7 @@ contains
     load(egdof)=load(egdof)+eld
   enddo
   ! multiply by 4*PI*G! or scaled
-  load = 4.0_kreal*load
+  load = 4.0_CUSTOM_REAL*load
   end subroutine poisson_load_onlyrho
 
 !
@@ -2105,22 +2113,22 @@ contains
                                    ibool,xstore,ystore,zstore,rhostore,nnode1,ibool1,load)
 
   use constants_solver, only: IFLAG_IN_FICTITIOUS_CUBE,IREGION_INNER_CORE,NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF
-  use gll_library1
-  use math_library, only: determinant,dotmat,invert
+  use siem_gll_library
+  use siem_math_library, only: determinant,dotmat,invert
   use specfem_par_innercore, only: idoubling_inner_core
   implicit none
 
   integer,intent(in) :: iregion,NGLLX,NGLLY,NGLLZ,NGLL,nelmt,nnode,nnode1
   integer,intent(in) :: ibool(NGLLX,NGLLY,NGLLZ,nelmt),ibool1(NGLLCUBE_INF,nelmt)
-  real(kind=kreal),intent(in) ::  xstore(nnode),ystore(nnode),zstore(nnode)
-  real(kind=kreal),intent(in) :: rhostore(NGLLX,NGLLY,NGLLZ,nelmt)
-  real(kind=kreal),intent(out) :: load(nnode1)
+  real(kind=CUSTOM_REAL),intent(in) ::  xstore(nnode),ystore(nnode),zstore(nnode)
+  real(kind=CUSTOM_REAL),intent(in) :: rhostore(NGLLX,NGLLY,NGLLZ,nelmt)
+  real(kind=CUSTOM_REAL),intent(out) :: load(nnode1)
 
   integer,parameter :: ndim = 3,ngnod = 8
 
   integer :: i,i_elmt
   integer :: egdof(NGLLCUBE_INF),ignod(ngnod) !dnx,dny,dnz,
-  real(kind=kreal) :: detjac,eld(NGLLCUBE_INF),rho(NGLLCUBE_INF)
+  real(kind=CUSTOM_REAL) :: detjac,eld(NGLLCUBE_INF),rho(NGLLCUBE_INF)
 
   real(kind=kdble),parameter :: jalpha=0.0_kdble,jbeta=0.0_kdble,zero=0.0_kdble
   real(kind=kdble) :: xigll(NGLLX_INF),wxgll(NGLLX_INF),etagll(NGLLY_INF),wygll(NGLLY_INF), &
@@ -2129,7 +2137,7 @@ contains
   real(kind=kdble) :: gll_weights(NGLLCUBE_INF),gll_points(ndim,NGLLCUBE_INF),lagrange_gll(NGLLCUBE_INF,NGLLCUBE_INF), &
   dlagrange_gll(ndim,NGLLCUBE_INF,NGLLCUBE_INF),dshape_hex8(ndim,ngnod,NGLLCUBE_INF)
 
-  real(kind=kreal) :: coord(ngnod,ndim),deriv(ndim,NGLLCUBE_INF),jac(ndim,ndim)
+  real(kind=CUSTOM_REAL) :: coord(ngnod,ndim),deriv(ndim,NGLLCUBE_INF),jac(ndim,ndim)
 
   call zwgljd(xigll,wxgll,NGLLX_INF,jalpha,jbeta)
   call zwgljd(etagll,wygll,NGLLY_INF,jalpha,jbeta)
@@ -2176,7 +2184,7 @@ contains
     load(egdof)=load(egdof)+eld
   enddo
   ! multiply by 4*PI*G! or scaled
-  load = 4.0_kreal*load
+  load = 4.0_CUSTOM_REAL*load
   end subroutine poisson_load_onlyrho3
 
 !
@@ -2187,26 +2195,26 @@ contains
                                       ibool,storerhojw,load)
 
   use constants_solver, only: IFLAG_IN_FICTITIOUS_CUBE,IREGION_INNER_CORE
-  use gll_library1
-  use math_library, only: determinant,dotmat,invert
+  use siem_gll_library
+  use siem_math_library, only: determinant,dotmat,invert
   use specfem_par_innercore, only: idoubling_inner_core
   implicit none
 
   integer,intent(in) :: iregion,NGLLX,NGLLY,NGLLZ,NGLL,nelmt,nnode
   integer,intent(in) :: ibool(NGLLX,NGLLY,NGLLZ,nelmt)
-  real(kind=kreal),intent(in) :: storerhojw(NGLL,nelmt)
-  real(kind=kreal),intent(out) :: load(nnode)
+  real(kind=CUSTOM_REAL),intent(in) :: storerhojw(NGLL,nelmt)
+  real(kind=CUSTOM_REAL),intent(out) :: load(nnode)
 
   integer,parameter :: ndim = 3,ngnod = 8
 
   integer :: i,i_elmt
   integer :: egdof(NGLL),ignod(ngnod) !dnx,dny,dnz,
-  real(kind=kreal) :: eld(NGLL)
+  real(kind=CUSTOM_REAL) :: eld(NGLL)
 
   real(kind=kdble) :: gll_weights(NGLL),gll_points(ndim,NGLL),lagrange_gll(NGLL,NGLL), &
   dlagrange_gll(ndim,NGLL,NGLL),dshape_hex8(ndim,ngnod,NGLL)
 
-  real(kind=kreal),parameter :: zero=0.0_kreal
+  real(kind=CUSTOM_REAL),parameter :: zero=0.0_CUSTOM_REAL
 
   ! compute gauss-lobatto-legendre quadrature information
   call gll_quadrature(ndim,NGLLX,NGLLY,NGLLZ,NGLL,gll_points,gll_weights, &
@@ -2227,7 +2235,7 @@ contains
     load(egdof)=load(egdof)+eld
   enddo
   ! multiply by 4*PI*G! or scaled
-  load = 4.0_kreal*load
+  load = 4.0_CUSTOM_REAL*load
   end subroutine poisson_load_onlyrhoFAST
 
 !
@@ -2238,26 +2246,26 @@ contains
                                        ibool,storerhojw,nnode1,ibool1,load)
 
   use constants_solver, only: IFLAG_IN_FICTITIOUS_CUBE,IREGION_INNER_CORE,NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF
-  use gll_library1
-  use math_library, only: determinant,dotmat,invert
+  use siem_gll_library
+  use siem_math_library, only: determinant,dotmat,invert
   use specfem_par_innercore, only: idoubling_inner_core
   implicit none
 
   integer,intent(in) :: iregion,NGLLX,NGLLY,NGLLZ,NGLL,nelmt,nnode,nnode1
   integer,intent(in) :: ibool(NGLLX,NGLLY,NGLLZ,nelmt),ibool1(NGLLCUBE_INF,nelmt)
-  real(kind=kreal),intent(in) ::  storerhojw(NGLLCUBE_INF,nelmt)
-  real(kind=kreal),intent(out) :: load(nnode1)
+  real(kind=CUSTOM_REAL),intent(in) ::  storerhojw(NGLLCUBE_INF,nelmt)
+  real(kind=CUSTOM_REAL),intent(out) :: load(nnode1)
 
   integer,parameter :: ndim = 3,ngnod = 8
 
   integer :: i,i_elmt
   integer :: egdof(NGLLCUBE_INF),ignod(ngnod) !dnx,dny,dnz,
-  real(kind=kreal) :: detjac,eld(NGLLCUBE_INF),rho(NGLLCUBE_INF)
+  real(kind=CUSTOM_REAL) :: detjac,eld(NGLLCUBE_INF),rho(NGLLCUBE_INF)
 
   real(kind=kdble) :: gll_weights(NGLLCUBE_INF),gll_points(ndim,NGLLCUBE_INF),lagrange_gll(NGLLCUBE_INF,NGLLCUBE_INF), &
   dlagrange_gll(ndim,NGLLCUBE_INF,NGLLCUBE_INF),dshape_hex8(ndim,ngnod,NGLLCUBE_INF)
 
-  real(kind=kreal),parameter :: zero=0.0_kreal
+  real(kind=CUSTOM_REAL),parameter :: zero=0.0_CUSTOM_REAL
 
   ! compute gauss-lobatto-legendre quadrature information
   call gll_quadrature(ndim,NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF,gll_points,gll_weights, &
@@ -2278,7 +2286,7 @@ contains
     load(egdof)=load(egdof)+eld
   enddo
   ! multiply by 4*PI*G! or scaled
-  load = 4.0_kreal*load
+  load = 4.0_CUSTOM_REAL*load
   end subroutine poisson_load_onlyrhoFAST3
 
 !
@@ -2289,22 +2297,22 @@ contains
                              gradphi)
 
   use constants_solver, only: IFLAG_IN_FICTITIOUS_CUBE,IREGION_INNER_CORE,NGLLX,NGLLY,NGLLZ,NGLL
-  use gll_library1
-  use math_library, only: determinant,invert
+  use siem_gll_library
+  use siem_math_library, only: determinant,invert
   use specfem_par_innercore, only: idoubling_inner_core
   !use specfem_par_crustmantle, only: rmassz_crust_mantle !TODO: remove this
   implicit none
   integer,intent(in) :: iregion,nelmt,nnode
   integer,intent(in) :: ibool(NGLLX,NGLLY,NGLLZ,nelmt)
-  real(kind=kreal),intent(in) ::  xstore(nnode),ystore(nnode),zstore(nnode)
-  real(kind=kreal),intent(in) :: pgrav(nnode)
-  real(kind=kreal),intent(out) :: gradphi(3,NGLL,nelmt)
+  real(kind=CUSTOM_REAL),intent(in) ::  xstore(nnode),ystore(nnode),zstore(nnode)
+  real(kind=CUSTOM_REAL),intent(in) :: pgrav(nnode)
+  real(kind=CUSTOM_REAL),intent(out) :: gradphi(3,NGLL,nelmt)
 
   integer,parameter :: ndim = 3,ngnod = 8
 
   integer :: i,i_elmt
   integer :: dnx,dny,dnz,egdof(NGLL),ignod(ngnod)
-  real(kind=kreal) :: detjac
+  real(kind=CUSTOM_REAL) :: detjac
 
   real(kind=kdble),parameter :: jalpha=0.0_kdble,jbeta=0.0_kdble,zero=0.0_kdble
   real(kind=kdble) :: xigll(NGLLX),wxgll(NGLLX),etagll(NGLLY),wygll(NGLLY), &
@@ -2312,7 +2320,7 @@ contains
   real(kind=kdble) :: dshape_hex8(ndim,ngnod,NGLL),gll_weights(NGLL), &
   gll_points(ndim,NGLL),lagrange_gll(NGLL,NGLL),dlagrange_gll(ndim,NGLL,NGLL)
 
-  real(kind=kreal) :: coord(ngnod,ndim),deriv(ndim,NGLL),jac(ndim,ndim)
+  real(kind=CUSTOM_REAL) :: coord(ngnod,ndim),deriv(ndim,NGLL),jac(ndim,ndim)
 
   call zwgljd(xigll,wxgll,NGLLX,jalpha,jbeta)
   call zwgljd(etagll,wygll,NGLLY,jalpha,jbeta)

@@ -28,6 +28,7 @@
   subroutine SIEM_prepare_solver()
 
   use specfem_par
+
   implicit none
 
   ! check if anything to do
@@ -42,9 +43,6 @@
   ! safety stop
   stop 'FULL_GRAVITY not fully implemented yet'
 
-! TODO: full gravity is not working yet, needs to fully implement solver...
-#ifdef USE_PETSC_NOT_WORKING_YET
-
   ! compute and store integration coefficients
   call SIEM_prepare_solver_preintegrate3()
   call SIEM_prepare_solver_preintegrate()
@@ -55,9 +53,7 @@
   call SIEM_prepare_solver_poisson()
 
   ! create sparse matrix
-  if (SOLVER == PETSC) call SIEM_prepare_solver_sparse()
-
-#endif
+  if (POISSON_SOLVER == PETSC) call SIEM_prepare_solver_sparse()
 
   end subroutine SIEM_prepare_solver
 
@@ -65,12 +61,9 @@
 !-------------------------------------------------------------------------------
 !
 
-! TODO: full gravity is not working yet, needs to fully implement solver...
-#ifdef USE_PETSC_NOT_WORKING_YET
-
   subroutine prepare_solver_preintegrate()
 
-  use specfem_par, only: CUSTOM_REAL,myrank,NDIM,NGLLX,NGLLY,NGLLZ,NGLLCUBE
+  use specfem_par, only: CUSTOM_REAL,NDIM,NGLLX,NGLLY,NGLLZ,NGLLCUBE
 
   use specfem_par_crustmantle, only: ibool_crust_mantle,NSPEC_CRUST_MANTLE, &
     xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
@@ -86,45 +79,53 @@
   !use specfem_par_infinite
   use constants_solver, only: IFLAG_IN_FICTITIOUS_CUBE
 
-  use gll_library1, only: kdble,zwgljd,dshape_function_hex8,gll_quadrature
-  use math_library, only: determinant,invert
+  use siem_gll_library, only: kdble,zwgljd,dshape_function_hex8,gll_quadrature
+  use siem_math_library, only: determinant,invert
 
   use specfem_par_innercore, only: idoubling_inner_core
 
   use specfem_par_full_gravity, only: lagrange_gll, &
-    storederiv_cm,storerhojw_cm, storedetjac_cm, SAVE_JACOBIAN_ENSIGHT, &
+    storederiv_cm,storerhojw_cm, &
     storederiv_ic,storerhojw_ic, &
     storederiv_oc,storerhojw_oc
+
+  !not used yet...
+  !use specfem_par_full_gravity, only: SAVE_JACOBIAN_ENSIGHT,storedetjac_cm
 
   implicit none
 
   integer,parameter :: ngnod = 8
 
-  integer :: i,i_elmt, j, k
-  integer :: ignod(ngnod) !dnx,dny,dnz,
+  integer :: i,i_elmt !,j,k
+  integer :: ignod(ngnod)
   real(kind=CUSTOM_REAL) :: detjac,rho(NGLLCUBE)
 
   real(kind=kdble),parameter :: jalpha=0.0_kdble,jbeta=0.0_kdble,zero=0.0_kdble
 
   real(kind=kdble) :: xigll(NGLLX),wxgll(NGLLX),etagll(NGLLY),wygll(NGLLY), &
-                      zetagll(NGLLZ),wzgll(NGLLZ), detjac_cm_tmp(NGLLCUBE), element_detjac(NGLLX,NGLLY,NGLLZ)
+                      zetagll(NGLLZ),wzgll(NGLLZ), detjac_cm_tmp(NGLLCUBE) !, element_detjac(NGLLX,NGLLY,NGLLZ)
 
-  real(kind=kdble) :: gll_weights(NGLLCUBE),gll_points(NDIM,NGLLCUBE), &
-                      dlagrange_gll(NDIM,NGLLCUBE,NGLLCUBE),dshape_hex8(NDIM,ngnod,NGLLCUBE)
+  real(kind=kdble) :: gll_weights(NGLLCUBE),gll_points(NDIM,NGLLCUBE)
 
-  real(kind=CUSTOM_REAL) :: coord(ngnod,NDIM),deriv(NDIM,NGLLCUBE),jac(NDIM,NDIM)
+  real(kind=kdble),dimension(:,:,:), allocatable :: dshape_hex8,dlagrange_gll
+
+  real(kind=CUSTOM_REAL) :: coord(ngnod,NDIM),jac(NDIM,NDIM)
+
+  ! allocates arrays to avoid error about exceeding stack size limit
+  allocate(dshape_hex8(NDIM,ngnod,NGLLCUBE), &
+           dlagrange_gll(NDIM,NGLLCUBE,NGLLCUBE))
+  dshape_hex8(:,:,:) = 0.0_kdble
+  dlagrange_gll(:,:,:) = 0.0_kdble
 
   call zwgljd(xigll,wxgll,NGLLX,jalpha,jbeta)
   call zwgljd(etagll,wygll,NGLLY,jalpha,jbeta)
   call zwgljd(zetagll,wzgll,NGLLZ,jalpha,jbeta)
 
   ! get derivatives of shape functions for 8-noded hex
-  call dshape_function_hex8(NDIM,ngnod,NGLLX,NGLLY,NGLLZ,NGLLCUBE,xigll,etagll, &
-                            zetagll,dshape_hex8)
+  call dshape_function_hex8(NDIM,ngnod,NGLLX,NGLLY,NGLLZ,NGLLCUBE,xigll,etagll,zetagll,dshape_hex8)
 
   ! compute gauss-lobatto-legendre quadrature information
-  call gll_quadrature(NDIM,NGLLX,NGLLY,NGLLZ,NGLLCUBE,gll_points,gll_weights, &
-                      lagrange_gll,dlagrange_gll)
+  call gll_quadrature(NDIM,NGLLX,NGLLY,NGLLZ,NGLLCUBE,gll_points,gll_weights,lagrange_gll,dlagrange_gll)
 
   ! inner core
   storederiv_ic = 0.0_CUSTOM_REAL
@@ -145,17 +146,17 @@
     ignod(7) = ibool_inner_core(NGLLX,NGLLY,NGLLZ,i_elmt)
     ignod(8) = ibool_inner_core(1,NGLLY,NGLLZ,i_elmt)
 
-    coord(:,1)=xstore_inner_core(ignod)
-    coord(:,2)=ystore_inner_core(ignod)
-    coord(:,3)=zstore_inner_core(ignod)
+    coord(:,1) = xstore_inner_core(ignod)
+    coord(:,2) = ystore_inner_core(ignod)
+    coord(:,3) = zstore_inner_core(ignod)
     rho = reshape(rhostore_inner_core(:,:,:,i_elmt),(/NGLLCUBE/))
 
     do i = 1,NGLLCUBE
-      jac = matmul(dshape_hex8(:,:,i),coord)
+      jac = real(matmul(dshape_hex8(:,:,i),coord),kind=CUSTOM_REAL)
       detjac = determinant(jac)
       call invert(jac)
-      storederiv_ic(:,:,i,i_elmt) = matmul(jac,dlagrange_gll(:,i,:))
-      storerhojw_ic(i,i_elmt) = rho(i)*detjac*gll_weights(i)
+      storederiv_ic(:,:,i,i_elmt) = real(matmul(jac,dlagrange_gll(:,i,:)),kind=CUSTOM_REAL)
+      storerhojw_ic(i,i_elmt) = real(rho(i)*detjac*gll_weights(i),kind=CUSTOM_REAL)
       enddo
   enddo
 
@@ -181,11 +182,11 @@
     rho = reshape(rhostore_outer_core(:,:,:,i_elmt),(/NGLLCUBE/))
 
     do i = 1,NGLLCUBE
-      jac = matmul(dshape_hex8(:,:,i),coord)
+      jac = real(matmul(dshape_hex8(:,:,i),coord),kind=CUSTOM_REAL)
       detjac = determinant(jac)
       call invert(jac)
-      storederiv_oc(:,:,i,i_elmt) = matmul(jac,dlagrange_gll(:,i,:))
-      storerhojw_oc(i,i_elmt) = rho(i)*detjac*gll_weights(i)
+      storederiv_oc(:,:,i,i_elmt) = real(matmul(jac,dlagrange_gll(:,i,:)),kind=CUSTOM_REAL)
+      storerhojw_oc(i,i_elmt) = real(rho(i)*detjac*gll_weights(i),kind=CUSTOM_REAL)
     enddo
   enddo
 
@@ -195,40 +196,41 @@
   do i_elmt = 1,NSPEC_CRUST_MANTLE
     ! EXODUS order NOT indicial order
     ! bottom corner nodes
-    ignod(1)=ibool_crust_mantle(1,1,1,i_elmt)
-    ignod(2)=ibool_crust_mantle(NGLLX,1,1,i_elmt)
-    ignod(3)=ibool_crust_mantle(NGLLX,NGLLY,1,i_elmt)
-    ignod(4)=ibool_crust_mantle(1,NGLLY,1,i_elmt)
+    ignod(1) = ibool_crust_mantle(1,1,1,i_elmt)
+    ignod(2) = ibool_crust_mantle(NGLLX,1,1,i_elmt)
+    ignod(3) = ibool_crust_mantle(NGLLX,NGLLY,1,i_elmt)
+    ignod(4) = ibool_crust_mantle(1,NGLLY,1,i_elmt)
     ! second-last corner nodes
-    ignod(5)=ibool_crust_mantle(1,1,NGLLZ,i_elmt)
-    ignod(6)=ibool_crust_mantle(NGLLX,1,NGLLZ,i_elmt)
-    ignod(7)=ibool_crust_mantle(NGLLX,NGLLY,NGLLZ,i_elmt)
-    ignod(8)=ibool_crust_mantle(1,NGLLY,NGLLZ,i_elmt)
+    ignod(5) = ibool_crust_mantle(1,1,NGLLZ,i_elmt)
+    ignod(6) = ibool_crust_mantle(NGLLX,1,NGLLZ,i_elmt)
+    ignod(7) = ibool_crust_mantle(NGLLX,NGLLY,NGLLZ,i_elmt)
+    ignod(8) = ibool_crust_mantle(1,NGLLY,NGLLZ,i_elmt)
 
-    coord(:,1)=xstore_crust_mantle(ignod)
-    coord(:,2)=ystore_crust_mantle(ignod)
-    coord(:,3)=zstore_crust_mantle(ignod)
+    coord(:,1) = xstore_crust_mantle(ignod)
+    coord(:,2) = ystore_crust_mantle(ignod)
+    coord(:,3) = zstore_crust_mantle(ignod)
     rho = reshape(rhostore_crust_mantle(:,:,:,i_elmt),(/NGLLCUBE/))
 
     do i = 1,NGLLCUBE
-      jac = matmul(dshape_hex8(:,:,i),coord)
-      detjac=determinant(jac)
+      jac = real(matmul(dshape_hex8(:,:,i),coord),kind=CUSTOM_REAL)
+      detjac = determinant(jac)
       call invert(jac)
-      storederiv_cm(:,:,i,i_elmt)=matmul(jac,dlagrange_gll(:,i,:))
-      storerhojw_cm(i,i_elmt)=rho(i)*detjac*gll_weights(i)
+      storederiv_cm(:,:,i,i_elmt) = real(matmul(jac,dlagrange_gll(:,i,:)),kind=CUSTOM_REAL)
+      storerhojw_cm(i,i_elmt) = real(rho(i)*detjac*gll_weights(i),kind=CUSTOM_REAL)
       detjac_cm_tmp(i) = detjac
     enddo
 
-    if (SAVE_JACOBIAN_ENSIGHT) then
-      element_detjac(:,:,:) = reshape(detjac_cm_tmp(:), (/NGLLX,NGLLY,NGLLZ/) )
-      do k = 1, NGLLZ
-        do j = 1, NGLLY
-          do i = 1, NGLLX
-            storedetjac_cm(ibool_crust_mantle(i,j,k,i_elmt)) = element_detjac(i,j,k)
-          enddo
-        enddo
-      enddo
-    endif
+    !not used yet...
+    !if (SAVE_JACOBIAN_ENSIGHT) then
+    !  element_detjac(:,:,:) = reshape(detjac_cm_tmp(:), (/NGLLX,NGLLY,NGLLZ/) )
+    !  do k = 1, NGLLZ
+    !    do j = 1, NGLLY
+    !      do i = 1, NGLLX
+    !        storedetjac_cm(ibool_crust_mantle(i,j,k,i_elmt)) = element_detjac(i,j,k)
+    !      enddo
+    !    enddo
+    !  enddo
+    !endif
 
   enddo
 
@@ -240,29 +242,25 @@
 
   subroutine prepare_solver_preintegrate3()
 
-  use specfem_par, only: CUSTOM_REAL,NDIM,NGLLX,NGLLY,NGLLZ,NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF
+  use constants, only: CUSTOM_REAL,NDIM,NGLLX,NGLLY,NGLLZ,NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF, &
+    IFLAG_IN_FICTITIOUS_CUBE
 
   use specfem_par_crustmantle, only: ibool_crust_mantle,NSPEC_CRUST_MANTLE, &
-    xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-    rhostore_crust_mantle,storederiv_cm1,storerhojw_cm1,storejw_cm1
+    xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle,rhostore_crust_mantle
 
-  use specfem_par_innercore, only: idoubling_inner_core,IFLAG_IN_FICTITIOUS_CUBE, &
-    ibool_inner_core,NSPEC_INNER_CORE,xstore_inner_core,ystore_inner_core, &
-    zstore_inner_core,rhostore_inner_core,storederiv_ic1,storerhojw_ic1
+  use specfem_par_innercore, only: idoubling_inner_core,ibool_inner_core,NSPEC_INNER_CORE, &
+    xstore_inner_core,ystore_inner_core,zstore_inner_core,rhostore_inner_core
 
   use specfem_par_outercore, only: ibool_outer_core,NSPEC_OUTER_CORE, &
-    xstore_outer_core,ystore_outer_core,zstore_outer_core,rhostore_outer_core, &
+    xstore_outer_core,ystore_outer_core,zstore_outer_core,rhostore_outer_core
+
+  use siem_gll_library, only: kdble,zwgljd,dshape_function_hex8,gll_quadrature
+  use siem_math_library, only: determinant,invert
+
+  use specfem_par_full_gravity, only: lagrange_gll1, &
+    storederiv_cm1,storerhojw_cm1,storejw_cm1, &
+    storederiv_ic1,storerhojw_ic1, &
     storederiv_oc1,storerhojw_oc1
-
-  !use specfem_par_infinite
-  use constants_solver, only: IFLAG_IN_FICTITIOUS_CUBE
-
-  use gll_library1, only: kdble,zwgljd,dshape_function_hex8,gll_quadrature
-  use math_library, only: determinant,invert
-
-  use specfem_par_innercore, only: idoubling_inner_core
-
-  use specfem_par_full_gravity, only: lagrange_gll1
 
   implicit none
 
@@ -280,7 +278,7 @@
   real(kind=kdble) :: gll_weights1(NGLLCUBE_INF),gll_points1(NDIM,NGLLCUBE_INF), &
                       dlagrange_gll1(NDIM,NGLLCUBE_INF,NGLLCUBE_INF),dshape_hex8(NDIM,ngnod,NGLLCUBE_INF)
 
-  real(kind=CUSTOM_REAL) :: coord(ngnod,NDIM),deriv(NDIM,NGLLCUBE_INF),jac(NDIM,NDIM)
+  real(kind=CUSTOM_REAL) :: coord(ngnod,NDIM),jac(NDIM,NDIM)
 
   call zwgljd(xigll,wxgll,NGLLX_INF,jalpha,jbeta)
   call zwgljd(etagll,wygll,NGLLY_INF,jalpha,jbeta)
@@ -288,11 +286,11 @@
 
   ! get derivatives of shape functions for 8-noded hex
   call dshape_function_hex8(NDIM,ngnod,NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF,xigll,etagll, &
-  zetagll,dshape_hex8)
+                            zetagll,dshape_hex8)
 
   ! compute gauss-lobatto-legendre quadrature information
   call gll_quadrature(NDIM,NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF,gll_points1,gll_weights1, &
-  lagrange_gll1,dlagrange_gll1)
+                      lagrange_gll1,dlagrange_gll1)
 
   ! inner core
   storederiv_ic1 = 0.0_CUSTOM_REAL
@@ -303,27 +301,27 @@
 
     ! EXODUS order NOT indicial order
     ! bottom corner nodes
-    ignod(1)=ibool_inner_core(1,1,1,i_elmt)
-    ignod(2)=ibool_inner_core(NGLLX,1,1,i_elmt)
-    ignod(3)=ibool_inner_core(NGLLX,NGLLY,1,i_elmt)
-    ignod(4)=ibool_inner_core(1,NGLLY,1,i_elmt)
+    ignod(1) = ibool_inner_core(1,1,1,i_elmt)
+    ignod(2) = ibool_inner_core(NGLLX,1,1,i_elmt)
+    ignod(3) = ibool_inner_core(NGLLX,NGLLY,1,i_elmt)
+    ignod(4) = ibool_inner_core(1,NGLLY,1,i_elmt)
     ! second-last corner nodes
-    ignod(5)=ibool_inner_core(1,1,NGLLZ,i_elmt)
-    ignod(6)=ibool_inner_core(NGLLX,1,NGLLZ,i_elmt)
-    ignod(7)=ibool_inner_core(NGLLX,NGLLY,NGLLZ,i_elmt)
-    ignod(8)=ibool_inner_core(1,NGLLY,NGLLZ,i_elmt)
+    ignod(5) = ibool_inner_core(1,1,NGLLZ,i_elmt)
+    ignod(6) = ibool_inner_core(NGLLX,1,NGLLZ,i_elmt)
+    ignod(7) = ibool_inner_core(NGLLX,NGLLY,NGLLZ,i_elmt)
+    ignod(8) = ibool_inner_core(1,NGLLY,NGLLZ,i_elmt)
 
-    coord(:,1)=xstore_inner_core(ignod)
-    coord(:,2)=ystore_inner_core(ignod)
-    coord(:,3)=zstore_inner_core(ignod)
+    coord(:,1) = xstore_inner_core(ignod)
+    coord(:,2) = ystore_inner_core(ignod)
+    coord(:,3) = zstore_inner_core(ignod)
     rho = reshape(rhostore_inner_core(1:NGLLX:2,1:NGLLY:2,1:NGLLZ:2,i_elmt),(/NGLLCUBE_INF/))
 
     do i = 1,NGLLCUBE_INF
-      jac = matmul(dshape_hex8(:,:,i),coord)
-      detjac=determinant(jac)
+      jac = real(matmul(dshape_hex8(:,:,i),coord),kind=CUSTOM_REAL)
+      detjac = determinant(jac)
       call invert(jac)
-      storederiv_ic1(:,:,i,i_elmt)=matmul(jac,dlagrange_gll1(:,i,:))
-      storerhojw_ic1(i,i_elmt)=rho(i)*detjac*gll_weights1(i)
+      storederiv_ic1(:,:,i,i_elmt) = real(matmul(jac,dlagrange_gll1(:,i,:)),kind=CUSTOM_REAL)
+      storerhojw_ic1(i,i_elmt) = real(rho(i)*detjac*gll_weights1(i),kind=CUSTOM_REAL)
     enddo
   enddo
 
@@ -333,27 +331,27 @@
   do i_elmt = 1,NSPEC_OUTER_CORE
     ! EXODUS order NOT indicial order
     ! bottom corner nodes
-    ignod(1)=ibool_outer_core(1,1,1,i_elmt)
-    ignod(2)=ibool_outer_core(NGLLX,1,1,i_elmt)
-    ignod(3)=ibool_outer_core(NGLLX,NGLLY,1,i_elmt)
-    ignod(4)=ibool_outer_core(1,NGLLY,1,i_elmt)
+    ignod(1) = ibool_outer_core(1,1,1,i_elmt)
+    ignod(2) = ibool_outer_core(NGLLX,1,1,i_elmt)
+    ignod(3) = ibool_outer_core(NGLLX,NGLLY,1,i_elmt)
+    ignod(4) = ibool_outer_core(1,NGLLY,1,i_elmt)
     ! second-last corner nodes
-    ignod(5)=ibool_outer_core(1,1,NGLLZ,i_elmt)
-    ignod(6)=ibool_outer_core(NGLLX,1,NGLLZ,i_elmt)
-    ignod(7)=ibool_outer_core(NGLLX,NGLLY,NGLLZ,i_elmt)
-    ignod(8)=ibool_outer_core(1,NGLLY,NGLLZ,i_elmt)
+    ignod(5) = ibool_outer_core(1,1,NGLLZ,i_elmt)
+    ignod(6) = ibool_outer_core(NGLLX,1,NGLLZ,i_elmt)
+    ignod(7) = ibool_outer_core(NGLLX,NGLLY,NGLLZ,i_elmt)
+    ignod(8) = ibool_outer_core(1,NGLLY,NGLLZ,i_elmt)
 
-    coord(:,1)=xstore_outer_core(ignod)
-    coord(:,2)=ystore_outer_core(ignod)
-    coord(:,3)=zstore_outer_core(ignod)
+    coord(:,1) = xstore_outer_core(ignod)
+    coord(:,2) = ystore_outer_core(ignod)
+    coord(:,3) = zstore_outer_core(ignod)
     rho = reshape(rhostore_outer_core(1:NGLLX:2,1:NGLLY:2,1:NGLLZ:2,i_elmt), (/NGLLCUBE_INF/))
 
     do i = 1,NGLLCUBE_INF
-      jac = matmul(dshape_hex8(:,:,i),coord)
-      detjac=determinant(jac)
+      jac = real(matmul(dshape_hex8(:,:,i),coord),kind=CUSTOM_REAL)
+      detjac = determinant(jac)
       call invert(jac)
-      storederiv_oc1(:,:,i,i_elmt)=matmul(jac,dlagrange_gll1(:,i,:))
-      storerhojw_oc1(i,i_elmt)=rho(i)*detjac*gll_weights1(i)
+      storederiv_oc1(:,:,i,i_elmt) = real(matmul(jac,dlagrange_gll1(:,i,:)),kind=CUSTOM_REAL)
+      storerhojw_oc1(i,i_elmt) = real(rho(i)*detjac*gll_weights1(i),kind=CUSTOM_REAL)
     enddo
   enddo
 
@@ -364,28 +362,28 @@
   do i_elmt = 1,NSPEC_CRUST_MANTLE
     ! EXODUS order NOT indicial order
     ! bottom corner nodes
-    ignod(1)=ibool_crust_mantle(1,1,1,i_elmt)
-    ignod(2)=ibool_crust_mantle(NGLLX,1,1,i_elmt)
-    ignod(3)=ibool_crust_mantle(NGLLX,NGLLY,1,i_elmt)
-    ignod(4)=ibool_crust_mantle(1,NGLLY,1,i_elmt)
+    ignod(1) = ibool_crust_mantle(1,1,1,i_elmt)
+    ignod(2) = ibool_crust_mantle(NGLLX,1,1,i_elmt)
+    ignod(3) = ibool_crust_mantle(NGLLX,NGLLY,1,i_elmt)
+    ignod(4) = ibool_crust_mantle(1,NGLLY,1,i_elmt)
     ! second-last corner nodes
-    ignod(5)=ibool_crust_mantle(1,1,NGLLZ,i_elmt)
-    ignod(6)=ibool_crust_mantle(NGLLX,1,NGLLZ,i_elmt)
-    ignod(7)=ibool_crust_mantle(NGLLX,NGLLY,NGLLZ,i_elmt)
-    ignod(8)=ibool_crust_mantle(1,NGLLY,NGLLZ,i_elmt)
+    ignod(5) = ibool_crust_mantle(1,1,NGLLZ,i_elmt)
+    ignod(6) = ibool_crust_mantle(NGLLX,1,NGLLZ,i_elmt)
+    ignod(7) = ibool_crust_mantle(NGLLX,NGLLY,NGLLZ,i_elmt)
+    ignod(8) = ibool_crust_mantle(1,NGLLY,NGLLZ,i_elmt)
 
-    coord(:,1)=xstore_crust_mantle(ignod)
-    coord(:,2)=ystore_crust_mantle(ignod)
-    coord(:,3)=zstore_crust_mantle(ignod)
+    coord(:,1) = xstore_crust_mantle(ignod)
+    coord(:,2) = ystore_crust_mantle(ignod)
+    coord(:,3) = zstore_crust_mantle(ignod)
     rho = reshape(rhostore_crust_mantle(1:NGLLX:2,1:NGLLY:2,1:NGLLZ:2,i_elmt), (/NGLLCUBE_INF/))
 
     do i = 1,NGLLCUBE_INF
-      jac = matmul(dshape_hex8(:,:,i),coord)
-      detjac=determinant(jac)
+      jac = real(matmul(dshape_hex8(:,:,i),coord),kind=CUSTOM_REAL)
+      detjac = determinant(jac)
       call invert(jac)
-      storederiv_cm1(:,:,i,i_elmt)=matmul(jac,dlagrange_gll1(:,i,:))
-      storerhojw_cm1(i,i_elmt)=rho(i)*detjac*gll_weights1(i)
-      storejw_cm1(i,i_elmt)=detjac*gll_weights1(i)
+      storederiv_cm1(:,:,i,i_elmt) = real(matmul(jac,dlagrange_gll1(:,i,:)),kind=CUSTOM_REAL)
+      storerhojw_cm1(i,i_elmt) = real(rho(i)*detjac*gll_weights1(i),kind=CUSTOM_REAL)
+      storejw_cm1(i,i_elmt) = real(detjac*gll_weights1(i),kind=CUSTOM_REAL)
     enddo
   enddo
 
@@ -400,16 +398,21 @@
 
   subroutine prepare_solver_poisson()
 
-  use math_library_mpi, only: maxscal,minscal
+  use siem_math_library_mpi, only: maxscal,minscal
+
   use specfem_par
   use specfem_par_crustmantle
   use specfem_par_innercore
   use specfem_par_outercore
-  use specfem_par_trinfinite
-  use specfem_par_infinite
-  use index_region
+
+  use specfem_par_full_gravity
+
+! TODO: full gravity is not working yet, needs to fully implement solver...
+#ifdef USE_PETSC_NOT_WORKING_YET
+
   use poisson, only: poisson_stiffness,poisson_stiffnessINF,poisson_stiffness3, &
-  poisson_stiffnessINF3
+                     poisson_stiffnessINF3
+#endif
 
   implicit none
 
@@ -418,6 +421,9 @@
     write(IMAIN,*) "  allocating poisson level-1 solver arrays"
     call flush_IMAIN()
   endif
+
+! TODO: full gravity is not working yet, needs to fully implement solver...
+#ifdef USE_PETSC_NOT_WORKING_YET
 
   ! indexify regions
   call get_index_region()
@@ -489,7 +495,7 @@
                              xstore_infinite,ystore_infinite,zstore_infinite,nnode_inf1,inode_elmt_inf1, &
                              storekmat_infinite1,dprecon_infinite1)
 
-  call sync_all()
+  call synchronize_all()
 
   ! assemble stiffness matrices
   ! assemble across the MPI processes in a region
@@ -525,7 +531,7 @@
                            nibool_interfaces_infinite1,ibool_interfaces_infinite1, &
                            my_neighbors_infinite1)
 
-  call sync_all()
+  call synchronize_all()
 
   ! assemble across the different regions in a process
   dprecon1 = zero
@@ -548,7 +554,7 @@
 
   dprecon1(0) = 0.0_CUSTOM_REAL
 
-  call sync_all()
+  call synchronize_all()
 
   ! invert preconditioner
   !dprecon1(1:)=1.0_CUSTOM_REAL/dprecon1(1:)
@@ -556,8 +562,7 @@
 
 
   ! Level-2 solver------------------
-  if (SOLVER_5GLL) then
-
+  if (POISSON_SOLVER_5GLL) then
     ! user output
     if (myrank == 0) then
       write(IMAIN,*) "  allocating poisson level-2 solver arrays"
@@ -605,7 +610,7 @@
                               ibool_infinite,xstore_infinite,ystore_infinite,zstore_infinite, &
                               storekmat_infinite,dprecon_infinite)
 
-    call sync_all()
+    call synchronize_all()
 
     ! assemble stiffness matrices
     ! assemble across the MPI processes in a region
@@ -642,7 +647,7 @@
                              nibool_interfaces_infinite,ibool_interfaces_infinite, &
                              my_neighbors_infinite)
 
-    call sync_all()
+    call synchronize_all()
 
     ! assemble across the different regions in a process
     dprecon = zero
@@ -666,11 +671,11 @@
 
     dprecon(0) = 0.0_CUSTOM_REAL
 
-    call sync_all()
+    call synchronize_all()
     !--------------------Level-2 solver
-  endif ! if (SOLVER_5GLL) then
+  endif
 
-  return
+#endif
 
   end subroutine prepare_solver_poisson
 
@@ -693,16 +698,16 @@
   use specfem_par_outercore
   use specfem_par_trinfinite
   use specfem_par_infinite
-  use index_region
-  use math_library, only: i_uniinv
-  use math_library_mpi, only: maxscal,minvec,maxvec
+
+  use specfem_par_full_gravity
+
+  use siem_math_library, only: i_uniinv
+  use siem_math_library_mpi, only: maxscal,minvec,maxvec
+
   implicit none
-  logical :: ismpi
-  integer :: errcode
-  character(len=250) :: errtag
 
   ! sparse stage 0
-  integer :: i,j,i_elmt,i_count,n,ncount
+  integer :: i,j,i_elmt,i_count,ncount
   integer :: igdof,jgdof
   integer :: nmax !,nsparse
   integer :: nedof_ic,nedof_oc,nedof_cm,nedof_trinf,nedof_inf
@@ -714,8 +719,6 @@
   imap_inf(:)
   integer,allocatable :: ind0(:),iorder(:),row0(:),col0(:),grow0(:),gcol0(:)
   real(kind=CUSTOM_REAL),allocatable :: kmat0(:)
-  integer,allocatable :: ind1(:),row1(:),col1(:)
-  real(kind=CUSTOM_REAL),allocatable :: kmat1(:)
 
   integer :: nglob_ic,nglob_oc,nglob_cm,nglob_trinf,nglob_inf
   integer :: nglob_ic1,nglob_oc1,nglob_cm1,nglob_trinf1,nglob_inf1
@@ -723,16 +726,7 @@
   character(len=12) :: spm
   character(len=60) :: fname
 
-  integer :: nx,ny,nz,nbyte,off0,gmin,gmax
-  integer :: i_bool,ibool,i_s,i0,i1,ier,j_proc
-  logical :: isbig
-
-  ! counting nonzero elements in offdiagonal portion
-  integer :: grow,ig0,ig1,ind,neq_part1
-  integer,allocatable :: nzero_rowoff1(:)
-  integer,allocatable :: igorder(:)
-
-  ismpi = .true.
+  integer :: gmin,gmax
 
   ! user output
   if (myrank == 0) then
@@ -821,7 +815,6 @@
     gdof_elmt1 = reshape(gdof_ic1(inode_elmt_ic1(:,i_elmt)),(/NEDOF1/))
     ggdof_elmt1 = reshape(ggdof_ic1(:,inode_elmt_ic1(:,i_elmt)),(/NEDOF1/))
     !if (myrank==0) print *,'ICkmat zeros1:',count(storekmat_inner_core1(:,:,i_elmt)==0.0_CUSTOM_REAL)
-    !if (myrank==0.and.i_elmt==1)print *,'kmat1:',storekmat_inner_core1(1,:,i_elmt)
     do i = 1,nedof_ic1
       do j = 1,nedof_ic1
         igdof = gdof_elmt1(imap_ic(i))
@@ -839,7 +832,7 @@
       enddo
     enddo
   enddo
-  call sync_all()
+  call synchronize_all()
 
   ! outer core
   do i_elmt = 1,NSPEC_OUTER_CORE
@@ -932,7 +925,7 @@
 
   !debug
   if (myrank == 0) write(*,'(a,1x,i0,1x,a,1x,i0)')'  neq1:',neq1,' Nsparse1:',nsparse1
-  call sync_all()
+  call synchronize_all()
 
   allocate(krow_sparse1(nsparse1),kcol_sparse1(nsparse1))
   allocate(kgrow_sparse1(nsparse1),kgcol_sparse1(nsparse1))
@@ -981,7 +974,7 @@
 
   !debug
   if (myrank == 0) write(*,'(a,1x,i0,1x,i0)')'  l2gdof1 range:',gmin,gmax
-  call sync_all()
+  call synchronize_all()
 
   if (minval(l2gdof1(1:)) < 0) then
     write(*,*) 'ERROR: local-to-global indices are less than 1!'
@@ -991,7 +984,7 @@
   !===============================================================================
   ! Level-2 solver
   !===============================================================================
-  if (SOLVER_5GLL) then
+  if (POISSON_SOLVER_5GLL) then
     nedof_ic = NEDOFU+NEDOFPHI
     nedof_oc = NEDOFCHI+NEDOFP+NEDOFPHI
     nedof_cm = NEDOFU+NEDOFPHI
@@ -1069,7 +1062,8 @@
         enddo
       enddo
     enddo
-    call sync_all
+    call synchronize_all()
+
     ! outer core
     do i_elmt = 1,NSPEC_OUTER_CORE
       gdof_elmt = reshape(gdof_oc(inode_elmt_oc(:,i_elmt)),(/NEDOF/))
@@ -1193,50 +1187,18 @@
 
     !debug
     if (myrank == 0) write(*,'(a,1x,i0,1x,i0)')'  l2gdof range:',minval(l2gdof(1:)),maxval(l2gdof(1:))
-    call sync_all()
+    call synchronize_all()
 
     if (minval(l2gdof(1:)) < 1) then
       write(*,*) 'ERROR: local-to-global indices are less than 1!'
       stop 'Error local-to-global indices are less than 1'
     endif
-  endif !if (SOLVER_5GLL) then
+  endif
 
   !debug
   if (myrank == 0) write(*,'(a)')'--------------------------------------------------'
 
   return
 
-! not used yet...
-!contains
-!
-!  ! subroutine within the prepare_solver_sparse subroutine
-!  subroutine is_symmetric(myrank,mat)
-!
-!  implicit none
-!  integer,parameter :: kreal = selected_real_kind(15)
-!  integer,intent(in) :: myrank
-!  real(kind=kreal),intent(in) :: mat(:,:)
-!  real(kind=kreal) :: dx
-!  integer :: i,j,n,nc
-!
-!  n=ubound(mat,1)
-!  nc=ubound(mat,2)
-!  if (nc /= n) then
-!    write(*,*) 'ERROR: non-square matrix!',n,nc
-!    stop
-!  endif
-!
-!  do i = 1,n-1
-!    do j = i+1,n
-!      dx = mat(i,j)-mat(j,i)
-!      if (abs(dx) > 1.0e-20_kreal) then
-!        if (myrank == 0) write(*,*) 'ERROR: non-symmetric matrix!',mat(i,j),mat(j,i),dx
-!        stop
-!      endif
-!    enddo
-!  enddo
-!  end subroutine is_symmetric
-
   end subroutine prepare_solver_sparse
 
-#endif

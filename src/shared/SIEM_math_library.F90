@@ -25,280 +25,151 @@
 !
 !=====================================================================
 
-! TODO: full gravity is not working yet, needs to fully implement solver...
-#ifdef USE_PETSC_NOT_WORKING_YET
 
-
-! this module contains math constants
-! math parameters
-! REVISION
-!   HNG, Jul 12,2011; HNG, Apr 09,2010
-
-module math_constants
-
-  use constants_solver, only: CUSTOM_REAL
-  implicit none
-
-  integer,parameter :: kreal = CUSTOM_REAL
-  real(kind=kreal),parameter :: zero=0.0_kreal,half=0.5_kreal,one=1.0_kreal, &
-  two = 2.0_kreal
-  real(kind=kreal),parameter :: pi=3.141592653589793_kreal
-  real(kind=kreal),parameter :: deg2rad=pi/180.0_kreal,rad2deg=180.0_kreal/pi
-
-  ! tolerance value for zero
-  real(kind=kreal),parameter :: inftol=1.0e32_kreal,zerotol = 1.0e-12_kreal
-  !real(kind=kreal) :: tmpx
-  !real(kind=kreal),parameter :: NAN = IEEE_VALUE(tmpx, IEEE_QUIET_NAN)
-end module math_constants
-
-
+! Spectral-Infinite Element Method (SIEM)
+! helper module functions
 !
-!=====================================================================
-!
+! note: using lower-case naming for module names ("siem_math_*" instead of "SIEM_math_*") to avoid problems
+!       with different compilers (like Cray) when generating the *.mod files.
 
-! this module coatins math routines
-! REVISION
-!   HNG, Jul 12,2011; HNG, Apr 09,2010
+module siem_math_library
 
-module math_library
-
-  use constants_solver, only: CUSTOM_REAL
-  integer,parameter :: kreal = CUSTOM_REAL
+  use constants, only: CUSTOM_REAL
 
 contains
 
-  function get_normal(x1,x2,x3) result(nx)
-  real(kind=kreal),dimension(3),intent(in) :: x1,x2,x3
-  real(kind=kreal),dimension(3) :: nx
-  real(kind=kreal),dimension(3) :: v1,v2
-  real(kind=kreal) :: norm
 
-  ! two vectors
-  v1 = x2-x1
-  v2 = x3-x1
+  function determinant(jac) result(det)
 
-  ! cross product
-  nx(1)=v1(2)*v2(3)-v2(2)*v1(3)
-  nx(2)=v2(1)*v1(3)-v1(1)*v2(3)
-  nx(3)=v1(1)*v2(2)-v2(1)*v1(2)
-  norm = sqrt(sum(nx**2))
-  if (norm <= 0.0_kreal) then
-    write(*,*) 'ERROR: undefined normal!'
-    stop
-  endif
-  ! unit normal
-  nx = nx/norm
-  return
-  end function get_normal
-  !=======================================================
+  ! this function returns the determinant of a 1x1, 2x2 or 3x3 jacobian matrix.
 
-  function norm(x) result(l2n)
-  !
-  ! this function calculates the l2 norm of vector x
-  !
-  implicit none
-  real(kind=kreal),intent(in) :: x(:)
-  real(kind=kreal)::l2n
-  l2n = sqrt(sum(x**2))
-  return
-  end function norm
-  !=======================================================
-
-  recursive function factorial(n) result(nfact)
-  implicit none
-  integer, intent(in) :: n
-  integer :: nfact
-  if (n > 0) then
-    nfact = n * factorial(n-1)
-    return
-  else if (n == 0) then
-    nfact = 1
-  else
-    write(*,*) 'ERROR: undefined factorial!'
-    stop
-  endif
-  end function factorial
-  !=======================================================
-
-  ! this function returns the determinant of a 1x1, 2x2 or 3x3
-  ! jacobian matrix.
-  ! this routine was copied and modified from
+  ! the routine is following the idea from
   ! Smith and Griffiths (2004): Programming the finite element method
-  function determinant(jac)result(det)
+  ! see: https://github.com/ParaFEM/ParaFEM
+
   implicit none
-  real(kind=kreal),intent(in)::jac(:,:)
-  real(kind=kreal)::det
-  integer::it
-  it=ubound(jac,1)
+  real(kind=CUSTOM_REAL),intent(in) :: jac(:,:)
+  real(kind=CUSTOM_REAL) :: det
+  integer :: it
+
+  it = ubound(jac,1)
+
   select case(it)
   case(1)
-    det = 1.0_kreal
+    det = 1.0_CUSTOM_REAL
   case(2)
-    det = jac(1,1)*jac(2,2)-jac(1,2)*jac(2,1)
+    det = jac(1,1)*jac(2,2) - jac(1,2)*jac(2,1)
   case(3)
-    det = jac(1,1)*(jac(2,2)*jac(3,3)-jac(3,2)*jac(2,3))
-    det = det-jac(1,2)*(jac(2,1)*jac(3,3)-jac(3,1)*jac(2,3))
-    det = det+jac(1,3)*(jac(2,1)*jac(3,2)-jac(3,1)*jac(2,2))
+    det = jac(1,1)*(jac(2,2)*jac(3,3) - jac(3,2)*jac(2,3))
+    det = det - jac(1,2)*(jac(2,1)*jac(3,3) - jac(3,1)*jac(2,3))
+    det = det + jac(1,3)*(jac(2,1)*jac(3,2) - jac(3,1)*jac(2,2))
   case default
     write(*,*) 'ERROR: wrong dimension for jacobian matrix!'
   end select
+
   return
+
   end function determinant
+
   !=======================================================
 
-  ! this subroutine inverts a small square matrix onto itself.
-  ! this routine was copied and modified from
-  ! Smith and Griffiths (2004): Programming the finite element method
   subroutine invert(matrix)
+
+  ! this subroutine inverts a small square matrix onto itself.
+
+  ! the routine is following the idea from
+  ! Smith and Griffiths (2004): Programming the finite element method
+  ! see: https://github.com/ParaFEM/ParaFEM
+
   implicit none
-  real(kind=kreal),intent(inout)::matrix(:,:)
-  real(kind=kreal)::det,j11,j12,j13,j21,j22,j23,j31,j32,j33,con
-  integer::ndim,i,k
-  ndim=ubound(matrix,1)
+  real(kind=CUSTOM_REAL),intent(inout) :: matrix(:,:)
+  real(kind=CUSTOM_REAL) :: det,j11,j12,j13,j21,j22,j23,j31,j32,j33,con
+  integer :: ndim,i,k
+
+  ndim = ubound(matrix,1)
+
   if (ndim == 2) then
-    det = matrix(1,1)*matrix(2,2)-matrix(1,2)*matrix(2,1)
-    j11=matrix(1,1)
-    matrix(1,1)=matrix(2,2)
-    matrix(2,2)=j11
-    matrix(1,2)=-matrix(1,2)
-    matrix(2,1)=-matrix(2,1)
+    det = matrix(1,1)*matrix(2,2) - matrix(1,2)*matrix(2,1)
+    j11 = matrix(1,1)
+    matrix(1,1) = matrix(2,2)
+    matrix(2,2) = j11
+    matrix(1,2) = -matrix(1,2)
+    matrix(2,1) = -matrix(2,1)
     matrix = matrix/det
+
   else if (ndim == 3) then
     det = matrix(1,1)*(matrix(2,2)*matrix(3,3)-matrix(3,2)*matrix(2,3))
     det = det-matrix(1,2)*(matrix(2,1)*matrix(3,3)-matrix(3,1)*matrix(2,3))
     det = det+matrix(1,3)*(matrix(2,1)*matrix(3,2)-matrix(3,1)*matrix(2,2))
+
     j11 = matrix(2,2)*matrix(3,3)-matrix(3,2)*matrix(2,3)
-    j21=-matrix(2,1)*matrix(3,3)+matrix(3,1)*matrix(2,3)
+    j21 = -matrix(2,1)*matrix(3,3)+matrix(3,1)*matrix(2,3)
     j31 = matrix(2,1)*matrix(3,2)-matrix(3,1)*matrix(2,2)
-    j12=-matrix(1,2)*matrix(3,3)+matrix(3,2)*matrix(1,3)
+    j12 = -matrix(1,2)*matrix(3,3)+matrix(3,2)*matrix(1,3)
     j22 = matrix(1,1)*matrix(3,3)-matrix(3,1)*matrix(1,3)
-    j32=-matrix(1,1)*matrix(3,2)+matrix(3,1)*matrix(1,2)
+    j32 = -matrix(1,1)*matrix(3,2)+matrix(3,1)*matrix(1,2)
     j13 = matrix(1,2)*matrix(2,3)-matrix(2,2)*matrix(1,3)
-    j23=-matrix(1,1)*matrix(2,3)+matrix(2,1)*matrix(1,3)
+    j23 = -matrix(1,1)*matrix(2,3)+matrix(2,1)*matrix(1,3)
     j33 = matrix(1,1)*matrix(2,2)-matrix(2,1)*matrix(1,2)
-    matrix(1,1)=j11
-    matrix(1,2)=j12
-    matrix(1,3)=j13
-    matrix(2,1)=j21
-    matrix(2,2)=j22
-    matrix(2,3)=j23
-    matrix(3,1)=j31
-    matrix(3,2)=j32
-    matrix(3,3)=j33
+
+    matrix(1,1) = j11
+    matrix(1,2) = j12
+    matrix(1,3) = j13
+    matrix(2,1) = j21
+    matrix(2,2) = j22
+    matrix(2,3) = j23
+    matrix(3,1) = j31
+    matrix(3,2) = j32
+    matrix(3,3) = j33
     matrix = matrix/det
+
   else
     do k = 1,ndim
-      con=matrix(k,k)
-      matrix(k,k)=1.0_kreal
-      matrix(k,:)=matrix(k,:)/con
+      con = matrix(k,k)
+      matrix(k,k) = 1.0_CUSTOM_REAL
+      matrix(k,:) = matrix(k,:)/con
       do i = 1,ndim
         if (i /= k) then
-          con=matrix(i,k)
-          matrix(i,k)=0.0_kreal
-          matrix(i,:)=matrix(i,:)-matrix(k,:)*con
+          con = matrix(i,k)
+          matrix(i,k) = 0.0_CUSTOM_REAL
+          matrix(i,:) = matrix(i,:) - matrix(k,:)*con
         endif
       enddo
     enddo
   endif
+
   return
+
   end subroutine invert
+
   !=======================================================
 
   function dotmat(m,n,x1,x2) result(dotm)
+
   implicit none
   integer,intent(in) :: m,n
-  real(kind=kreal),intent(in) :: x1(m,n),x2(m,n)
-  real(kind=kreal) :: dotm(n)
-
+  real(kind=CUSTOM_REAL),intent(in) :: x1(m,n),x2(m,n)
+  real(kind=CUSTOM_REAL) :: dotm(n)
   integer :: i
 
   do i = 1,n
-    dotm(i)=dot_product(x1(:,i),x2(:,i))
+    dotm(i) = dot_product(x1(:,i),x2(:,i))
   enddo
+
   return
+
   end function dotmat
-  !=======================================================
 
-  ! quick sort of integer list
-  function quick_sort(x,n) result(xnew)
-  integer,intent(in) :: n ! size of the vector data x
-  integer, dimension(n) :: x ! data vector to sort
-  integer :: temp
-  integer :: i,j
-  integer,dimension(n) :: xnew
-
-  do i = 2, n
-    j = i - 1
-    temp = x(i)
-    do while (j >= 1 .and. x(j) > temp)
-      x(j+1) = x(j)
-      j = j - 1
-    enddo
-    x(j+1) = temp
-  enddo
-  xnew = x
-  end function quick_sort
-  !=======================================================
-
-  ! quick sort of real list
-  function rquick_sort(x,n) result(xnew)
-  integer,intent(in) :: n ! size of the vector data x
-  real(kind=kreal), dimension(n) :: x ! data vector to sort
-  real(kind=kreal) :: temp
-  integer :: i,j
-  real(kind=kreal),dimension(n) :: xnew
-
-  do i = 2, n
-    j = i - 1
-    temp = x(i)
-    do while (j >= 1 .and. x(j) > temp)
-      x(j+1) = x(j)
-      j = j - 1
-    enddo
-    x(j+1) = temp
-  enddo
-  xnew = x
-  end function rquick_sort
-  !=======================================================
-
-  ! insertion sort of integer list
-  subroutine insertion_sort(x,n)
-  integer,intent(in) :: n ! size of the vector data x
-  real, intent(inout), dimension(n) :: x ! data vector to sort
-  real :: temp
-  integer :: i, j
-
-  do i = 2, n
-    j = i - 1
-    temp = x(i)
-    do while (j >= 1 .and. x(j) > temp)
-      x(j+1) = x(j)
-      j = j - 1
-    enddo
-    x(j+1) = temp
-  enddo
-  end subroutine insertion_sort
-  !=======================================================
-
-  ! compute distance between two points in a n-dimensional space
-  function distance(x1,x2,n) result(r)
-  implicit none
-  integer,intent(in) :: n
-  real(kind=kreal),intent(in) :: x1(n),x2(n)
-  real(kind=kreal) :: dx(n),r
-
-  dx = x1-x2
-  r = sqrt(sum(dx*dx))
-  return
-  end function distance
   !=======================================================
 
   ! Author: Michel Olagnon
   ! orderpack 2.0
   ! source: http://www.Fortran-2000.com/rank/
+
   subroutine i_uniinv (XDONT, IGOEST)
-  ! UNIINV = Merge-sort inverse ranking of an array, with removal of
-  ! duplicate entries.
+
+  ! UNIINV = Merge-sort inverse ranking of an array, with removal of duplicate entries.
+
   ! this routine is similar to pure merge-sort ranking, but on
   ! the last pass, it sets indices in IGOEST to the rank
   ! of the value in the ordered set with duplicates removed.
@@ -499,667 +370,45 @@ contains
     endif
     IGOEST (IRNG) = NUNI
   enddo
+
   return
+
   end subroutine i_uniinv
+
   !=======================================================
 
   function i_nearless (XVAL) result (I_nl)
+
   ! nearest value less than given value
+
   implicit none
   integer,intent(in) :: XVAL
   integer :: I_nl
+
   I_nl = XVAL - 1
+
   return
+
   end function i_nearless
-  !=======================================================
 
-  ! this function computes unit vectors in spherical coordinates at a point
-  ! defined by (r,theta,phi)
-  subroutine dspherical_unitvect(theta,phi,unitr,unittheta,unitphi)
-  implicit none
-  double precision,intent(in) :: theta,phi
-  double precision,intent(out) :: unitr(3),unittheta(3),unitphi(3)
-  double precision :: ctheta,cphi,stheta,sphi
-  double precision,parameter :: zero = 0.0_kreal
 
-  ctheta = cos(theta); stheta = sin(theta)
-  cphi = cos(phi);     sphi = sin(phi)
-
-  !unitr(1)=ctheta*sphi;   unitr(2)=stheta*sphi;   unitr(3)=ctheta
-  !unittheta(1)=-stheta;   unittheta(2)=ctheta;    unittheta(3)=zero
-  !unitphi(1)=ctheta*cphi; unitphi(2)=stheta*cphi; unitphi(3)=-sphi
-
-  unitr(1)=stheta*cphi;   unitr(2)=stheta*sphi;   unitr(3)=ctheta
-  unittheta(1)=ctheta*cphi; unittheta(2)=ctheta*sphi; unittheta(3)=-stheta
-  unitphi(1)=-sphi;   unitphi(2)=cphi;    unitphi(3)=zero
-
-  return
-  end subroutine dspherical_unitvect
-  !=======================================================
-
-  ! this function computes unit vectors in spherical coordinates at a point
-  ! defined by (r,theta,phi)
-  subroutine spherical_unitvect(theta,phi,unitr,unittheta,unitphi)
-  implicit none
-  real(kind=kreal),intent(in) :: theta,phi
-  real(kind=kreal),intent(out) :: unitr(3),unittheta(3),unitphi(3)
-  real(kind=kreal) :: ctheta,cphi,stheta,sphi
-  real(kind=kreal),parameter :: zero=0.0_kreal
-
-  ctheta = cos(theta); stheta = sin(theta)
-  cphi = cos(phi);     sphi = sin(phi)
-
-  !unitr(1)=ctheta*sphi;   unitr(2)=stheta*sphi;   unitr(3)=ctheta
-  !unittheta(1)=-stheta;   unittheta(2)=ctheta;    unittheta(3)=zero
-  !unitphi(1)=ctheta*cphi; unitphi(2)=stheta*cphi; unitphi(3)=-sphi
-
-  unitr(1)=stheta*cphi;   unitr(2)=stheta*sphi;   unitr(3)=ctheta
-  unittheta(1)=ctheta*cphi; unittheta(2)=ctheta*sphi; unittheta(3)=-stheta
-  unitphi(1)=-sphi;   unitphi(2)=cphi;    unitphi(3)=zero
-
-  return
-  end subroutine spherical_unitvect
-  !=======================================================
-
-  subroutine dlegendreP2_costheta(theta,P2,dP2,d2P2)
-  implicit none
-  double precision,intent(in) :: theta ! radian
-  double precision,intent(out) :: P2,dP2,d2P2
-  double precision :: ctheta
-  double precision,parameter :: half = 0.5_kreal,one = 1.0_kreal,two = 2.0_kreal,three = 3.0_kreal
-
-  ctheta=cos(theta)
-
-  P2=half*(three*ctheta*ctheta-one)
-  dP2=-three*sin(theta)*ctheta
-  d2P2=-3*cos(two*theta)
-  return
-  end subroutine dlegendreP2_costheta
-  !=======================================================
-
-  subroutine legendreP2_costheta(theta,P2,dP2,d2P2)
-  implicit none
-  real(kind=kreal),intent(in) :: theta ! radian
-  real(kind=kreal),intent(out) :: P2,dP2,d2P2
-  real(kind=kreal) :: ctheta
-  real(kind=kreal),parameter :: half=0.5_kreal,one=1.0_kreal,two=2.0_kreal,three=3.0_kreal
-
-  ctheta=cos(theta)
-
-  P2=half*(three*ctheta*ctheta-one)
-  dP2=-three*sin(theta)*ctheta
-  d2P2=-3*cos(two*theta)
-  return
-  end subroutine legendreP2_costheta
-  !=======================================================
-
-  ! from specfem3d_globe
-  ! convert x y z to r theta phi, real(kind=kreal) call
-  subroutine xyz2rthetaphi(x,y,z,r,theta,phi)
-  implicit none
-  real(kind=kreal),intent(in) :: x,y,z
-  real(kind=kreal),intent(out) :: r,theta,phi
-  real(kind=kreal) :: xmesh,ymesh,zmesh
-  ! small tolerance for conversion from x y z to r theta phi
-  real(kind=kreal),parameter :: SMALL_VAL_ANGLE = 1.0e-10_kreal,zero=0.0_kreal
-
-  xmesh = x
-  ymesh = y
-  zmesh = z
-
-  if (zmesh > -SMALL_VAL_ANGLE .and. zmesh <= ZERO) zmesh = -SMALL_VAL_ANGLE
-  if (zmesh < SMALL_VAL_ANGLE .and. zmesh >= ZERO) zmesh = SMALL_VAL_ANGLE
-
-  theta = atan2(sqrt(xmesh*xmesh+ymesh*ymesh),zmesh)
-  if (xmesh > -SMALL_VAL_ANGLE .and. xmesh <= ZERO) xmesh = -SMALL_VAL_ANGLE
-  if (xmesh < SMALL_VAL_ANGLE .and. xmesh >= ZERO) xmesh = SMALL_VAL_ANGLE
-
-  phi = atan2(ymesh,xmesh)
-
-  r = sqrt(xmesh*xmesh + ymesh*ymesh + zmesh*zmesh)
-  return
-  end subroutine xyz2rthetaphi
-
-  !=======================================================
-
-  ! from specfem3d_globe
-  ! convert r theta phi to x y z
-  subroutine rthetaphi2xyz(r,theta,phi,x,y,z)
-  implicit none
-  real(kind=kreal),intent(in) :: r,theta,phi
-  real(kind=kreal),intent(out) :: x,y,z
-
-  x = r*sin(theta)*cos(phi)
-  y = r*sin(theta)*sin(phi)
-  z = r*cos(theta)
-  return
-  end subroutine rthetaphi2xyz
-  !=======================================================
-
-  subroutine compute_g_gradg_elliptical(ndim,r,theta,phi,rho,dotrho,g0,eps,eta,twothirdOmega2,g,gradg)
-  implicit none
-  integer,intent(in) :: ndim
-  double precision,intent(in) :: r,theta,phi,rho,dotrho,g0,eps,eta,twothirdOmega2
-  double precision,intent(out) :: g(ndim)
-  double precision,optional,intent(out) :: gradg(6)
-
-  double precision,parameter :: two = 2.d0,four = 4.d0,two_third = two/3.d0
-  double precision :: hmat(ndim,ndim)
-  double precision :: lfac,rinv
-  double precision :: cotthetaXdP2,doteps,ddoteps,doteta,dotg
-  double precision :: facP2,P2,dP2,d2P2
-  double precision :: unitr(ndim,1),unittheta(ndim,1),unitphi(ndim,1)
-  double precision :: unitrT(1,ndim),unitthetaT(1,ndim),unitphiT(1,ndim)
-
-  ! compute unit vectors
-  call dspherical_unitvect(theta,phi,unitr,unittheta,unitphi)
-
-  unitrT(1,:)=unitr(:,1);
-  unitthetaT(1,:)=unittheta(:,1)
-  unitphiT(1,:)=unitphi(:,1)
-  call dlegendreP2_costheta(theta,P2,dP2,d2P2)
-  rinv = 1.d0/r
-
-  dotg = four*rho-two*rinv*g0 !dotg = four_pi_G*rho-two*rinv*g_ss
-  doteps = eta*eps*rinv !eta*eps/r
-  ddoteps=6.d0*rinv*rinv*eps-8.0d0*rho*(doteps+rinv*eps)/g0 !two*four
-  !doteta=doteps/eps-0.5_kreal*r0*rinv*rinv*doteps*doteps+r0*ddoteps/eps
-  !doteta=doteps/eps-r*doteps*doteps/(eps*eps)+r*ddoteps/eps
-  doteta = doteps/eps+r*(eps*ddoteps-doteps*doteps)/(eps*eps)
-  !cottheta=cos(theta)/sin(theta)
-  cotthetaXdp2=-3.d0*cos(theta)*cos(theta)
-
-  ! lfac=g_ss+two_third*(eta*eps*g_ss+four_pi_G*r0*rho*eps-eps*g_ss)*P2-two_third*Omega2*r0
-  lfac=g0+two_third*(eta*eps*g0+four*r*rho*eps-eps*g0)*P2-twothirdOmega2*r
-  ! compute g
-  g=-lfac*unitr(:,1)-two_third*eps*g0*dP2*unittheta(:,1)
-
-  if (.not.present(gradg))return
-
-  ! compute grad g
-  facP2=(doteta*eps*g0+eta*doteps*g0+eta*eps*dotg+four*(rho*eps+r*dotrho*eps+r*rho*doteps)-doteps*g0-eps*dotg)
-
-  !hmat=-(dotg+two_third*facP2*P2-two_third*Omega2)*matmul(unitr,unitrT)     &
-  !     -two_third*(doteps*g0+eps+dotg)*dP2*(matmul(unitr,unitthetaT)+matmul(unittheta,unitrT))     &
-  !     -rinv*(lfac-two_third*Omega2*r+two_third*rinv*eps*g0*d2p2)*matmul(unittheta,unitthetaT)  &
-  !     -rinv*(lfac-two_third*Omega2*r+two_third*rinv*eps*g0*cotthetaXdp2)*matmul(unitphi,unitphiT)
-  hmat=-(dotg+two_third*facP2*P2-twothirdOmega2)*matmul(unitr,unitrT)     &
-       -two_third*(doteps*g0+eps+dotg)*dP2*(matmul(unitr,unitthetaT)+matmul(unittheta,unitrT))     &
-       -rinv*(lfac+two_third*rinv*eps*g0*d2p2)*matmul(unittheta,unitthetaT)  &
-       -rinv*(lfac+two_third*rinv*eps*g0*cotthetaXdp2)*matmul(unitphi,unitphiT)
-
-  gradg=(/ hmat(1,1),hmat(2,2),hmat(3,3),hmat(1,2),hmat(1,3),hmat(2,3) /)
-  return
-  end subroutine compute_g_gradg_elliptical
-  !=======================================================
-
-  subroutine compute_g_gradg(ndim,r,theta,phi,rho,g0,g,gradg)
-  implicit none
-  integer,intent(in) :: ndim
-  double precision,intent(in) :: r,theta,phi,rho,g0
-  double precision,intent(out) :: g(ndim)
-  double precision,optional,intent(out) :: gradg(6)
-
-  double precision,parameter :: two = 2.d0,four = 4.d0
-  double precision :: hmat(ndim,ndim)
-  double precision :: lfac,rinv
-  double precision :: dotg
-  double precision :: ctheta,P2,dP2,d2P2
-  double precision :: unitr(ndim,1),unittheta(ndim,1),unitphi(ndim,1)
-  double precision :: unitrT(1,ndim),unitthetaT(1,ndim),unitphiT(1,ndim)
-
-  ! compute unit vectors
-  call dspherical_unitvect(theta,phi,unitr,unittheta,unitphi)
-
-  unitrT(1,:)=unitr(:,1);
-  unitthetaT(1,:)=unittheta(:,1)
-  unitphiT(1,:)=unitphi(:,1)
-
-  !call dlegendreP2_costheta(theta,P2,dP2,d2P2)
-
-  ctheta=cos(theta)
-  P2=0.5d0*(3.0d0*ctheta*ctheta-1.0d0)
-
-  rinv = 1.d0/r
-  dotg = four*rho-two*rinv*g0 !dotg = four_pi_G*rho-two*rinv*g_ss
-
-  lfac = g0
-  ! compute g
-  g=-lfac*unitr(:,1)
-
-  if (.not.present(gradg))return
-
-  ! compute grad g
-  hmat=-dotg*matmul(unitr,unitrT)-rinv*lfac*matmul(unittheta,unitthetaT)          &
-       -rinv*lfac*matmul(unitphi,unitphiT)
-
-  gradg=(/ hmat(1,1),hmat(2,2),hmat(3,3),hmat(1,2),hmat(1,3),hmat(2,3) /)
-  return
-  end subroutine compute_g_gradg
-  !=======================================================
-
-  ! computes the integral of f[r]*r[r]*r[r] from i=nir to i=ner for
-  ! radii values as in model PREM_an640
-  subroutine integrate_frr_consrho(intsum,ndis,kdis,nr,r,nir,ner,f)
-  implicit none
-  ! Argument variables
-  integer,intent(in) :: ndis,kdis(2*ndis),nr,ner,nir
-  real(kind=kreal),intent(in) :: f(nr),r(nr)
-  real(kind=kreal),intent(out) :: intsum
-  ! Local variables
-  real(kind=kreal),parameter :: half = 0.5_kreal
-  real(kind=kreal),parameter :: third = 1.0_kreal/3.0_kreal
-  real(kind=kreal),parameter :: fourth = 0.25_kreal
-  real(kind=kreal),parameter :: fifth = 0.2_kreal
-  real(kind=kreal),parameter :: sixth = 1.0_kreal/6.0_kreal
-  real(kind=kreal) :: rji,yprime(nr)
-  real(kind=kreal) :: s1l,s2l,s3l
-  integer :: i,i0,j !,kdis(28),n
-  integer :: nir1 !,ndis
-
-  nir1 = nir + 1
-  intsum = 0.0_kreal
-  do i = nir1,ner
-    i0 = i-1
-    intsum = intsum + third*f(i0)*(r(i)-r(i0))
-  enddo
-
-  end subroutine integrate_frr_consrho
-  !=======================================================
-
-  ! computes the integral of f[i]*r[i]*r[i] from i=nir to i=ner for
-  ! radii values as in model PREM_an640
-  subroutine integrate_frr(intsum,ndis,kdis,nr,r,nir,ner,f,s1,s2,s3)
-  implicit none
-  ! Argument variables
-  integer,intent(in) :: ndis,kdis(2*ndis),nr,ner,nir
-  real(kind=kreal),intent(in) :: f(nr),r(nr)
-  real(kind=kreal),intent(out) :: s1(nr),s2(nr),s3(nr),intsum
-  ! Local variables
-  real(kind=kreal),parameter :: half = 0.5_kreal
-  real(kind=kreal),parameter :: third = 1.0_kreal/3.0_kreal
-  real(kind=kreal),parameter :: fourth = 0.25_kreal
-  real(kind=kreal),parameter :: fifth = 0.2_kreal
-  real(kind=kreal),parameter :: sixth = 1.0_kreal/6.0_kreal
-  real(kind=kreal) :: rji,yprime(nr)
-  real(kind=kreal) :: s1l,s2l,s3l
-  integer :: i,j !,kdis(28),n
-  integer :: nir1 !,ndis
-  !data kdis /163,323,336,517,530,540,565,590,609,619,626,633,16*0/
-
-  !ndis = 12
-  !n = 640
-
-  call deriv(f,yprime,nr,r,ndis,kdis,s1,s2,s3)
-  nir1 = nir + 1
-  intsum = 0.0_kreal
-  do i = nir1,ner
-    j = i-1
-    rji = r(i) - r(j)
-    s1l = s1(j)
-    s2l = s2(j)
-    s3l = s3(j)
-    intsum = intsum + r(j)*r(j)*rji*(f(j) &
-             + rji*(half*s1l + rji*(third*s2l + rji*fourth*s3l))) &
-             + 2.0_kreal*r(j)*rji*rji*(half*f(j) + rji*(third*s1l + rji*(fourth*s2l + rji*fifth*s3l))) &
-             + rji*rji*rji*(third*f(j) + rji*(fourth*s1l + rji*(fifth*s2l + rji*sixth*s3l)))
-  enddo
-
-  end subroutine integrate_frr
-  !=======================================================
-
-  subroutine deriv(y,yprime,n,r,ndis,kdis,s1,s2,s3)
-  implicit none
-  ! Argument variables
-  integer,intent(in) :: n,ndis,kdis(2*ndis)
-  real(kind=kreal),intent(in) :: r(n),y(n)
-  real(kind=kreal),intent(out) :: s1(n),s2(n),s3(n)
-  real(kind=kreal),intent(out) :: yprime(n)
-  ! Local variables
-  integer i,j,j1,j2
-  integer k,nd,ndp
-  real(kind=kreal) a0,b0,b1
-  real(kind=kreal) f(3,1000),h,h2,h2a
-  real(kind=kreal) h2b,h3a,ha,s13
-  real(kind=kreal) s21,s32,yy(3)
-  real(kind=kreal),parameter :: two=2.0_kreal,three=3.0_kreal,zero=0.0_kreal
-  !print *,'N:',n,ndis,'k:',kdis
-  yy(1) = zero
-  yy(2) = zero
-  yy(3) = zero
-
-  ndp = ndis+1
-
-   do 3 nd = 1,ndp
-    if (nd == 1) goto 4
-    if (nd == ndp) goto 5
-    j1=kdis(nd-1)+1
-    j2=kdis(nd)-2
-    goto 6
-      4 j1 = 1
-    j2=kdis(1)-2
-    goto 6
-      5 j1=kdis(ndis)+1
-    j2 = n-2
-      6 if ((j2+1-j1) > 0) goto 11
-      !print *,'j1,j2:',j1,j2
-    j2 = j2+2
-    !print *,'nd:',nd,'j:',j1,j2
-    yy(1)=(y(j2)-y(j1))/(r(j2)-r(j1))
-    s1(j1)=yy(1)
-    s1(j2)=yy(1)
-    s2(j1)=yy(2)
-    s2(j2)=yy(2)
-    s3(j1)=yy(3)
-    s3(j2)=yy(3)
-    goto 3
-     11 a0 = 0.0d0
-    if (j1 == 1) goto 7
-    h = r(j1+1)-r(j1)
-    h2 = r(j1+2)-r(j1)
-    yy(1)=h*h2*(h2-h)
-    h = h*h
-    h2 = h2*h2
-    b0=(y(j1)*(h-h2)+y(j1+1)*h2-y(j1+2)*h)/yy(1)
-    goto 8
-   7 b0 = 0.0d0
-   8 b1 = b0
-
-    if (j2 > 1000) stop 'error in subroutine deriv for j2'
-
-    do i = j1,j2
-      h = r(i+1)-r(i)
-      yy(1)=y(i+1)-y(i)
-      h2 = h*h
-      ha = h-a0
-      h2a = h-2.0d0*a0
-      h3a = 2.0d0*h-3.0d0*a0
-      h2b = h2*b0
-      s1(i)=h2/ha
-      s2(i)=-ha/(h2a*h2)
-      s3(i)=-h*h2a/h3a
-      f(1,i)=(yy(1)-h*b0)/(h*ha)
-      f(2,i)=(h2b-yy(1)*(2.0d0*h-a0))/(h*h2*h2a)
-      f(3,i)=-(h2b-3.0d0*yy(1)*ha)/(h*h3a)
-      a0=s3(i)
-      b0=f(3,i)
-    enddo
-
-    i = j2+1
-    h = r(i+1)-r(i)
-    yy(1)=y(i+1)-y(i)
-    h2 = h*h
-    ha = h-a0
-    h2a = h*ha
-    h2b = h2*b0-yy(1)*(2.d0*h-a0)
-    s1(i)=h2/ha
-    f(1,i)=(yy(1)-h*b0)/h2a
-    ha = r(j2)-r(i+1)
-    yy(1)=-h*ha*(ha+h)
-    ha = ha*ha
-    yy(1)=(y(i+1)*(h2-ha)+y(i)*ha-y(j2)*h2)/yy(1)
-    s3(i)=(yy(1)*h2a+h2b)/(h*h2*(h-2.0d0*a0))
-    s13 = s1(i)*s3(i)
-    s2(i)=f(1,i)-s13
-
-    do j = j1,j2
-      k = i-1
-      s32 = s3(k)*s2(i)
-      s1(i)=f(3,k)-s32
-      s21 = s2(k)*s1(i)
-      s3(k)=f(2,k)-s21
-      s13 = s1(k)*s3(k)
-      s2(k)=f(1,k)-s13
-      i = k
-    enddo
-
-    s1(i)=b1
-    j2 = j2+2
-    s1(j2)=yy(1)
-    s2(j2)=yy(2)
-    s3(j2)=yy(3)
-   3 continue
-  !stop
-    do i = 1,n
-      yprime(i)=s1(i)
-    enddo
-  !print *,yprime; stop
-  !!ndloop: do nd=1,ndp
-  !!  if (nd == 1) then
-  !!    j1=1
-  !!    j2=kdis(1)-2
-  !!  else if (nd == ndp) then
-  !!    j1=kdis(ndis)+1
-  !!    j2=n-2
-  !!  else
-  !!    j1=kdis(nd-1)+1
-  !!    j2=kdis(nd)-2
-  !!  endif
-  !!  print *,'j1,j2:',j1,j2
-  !!  if ((j2+1-j1)>0) then
-  !!    a0=zero
-  !!  else
-  !!    j2=j2+2; print *,j1,j2; print *,(r(j2)-r(j1))
-  !!    yy(1)=(y(j2)-y(j1))/(r(j2)-r(j1))
-  !!    s1(j1)=yy(1)
-  !!    s1(j2)=yy(1)
-  !!    s2(j1)=yy(2)
-  !!    s2(j2)=yy(2)
-  !!    s3(j1)=yy(3)
-  !!    s3(j2)=yy(3)
-  !!    cycle ndloop
-  !!  endif
-
-  !  if (nd == 1) goto 4
-  !  if (nd == ndp) goto 5
-  !  j1=kdis(nd-1)+1
-  !  j2=kdis(nd)-2
-  !  goto 6
-  !    4 j1=1
-  !  j2=kdis(1)-2
-  !  goto 6
-  !    5 j1=kdis(ndis)+1
-  !  j2=n-2
-  !    6 if ((j2+1-j1)>0) goto 11
-  !  j2=j2+2
-  !  yy(1)=(y(j2)-y(j1))/(r(j2)-r(j1))
-  !  s1(j1)=yy(1)
-  !  s1(j2)=yy(1)
-  !  s2(j1)=yy(2)
-  !  s2(j2)=yy(2)
-  !  s3(j1)=yy(3)
-  !  s3(j2)=yy(3)
-  !  cycle ndloop !goto 3
-  !   11 a0=zero
-
-  !!  if (j1 == 1) then
-  !!    b0=zero
-  !!  else
-  !!    h=r(j1+1)-r(j1)
-  !!    h2=r(j1+2)-r(j1)
-  !!    yy(1)=h*h2*(h2-h)
-  !!    h=h*h
-  !!    h2=h2*h2
-  !!    b0=(y(j1)*(h-h2)+y(j1+1)*h2-y(j1+2)*h)/yy(1)
-  !!  endif
-  !!  b1=b0
-
-  !  if (j1 == 1) goto 7
-  !  h=r(j1+1)-r(j1)
-  !  h2=r(j1+2)-r(j1)
-  !  yy(1)=h*h2*(h2-h)
-  !  h=h*h
-  !  h2=h2*h2
-  !  b0=(y(j1)*(h-h2)+y(j1+1)*h2-y(j1+2)*h)/yy(1)
-  !  goto 8
-  ! 7 b0=zero
-  ! 8 b1=b0
-
-  !!  if (j2 > 1000) then
-  !!    write(*,*) 'ERROR: in subroutine deriv for j2!'
-  !!    stop
-  !!  endif
-
-  !!  do i=j1,j2
-  !!    h=r(i+1)-r(i)
-  !!    yy(1)=y(i+1)-y(i)
-  !!    h2=h*h
-  !!    ha=h-a0
-  !!    h2a=h-two*a0
-  !!    h3a=two*h-three*a0
-  !!    h2b=h2*b0
-  !!    s1(i)=h2/ha
-  !!    s2(i)=-ha/(h2a*h2)
-  !!    s3(i)=-h*h2a/h3a
-  !!    f(1,i)=(yy(1)-h*b0)/(h*ha)
-  !!    f(2,i)=(h2b-yy(1)*(two*h-a0))/(h*h2*h2a)
-  !!    f(3,i)=-(h2b-three*yy(1)*ha)/(h*h3a)
-  !!    a0=s3(i)
-  !!    b0=f(3,i)
-  !!  enddo
-
-  !! i=j2+1
-  !!  h=r(i+1)-r(i)
-  !!  yy(1)=y(i+1)-y(i)
-  !!  h2=h*h
-  !!  ha=h-a0
-  !!  h2a=h*ha
-  !!  h2b=h2*b0-yy(1)*(two*h-a0)
-  !!  s1(i)=h2/ha
-  !!  f(1,i)=(yy(1)-h*b0)/h2a
-  !!  ha=r(j2)-r(i+1)
-  !!  yy(1)=-h*ha*(ha+h)
-  !!  ha=ha*ha
-  !!  yy(1)=(y(i+1)*(h2-ha)+y(i)*ha-y(j2)*h2)/yy(1)
-  !!  s3(i)=(yy(1)*h2a+h2b)/(h*h2*(h-two*a0))
-  !!  s13=s1(i)*s3(i)
-  !!  s2(i)=f(1,i)-s13
-
-  !! do j=j1,j2
-  !!   k=i-1
-  !!   s32=s3(k)*s2(i)
-  !!   s1(i)=f(3,k)-s32
-  !!   s21=s2(k)*s1(i)
-  !!   s3(k)=f(2,k)-s21
-  !!   s13=s1(k)*s3(k)
-  !!   s2(k)=f(1,k)-s13
-  !!   i=k
-  !! enddo
-
-  !!  s1(i)=b1
-  !!  j2=j2+2
-  !!  s1(j2)=yy(1)
-  !!  s2(j2)=yy(2)
-  !!  s3(j2)=yy(3)
-  !!enddo ndloop
-  !!!3 continue
-  !!!stop
-  !!do i=1,n
-  !!  yprime(i)=s1(i)
-  !!enddo
-  return
-  end subroutine deriv
-  !=======================================================
-
-  ! compute spline coefficients
-  subroutine spline_construction(xp,yp,np,tp1,tpn,coef)
-  implicit none
-  ! tangent to the spline imposed at the first and last points
-  real(kind=kreal), intent(in) :: tp1,tpn
-  ! number of input points and coordinates of the input points
-  integer, intent(in) :: np
-  real(kind=kreal), dimension(np), intent(in) :: xp,yp
-  ! spline coefficients output by the routine
-  real(kind=kreal),dimension(np), intent(out) :: coef
-  integer :: i
-  real(kind=kreal),dimension(:), allocatable :: temp_array
-  real(kind=kreal),parameter :: one=1.0_kreal,two=2.0_kreal,three=3.0_kreal
-
-  allocate(temp_array(np))
-  coef(1) = - one/two
-  temp_array(1) = (three/(xp(2)-xp(1)))*((yp(2)-yp(1))/(xp(2)-xp(1))-tp1)
-
-  do i = 2,np-1
-    coef(i) = ((xp(i)-xp(i-1))/(xp(i+1)-xp(i-1))-one) &
-      / ((xp(i)-xp(i-1))/(xp(i+1)-xp(i-1))*coef(i-1)+two)
-
-    temp_array(i) = (6.0_kreal*((yp(i+1)-yp(i))/(xp(i+1)-xp(i)) &
-      - (yp(i)-yp(i-1))/(xp(i)-xp(i-1)))/(xp(i+1)-xp(i-1)) &
-      - (xp(i)-xp(i-1))/(xp(i+1)-xp(i-1))*temp_array(i-1)) &
-      / ((xp(i)-xp(i-1))/(xp(i+1)-xp(i-1))*coef(i-1)+two)
-
-  enddo
-  coef(np) = ((three/(xp(np)-xp(np-1))) &
-    * (tpn-(yp(np)-yp(np-1))/(xp(np)-xp(np-1))) &
-    - one/two*temp_array(np-1))/(one/two*coef(np-1)+one)
-
-  do i = np-1,1,-1
-    coef(i) = coef(i)*coef(i+1) + temp_array(i)
-  enddo
-  deallocate(temp_array)
-  return
-  end subroutine spline_construction
-  !=======================================================
-
-  ! evaluate a spline
-  subroutine spline_evaluation(xp,yp,coef,np,x,y)
-  implicit none
-  ! number of input points and coordinates of the input points
-  integer,intent(in) :: np
-  real(kind=kreal),dimension(np),intent(in) :: xp,yp
-  ! spline coefficients to use
-  real(kind=kreal),dimension(np),intent(in) :: coef
-  ! abscissa at which we need to evaluate the value of the spline
-  real(kind=kreal),intent(in) :: x
-  ! ordinate evaluated by the routine for the spline at this abscissa
-  real(kind=kreal),intent(out) :: y
-  integer :: iloop,ilower,ihigher
-  real(kind=kreal) :: coef1,coef2
-
-  ! initialize to the whole interval
-  ilower = 1
-  ihigher = np
-  ! determine the right interval to use, by dichotomy
-  do while(ihigher-ilower > 1)
-    ! compute the middle of the interval
-    iloop = (ihigher+ilower)/2
-    if (xp(iloop) > x) then
-      ihigher = iloop
-    else
-      ilower = iloop
-    endif
-  enddo
-
-  ! test that the interval obtained does not have a size of zero
-  ! (this could happen for instance in the case of duplicates in the input list of points)
-  if (xp(ihigher) == xp(ilower)) stop 'incorrect interval found in spline evaluation'
-
-  coef1 = (xp(ihigher)-x)/(xp(ihigher)-xp(ilower))
-  coef2 = (x-xp(ilower))/(xp(ihigher)-xp(ilower))
-
-  y = coef1*yp(ilower)+coef2*yp(ihigher)+ &
-    ((coef1**3-coef1)*coef(ilower)+ &
-    (coef2**3-coef2)*coef(ihigher))*((xp(ihigher)-xp(ilower))**2)/6.0_kreal
-
-  return
-  end subroutine spline_evaluation
-
-end module math_library
+end module siem_math_library
 
 
 !
-!=====================================================================
+!-----------------------------------------------------------------------------------
 !
+
 
 ! MPI math library
-module math_library_mpi
+module siem_math_library_mpi
 
   use mpi
-  use constants_solver, only: CUSTOM_REAL
+  use constants, only: CUSTOM_REAL
+
   implicit none
+
   include "precision.h"
-  integer,parameter :: kreal = CUSTOM_REAL
-  integer,parameter :: MPI_KREAL = CUSTOM_MPI_TYPE!MPI_DOUBLE_PRECISION
 
   private :: iminscal,fminscal
   private :: iminvec,fminvec
@@ -1212,6 +461,7 @@ contains
 
   return
   end function iminscal
+
   !=======================================================
 
   function fminscal(scal) result(gmin)
@@ -1219,14 +469,15 @@ contains
   ! this finds a global minimum of a scalar across the processors
   !
   implicit none
-  real(kind=kreal),intent(in)::scal
-  real(kind=kreal) :: gmin
+  real(kind=CUSTOM_REAL),intent(in)::scal
+  real(kind=CUSTOM_REAL) :: gmin
   integer :: ierr
 
-  call MPI_ALLREDUCE(scal,gmin,1,MPI_KREAL,MPI_MIN,MPI_COMM_WORLD,ierr)
+  call MPI_ALLREDUCE(scal,gmin,1,CUSTOM_MPI_TYPE,MPI_MIN,MPI_COMM_WORLD,ierr)
 
   return
   end function fminscal
+
   !=======================================================
 
   function imaxscal(scal) result(gmax)
@@ -1242,6 +493,7 @@ contains
 
   return
   end function imaxscal
+
   !=======================================================
 
   function fmaxscal(scal) result(gmax)
@@ -1249,14 +501,15 @@ contains
   ! this finds a global maximum of a scalar across the processors
   !
   implicit none
-  real(kind=kreal),intent(in)::scal
-  real(kind=kreal) :: gmax
+  real(kind=CUSTOM_REAL),intent(in)::scal
+  real(kind=CUSTOM_REAL) :: gmax
   integer :: ierr
 
-  call MPI_ALLREDUCE(scal,gmax,1,MPI_KREAL,MPI_MAX,MPI_COMM_WORLD,ierr)
+  call MPI_ALLREDUCE(scal,gmax,1,CUSTOM_MPI_TYPE,MPI_MAX,MPI_COMM_WORLD,ierr)
 
   return
   end function fmaxscal
+
   !=======================================================
 
   function imaxvec(vec) result(gmax)
@@ -1265,26 +518,28 @@ contains
   integer :: lmax,gmax ! local and global
   integer :: ierr
 
-  lmax=maxval(vec)
+  lmax = maxval(vec)
 
   call MPI_ALLREDUCE(lmax,gmax,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ierr)
 
   return
   end function imaxvec
+
   !=======================================================
 
   function fmaxvec(vec) result(gmax)
   implicit none
-  real(kind=kreal),intent(in)::vec(:)
-  real(kind=kreal) :: lmax,gmax ! local and global
+  real(kind=CUSTOM_REAL),intent(in)::vec(:)
+  real(kind=CUSTOM_REAL) :: lmax,gmax ! local and global
   integer :: ierr
 
-  lmax=maxval(vec)
+  lmax = maxval(vec)
 
-  call MPI_ALLREDUCE(lmax,gmax,1,MPI_KREAL,MPI_MAX,MPI_COMM_WORLD,ierr)
+  call MPI_ALLREDUCE(lmax,gmax,1,CUSTOM_MPI_TYPE,MPI_MAX,MPI_COMM_WORLD,ierr)
 
   return
   end function fmaxvec
+
   !=======================================================
 
   function iminvec(vec) result(gmin)
@@ -1293,26 +548,28 @@ contains
   integer :: lmin,gmin ! local and global
   integer :: ierr
 
-  lmin=minval(vec)
+  lmin = minval(vec)
 
   call MPI_ALLREDUCE(lmin,gmin,1,MPI_INTEGER,MPI_MIN,MPI_COMM_WORLD,ierr)
 
   return
   end function iminvec
+
   !=======================================================
 
   function fminvec(vec) result(gmin)
   implicit none
-  real(kind=kreal),intent(in)::vec(:)
-  real(kind=kreal) :: lmin,gmin ! local and global
+  real(kind=CUSTOM_REAL),intent(in)::vec(:)
+  real(kind=CUSTOM_REAL) :: lmin,gmin ! local and global
   integer :: ierr
 
-  lmin=minval(vec)
+  lmin = minval(vec)
 
-  call MPI_ALLREDUCE(lmin,gmin,1,MPI_KREAL,MPI_MIN,MPI_COMM_WORLD,ierr)
+  call MPI_ALLREDUCE(lmin,gmin,1,CUSTOM_MPI_TYPE,MPI_MIN,MPI_COMM_WORLD,ierr)
 
   return
   end function fminvec
+
   !=======================================================
 
   function isumscal(scal) result(gsum)
@@ -1328,6 +585,7 @@ contains
 
   return
   end function isumscal
+
   !=======================================================
 
   function fsumscal(scal) result(gsum)
@@ -1335,14 +593,15 @@ contains
   ! this finds a global summation of a scalar across the processors
   !
   implicit none
-  real(kind=kreal),intent(in)::scal
-  real(kind=kreal) :: gsum
+  real(kind=CUSTOM_REAL),intent(in)::scal
+  real(kind=CUSTOM_REAL) :: gsum
   integer :: ierr
 
-  call MPI_ALLREDUCE(scal,gsum,1,MPI_KREAL,MPI_SUM,MPI_COMM_WORLD,ierr)
+  call MPI_ALLREDUCE(scal,gsum,1,CUSTOM_MPI_TYPE,MPI_SUM,MPI_COMM_WORLD,ierr)
 
   return
   end function fsumscal
+
   !=======================================================
 
   function dot_product_par(vec1,vec2) result(gdot)
@@ -1350,29 +609,31 @@ contains
   ! this finds global dot product of two vectors across the processors
   !
   implicit none
-  real(kind=kreal),intent(in)::vec1(:),vec2(:)
-  real(kind=kreal) :: ldot,gdot
+  real(kind=CUSTOM_REAL),intent(in)::vec1(:),vec2(:)
+  real(kind=CUSTOM_REAL) :: ldot,gdot
   integer :: ierr
 
   ! find local dot
-  ldot=dot_product(vec1,vec2)
-  call MPI_ALLREDUCE(ldot,gdot,1,MPI_KREAL,MPI_SUM,MPI_COMM_WORLD,ierr)
+  ldot = dot_product(vec1,vec2)
+
+  call MPI_ALLREDUCE(ldot,gdot,1,CUSTOM_MPI_TYPE,MPI_SUM,MPI_COMM_WORLD,ierr)
 
   return
   end function dot_product_par
 
-end module math_library_mpi
+end module siem_math_library_mpi
 
 
+!
+!-----------------------------------------------------------------------------------
+!
 
 ! NOTES:
 !  - gll_points not needed can be removed
 !  - can be make faster using orthoginality of shape functions
 ! this module contains routines to compute Gauss-Legendre-Lobatto quadrature
-! REVISION
-!   HNG, Jul 12,2011; HNG, Apr 09,2010
 
-module gll_library1
+module siem_gll_library
 
   integer,parameter :: kdble=selected_real_kind(15) ! double precision
 
@@ -1623,10 +884,8 @@ contains
   !real(kind=kdble),dimension(ndim,ngll,ngll) ::fdlagrange_gll
   real(kind=kdble),parameter :: zero=0.0_kdble,one=1.0_kdble
   real(kind=kdble),parameter :: jacobi_alpha=zero,jacobi_beta=zero
-  integer :: i,j,k,n,ngllxy
+  integer :: i,j,k,n
   integer :: ip,ipx,ipy,ipz ! integration points
-  integer :: inpy,inpz
-  integer :: np,npx,npy,npz ! interpolation function points
   real(kind=kdble) :: xi,eta,zeta
   real(kind=kdble),dimension(ngllx) :: gllpx,gllwx ! GLL points and weights
   real(kind=kdble),dimension(nglly) :: gllpy,gllwy ! GLL points and weights
@@ -1866,7 +1125,7 @@ contains
   real(kind=kdble),dimension(ndim,ngll,ngll),intent(out) :: dlagrange_gll2d
 
   real(kind=kdble),parameter :: jacobi_alpha=0.0_kdble,jacobi_beta=0.0_kdble
-  integer :: i,ii,j,k,n
+  integer :: i,ii,j,n
   real(kind=kdble) :: xi,eta !,zeta
   real(kind=kdble),dimension(ngllx) :: gllpx,gllwx ! GLL points and weights
   real(kind=kdble),dimension(nglly) :: gllpy,gllwy ! GLL points and weights
@@ -1937,7 +1196,7 @@ contains
   real(kind=kdble),dimension(ndim,ngll,ngll),intent(out) :: dlagrange_gll1d
 
   real(kind=kdble),parameter :: jacobi_alpha=0.0_kdble,jacobi_beta=0.0_kdble
-  integer :: i,ii,j,k,n
+  integer :: i,ii,n
   real(kind=kdble) :: xi
   real(kind=kdble),dimension(ngllx) :: gllpx,gllwx ! GLL points and weights
   real(kind=kdble),dimension(ngllx) :: lagrange_x,lagrange_dx
@@ -2189,7 +1448,6 @@ contains
 
   integer :: i,j,k
   real(kind=kdble),dimension(nenod-1) :: term,dterm,sum_term
-  real(kind=kdble) :: dx
   real(kind=kdble),parameter :: one=1.0_kdble
 
   do i = 1,nenod
@@ -2245,7 +1503,6 @@ contains
 
   integer :: i,j,k
   real(kind=kdble),dimension(nenod-1) :: term,dterm,sum_term
-  real(kind=kdble) :: dx
   real(kind=kdble),parameter :: one=1.0_kdble
 
   do i = 1,nenod
@@ -2826,6 +2083,5 @@ contains
   end subroutine zwgljd
 
 
-end module gll_library1
+end module siem_gll_library
 
-#endif

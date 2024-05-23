@@ -231,6 +231,7 @@ meshfem3D_SHARED_OBJECTS = \
 	$O/rthetaphi_xyz.shared.o \
 	$O/save_header_file.shared.o \
 	$O/shared_par.shared_module.o \
+	$O/SIEM_math_library.sharedmpi.o \
 	$O/smooth_weights_vec.shared.o \
 	$O/sort_array_coordinates.shared.o \
 	$O/spline_routines.shared.o \
@@ -358,6 +359,9 @@ $O/model_atten3D_QRFSI12.check.o: $O/model_prem.shared.o
 
 # Version file
 $O/initialize_mesher.check.o: ${SETUP}/version.fh
+
+# SIEM
+$O/SIEM_meshing.check.o: $O/SIEM_math_library.sharedmpi.o
 
 ## general rules
 

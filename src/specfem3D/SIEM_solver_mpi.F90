@@ -34,8 +34,10 @@
 !   HNG, Jul 12,2011; HNG, Apr 09,2010
 
 module solver_mpi
-  use constants_solver, only: CUSTOM_REAL,CG_MAXITER,CG_TOL,CG_TOL1
-  use math_library_mpi
+
+  use constants, only: CUSTOM_REAL,CG_MAXITER,CG_TOL,CG_TOL1
+
+  use siem_math_library_mpi
 
 contains
 
@@ -44,17 +46,16 @@ contains
 
   subroutine pcpetsc_cg_solver(myid,neq,u_g,f,dprecon_g,cg_iter)
 
-  !use math_library
   implicit none
   integer,intent(in) :: myid,neq
-  real(kind=kreal),dimension(0:neq),intent(inout) :: u_g
-  real(kind=kreal),dimension(0:neq),intent(in) :: f,dprecon_g
+  real(kind=CUSTOM_REAL),dimension(0:neq),intent(inout) :: u_g
+  real(kind=CUSTOM_REAL),dimension(0:neq),intent(in) :: f,dprecon_g
   integer,intent(out) :: cg_iter
 
-  real(kind=kreal) :: alpha,beta,rz,maxp,maxu
-  real(kind=kreal),dimension(0:neq) :: kp,p,p_g,r,r0,z,z_g!,r_g
+  real(kind=CUSTOM_REAL) :: alpha,beta,rz,maxp,maxu
+  real(kind=CUSTOM_REAL),dimension(0:neq) :: kp,p,p_g,r,r0,z,z_g!,r_g
 
-  real(kind=kreal),parameter :: zero=0.0_kreal,zerotol=1.0e-12_kreal
+  real(kind=CUSTOM_REAL),parameter :: zero=0.0_CUSTOM_REAL,zerotol=1.0e-12_CUSTOM_REAL
 
   ! all global array variables are both MPI and regionally assembled.
   ! local array variables are regionally assembled.
@@ -122,17 +123,16 @@ contains
 
   subroutine cg_solver(myid,neq,u_g,f,cg_iter)
 
-  !use math_library
   implicit none
   integer,intent(in) :: myid,neq
-  real(kind=kreal),dimension(0:neq),intent(inout) :: u_g
-  real(kind=kreal),dimension(0:neq),intent(in) :: f
+  real(kind=CUSTOM_REAL),dimension(0:neq),intent(inout) :: u_g
+  real(kind=CUSTOM_REAL),dimension(0:neq),intent(in) :: f
   integer,intent(out) :: cg_iter
 
-  real(kind=kreal) :: alpha,beta,pkp,rz,maxp,maxu
-  real(kind=kreal),dimension(0:neq) :: kp,p,p_g,r,r0,r_g
+  real(kind=CUSTOM_REAL) :: alpha,beta,pkp,rz,maxp,maxu
+  real(kind=CUSTOM_REAL),dimension(0:neq) :: kp,p,p_g,r,r0,r_g
 
-  real(kind=kreal),parameter :: zero=0.0_kreal,zerotol=1.0e-30_kreal
+  real(kind=CUSTOM_REAL),parameter :: zero=0.0_CUSTOM_REAL,zerotol=1.0e-30_CUSTOM_REAL
 
   ! all global array variables are both MPI and regionally assembled.
   ! local array variables are regionally assembled.
@@ -199,17 +199,16 @@ contains
 
   subroutine cg_solver3(myid,neq,u_g,f,cg_iter)
 
-  !use math_library
   implicit none
   integer,intent(in) :: myid,neq
-  real(kind=kreal),dimension(0:neq),intent(inout) :: u_g
-  real(kind=kreal),dimension(0:neq),intent(in) :: f
+  real(kind=CUSTOM_REAL),dimension(0:neq),intent(inout) :: u_g
+  real(kind=CUSTOM_REAL),dimension(0:neq),intent(in) :: f
   integer,intent(out) :: cg_iter
 
-  real(kind=kreal) :: alpha,beta,pkp,rz,maxf,maxp,maxu
-  real(kind=kreal),dimension(0:neq) :: kp,p,p_g,r0,r,r_g
+  real(kind=CUSTOM_REAL) :: alpha,beta,pkp,rz,maxf,maxp,maxu
+  real(kind=CUSTOM_REAL),dimension(0:neq) :: kp,p,p_g,r0,r,r_g
 
-  real(kind=kreal),parameter :: zero=0.0_kreal,zerotol=1.0e-30_kreal
+  real(kind=CUSTOM_REAL),parameter :: zero=0.0_CUSTOM_REAL,zerotol=1.0e-30_CUSTOM_REAL
 
 
   ! all global array variables are both MPI and regionally assembled.
@@ -277,17 +276,16 @@ contains
 
   subroutine diagpcg_solver(myid,neq,u_g,f,dprecon_g,cg_iter)
 
-  !use math_library
   implicit none
   integer,intent(in) :: myid,neq
-  real(kind=kreal),dimension(0:neq),intent(inout) :: u_g
-  real(kind=kreal),dimension(0:neq),intent(in) :: f,dprecon_g
+  real(kind=CUSTOM_REAL),dimension(0:neq),intent(inout) :: u_g
+  real(kind=CUSTOM_REAL),dimension(0:neq),intent(in) :: f,dprecon_g
   integer,intent(out) :: cg_iter
 
-  real(kind=kreal) :: alpha,beta,rz,maxp,maxu
-  real(kind=kreal),dimension(0:neq) :: kp,p,p_g,r,r0,z,z_g!,r_g
+  real(kind=CUSTOM_REAL) :: alpha,beta,rz,maxp,maxu
+  real(kind=CUSTOM_REAL),dimension(0:neq) :: kp,p,p_g,r,r0,z,z_g!,r_g
 
-  real(kind=kreal),parameter :: zero=0.0_kreal,zerotol=1.0e-12_kreal
+  real(kind=CUSTOM_REAL),parameter :: zero=0.0_CUSTOM_REAL,zerotol=1.0e-12_CUSTOM_REAL
 
 
   ! all global array variables are both MPI and regionally assembled.
@@ -351,17 +349,16 @@ contains
 
   subroutine diagpcg_solver3(myid,neq,u_g,f,dprecon_g,cg_iter)
 
-  !use math_library
   implicit none
   integer,intent(in) :: myid,neq
-  real(kind=kreal),dimension(0:neq),intent(inout) :: u_g
-  real(kind=kreal),dimension(0:neq),intent(in) :: f,dprecon_g
+  real(kind=CUSTOM_REAL),dimension(0:neq),intent(inout) :: u_g
+  real(kind=CUSTOM_REAL),dimension(0:neq),intent(in) :: f,dprecon_g
   integer,intent(out) :: cg_iter
 
-  real(kind=kreal) :: alpha,beta,rz,maxp,maxu
-  real(kind=kreal),dimension(0:neq) :: kp,p,p_g,r0,r,z,z_g!,r_g
+  real(kind=CUSTOM_REAL) :: alpha,beta,rz,maxp,maxu
+  real(kind=CUSTOM_REAL),dimension(0:neq) :: kp,p,p_g,r0,r,z,z_g!,r_g
 
-  real(kind=kreal),parameter :: zero=0.0_kreal,zerotol=1.0e-12_kreal
+  real(kind=CUSTOM_REAL),parameter :: zero=0.0_CUSTOM_REAL,zerotol=1.0e-12_CUSTOM_REAL
 
   ! all global array variables are both MPI and regionally assembled.
   ! local array variables are regionally assembled.
@@ -431,22 +428,24 @@ contains
   use specfem_par, only: ADD_TRINF,NGLLCUBE,NSPEC_INNER_CORE,NSPEC_OUTER_CORE,NSPEC_CRUST_MANTLE, &
     NSPEC_TRINFINITE,NSPEC_INFINITE,NGLOB_INNER_CORE,NGLOB_OUTER_CORE,NGLOB_CRUST_MANTLE, &
     NGLOB_TRINFINITE,NGLOB_INFINITE
-  use specfem_par_crustmantle, only: gdof_cm,inode_elmt_cm,storekmat_crust_mantle
-  use specfem_par_outercore, only: gdof_oc,inode_elmt_oc,storekmat_outer_core
-  use specfem_par_innercore, only: gdof_ic,inode_elmt_ic,storekmat_inner_core
-  use specfem_par_trinfinite, only: gdof_trinf,inode_elmt_trinf,storekmat_trinfinite
-  use specfem_par_infinite, only: gdof_inf,inode_elmt_inf,storekmat_infinite
+
+  use specfem_par_full_gravity, only: &
+    gdof_cm,inode_elmt_cm,storekmat_crust_mantle, &
+    gdof_oc,inode_elmt_oc,storekmat_outer_core, &
+    gdof_ic,inode_elmt_ic,storekmat_inner_core, &
+    gdof_trinf,inode_elmt_trinf,storekmat_trinfinite, &
+    gdof_inf,inode_elmt_inf,storekmat_infinite
 
   implicit none
   integer,intent(in) :: neq
-  real(kind=kreal),intent(in) :: p_g(0:neq)
-  real(kind=kreal),intent(out) :: kp(0:neq)
+  real(kind=CUSTOM_REAL),intent(in) :: p_g(0:neq)
+  real(kind=CUSTOM_REAL),intent(out) :: kp(0:neq)
 
-  real(kind=kreal) :: km(NGLLCUBE,NGLLCUBE),km_trinf(NGLLCUBE,NGLLCUBE),km_inf(NGLLCUBE,NGLLCUBE)
-  real(kind=kreal) :: kp_ic(NGLOB_INNER_CORE),kp_oc(NGLOB_OUTER_CORE), &
+  real(kind=CUSTOM_REAL) :: km(NGLLCUBE,NGLLCUBE),km_trinf(NGLLCUBE,NGLLCUBE),km_inf(NGLLCUBE,NGLLCUBE)
+  real(kind=CUSTOM_REAL) :: kp_ic(NGLOB_INNER_CORE),kp_oc(NGLOB_OUTER_CORE), &
   kp_cm(NGLOB_CRUST_MANTLE),kp_trinf(NGLOB_TRINFINITE),kp_inf(NGLOB_INFINITE)
 
-  real(kind=kreal),parameter :: zero=0.0_kreal
+  real(kind=CUSTOM_REAL),parameter :: zero=0.0_CUSTOM_REAL
   integer :: i_elmt,inode(NGLLCUBE),igdof(NGLLCUBE),inode_trinf(NGLLCUBE),igdof_trinf(NGLLCUBE), &
   inode_inf(NGLLCUBE),igdof_inf(NGLLCUBE)
 
@@ -549,13 +548,13 @@ contains
 
   implicit none
   integer,intent(in) :: neq
-  real(kind=kreal),intent(in) :: array(0:neq)
-  real(kind=kreal),intent(out) :: array_g(0:neq)
+  real(kind=CUSTOM_REAL),intent(in) :: array(0:neq)
+  real(kind=CUSTOM_REAL),intent(out) :: array_g(0:neq)
 
-  real(kind=kreal) :: array_ic(NGLOB_INNER_CORE),array_oc(NGLOB_OUTER_CORE), &
+  real(kind=CUSTOM_REAL) :: array_ic(NGLOB_INNER_CORE),array_oc(NGLOB_OUTER_CORE), &
   array_cm(NGLOB_CRUST_MANTLE),array_trinf(NGLOB_TRINFINITE),array_inf(NGLOB_INFINITE)
 
-  real(kind=kreal),parameter :: zero=0.0_kreal
+  real(kind=CUSTOM_REAL),parameter :: zero=0.0_CUSTOM_REAL
 
 
   ! scatter array
@@ -632,23 +631,26 @@ contains
   subroutine product_stiffness_vector3(neq,p_g,kp)
 
   use specfem_par, only: ADD_TRINF,NGLLCUBE_INF,NSPEC_INNER_CORE,NSPEC_OUTER_CORE,NSPEC_CRUST_MANTLE, &
-  NSPEC_TRINFINITE,NSPEC_INFINITE,nnode_ic1,nnode_oc1,nnode_cm1,nnode_trinf1,nnode_inf1
-  use specfem_par_crustmantle, only: gdof_cm1,inode_elmt_cm1,storekmat_crust_mantle1
-  use specfem_par_outercore, only: gdof_oc1,inode_elmt_oc1,storekmat_outer_core1
-  use specfem_par_innercore, only: gdof_ic1,inode_elmt_ic1,storekmat_inner_core1
-  use specfem_par_trinfinite, only: gdof_trinf1,inode_elmt_trinf1,storekmat_trinfinite1
-  use specfem_par_infinite, only: gdof_inf1,inode_elmt_inf1,storekmat_infinite1
+    NSPEC_TRINFINITE,NSPEC_INFINITE
+
+  use specfem_par_full_gravity, only: &
+    nnode_ic1,nnode_oc1,nnode_cm1,nnode_trinf1,nnode_inf1, &
+    gdof_cm1,inode_elmt_cm1,storekmat_crust_mantle1, &
+    gdof_oc1,inode_elmt_oc1,storekmat_outer_core1, &
+    gdof_ic1,inode_elmt_ic1,storekmat_inner_core1, &
+    gdof_trinf1,inode_elmt_trinf1,storekmat_trinfinite1, &
+    gdof_inf1,inode_elmt_inf1,storekmat_infinite1
 
   implicit none
   integer,intent(in) :: neq
-  real(kind=kreal),intent(in) :: p_g(0:neq)
-  real(kind=kreal),intent(out) :: kp(0:neq)
+  real(kind=CUSTOM_REAL),intent(in) :: p_g(0:neq)
+  real(kind=CUSTOM_REAL),intent(out) :: kp(0:neq)
 
-  real(kind=kreal) :: km(NGLLCUBE_INF,NGLLCUBE_INF),km_trinf(NGLLCUBE_INF,NGLLCUBE_INF),km_inf(NGLLCUBE_INF,NGLLCUBE_INF)
-  real(kind=kreal) :: kp_ic(nnode_ic1),kp_oc(nnode_oc1),kp_cm(nnode_cm1), &
+  real(kind=CUSTOM_REAL) :: km(NGLLCUBE_INF,NGLLCUBE_INF),km_trinf(NGLLCUBE_INF,NGLLCUBE_INF),km_inf(NGLLCUBE_INF,NGLLCUBE_INF)
+  real(kind=CUSTOM_REAL) :: kp_ic(nnode_ic1),kp_oc(nnode_oc1),kp_cm(nnode_cm1), &
   kp_trinf(nnode_trinf1),kp_inf(nnode_inf1)
 
-  real(kind=kreal),parameter :: zero=0.0_kreal
+  real(kind=CUSTOM_REAL),parameter :: zero=0.0_CUSTOM_REAL
   integer :: i_elmt,inode(NGLLCUBE_INF),igdof(NGLLCUBE_INF),inode_trinf(NGLLCUBE_INF),igdof_trinf(NGLLCUBE_INF),inode_inf(NGLLCUBE_INF),igdof_inf(NGLLCUBE_INF)
 
   ! inner core
@@ -755,13 +757,13 @@ contains
 
   implicit none
   integer,intent(in) :: neq
-  real(kind=kreal),intent(in) :: array(0:neq)
-  real(kind=kreal),intent(out) :: array_g(0:neq)
+  real(kind=CUSTOM_REAL),intent(in) :: array(0:neq)
+  real(kind=CUSTOM_REAL),intent(out) :: array_g(0:neq)
 
-  real(kind=kreal) :: array_ic(nnode_ic1),array_oc(nnode_oc1),array_cm(nnode_cm1), &
+  real(kind=CUSTOM_REAL) :: array_ic(nnode_ic1),array_oc(nnode_oc1),array_cm(nnode_cm1), &
   array_trinf(nnode_trinf1),array_inf(nnode_inf1)
 
-  real(kind=kreal),parameter :: zero=0.0_kreal
+  real(kind=CUSTOM_REAL),parameter :: zero=0.0_CUSTOM_REAL
 
   ! scatter array
   array_ic=array(gdof_ic1)
@@ -833,14 +835,14 @@ contains
   subroutine interpolate3to5(nelmt,nnode,nnode1,inode_elmt,nmir,inode_map,isgll, &
                              igll_on,x3,x5)
 
-  use gll_library1, only: gll_quadrature3inNGLL,zwgljd
+  use siem_gll_library, only: gll_quadrature3inNGLL,zwgljd
   use constants_solver, only: ndim,NGLLX,NGLLX_INF,NGLLCUBE,NGLLCUBE_INF
   implicit none
   integer,intent(in) :: nelmt,nnode,nnode1,inode_elmt(NGLLCUBE,nelmt),nmir(nnode), &
   inode_map(2,nnode),igll_on(NGLLCUBE_INF)
   logical,intent(in) :: isgll(NGLLCUBE)
-  real(kind=kreal),intent(in) :: x3(nnode1) ! array for 3 GLLX points
-  real(kind=kreal),intent(out) :: x5(nnode) ! aray for 5 GLLX points
+  real(kind=CUSTOM_REAL),intent(in) :: x3(nnode1) ! array for 3 GLLX points
+  real(kind=CUSTOM_REAL),intent(out) :: x5(nnode) ! aray for 5 GLLX points
   double precision :: lagrange_gll3inNGLL(NGLLCUBE,27),xigll(NGLLX),wxgll(NGLLX), &
   xigll1(NGLLX_INF),wxgll1(NGLLX_INF)
 
@@ -851,7 +853,7 @@ contains
   call gll_quadrature3inNGLL(ndim,NGLLX,NGLLCUBE,xigll,xigll1,lagrange_gll3inNGLL)
 
   ! inner core
-  x5 = 0.0_kreal
+  x5 = 0.0_CUSTOM_REAL
   do i_node = 1,nnode!NGLOB_INNER_CORE
     inode1=nmir(i_node)
     ielmt=inode_map(1,i_node)
