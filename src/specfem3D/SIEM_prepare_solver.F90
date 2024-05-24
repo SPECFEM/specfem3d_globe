@@ -49,7 +49,7 @@
 
   ! sets the stiffness matrices for Poisson's solver
   ! calculate dprecon
-  ! allocates load, regional pgravs (e.g. pgrav_cm1)
+  ! allocates gravload, regional pgravs (e.g. pgrav_cm1)
   call SIEM_prepare_solver_poisson()
 
   ! create sparse matrix
@@ -455,12 +455,12 @@
   allocate(storekmat_infinite1(NGLLCUBE_INF,NGLLCUBE_INF,NSPEC_INFINITE), &
            dprecon_infinite1(nnode_inf1))
 
-  allocate(dprecon1(0:neq1),load1(0:neq1),pgrav_ic1(nnode_ic1), &
+  allocate(dprecon1(0:neq1),gravload1(0:neq1),pgrav_ic1(nnode_ic1), &
            pgrav_oc1(nnode_oc1),pgrav_cm1(nnode_cm1),pgrav_trinf1(nnode_trinf1), &
            pgrav_inf1(nnode_inf1))
 
   if (SIMULATION_TYPE == 3) then
-    allocate(b_load1(0:neq1), b_pgrav_ic1(nnode_ic1), b_pgrav_oc1(nnode_oc1), &
+    allocate(b_gravload1(0:neq1), b_pgrav_ic1(nnode_ic1), b_pgrav_oc1(nnode_oc1), &
              b_pgrav_cm1(nnode_cm1), b_pgrav_trinf1(nnode_trinf1), b_pgrav_inf1(nnode_inf1))
   endif
 
@@ -589,7 +589,7 @@
     endif
     allocate(storekmat_infinite(NGLLCUBE,NGLLCUBE,NSPEC_INFINITE), &
              dprecon_infinite(NGLOB_INFINITE))
-    allocate(dprecon(0:neq),load(0:neq))
+    allocate(dprecon(0:neq),gravload(0:neq))
 
     ! better to make dprecon_* local rather than global
 

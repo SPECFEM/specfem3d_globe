@@ -29,9 +29,18 @@
 
 module siem_solver_mpi
 
-  use constants, only: myrank,CUSTOM_REAL,CG_MAXITER,CG_TOL,CG_TOL1
+  use constants, only: myrank,CUSTOM_REAL
 
   use siem_math_library_mpi
+
+  implicit none
+
+  ! maximum number of iteration for conjugate gradient solver
+  integer, parameter :: CG_MAXITER = 10000
+
+  ! relative tolerance for conjugate gradient solver
+  real(kind=CUSTOM_REAL), parameter :: CG_TOL  = 1.0e-7_CUSTOM_REAL, &
+                                       CG_TOL1 = 1.0e-7_CUSTOM_REAL
 
 contains
 

@@ -1220,10 +1220,10 @@ module specfem_par_full_gravity
   !real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_trinf    ! pgrav_trinf(NGLOB_TRINFINITE)
   !real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_inf      ! pgrav_inf(NGLOB_INFINITE)
 
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon, load, pgrav
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon, gravload, pgrav
 
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_ic1, pgrav_oc1, pgrav_cm1, pgrav_trinf1, pgrav_inf1
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon1, load1, pgrav1, pgrav1_oldrun
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon1, gravload1, pgrav1, pgrav1_oldrun
 
   !real(kind=CUSTOM_REAL),dimension(:),allocatable :: WEvector
 
@@ -1233,10 +1233,10 @@ module specfem_par_full_gravity
   !real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_cm     ! b_pgrav_cm(NGLOB_CRUST_MANTLE_ADJOINT)
   !real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_trinf  ! b_pgrav_trinf(NGLOB_TRINFINITE_ADJOINT)
   !real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_inf    ! b_pgrav_inf(NGLOB_INFINITE_ADJOINT)
-  !real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_dprecon, b_load, b_pgrav
+  !real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_dprecon, b_gravload, b_pgrav
 
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_ic1, b_pgrav_oc1, b_pgrav_cm1, b_pgrav_trinf1, b_pgrav_inf1
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_dprecon1, b_load1, b_pgrav1
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_dprecon1, b_gravload1, b_pgrav1
 
   ! number of global degrees of freedom
   integer :: ngdof,nsparse

@@ -421,7 +421,7 @@ contains
   use specfem_par_outercore, only: ibool_outer_core
   use specfem_par_innercore, only: ibool_inner_core
 
-  use specfem_par_full_gravity, only: load, &
+  use specfem_par_full_gravity, only: gravload, &
     storerhojw_cm,gdof_cm, &
     storerhojw_oc,gdof_oc, &
     storerhojw_ic,gdof_ic
@@ -432,7 +432,7 @@ contains
 
   !note: NGLLCUBE = NGLLX*NGLLY*NGLLZ
 
-  load = 0.0_CUSTOM_REAL
+  gravload(:) = 0.0_CUSTOM_REAL
 
   ! crust-mantle
   call poisson_load_onlyrhoFAST(IREGION_CRUST_MANTLE,nspec_crust_mantle, &
@@ -451,18 +451,18 @@ contains
 
   ! assemble across the regions but not MPI
   ! crust_mantle
-  load(gdof_cm) = load(gdof_cm) + load_cm
+  gravload(gdof_cm(:)) = gravload(gdof_cm(:)) + load_cm(:)
 
   ! outer core
-  load(gdof_oc) = load(gdof_oc) + load_oc
+  gravload(gdof_oc(:)) = gravload(gdof_oc(:)) + load_oc(:)
 
   ! inner core
-  load(gdof_ic) = load(gdof_ic) + load_ic
+  gravload(gdof_ic(:)) = gravload(gdof_ic(:)) + load_ic(:)
 
   ! infinite
   ! there no contribution from infinite region
 
-  load(0) = 0.0_CUSTOM_REAL
+  gravload(0) = 0.0_CUSTOM_REAL
 
   end subroutine compute_poisson_rhoload
 
@@ -477,7 +477,7 @@ contains
 
   use constants_solver, only: NSPEC_INNER_CORE,NSPEC_OUTER_CORE,NSPEC_CRUST_MANTLE
 
-  use specfem_par_full_gravity, only: load1,nnode_ic1,nnode_oc1,nnode_cm1, &
+  use specfem_par_full_gravity, only: gravload1,nnode_ic1,nnode_oc1,nnode_cm1, &
     storerhojw_cm1,gdof_cm1,inode_elmt_cm1, &
     storerhojw_oc1,gdof_oc1,inode_elmt_oc1, &
     storerhojw_ic1,gdof_ic1,inode_elmt_ic1
@@ -488,7 +488,7 @@ contains
 
   !note: NGLLCUBE = NGLLX*NGLLY*NGLLZ
 
-  load1 = 0.0_CUSTOM_REAL
+  gravload1(:) = 0.0_CUSTOM_REAL
 
   !! crust-mantle
   !call poisson_load_onlyrho3(1,nspec_crust_mantle, &
@@ -507,36 +507,33 @@ contains
 
   ! crust-mantle
   call poisson_load_onlyrhoFAST3(IREGION_CRUST_MANTLE,nspec_crust_mantle, &
-                                 storerhojw_cm1,nnode_cm1,inode_elmt_cm1, &
-                                 load_cm)
+                                 storerhojw_cm1,nnode_cm1,inode_elmt_cm1,load_cm)
 
   ! outer core
   call poisson_load_onlyrhoFAST3(IREGION_OUTER_CORE,nspec_outer_core, &
-                                 storerhojw_oc1,nnode_oc1,inode_elmt_oc1, &
-                                 load_oc)
+                                 storerhojw_oc1,nnode_oc1,inode_elmt_oc1,load_oc)
 
   ! inner core
   call poisson_load_onlyrhoFAST3(IREGION_INNER_CORE,nspec_inner_core, &
-                                 storerhojw_ic1,nnode_ic1,inode_elmt_ic1, &
-                                 load_ic)
+                                 storerhojw_ic1,nnode_ic1,inode_elmt_ic1,load_ic)
 
   ! infinite
   ! this region has no contribution
 
   ! assemble across the regions but not MPI
   ! crust_mantle
-  load1(gdof_cm1) = load1(gdof_cm1) + load_cm
+  gravload1(gdof_cm1(:)) = gravload1(gdof_cm1(:)) + load_cm(:)
 
   ! outer core
-  load1(gdof_oc1) = load1(gdof_oc1) + load_oc
+  gravload1(gdof_oc1(:)) = gravload1(gdof_oc1(:)) + load_oc(:)
 
   ! inner core
-  load1(gdof_ic1) = load1(gdof_ic1) + load_ic
+  gravload1(gdof_ic1(:)) = gravload1(gdof_ic1(:)) + load_ic(:)
 
   ! infinite
   ! there is no contribution from infinite region
 
-  load1(0) = 0.0_CUSTOM_REAL
+  gravload1(0) = 0.0_CUSTOM_REAL
 
   end subroutine compute_poisson_rhoload3
 
@@ -551,7 +548,7 @@ contains
   use constants, only: NGLLX,NGLLY,NGLLZ,NGLLCUBE,NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF
   use constants_solver, only: NSPEC_CRUST_MANTLE
 
-  use specfem_par_full_gravity, only: load1, nnode_cm1, &
+  use specfem_par_full_gravity, only: gravload1, nnode_cm1, &
     storejw_cm1,gdof_cm1,inode_elmt_cm1, &
     rho1siem_kl_crust_mantle
 
@@ -570,22 +567,22 @@ contains
   integer :: egdof(NGLLCUBE_INF)
 
   ! Based off of poisson_load_solid3FAST
-  load1 = 0.0_CUSTOM_REAL
-  load_cm = zero
+  gravload1(:) = 0.0_CUSTOM_REAL
+  load_cm(:) = zero
   do i_elmt = 1,nspec_crust_mantle
-    evalue = reshape(rho1siem_kl_crust_mantle(component,1:NGLLX:2,1:NGLLY:2,1:NGLLZ:2,i_elmt),(/NGLLCUBE_INF/))
-    eload = zero
+    evalue(:) = reshape(rho1siem_kl_crust_mantle(component,1:NGLLX:2,1:NGLLY:2,1:NGLLZ:2,i_elmt),(/NGLLCUBE_INF/))
+    eload(:) = zero
     do i = 1,NGLLCUBE_INF
-      eload = eload + storejw_cm1(i,i_elmt)*evalue(i)
+      eload(:) = eload(:) + storejw_cm1(i,i_elmt)*evalue(i)
     enddo
-    egdof = inode_elmt_cm1(:,i_elmt)
-    load_cm(egdof) = load_cm(egdof)+eload
+    egdof(:) = inode_elmt_cm1(:,i_elmt)
+    load_cm(egdof(:)) = load_cm(egdof(:)) + eload(:)
   enddo
 
   ! assemble across the regions but not MPI
   ! crust_mantle -  multiply by 4*PI*G! or scaled
-  load1(gdof_cm1) = load1(gdof_cm1) + 4.0_CUSTOM_REAL*load_cm
-  load1(0) = 0.0_CUSTOM_REAL
+  gravload1(gdof_cm1(:)) = gravload1(gdof_cm1(:)) + 4.0_CUSTOM_REAL * load_cm(:)
+  gravload1(0) = 0.0_CUSTOM_REAL
 
   end subroutine compute_grav_kl1_load
 
@@ -601,7 +598,7 @@ contains
 
   use constants_solver, only: NSPEC_CRUST_MANTLE
 
-  use specfem_par_full_gravity, only: load1, nnode_cm1, &
+  use specfem_par_full_gravity, only: gravload1, nnode_cm1, &
     storejw_cm1,gdof_cm1,inode_elmt_cm1, &
     rho2siem_kl_crust_mantle
 
@@ -616,23 +613,23 @@ contains
   integer :: egdof(NGLLCUBE_INF)
   real(kind=CUSTOM_REAL) :: load_cm(nnode_cm1), evalue(NGLLCUBE_INF), eload(NGLLCUBE_INF)
 
-  load1 = 0.0_CUSTOM_REAL
+  gravload1(:) = 0.0_CUSTOM_REAL
 
   ! Based off of poisson_load_solid3FAST
-  load_cm = zero
+  load_cm(:) = zero
   do i_elmt = 1,nspec_crust_mantle
-    evalue = reshape(rho2siem_kl_crust_mantle(icomp,jcomp,1:NGLLX:2,1:NGLLY:2,1:NGLLZ:2,i_elmt),(/NGLLCUBE_INF/))
-    eload = zero
+    evalue(:) = reshape(rho2siem_kl_crust_mantle(icomp,jcomp,1:NGLLX:2,1:NGLLY:2,1:NGLLZ:2,i_elmt),(/NGLLCUBE_INF/))
+    eload(:) = zero
     do i = 1,NGLLCUBE_INF
-      eload = eload + storejw_cm1(i,i_elmt)*evalue(i)
+      eload(:) = eload(:) + storejw_cm1(i,i_elmt)*evalue(i)
     enddo
-    egdof = inode_elmt_cm1(:,i_elmt)
-    load_cm(egdof)=load_cm(egdof)+eload
+    egdof(:) = inode_elmt_cm1(:,i_elmt)
+    load_cm(egdof(:)) = load_cm(egdof(:)) + eload(:)
   enddo
   ! assemble across the regions but not MPI
   ! crust_mantle -  multiply by 4*PI*G! or scaled
-  load1(gdof_cm1) = load1(gdof_cm1) + 4.0_CUSTOM_REAL*load_cm
-  load1(0) = 0.0_CUSTOM_REAL
+  gravload1(gdof_cm1(:)) = gravload1(gdof_cm1(:)) + 4.0_CUSTOM_REAL * load_cm(:)
+  gravload1(0) = 0.0_CUSTOM_REAL
 
   end subroutine compute_grav_kl2_load
 
@@ -655,7 +652,7 @@ contains
   use specfem_par_outercore, only: displ_outer_core,ibool_outer_core
   use specfem_par_innercore, only: displ_inner_core,ibool_inner_core
 
-  use specfem_par_full_gravity, only: load, &
+  use specfem_par_full_gravity, only: gravload, &
     storederiv_cm,storerhojw_cm,gdof_cm, &
     storederiv_oc,storerhojw_oc,gdof_oc, &
     storederiv_ic,storerhojw_ic,gdof_ic, &
@@ -663,12 +660,11 @@ contains
 
   implicit none
   real(kind=CUSTOM_REAL) :: time
-  real(kind=CUSTOM_REAL) :: load_ic(NGLOB_INNER_CORE),load_oc(NGLOB_OUTER_CORE), &
-  load_cm(NGLOB_CRUST_MANTLE)
+  real(kind=CUSTOM_REAL) :: load_ic(NGLOB_INNER_CORE),load_oc(NGLOB_OUTER_CORE),load_cm(NGLOB_CRUST_MANTLE)
 
   !NGLLCUBE = NGLLX*NGLLY*NGLLZ
 
-  load = 0.0_CUSTOM_REAL
+  gravload(:) = 0.0_CUSTOM_REAL
 
   ! inner core
   !call poisson_load_solid(IREGION_INNER_CORE,nspec_inner_core, &
@@ -710,18 +706,18 @@ contains
 
   ! assemble across the regions but not MPI
   ! crust_mantle
-  load(gdof_cm) = load(gdof_cm) + load_cm
+  gravload(gdof_cm(:)) = gravload(gdof_cm(:)) + load_cm(:)
 
   ! outer core
-  load(gdof_oc) = load(gdof_oc) + load_oc
+  gravload(gdof_oc(:)) = gravload(gdof_oc(:)) + load_oc(:)
 
   ! inner core
-  load(gdof_ic) = load(gdof_ic) + load_ic
+  gravload(gdof_ic(:)) = gravload(gdof_ic(:)) + load_ic(:)
 
   ! infinite
   ! there no contribution from infinite region
 
-  load(0) = 0.0_CUSTOM_REAL
+  gravload(0) = 0.0_CUSTOM_REAL
 
   end subroutine compute_poisson_load
 
@@ -744,7 +740,7 @@ contains
   use specfem_par_outercore, only: displ_outer_core,ibool_outer_core
   use specfem_par_innercore, only: displ_inner_core,ibool_inner_core
 
-  use specfem_par_full_gravity, only: load1,nnode_ic1,nnode_oc1,nnode_cm1, &
+  use specfem_par_full_gravity, only: gravload1,nnode_ic1,nnode_oc1,nnode_cm1, &
     storederiv_cm1,storerhojw_cm1,gdof_cm1,inode_elmt_cm1, &
     storederiv_oc1,storerhojw_oc1,gdof_oc1,inode_elmt_oc1, &
     storederiv_ic1,storerhojw_ic1,gdof_ic1,inode_elmt_ic1, &
@@ -752,12 +748,10 @@ contains
 
   implicit none
   real(kind=CUSTOM_REAL) :: time
-  real(kind=CUSTOM_REAL) :: load_ic(nnode_ic1),load_oc(nnode_oc1), &
-  load_cm(nnode_cm1)
+  real(kind=CUSTOM_REAL) :: load_ic(nnode_ic1),load_oc(nnode_oc1),load_cm(nnode_cm1)
 
-  !note: NGLLCUBE = NGLLX*NGLLY*NGLLZ
+  gravload1(:) = 0.0_CUSTOM_REAL
 
-  load1 = 0.0_CUSTOM_REAL
   ! inner core
   call poisson_load_solid3FAST(IREGION_INNER_CORE,nspec_inner_core, &
                                nglob_inner_core,ibool_inner_core,storederiv_ic1,storerhojw_ic1, &
@@ -782,15 +776,15 @@ contains
 
   ! assemble across the regions but not MPI
   ! crust_mantle
-  load1(gdof_cm1) = load1(gdof_cm1) + load_cm
+  gravload1(gdof_cm1(:)) = gravload1(gdof_cm1(:)) + load_cm(:)
 
   ! outer core
-  load1(gdof_oc1) = load1(gdof_oc1) + load_oc
+  gravload1(gdof_oc1(:)) = gravload1(gdof_oc1(:)) + load_oc(:)
 
   ! inner core
-  load1(gdof_ic1) = load1(gdof_ic1) + load_ic
+  gravload1(gdof_ic1(:)) = gravload1(gdof_ic1(:)) + load_ic(:)
 
-  load1(0) = 0.0_CUSTOM_REAL
+  gravload1(0) = 0.0_CUSTOM_REAL
 
   end subroutine compute_poisson_load3
 
@@ -813,7 +807,7 @@ contains
   use specfem_par_outercore, only: b_displ_outer_core,ibool_outer_core
   use specfem_par_innercore, only: b_displ_inner_core,ibool_inner_core
 
-  use specfem_par_full_gravity, only: b_load1,nnode_ic1,nnode_oc1,nnode_cm1, &
+  use specfem_par_full_gravity, only: b_gravload1,nnode_ic1,nnode_oc1,nnode_cm1, &
     storederiv_cm1,storerhojw_cm1,gdof_cm1,inode_elmt_cm1, &
     storederiv_oc1,storerhojw_oc1,gdof_oc1,inode_elmt_oc1, &
     storederiv_ic1,storerhojw_ic1,gdof_ic1,inode_elmt_ic1, &
@@ -822,12 +816,9 @@ contains
   implicit none
   real(kind=CUSTOM_REAL) :: time
   ! local loads
-  real(kind=CUSTOM_REAL) :: b_load_ic(nnode_ic1),b_load_oc(nnode_oc1), &
-  b_load_cm(nnode_cm1)
+  real(kind=CUSTOM_REAL) :: b_load_ic(nnode_ic1),b_load_oc(nnode_oc1),b_load_cm(nnode_cm1)
 
-  !note: NGLLCUBE = NGLLX*NGLLY*NGLLZ
-
-  b_load1 = 0.0_CUSTOM_REAL
+  b_gravload1(:) = 0.0_CUSTOM_REAL
 
   ! inner core
   call poisson_load_solid3FAST(IREGION_INNER_CORE,nspec_inner_core, &
@@ -856,15 +847,15 @@ contains
 
   ! assemble across the regions but not MPI
   ! crust_mantle
-  b_load1(gdof_cm1) = b_load1(gdof_cm1) + b_load_cm
+  b_gravload1(gdof_cm1(:)) = b_gravload1(gdof_cm1(:)) + b_load_cm(:)
 
   ! outer core
-  b_load1(gdof_oc1) = b_load1(gdof_oc1) + b_load_oc
+  b_gravload1(gdof_oc1(:)) = b_gravload1(gdof_oc1(:)) + b_load_oc(:)
 
   ! inner core
-  b_load1(gdof_ic1) = b_load1(gdof_ic1) + b_load_ic
+  b_gravload1(gdof_ic1(:)) = b_gravload1(gdof_ic1(:)) + b_load_ic(:)
 
-  b_load1(0) = 0.0_CUSTOM_REAL
+  b_gravload1(0) = 0.0_CUSTOM_REAL
 
   end subroutine compute_backward_poisson_load3
 
@@ -931,7 +922,7 @@ contains
                       lagrange_gll,dlagrange_gll)
 
   !TODO: can store deriv, and detjac*gll_weights(i) for speeding up
-  load = 0.0_CUSTOM_REAL
+  load(:) = 0.0_CUSTOM_REAL
   do i_elmt = 1,nelmt
     ! suppress fictitious elements in central cube
     if (iregion == IREGION_INNER_CORE) then
@@ -951,23 +942,23 @@ contains
     coord(:,2) = ystore(ignod)
     coord(:,3) = zstore(ignod)
 
-    egdof = reshape(ibool(:,:,:,i_elmt),(/NGLLCUBE/))
-    rho = reshape(rhostore(:,:,:,i_elmt),(/NGLLCUBE/))
-    edisp = disp(:,egdof)
+    egdof(:) = reshape(ibool(:,:,:,i_elmt),(/NGLLCUBE/))
+    rho(:) = reshape(rhostore(:,:,:,i_elmt),(/NGLLCUBE/))
+    edisp(:,:) = disp(:,egdof(:))
 
-    eload = zero
+    eload(:) = zero
     do i = 1,NGLLCUBE
       jac = real(matmul(dshape_hex8(:,:,i),coord),kind=CUSTOM_REAL) !jac = matmul(der,coord)
       detjac = determinant(jac)
       call invert(jac)
       deriv = real(matmul(jac,dlagrange_gll(:,i,:)),kind=CUSTOM_REAL)
-      eload = eload + real(rho(i)*dotmat(ndim,NGLLCUBE,deriv,edisp)*detjac*gll_weights(i),kind=CUSTOM_REAL)
+      eload(:) = eload(:) + real(rho(i)*dotmat(ndim,NGLLCUBE,deriv,edisp)*detjac*gll_weights(i),kind=CUSTOM_REAL)
     enddo
-    load(egdof) = load(egdof) + eload
+    load(egdof(:)) = load(egdof(:)) + eload(:)
   enddo
 
   ! multiply by 4*PI*G! or scaled
-  load = -4.0_CUSTOM_REAL*load
+  load(:) = -4.0_CUSTOM_REAL * load(:)
 
   end subroutine poisson_load_solid
 
@@ -1028,7 +1019,7 @@ contains
   !dnx=NGLLX-1; dny=NGLLY-1; dnz=NGLLZ-1
 
   !TODO: can store deriv, and detjac*gll_weights(i) for speeding up
-  load = 0.0_CUSTOM_REAL
+  load(:) = 0.0_CUSTOM_REAL
   do i_elmt = 1,nelmt
     ! suppress fictitious elements in central cube
     if (iregion == IREGION_INNER_CORE) then
@@ -1048,24 +1039,24 @@ contains
     coord(:,2) = ystore(ignod)
     coord(:,3) = zstore(ignod)
 
-    egdof1 = reshape(ibool(1:NGLLX:2,1:NGLLY:2,1:NGLLZ:2,i_elmt),(/NGLLCUBE_INF/))
-    egdof = ibool1(:,i_elmt)
-    rho = reshape(rhostore(1:NGLLX:2,1:NGLLY:2,1:NGLLZ:2,i_elmt),(/NGLLCUBE_INF/))
-    edisp = disp(:,egdof1)
+    egdof1(:) = reshape(ibool(1:NGLLX:2,1:NGLLY:2,1:NGLLZ:2,i_elmt),(/NGLLCUBE_INF/))
+    egdof(:) = ibool1(:,i_elmt)
+    rho(:) = reshape(rhostore(1:NGLLX:2,1:NGLLY:2,1:NGLLZ:2,i_elmt),(/NGLLCUBE_INF/))
+    edisp(:,:) = disp(:,egdof1(:))
 
-    eload = zero
+    eload(:) = zero
     do i = 1,NGLLCUBE_INF
       jac = real(matmul(dshape_hex8(:,:,i),coord),kind=CUSTOM_REAL) !jac = matmul(der,coord)
       detjac = determinant(jac)
       call invert(jac)
       deriv = real(matmul(jac,dlagrange_gll(:,i,:)),kind=CUSTOM_REAL)
-      eload = eload + real(rho(i)*dotmat(ndim,NGLLCUBE_INF,deriv,edisp)*detjac*gll_weights(i),kind=CUSTOM_REAL)
+      eload(:) = eload(:) + real(rho(i)*dotmat(ndim,NGLLCUBE_INF,deriv,edisp)*detjac*gll_weights(i),kind=CUSTOM_REAL)
     enddo
-    load(egdof) = load(egdof) + eload
+    load(egdof(:)) = load(egdof(:)) + eload(:)
   enddo
 
   ! multiply by 4*PI*G! or scaled
-  load = -4.0_CUSTOM_REAL*load
+  load(:) = -4.0_CUSTOM_REAL * load(:)
 
   end subroutine poisson_load_solid3
 
@@ -1100,26 +1091,26 @@ contains
   real(kind=CUSTOM_REAL) :: deriv(ndim,NGLLCUBE),edisp(NDIM,NGLLCUBE),eload(NGLLCUBE)
   real(kind=CUSTOM_REAL),parameter :: zero=0.0_CUSTOM_REAL
 
-  load = zero
+  load(:) = zero
   do i_elmt = 1,nelmt
     ! suppress fictitious elements in central cube
     if (iregion == IREGION_INNER_CORE) then
       if (idoubling_inner_core(i_elmt) == IFLAG_IN_FICTITIOUS_CUBE)cycle
     endif
 
-    egdof = reshape(ibool(:,:,:,i_elmt),(/NGLLCUBE/))
-    edisp = disp(:,egdof)
+    egdof(:) = reshape(ibool(:,:,:,i_elmt),(/NGLLCUBE/))
+    edisp(:,:) = disp(:,egdof(:))
 
-    eload = zero
+    eload(:) = zero
     do i = 1,NGLLCUBE
       deriv = storederiv(:,:,i,i_elmt)
-      eload = eload + storerhojw(i,i_elmt)*matmul(transpose(deriv),edisp(:,i))
+      eload(:) = eload(:) + storerhojw(i,i_elmt)*matmul(transpose(deriv),edisp(:,i))
     enddo
-    load(egdof) = load(egdof) + eload
+    load(egdof(:)) = load(egdof(:)) + eload(:)
   enddo
 
   ! multiply by 4*PI*G! or scaled
-  load = -4.0_CUSTOM_REAL*load
+  load(:) = -4.0_CUSTOM_REAL * load(:)
 
   end subroutine poisson_load_solidFAST
 
@@ -1156,29 +1147,29 @@ contains
   real(kind=CUSTOM_REAL) :: divs,deriv(ndim,NGLLCUBE_INF),edisp(NDIM,NGLLCUBE_INF),eload(NGLLCUBE_INF)
   real(kind=CUSTOM_REAL),parameter :: zero=0.0_CUSTOM_REAL
 
-  load = zero
+  load(:) = zero
   do i_elmt = 1,nelmt
     ! suppress fictitious elements in central cube
     if (iregion == IREGION_INNER_CORE) then
       if (idoubling_inner_core(i_elmt) == IFLAG_IN_FICTITIOUS_CUBE)cycle
     endif
 
-    egdof1 = reshape(ibool(1:NGLLX:2,1:NGLLY:2,1:NGLLZ:2,i_elmt),(/NGLLCUBE_INF/))
-    egdof = ibool1(:,i_elmt)
-    edisp = disp(:,egdof1)
+    egdof1(:) = reshape(ibool(1:NGLLX:2,1:NGLLY:2,1:NGLLZ:2,i_elmt),(/NGLLCUBE_INF/))
+    egdof(:) = ibool1(:,i_elmt)
+    edisp(:,:) = disp(:,egdof1(:))
 
-    eload = zero
+    eload(:) = zero
     do i = 1,NGLLCUBE_INF
       deriv = storederiv(:,:,i,i_elmt)
       divs = dot_product(deriv(1,:),edisp(1,:)) + dot_product(deriv(2,:),edisp(2,:)) + &
              dot_product(deriv(3,:),edisp(3,:)) ! rho should be included here
-      eload = eload + real(storerhojw(i,i_elmt)*divs*lagrange_gll1(i,:),kind=CUSTOM_REAL)
+      eload(:) = eload(:) + real(storerhojw(i,i_elmt)*divs*lagrange_gll1(i,:),kind=CUSTOM_REAL)
     enddo
-    load(egdof) = load(egdof) + eload
+    load(egdof(:)) = load(egdof(:)) + eload(:)
   enddo
 
   ! multiply by 4*PI*G! or scaled
-  load = -4.0_CUSTOM_REAL*load
+  load(:) = -4.0_CUSTOM_REAL * load(:)
 
   end subroutine poisson_load_solid3FAST1
 
@@ -1212,27 +1203,27 @@ contains
   real(kind=CUSTOM_REAL) :: deriv(ndim,NGLLCUBE_INF),edisp(NDIM,NGLLCUBE_INF),eload(NGLLCUBE_INF)
   real(kind=CUSTOM_REAL),parameter :: zero=0.0_CUSTOM_REAL
 
-  load = zero
+  load(:) = zero
   do i_elmt = 1,nelmt
     ! suppress fictitious elements in central cube
     if (iregion == IREGION_INNER_CORE) then
       if (idoubling_inner_core(i_elmt) == IFLAG_IN_FICTITIOUS_CUBE)cycle
     endif
 
-    egdof1 = reshape(ibool(1:NGLLX:2,1:NGLLY:2,1:NGLLZ:2,i_elmt),(/NGLLCUBE_INF/))
-    egdof = ibool1(:,i_elmt)
-    edisp = disp(:,egdof1)
+    egdof1(:) = reshape(ibool(1:NGLLX:2,1:NGLLY:2,1:NGLLZ:2,i_elmt),(/NGLLCUBE_INF/))
+    egdof(:) = ibool1(:,i_elmt)
+    edisp(:,:) = disp(:,egdof1)
 
-    eload = zero
+    eload(:) = zero
     do i = 1,NGLLCUBE_INF
       deriv = storederiv(:,:,i,i_elmt)
-      eload = eload + storerhojw(i,i_elmt)*matmul(transpose(deriv),edisp(:,i))
+      eload(:) = eload(:) + storerhojw(i,i_elmt)*matmul(transpose(deriv),edisp(:,i))
     enddo
-    load(egdof) = load(egdof) + eload
+    load(egdof(:)) = load(egdof(:)) + eload(:)
   enddo
 
   ! multiply by 4*PI*G! or scaled
-  load = -4.0_CUSTOM_REAL*load
+  load(:) = -4.0_CUSTOM_REAL * load(:)
 
   end subroutine poisson_load_solid3FAST
 
@@ -1286,7 +1277,7 @@ contains
   real(kind=CUSTOM_REAL) :: dpotentialdxl,dpotentialdyl,dpotentialdzl
   real(kind=CUSTOM_REAL) :: tempx1l,tempx2l,tempx3l,sum_terms
 
-  load = 0.0_CUSTOM_REAL
+  load(:) = 0.0_CUSTOM_REAL
 
   do ispec = 1,NSPEC
     ! only compute element which belong to current phase (inner or outer elements)
@@ -1390,7 +1381,7 @@ contains
 
   enddo ! ispec = 1,NSPEC spectral element loop
 
-  load = -4.0_CUSTOM_REAL*load
+  load(:) = -4.0_CUSTOM_REAL * load(:)
 
   end subroutine poisson_load_fluid
 
@@ -1443,7 +1434,7 @@ contains
   real(kind=CUSTOM_REAL) :: dpotentialdxl,dpotentialdyl,dpotentialdzl
   real(kind=CUSTOM_REAL) :: tempx1l,tempx2l,tempx3l,sum_terms
 
-  load = 0.0_CUSTOM_REAL
+  load(:) = 0.0_CUSTOM_REAL
 
   do ispec = 1,NSPEC
     ! only compute element which belong to current phase (inner or outer elements)
@@ -1547,7 +1538,7 @@ contains
 
   enddo ! ispec = 1,NSPEC spectral element loop
 
-  load = -4.0_CUSTOM_REAL*load
+  load(:) = -4.0_CUSTOM_REAL * load(:)
 
   end subroutine poisson_load_fluid3
 
@@ -1623,7 +1614,7 @@ contains
   !dnx=NGLLX-1; dny=NGLLY-1; dnz=NGLLZ-1
 
   !TODO: can store deriv, and detjac*gll_weights(i) for speeding up
-  load = zero
+  load(:) = zero
   do i_elmt = 1,nelmt
     !ignod=reshape(ibool(1:NGLLX:dnx,1:NGLLY:dny,1:NGLLZ:dnz,i_elmt),(/ngnod/)) ! this is wrong
     ! EXODUS order NOT indicial order
@@ -1678,11 +1669,11 @@ contains
     enddo
 
     ! integration
-    eload = zero
+    eload(:) = zero
     do i = 1,NGLLCUBE
-      eload = eload + real(rho(i)*dotmat(ndim,NGLLCUBE,deriv(:,:,i),edisp)*detjac(i)*gll_weights(i),kind=CUSTOM_REAL)
+      eload(:) = eload(:) + real(rho(i)*dotmat(ndim,NGLLCUBE,deriv(:,:,i),edisp)*detjac(i)*gll_weights(i),kind=CUSTOM_REAL)
     enddo
-    load(egdof) = load(egdof) + eload
+    load(egdof(:)) = load(egdof(:)) + eload(:)
 
     ! update rotation term with Euler scheme
     if (ROTATION_VAL) then
@@ -1694,7 +1685,7 @@ contains
   enddo
 
   ! multiply by 4*PI*G! or scaled
-  load = -4.0_CUSTOM_REAL*load
+  load(:) = -4.0_CUSTOM_REAL * load(:)
 
   end subroutine poisson_load_fluidNEW
 
@@ -1758,7 +1749,7 @@ contains
   !dnx=NGLLX-1; dny=NGLLY-1; dnz=NGLLZ-1
 
   !TODO: can store deriv, and detjac*gll_weights(i) for speeding up
-  load = zero
+  load(:) = zero
   do i_elmt = 1,nelmt
     !ignod=reshape(ibool(1:NGLLX:dnx,1:NGLLY:dny,1:NGLLZ:dnz,i_elmt),(/ngnod/))
     ! this is wrong
@@ -1815,11 +1806,11 @@ contains
     enddo
 
     ! integration
-    eload = zero
+    eload(:) = zero
     do i = 1,NGLLCUBE_INF
-      eload = eload + real(rho(i)*dotmat(ndim,NGLLCUBE_INF,deriv(:,:,i),edisp)*detjac(i)*gll_weights(i),kind=CUSTOM_REAL)
+      eload(:) = eload(:) + real(rho(i)*dotmat(ndim,NGLLCUBE_INF,deriv(:,:,i),edisp)*detjac(i)*gll_weights(i),kind=CUSTOM_REAL)
     enddo
-    load(egdof) = load(egdof) + eload
+    load(egdof(:)) = load(egdof(:)) + eload(:)
 
     ! update rotation term with Euler scheme
     if (ROTATION_VAL) then
@@ -1831,7 +1822,7 @@ contains
   enddo
 
   ! multiply by 4*PI*G! or scaled
-  load = -4.0_CUSTOM_REAL*load
+  load(:) = -4.0_CUSTOM_REAL * load(:)
 
   end subroutine poisson_load_fluidNEW3
 
@@ -1875,7 +1866,7 @@ contains
   allocate(deriv(ndim,NGLLCUBE,NGLLCUBE))
   deriv(:,:,:) = 0.0_CUSTOM_REAL
 
-  load = zero
+  load(:) = zero
   do i_elmt = 1,nelmt
     egdof = reshape(ibool(:,:,:,i_elmt),(/NGLLCUBE/))
     echi(:,1) = dispf(1,egdof)
@@ -1913,11 +1904,11 @@ contains
     enddo
 
     ! integration
-    eload = zero
+    eload(:) = zero
     do i = 1,NGLLCUBE
-      eload = eload + storerhojw(i,i_elmt)*matmul(transpose(deriv(:,:,i)),edisp(:,i))
+      eload(:) = eload(:) + storerhojw(i,i_elmt)*matmul(transpose(deriv(:,:,i)),edisp(:,i))
     enddo
-    load(egdof) = load(egdof) + eload
+    load(egdof(:)) = load(egdof(:)) + eload(:)
 
     ! update rotation term with Euler scheme
     if (ROTATION_VAL) then
@@ -1929,7 +1920,7 @@ contains
   enddo !i_elmt = 1,nelmt
 
   ! multiply by 4*PI*G! or scaled
-  load = -4.0_CUSTOM_REAL*load
+  load(:) = -4.0_CUSTOM_REAL * load(:)
 
   end subroutine poisson_load_fluidNEWFAST
 
@@ -1971,7 +1962,7 @@ contains
   !call gll_quadrature(ndim,NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF,gll_points,gll_weights, &
   !                    lagrange_gll,dlagrange_gll)
 
-  load = zero
+  load(:) = zero
   do i_elmt = 1,nelmt
     egdof1 = reshape(ibool(1:NGLLX:2,1:NGLLY:2,1:NGLLZ:2,i_elmt),(/NGLLCUBE_INF/))
     egdof = ibool1(:,i_elmt)
@@ -2010,11 +2001,11 @@ contains
     enddo
 
     ! integration
-    eload = zero
+    eload(:) = zero
     do i = 1,NGLLCUBE_INF
-      eload = eload+storerhojw(i,i_elmt)*matmul(transpose(deriv(:,:,i)),edisp(:,i))
+      eload(:) = eload(:) + storerhojw(i,i_elmt)*matmul(transpose(deriv(:,:,i)),edisp(:,i))
     enddo
-    load(egdof) = load(egdof) + eload
+    load(egdof(:)) = load(egdof(:)) + eload(:)
 
     ! update rotation term with Euler scheme
     if (ROTATION_VAL) then
@@ -2026,7 +2017,7 @@ contains
   enddo !i_elmt = 1,nelmt
 
   ! multiply by 4*PI*G! or scaled
-  load = -4.0_CUSTOM_REAL*load
+  load(:) = -4.0_CUSTOM_REAL * load(:)
 
   end subroutine poisson_load_fluidNEW3FAST
 
@@ -2049,7 +2040,7 @@ contains
 
   integer,intent(in) :: iregion,nelmt,nnode
   integer,intent(in) :: ibool(NGLLX,NGLLY,NGLLZ,nelmt)
-  real(kind=CUSTOM_REAL),intent(in) ::  xstore(nnode),ystore(nnode),zstore(nnode)
+  real(kind=CUSTOM_REAL),intent(in) :: xstore(nnode),ystore(nnode),zstore(nnode)
   real(kind=CUSTOM_REAL),intent(in) :: rhostore(NGLLX,NGLLY,NGLLZ,nelmt)
   real(kind=CUSTOM_REAL),intent(out) :: load(nnode)
 
@@ -2057,7 +2048,7 @@ contains
 
   integer :: i,i_elmt
   integer :: egdof(NGLLCUBE),ignod(ngnod)
-  real(kind=CUSTOM_REAL) :: detjac,eld(NGLLCUBE),rho(NGLLCUBE)
+  real(kind=CUSTOM_REAL) :: detjac,eload(NGLLCUBE),rho(NGLLCUBE)
 
   real(kind=kdble),parameter :: jalpha=0.0_kdble,jbeta=0.0_kdble,zero=0.0_kdble
   real(kind=kdble) :: xigll(NGLLX),wxgll(NGLLX),etagll(NGLLY),wygll(NGLLY), &
@@ -2091,7 +2082,7 @@ contains
   !dnx=NGLLX-1; dny=NGLLY-1; dnz=NGLLZ-1
 
   !TODO: can store deriv, and detjac*gll_weights(i) for speeding up
-  load = zero
+  load(:) = zero
   do i_elmt = 1,nelmt
     ! suppress fictitious elements in central cube
     if (iregion == IREGION_INNER_CORE) then
@@ -2114,17 +2105,17 @@ contains
     egdof = reshape(ibool(:,:,:,i_elmt),(/NGLLCUBE/))
     rho = reshape(rhostore(:,:,:,i_elmt),(/NGLLCUBE/))
 
-    eld = zero
+    eload(:) = zero
     do i = 1,NGLLCUBE
       jac = real(matmul(dshape_hex8(:,:,i),coord),kind=CUSTOM_REAL) !jac = matmul(der,coord)
       detjac = determinant(jac)
-      eld = eld + real(rho(i)*lagrange_gll(i,:)*detjac*gll_weights(i),kind=CUSTOM_REAL)
+      eload(:) = eload(:) + real(rho(i)*lagrange_gll(i,:)*detjac*gll_weights(i),kind=CUSTOM_REAL)
     enddo
-    load(egdof) = load(egdof) + eld
+    load(egdof(:)) = load(egdof(:)) + eload(:)
   enddo
 
   ! multiply by 4*PI*G! or scaled
-  load = 4.0_CUSTOM_REAL*load
+  load(:) = 4.0_CUSTOM_REAL * load(:)
 
   end subroutine poisson_load_onlyrho
 
@@ -2156,7 +2147,7 @@ contains
 
   integer :: i,i_elmt
   integer :: egdof(NGLLCUBE_INF),ignod(ngnod)
-  real(kind=CUSTOM_REAL) :: detjac,eld(NGLLCUBE_INF),rho(NGLLCUBE_INF)
+  real(kind=CUSTOM_REAL) :: detjac,eload(NGLLCUBE_INF),rho(NGLLCUBE_INF)
 
   real(kind=kdble),parameter :: jalpha=0.0_kdble,jbeta=0.0_kdble,zero=0.0_kdble
   real(kind=kdble) :: xigll(NGLLX_INF),wxgll(NGLLX_INF),etagll(NGLLY_INF),wygll(NGLLY_INF), &
@@ -2182,7 +2173,7 @@ contains
   !dnx=NGLLX-1; dny=NGLLY-1; dnz=NGLLZ-1
 
   !TODO: can store deriv, and detjac*gll_weights(i) for speeding up
-  load = zero
+  load(:) = zero
   do i_elmt = 1,nelmt
     ! suppress fictitious elements in central cube
     if (iregion == IREGION_INNER_CORE) then
@@ -2205,17 +2196,17 @@ contains
     egdof = ibool1(:,i_elmt) !reshape(ibool1(:,:,:,i_elmt),(/NGLLCUBE_INF/))
     rho = reshape(rhostore(1:NGLLX:2,1:NGLLY:2,1:NGLLZ:2,i_elmt),(/NGLLCUBE_INF/)) !WARNING: ONLY for 5 to 3 GLL extraction
 
-    eld = zero
+    eload(:) = zero
     do i = 1,NGLLCUBE_INF
       jac = real(matmul(dshape_hex8(:,:,i),coord),kind=CUSTOM_REAL) !jac = matmul(der,coord)
       detjac = determinant(jac)
-      eld = eld + real(rho(i)*lagrange_gll(i,:)*detjac*gll_weights(i),kind=CUSTOM_REAL)
+      eload(:) = eload(:) + real(rho(i)*lagrange_gll(i,:)*detjac*gll_weights(i),kind=CUSTOM_REAL)
     enddo
-    load(egdof) = load(egdof) + eld
+    load(egdof(:)) = load(egdof(:)) + eload(:)
   enddo
 
   ! multiply by 4*PI*G! or scaled
-  load = 4.0_CUSTOM_REAL*load
+  load(:) = 4.0_CUSTOM_REAL * load(:)
 
   end subroutine poisson_load_onlyrho3
 
@@ -2223,8 +2214,7 @@ contains
 !===========================================
 !
 
-  subroutine poisson_load_onlyrhoFAST(iregion,nelmt,nnode, &
-                                      ibool,storerhojw,load)
+  subroutine poisson_load_onlyrhoFAST(iregion,nelmt,nnode,ibool,storerhojw,load)
 
   use constants, only: IFLAG_IN_FICTITIOUS_CUBE,IREGION_INNER_CORE, &
     NGLLX,NGLLY,NGLLZ,NGLLCUBE
@@ -2245,7 +2235,7 @@ contains
 
   integer :: i,i_elmt
   integer :: egdof(NGLLCUBE)
-  real(kind=CUSTOM_REAL) :: eld(NGLLCUBE)
+  real(kind=CUSTOM_REAL) :: eload(NGLLCUBE)
 
   real(kind=kdble) :: gll_weights(NGLLCUBE),gll_points(ndim,NGLLCUBE)
 
@@ -2265,23 +2255,23 @@ contains
                       lagrange_gll,dlagrange_gll)
 
   !TODO: can store deriv, and detjac*gll_weights(i) for speeding up
-  load = zero
+  load(:) = zero
   do i_elmt = 1,nelmt
     ! suppress fictitious elements in central cube
     if (iregion == IREGION_INNER_CORE) then
       if (idoubling_inner_core(i_elmt) == IFLAG_IN_FICTITIOUS_CUBE) cycle
     endif
 
-    egdof = reshape(ibool(:,:,:,i_elmt),(/NGLLCUBE/))
-    eld = zero
+    egdof(:) = reshape(ibool(:,:,:,i_elmt),(/NGLLCUBE/))
+    eload(:) = zero
     do i = 1,NGLLCUBE
-      eld = eld + real(storerhojw(i,i_elmt)*lagrange_gll(i,:),kind=CUSTOM_REAL)
+      eload(:) = eload(:) + real(storerhojw(i,i_elmt)*lagrange_gll(i,:),kind=CUSTOM_REAL)
     enddo
-    load(egdof) = load(egdof) + eld
+    load(egdof(:)) = load(egdof(:)) + eload(:)
   enddo
 
   ! multiply by 4*PI*G! or scaled
-  load = 4.0_CUSTOM_REAL*load
+  load(:) = 4.0_CUSTOM_REAL * load(:)
 
   end subroutine poisson_load_onlyrhoFAST
 
@@ -2289,8 +2279,7 @@ contains
 !===========================================
 !
 
-  subroutine poisson_load_onlyrhoFAST3(iregion,nelmt, &
-                                       storerhojw,nnode1,ibool1,load)
+  subroutine poisson_load_onlyrhoFAST3(iregion,nelmt,storerhojw,nnode1,ibool1,load)
 
   use constants, only: IFLAG_IN_FICTITIOUS_CUBE,IREGION_INNER_CORE, &
     NGLLX,NGLLY,NGLLZ,NGLLCUBE, &
@@ -2312,7 +2301,7 @@ contains
 
   integer :: i,i_elmt
   integer :: egdof(NGLLCUBE_INF)
-  real(kind=CUSTOM_REAL) :: eld(NGLLCUBE_INF)
+  real(kind=CUSTOM_REAL) :: eload(NGLLCUBE_INF)
 
   real(kind=kdble) :: gll_weights(NGLLCUBE_INF),gll_points(ndim,NGLLCUBE_INF),lagrange_gll(NGLLCUBE_INF,NGLLCUBE_INF), &
                       dlagrange_gll(ndim,NGLLCUBE_INF,NGLLCUBE_INF)
@@ -2325,7 +2314,7 @@ contains
 
   !TODO: can store deriv, and detjac*gll_weights(i) for speeding up
 
-  load = zero
+  load(:) = zero
   do i_elmt = 1,nelmt
     ! suppress fictitious elements in central cube
     if (iregion == IREGION_INNER_CORE) then
@@ -2333,15 +2322,15 @@ contains
     endif
 
     egdof = ibool1(:,i_elmt) !reshape(ibool1(:,:,:,i_elmt),(/NGLLCUBE_INF/))
-    eld = zero
+    eload(:) = zero
     do i = 1,NGLLCUBE_INF
-      eld = eld + real(storerhojw(i,i_elmt)*lagrange_gll(i,:),kind=CUSTOM_REAL)
+      eload(:) = eload(:) + real(storerhojw(i,i_elmt)*lagrange_gll(i,:),kind=CUSTOM_REAL)
     enddo
-    load(egdof) = load(egdof) + eld
+    load(egdof(:)) = load(egdof(:)) + eload(:)
   enddo
 
   ! multiply by 4*PI*G! or scaled
-  load = 4.0_CUSTOM_REAL*load
+  load(:) = 4.0_CUSTOM_REAL * load(:)
 
   end subroutine poisson_load_onlyrhoFAST3
 
