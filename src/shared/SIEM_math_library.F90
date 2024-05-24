@@ -138,8 +138,6 @@ contains
     enddo
   endif
 
-  return
-
   end subroutine invert
 
   !=======================================================
@@ -371,8 +369,6 @@ contains
     IGOEST (IRNG) = NUNI
   enddo
 
-  return
-
   end subroutine i_uniinv
 
   !=======================================================
@@ -386,8 +382,6 @@ contains
   integer :: I_nl
 
   I_nl = XVAL - 1
-
-  return
 
   end function i_nearless
 
@@ -726,38 +720,39 @@ contains
   enddo
 
   ! check the shape functions and their derivatives
-
   do i = 1,ngll
-        sum_dshapexi = zero
-        sum_dshapeeta = zero
-        sum_dshapezeta = zero
+    sum_dshapexi = zero
+    sum_dshapeeta = zero
+    sum_dshapezeta = zero
 
-        do i_gnod = 1,ngnod
-          sum_dshapexi = sum_dshapexi + dshape_hex8(1,i_gnod,i)
-          sum_dshapeeta = sum_dshapeeta + dshape_hex8(2,i_gnod,i)
-          sum_dshapezeta = sum_dshapezeta + dshape_hex8(3,i_gnod,i)
-          !print *,sum_dshapexi,sum_dshapeeta,sum_dshapezeta
-        enddo
+    do i_gnod = 1,ngnod
+      sum_dshapexi = sum_dshapexi + dshape_hex8(1,i_gnod,i)
+      sum_dshapeeta = sum_dshapeeta + dshape_hex8(2,i_gnod,i)
+      sum_dshapezeta = sum_dshapezeta + dshape_hex8(3,i_gnod,i)
+      !print *,sum_dshapexi,sum_dshapeeta,sum_dshapezeta
+    enddo
 
-        ! sum of derivative of shape functions should be zero
-        if (abs(sum_dshapexi) > zerotol) then
-          write(*,*) 'ERROR: derivative xi shape functions!'
-          stop
-        endif
-        if (abs(sum_dshapeeta) > zerotol) then
-          write(*,*) 'ERROR: derivative eta shape functions!'
-          stop
-        endif
-        if (abs(sum_dshapezeta) > zerotol) then
-          write(*,*) 'ERROR: derivative gamma shape functions!'
-          print *,ngllx,nglly,ngllz,sum_dshapexi,sum_dshapeeta,sum_dshapezeta,zerotol
-          print *,xigll
-          print *,etagll
-          print *,zetagll
-          if (all(xigll == etagll))print *,'yes0'
-          if (all(xigll == zetagll))print *,'yes1'
-          stop
-        endif
+    ! sum of derivative of shape functions should be zero
+    if (abs(sum_dshapexi) > zerotol) then
+      write(*,*) 'ERROR: derivative xi shape functions!'
+      stop
+    endif
+
+    if (abs(sum_dshapeeta) > zerotol) then
+      write(*,*) 'ERROR: derivative eta shape functions!'
+      stop
+    endif
+
+    if (abs(sum_dshapezeta) > zerotol) then
+      write(*,*) 'ERROR: derivative gamma shape functions!'
+      print *,ngllx,nglly,ngllz,sum_dshapexi,sum_dshapeeta,sum_dshapezeta,zerotol
+      print *,xigll
+      print *,etagll
+      print *,zetagll
+      if (all(xigll == etagll))print *,'yes0'
+      if (all(xigll == zetagll))print *,'yes1'
+      stop
+    endif
   enddo
 
   end subroutine dshape_function_hex8
@@ -880,6 +875,7 @@ contains
   real(kind=kdble),dimension(ndim,ngll),intent(out) :: gll_points
   real(kind=kdble),dimension(ngll,ngll),intent(out) :: lagrange_gll
   real(kind=kdble),dimension(ndim,ngll,ngll),intent(out) :: dlagrange_gll
+
   !real(kind=kdble),dimension(ngll,ngll) :: flagrange_gll
   !real(kind=kdble),dimension(ndim,ngll,ngll) ::fdlagrange_gll
   real(kind=kdble),parameter :: zero=0.0_kdble,one=1.0_kdble
@@ -972,9 +968,9 @@ contains
 
   ! easier and general approach
   do ip = 1,ngll ! ngllx*nglly*ngllz
-    xi=gll_points(1,ip)
-    eta=gll_points(2,ip)
-    zeta=gll_points(3,ip)
+    xi = gll_points(1,ip)
+    eta = gll_points(2,ip)
+    zeta = gll_points(3,ip)
 
     ! compute 1d lagrange polynomials on GLL points
     ! this can also be computed in a simple manner due to the orthogonality as
@@ -987,10 +983,10 @@ contains
       do j = 1,nglly
         do i = 1,ngllx
           n = n+1
-          lagrange_gll(ip,n)=lagrange_x(i)*lagrange_y(j)*lagrange_z(k)
-          dlagrange_gll(1,ip,n)=lagrange_dx(i)*lagrange_y(j)*lagrange_z(k)
-          dlagrange_gll(2,ip,n)=lagrange_x(i)*lagrange_dy(j)*lagrange_z(k)
-          dlagrange_gll(3,ip,n)=lagrange_x(i)*lagrange_y(j)*lagrange_dz(k)
+          lagrange_gll(ip,n) = lagrange_x(i)*lagrange_y(j)*lagrange_z(k)
+          dlagrange_gll(1,ip,n) = lagrange_dx(i)*lagrange_y(j)*lagrange_z(k)
+          dlagrange_gll(2,ip,n) = lagrange_x(i)*lagrange_dy(j)*lagrange_z(k)
+          dlagrange_gll(3,ip,n) = lagrange_x(i)*lagrange_y(j)*lagrange_dz(k)
         enddo
       enddo
     enddo
@@ -998,8 +994,7 @@ contains
 
   !print *,maxval(abs(lagrange_gll-flagrange_gll))
   !print *,maxval(abs(dlagrange_gll-fdlagrange_gll))
-  !stop
-  return
+
   end subroutine gll_quadrature
 
 !
@@ -1041,7 +1036,6 @@ contains
     enddo
   enddo
 
-  return
   end subroutine gll_lagrange3d_point
 
 !
@@ -1106,7 +1100,6 @@ contains
     enddo
   enddo
 
-  return
   end subroutine gll_quadrature3inNGLL
 
 !
@@ -1177,7 +1170,6 @@ contains
     enddo
   enddo
 
-  return
   end subroutine gll_quadrature2d
 
 !
@@ -1238,7 +1230,6 @@ contains
     enddo
   enddo
 
-  return
   end subroutine gll_quadrature1d
 
 !
@@ -1298,7 +1289,6 @@ contains
     enddo
   enddo
 
-  return
   end subroutine lagrange1d
 
 !
@@ -1362,7 +1352,6 @@ contains
     !enddo
   enddo
 
-  return
   end subroutine lagrange1dGEN
 
 !
@@ -1427,7 +1416,6 @@ contains
     !enddo
   enddo
 
-  return
   end subroutine lagrange1dGENAS
 
 !
@@ -1481,7 +1469,6 @@ contains
     !enddo
   enddo
 
-  return
   end subroutine lagrange1dGLL
 
 !
@@ -1536,7 +1523,6 @@ contains
     !enddo
   enddo
 
-  return
   end subroutine lagrange1dGLLAS
 
 !===========================================

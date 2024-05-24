@@ -1211,8 +1211,7 @@ module specfem_par_full_gravity
 
   ! parameters for Poisson's equation
   integer :: neq, neq1, b_neq, b_neq1, nnode, nnode1
-
-  double precision,dimension(NGLLCUBE,NGLLCUBE) :: lagrange_gll
+  double precision,dimension(:,:),allocatable :: lagrange_gll
 
   !real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_ic       ! pgrav_ic(NGLOB_INNER_CORE)
   !real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_oc       ! pgrav_oc(NGLOB_OUTER_CORE)
@@ -1248,21 +1247,21 @@ module specfem_par_full_gravity
   integer :: ngdof1,nsparse1
   integer,dimension(:),allocatable :: l2gdof1, krow_sparse1, kcol_sparse1, kgrow_sparse1, kgcol_sparse1
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: kmat_sparse1
-
-  double precision,dimension(NGLLCUBE_INF,NGLLCUBE_INF) :: lagrange_gll1
+  double precision,dimension(:,:),allocatable :: lagrange_gll1
 
   integer :: nnode_ic1,nnode_oc1,nnode_cm1,nnode_trinf1,nnode_inf1
 
   integer,dimension(:),allocatable :: nmir_ic, nmir_oc, nmir_cm, nmir_trinf, nmir_inf
 
-  integer,dimension(:,:),allocatable :: inode_map_ic      ! inode_map_ic(2,NGLOB_INNER_CORE)
-  integer,dimension(:,:),allocatable :: inode_map_oc      ! inode_map_oc(2,NGLOB_OUTER_CORE)
-  integer,dimension(:,:),allocatable :: inode_map_cm      ! inode_map_cm(2,NGLOB_CRUST_MANTLE)
-  integer,dimension(:,:),allocatable :: inode_map_trinf   ! inode_map_trinf(2,NGLOB_TRINFINITE)
-  integer,dimension(:,:),allocatable :: inode_map_inf     ! inode_map_inf(2,NGLOB_INFINITE)
+  integer,dimension(:,:),allocatable :: inode_map_ic      ! (2,NGLOB_INNER_CORE)
+  integer,dimension(:,:),allocatable :: inode_map_oc      ! (2,NGLOB_OUTER_CORE)
+  integer,dimension(:,:),allocatable :: inode_map_cm      ! (2,NGLOB_CRUST_MANTLE)
+  integer,dimension(:,:),allocatable :: inode_map_trinf   ! (2,NGLOB_TRINFINITE)
+  integer,dimension(:,:),allocatable :: inode_map_inf     ! (2,NGLOB_INFINITE)
 
-  integer,dimension(NGLLCUBE_INF) :: igll_on
-  logical,dimension(NGLLCUBE) :: isgll
+  ! active GLL points
+  integer,dimension(NGLLCUBE_INF) :: igll_active_on
+  logical,dimension(NGLLCUBE) :: is_active_gll
 
   ! parameters for ENSIGHT GOLD files
   character(len=20) :: ptail
@@ -1276,8 +1275,8 @@ module specfem_par_full_gravity
   real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: g_cm     ! (NDIM,NGLOB_CRUST_MANTLE)
   real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: gradg_cm ! (6,NGLOB_CRUST_MANTLE)
   ! inner core
-  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: g_ic       ! g_ic(NDIM,NGLOB_INNER_CORE)
-  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: gradg_ic   ! gradg_ic(6,NGLOB_INNER_CORE)
+  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: g_ic       ! (NDIM,NGLOB_INNER_CORE)
+  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: gradg_ic   ! (6,NGLOB_INNER_CORE)
   ! outer core
   real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: g_oc ! (NDIM,NGLOB_OUTER_CORE)
 
@@ -1294,9 +1293,9 @@ module specfem_par_full_gravity
   real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable :: storekmat_crust_mantle1
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon_crust_mantle1
 
-  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: storederiv_cm        ! (NDIM,NGLLCUBE,NGLLCUBE,NSPEC_CRUST_MANTLE)
-  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: storerhojw_cm            ! (NGLLCUBE,NSPEC_CRUST_MANTLE)
-  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: storederiv_cm1       ! (NDIM,NGLLCUBE_INF,NGLLCUBE_INF,NSPEC_CRUST_MANTLE)
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: storederiv_cm    ! (NDIM,NGLLCUBE,NGLLCUBE,NSPEC_CRUST_MANTLE)
+  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: storerhojw_cm        ! (NGLLCUBE,NSPEC_CRUST_MANTLE)
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: storederiv_cm1   ! (NDIM,NGLLCUBE_INF,NGLLCUBE_INF,NSPEC_CRUST_MANTLE)
   real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: storerhojw_cm1,storejw_cm1  ! (NGLLCUBE_INF,NSPEC_CRUST_MANTLE)
 
   ! outer core

@@ -1655,9 +1655,14 @@ subroutine read_mesh_databases_INF()
   num_interfaces_crust_mantle = 0
   num_interfaces_outer_core = 0
   num_interfaces_inner_core = 0
-
   num_interfaces_trinfinite = 0
   num_interfaces_infinite = 0
+
+  max_nibool_interfaces_cm = 0
+  max_nibool_interfaces_oc = 0
+  max_nibool_interfaces_ic = 0
+  max_nibool_interfaces_trinfinite = 0
+  max_nibool_interfaces_infinite = 0
 
   !
   ! crust mantle
@@ -2165,13 +2170,13 @@ subroutine read_mesh_databases_INF()
 
     if (FULL_GRAVITY) then
       if (ADD_TRINF .and. NSPEC_TRINFINITE > 0) then
-        percentage_edge = 100. * nspec_trinfinite / real(NSPEC_TRINFINITE)
+        percentage_edge = 100. * nspec_outer_trinfinite / real(NSPEC_TRINFINITE)
         write(IMAIN,*) '  percentage of edge elements in trinfinite layer ',percentage_edge,'%'
         write(IMAIN,*) '  percentage of volume elements in trinfinite layer ',100. - percentage_edge,'%'
         write(IMAIN,*)
       endif
       if (NSPEC_INFINITE > 0) then
-        percentage_edge = 100. * nspec_infinite / real(NSPEC_INFINITE)
+        percentage_edge = 100. * nspec_outer_infinite / real(NSPEC_INFINITE)
         write(IMAIN,*) '  percentage of edge elements in infinite layer ',percentage_edge,'%'
         write(IMAIN,*) '  percentage of volume elements in infinite layer ',100. - percentage_edge,'%'
         write(IMAIN,*)

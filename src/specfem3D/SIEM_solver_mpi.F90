@@ -31,7 +31,7 @@ module siem_solver_mpi
 
   use constants, only: myrank,CUSTOM_REAL
 
-  use siem_math_library_mpi
+  use siem_math_library_mpi, only: maxvec,dot_product_par
 
   implicit none
 
@@ -846,8 +846,7 @@ contains
 
 ! interpolate solution to original mesh to compute initial guess
 
-  subroutine interpolate3to5(nelmt,nnode,nnode1,inode_elmt,nmir,inode_map,isgll, &
-                             igll_on,x3,x5)
+  subroutine interpolate3to5(nelmt,nnode,nnode1,inode_elmt,nmir,inode_map,is_active_gll,igll_active_on,x3,x5)
 
   use constants, only: NDIM,NGLLX,NGLLX_INF,NGLLCUBE,NGLLCUBE_INF
 
@@ -855,8 +854,8 @@ contains
 
   implicit none
   integer,intent(in) :: nelmt,nnode,nnode1,inode_elmt(NGLLCUBE,nelmt),nmir(nnode), &
-                        inode_map(2,nnode),igll_on(NGLLCUBE_INF)
-  logical,intent(in) :: isgll(NGLLCUBE)
+                        inode_map(2,nnode),igll_active_on(NGLLCUBE_INF)
+  logical,intent(in) :: is_active_gll(NGLLCUBE)
   real(kind=CUSTOM_REAL),intent(in) :: x3(nnode1) ! array for 3 GLLX points
   real(kind=CUSTOM_REAL),intent(out) :: x5(nnode) ! aray for 5 GLLX points
 
@@ -879,12 +878,12 @@ contains
       cycle ! skip fictitious nodes
     endif
     igll = inode_map(2,i_node)
-    if (isgll(igll)) then
+    if (is_active_gll(igll)) then
       x5(i_node) = x3(inode1)
     else
       ! interpolate values
-      inodes1 = nmir(inode_elmt(igll_on,ielmt))
-      x5(i_node) = real(sum(lagrange_gll3inNGLL(igll,:)*x3(inodes1)),kind=CUSTOM_REAL)
+      inodes1(:) = nmir(inode_elmt(igll_active_on(:),ielmt))
+      x5(i_node) = real(sum(lagrange_gll3inNGLL(igll,:)*x3(inodes1(:))),kind=CUSTOM_REAL)
     endif
   enddo
 

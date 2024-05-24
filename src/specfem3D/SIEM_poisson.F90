@@ -69,7 +69,7 @@ contains
   real(kind=kdble),dimension(:,:), allocatable :: lagrange_gll
   real(kind=kdble),dimension(:,:,:), allocatable :: dlagrange_gll
 
-  ! allocates arrays to avoid error about exceeding stack size limit
+  ! allocates local arrays to avoid error about exceeding stack size limit
   allocate(lagrange_gll(NGLLCUBE,NGLLCUBE), &
            dlagrange_gll(ndim,NGLLCUBE,NGLLCUBE))
   lagrange_gll(:,:) = 0.0_kdble
@@ -122,6 +122,10 @@ contains
       dprecon(egdof(k)) = dprecon(egdof(k))+kmat(k,k)
     enddo
   enddo
+
+  ! free temporary arrays
+  deallocate(lagrange_gll,dlagrange_gll)
+
   end subroutine poisson_stiffness
 
 !
@@ -162,7 +166,7 @@ contains
   real(kind=kdble),dimension(:,:), allocatable :: lagrange_gl
   real(kind=kdble),dimension(:,:,:), allocatable :: dlagrange_gl
 
-  ! allocates arrays to avoid error about exceeding stack size limit
+  ! allocates local arrays to avoid error about exceeding stack size limit
   allocate(lagrange_gl(nipinf,NGLLCUBE), &
            dlagrange_gl(ndim,nipinf,NGLLCUBE))
   lagrange_gl(:,:) = 0.0_kdble
@@ -221,6 +225,9 @@ contains
       dprecon(egdof(k)) = dprecon(egdof(k))+kmat(k,k)
     enddo
   enddo
+
+  ! free temporary arrays
+  deallocate(lagrange_gl,dlagrange_gl)
 
   end subroutine poisson_stiffnessINF
 
@@ -903,7 +910,7 @@ contains
   real(kind=kdble),dimension(:,:), allocatable :: lagrange_gll
   real(kind=kdble),dimension(:,:,:), allocatable :: dlagrange_gll
 
-  ! allocates arrays to avoid error about exceeding stack size limit
+  ! allocates local arrays to avoid error about exceeding stack size limit
   allocate(lagrange_gll(NGLLCUBE,NGLLCUBE), &
            dlagrange_gll(ndim,NGLLCUBE,NGLLCUBE))
   lagrange_gll(:,:) = 0.0_kdble
@@ -959,6 +966,9 @@ contains
 
   ! multiply by 4*PI*G! or scaled
   load(:) = -4.0_CUSTOM_REAL * load(:)
+
+  ! free temporary arrays
+  deallocate(lagrange_gll,dlagrange_gll)
 
   end subroutine poisson_load_solid
 
@@ -1590,7 +1600,7 @@ contains
 
   real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable :: deriv
 
-  ! allocates arrays to avoid error about exceeding stack size limit
+  ! allocates local arrays to avoid error about exceeding stack size limit
   allocate(lagrange_gll(NGLLCUBE,NGLLCUBE), &
            dlagrange_gll(ndim,NGLLCUBE,NGLLCUBE))
   lagrange_gll(:,:) = 0.0_kdble
@@ -1686,6 +1696,9 @@ contains
 
   ! multiply by 4*PI*G! or scaled
   load(:) = -4.0_CUSTOM_REAL * load(:)
+
+  ! free temporary arrays
+  deallocate(lagrange_gll,dlagrange_gll)
 
   end subroutine poisson_load_fluidNEW
 
@@ -1862,7 +1875,7 @@ contains
 
   real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable :: deriv
 
-  ! allocates arrays to avoid error about exceeding stack size limit
+  ! allocates local arrays to avoid error about exceeding stack size limit
   allocate(deriv(ndim,NGLLCUBE,NGLLCUBE))
   deriv(:,:,:) = 0.0_CUSTOM_REAL
 
@@ -1921,6 +1934,9 @@ contains
 
   ! multiply by 4*PI*G! or scaled
   load(:) = -4.0_CUSTOM_REAL * load(:)
+
+  ! free temporary arrays
+  deallocate(deriv)
 
   end subroutine poisson_load_fluidNEWFAST
 
@@ -2061,7 +2077,7 @@ contains
   real(kind=kdble),dimension(:,:), allocatable :: lagrange_gll
   real(kind=kdble),dimension(:,:,:), allocatable :: dlagrange_gll
 
-  ! allocates arrays to avoid error about exceeding stack size limit
+  ! allocates local arrays to avoid error about exceeding stack size limit
   allocate(lagrange_gll(NGLLCUBE,NGLLCUBE), &
            dlagrange_gll(ndim,NGLLCUBE,NGLLCUBE))
   lagrange_gll(:,:) = 0.0_kdble
@@ -2116,6 +2132,9 @@ contains
 
   ! multiply by 4*PI*G! or scaled
   load(:) = 4.0_CUSTOM_REAL * load(:)
+
+  ! free temporary arrays
+  deallocate(lagrange_gll,dlagrange_gll)
 
   end subroutine poisson_load_onlyrho
 
@@ -2244,7 +2263,7 @@ contains
   real(kind=kdble),dimension(:,:), allocatable :: lagrange_gll
   real(kind=kdble),dimension(:,:,:), allocatable :: dlagrange_gll
 
-  ! allocates arrays to avoid error about exceeding stack size limit
+  ! allocates local arrays to avoid error about exceeding stack size limit
   allocate(lagrange_gll(NGLLCUBE,NGLLCUBE), &
            dlagrange_gll(ndim,NGLLCUBE,NGLLCUBE))
   lagrange_gll(:,:) = 0.0_kdble
@@ -2272,6 +2291,9 @@ contains
 
   ! multiply by 4*PI*G! or scaled
   load(:) = 4.0_CUSTOM_REAL * load(:)
+
+  ! free temporary arrays
+  deallocate(lagrange_gll,dlagrange_gll)
 
   end subroutine poisson_load_onlyrhoFAST
 
@@ -2373,7 +2395,7 @@ contains
   real(kind=kdble),dimension(:,:), allocatable :: lagrange_gll
   real(kind=kdble),dimension(:,:,:), allocatable :: dlagrange_gll
 
-  ! allocates arrays to avoid error about exceeding stack size limit
+  ! allocates local arrays to avoid error about exceeding stack size limit
   allocate(lagrange_gll(NGLLCUBE,NGLLCUBE), &
            dlagrange_gll(ndim,NGLLCUBE,NGLLCUBE))
   lagrange_gll(:,:) = 0.0_kdble
@@ -2421,6 +2443,9 @@ contains
       gradphi(:,i,i_elmt) = matmul(deriv,pgrav(egdof))
     enddo
   enddo
+
+  ! free temporary arrays
+  deallocate(lagrange_gll,dlagrange_gll)
 
   end subroutine poisson_gravity
 

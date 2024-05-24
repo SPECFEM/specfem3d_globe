@@ -38,9 +38,9 @@
 !
 ! the PETSc base type file petscsys.h defines an error checking macro CHKERRA(ierr) as
 ! long free-from version:
-!#define CHKERRA(ierr) if (ierr .ne. 0) then;call PetscErrorF(ierr,__LINE__,__FILE__);call MPIU_Abort(PETSC_COMM_SELF,ierr);endif
+!#define CHKERRA(ierr) if (ierr /= 0) then;call PetscErrorF(ierr,__LINE__,__FILE__);call MPIU_Abort(PETSC_COMM_SELF,ierr);endif
 ! short version:
-!#define CHKERRA(ierr) if (ierr .ne. 0) then;call PetscErrorF(ierr);call MPIU_Abort(PETSC_COMM_SELF,ierr);endif
+!#define CHKERRA(ierr) if (ierr /= 0) then;call PetscErrorF(ierr);call MPIU_Abort(PETSC_COMM_SELF,ierr);endif
 !
 ! with gfortran, it uses the long free-form version that leads to compilation errors like
 !   "Error: Line truncated at (1) [-Werror=line-truncation]"
@@ -926,8 +926,6 @@ contains
     ggdof_trinf1,storekmat_trinfinite1,inode_elmt_trinf1, &
     ggdof_inf1,storekmat_infinite1,inode_elmt_inf1
 
-  use siem_math_library_mpi, only: maxscal,minscal
-
   implicit none
   integer :: i,i_elmt,j,ncount
   integer :: ggdof_elmt(NEDOF1),idof(NEDOF1),igdof(NEDOF1)
@@ -1715,13 +1713,13 @@ contains
 
   ! the PETSc base type file petscsys.h defines an error checking macro CHKERRA(ierr) as
   ! long free-from version:
-  !#define CHKERRA(ierr) if (ierr .ne. 0) then;call PetscErrorF(ierr,__LINE__,__FILE__);call MPIU_Abort(PETSC_COMM_SELF,ierr);endif
+  !#define CHKERRA(ierr) if (ierr /= 0) then;call PetscErrorF(ierr,__LINE__,__FILE__);call MPIU_Abort(PETSC_COMM_SELF,ierr);endif
   ! short version:
-  !#define CHKERRA(ierr) if (ierr .ne. 0) then;call PetscErrorF(ierr);call MPIU_Abort(PETSC_COMM_SELF,ierr);endif
+  !#define CHKERRA(ierr) if (ierr /= 0) then;call PetscErrorF(ierr);call MPIU_Abort(PETSC_COMM_SELF,ierr);endif
   !
   ! given the __LINE__ and __FILE__ info is not very useful when called in this subroutine, we use the short version here.
 
-  if (ierr .ne. 0) then
+  if (ierr /= 0) then
     ! petsc error function
     call PetscErrorF(ierr,line,"SIEM_solver_petsc.F90")
 

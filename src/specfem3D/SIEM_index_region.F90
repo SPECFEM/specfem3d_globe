@@ -83,7 +83,9 @@
   use specfem_par_trinfinite, only: ibool_trinfinite,ibelm_bottom_trinfinite,ibelm_top_trinfinite
   use specfem_par_infinite, only: ibool_infinite,ibelm_bottom_infinite
 
-  use specfem_par_full_gravity, only: inode_map_ic,inode_map_oc,inode_map_cm,inode_map_trinf,inode_map_inf,isgll,igll_on, &
+  use specfem_par_full_gravity, only: &
+    inode_map_ic,inode_map_oc,inode_map_cm,inode_map_trinf,inode_map_inf, &
+    is_active_gll,igll_active_on, &
     gdof_cm,gdof_cm1, &
     inode_elmt_cm,inode_elmt_cm1, &
     gdof_oc,gdof_oc1, &
@@ -100,65 +102,80 @@
 
   implicit none
 
-  integer :: i,j,k,i_elmt,i_node,ispec_ic,ispec_oc,ispec_cm,ispec_trinf,ispec_inf, &
-  ibool_ic,ibool_oc,ibool_cm,ibool_trinf,ibool_inf,k_ic,k_oc,k_cm,k_trinf,k_inf
+  integer :: i,j,k,ier
+  integer :: i_elmt,i_node
+  integer :: ispec_ic,ispec_oc,ispec_cm,ispec_trinf,ispec_inf
+  integer :: ibool_ic,ibool_oc,ibool_cm,ibool_trinf,ibool_inf
+  integer :: k_ic,k_oc,k_cm,k_trinf,k_inf
   integer :: ibool,inode,ispec,nnode_icb,nnode_cmb,nnode_trinfb,nnode_infb
 
-  integer :: inode_ic(NGLOB_INNER_CORE),inode_oc(NGLOB_OUTER_CORE), &
-  inode_cm(NGLOB_CRUST_MANTLE),inode_trinf(NGLOB_TRINFINITE),inode_inf(NGLOB_INFINITE)
-  logical :: isnode_ic(NGLOB_INNER_CORE),isnode_oc(NGLOB_OUTER_CORE), &
-  isnode_cm(NGLOB_CRUST_MANTLE),isnode_trinf(NGLOB_TRINFINITE),isnode_inf(NGLOB_INFINITE)
-  integer,allocatable :: inode_oc1(:),inode_ic1(:),inode_cm1(:),inode_trinf1(:),inode_inf1(:)
-
+  integer,dimension(:),allocatable :: inode_ic,inode_oc,inode_cm,inode_trinf,inode_inf
+  integer,dimension(:),allocatable :: inode_ic1,inode_oc1,inode_cm1,inode_trinf1,inode_inf1
+  logical,dimension(:),allocatable :: isnode_ic,isnode_oc,isnode_cm,isnode_trinf,isnode_inf
   integer,allocatable :: nf(:,:),nf1(:,:),nmir(:)
 
   integer :: nnode_ic,nnode_oc,nnode_cm,nnode_trinf,nnode_inf
-  !integer :: inode_ic1,inode_oc1,inode_cm1,inode_inf1
-  integer :: inode1,inum,igll !,inuminf!,igll_on(NGLLCUBE_INF)
-  !logical :: isgll(NGLLCUBE)
+  integer :: inode1,inum,igll
   logical,allocatable :: isnode(:)
 
   logical,allocatable :: isibool_interface_ic(:,:),isibool_interface_oc(:,:), &
-  isibool_interface_cm(:,:),isibool_interface_trinf(:,:),isibool_interface_inf(:,:)!,ix0(:),ix1(:)
+                         isibool_interface_cm(:,:),isibool_interface_trinf(:,:),isibool_interface_inf(:,:)
 
-  !real(CUSTOM_REAL),allocatable :: x0(:),x1(:),y0(:),y1(:),z0(:),z1(:)
-
+  ! array sizes
   nnode_ic = NGLOB_INNER_CORE
   nnode_oc = NGLOB_OUTER_CORE
   nnode_cm = NGLOB_CRUST_MANTLE
   nnode_trinf = NGLOB_TRINFINITE
   nnode_inf = NGLOB_INFINITE
 
+  ! allocate arrays
+  allocate(inode_ic(NGLOB_INNER_CORE), &
+           inode_oc(NGLOB_OUTER_CORE), &
+           inode_cm(NGLOB_CRUST_MANTLE), &
+           inode_trinf(NGLOB_TRINFINITE), &
+           inode_inf(NGLOB_INFINITE),stat=ier)
+  if (ier /= 0) stop 'Error allocating inode_ic,.. arrays'
+  inode_ic(:) = 0; inode_oc(:) = 0; inode_cm(:) = 0;
+  inode_trinf(:) = 0; inode_inf(:) = 0
+
+  allocate(isnode_ic(NGLOB_INNER_CORE), &
+           isnode_oc(NGLOB_OUTER_CORE), &
+           isnode_cm(NGLOB_CRUST_MANTLE), &
+           isnode_trinf(NGLOB_TRINFINITE), &
+           isnode_inf(NGLOB_INFINITE),stat=ier)
+  if (ier /= 0) stop 'Error allocating isnode_ic,.. arrays'
+  isnode_ic(:) = .false.; isnode_oc(:) = .false.; isnode_cm(:) = .false.
+  isnode_trinf(:) = .false.; isnode_inf(:) = .false.
+
   ! store ibool in 1D linear mapping
   ! inner core
   do i_elmt = 1,NSPEC_INNER_CORE
-    inode_elmt_ic(:,i_elmt)=reshape(ibool_inner_core(:,:,:,i_elmt),(/NGLLCUBE/))
+    inode_elmt_ic(:,i_elmt) = reshape(ibool_inner_core(:,:,:,i_elmt),(/NGLLCUBE/))
   enddo
   ! outer core
   do i_elmt = 1,NSPEC_OUTER_CORE
-    inode_elmt_oc(:,i_elmt)=reshape(ibool_outer_core(:,:,:,i_elmt),(/NGLLCUBE/))
+    inode_elmt_oc(:,i_elmt) = reshape(ibool_outer_core(:,:,:,i_elmt),(/NGLLCUBE/))
   enddo
   ! inner core
   do i_elmt = 1,NSPEC_CRUST_MANTLE
-    inode_elmt_cm(:,i_elmt)=reshape(ibool_crust_mantle(:,:,:,i_elmt),(/NGLLCUBE/))
+    inode_elmt_cm(:,i_elmt) = reshape(ibool_crust_mantle(:,:,:,i_elmt),(/NGLLCUBE/))
   enddo
   ! transition infinite
   if (ADD_TRINF) then
   do i_elmt = 1,NSPEC_TRINFINITE
-    inode_elmt_trinf(:,i_elmt)=reshape(ibool_trinfinite(:,:,:,i_elmt),(/NGLLCUBE/))
+    inode_elmt_trinf(:,i_elmt) = reshape(ibool_trinfinite(:,:,:,i_elmt),(/NGLLCUBE/))
   enddo
   endif
   ! infinite
   do i_elmt = 1,NSPEC_INFINITE
-    inode_elmt_inf(:,i_elmt)=reshape(ibool_infinite(:,:,:,i_elmt),(/NGLLCUBE/))
+    inode_elmt_inf(:,i_elmt) = reshape(ibool_infinite(:,:,:,i_elmt),(/NGLLCUBE/))
   enddo
 
   ! count global node numbers
-  nnode = NGLOB_INNER_CORE+NGLOB_OUTER_CORE+NGLOB_CRUST_MANTLE+NGLOB_TRINFINITE+NGLOB_INFINITE
+  nnode = NGLOB_INNER_CORE + NGLOB_OUTER_CORE + NGLOB_CRUST_MANTLE + NGLOB_TRINFINITE + NGLOB_INFINITE
 
   ! identify duplicate nodes on the boundary
   ! inner core - outer core boundary (ICB)
-  isnode_oc = .false.
   do i_elmt = 1,NSPEC2D_BOTTOM_OC
     ispec = ibelm_bottom_outer_core(i_elmt)
     k = 1 ! bottom face
@@ -171,7 +188,6 @@
   nnode_icb = count(isnode_oc)
 
   ! outer core - crust mantle boundary (CMB)
-  isnode_cm = .false.
   do i_elmt = 1,NSPEC2D_BOTTOM_CM
     ispec = ibelm_bottom_crust_mantle(i_elmt)
     k = 1 ! bottom face
@@ -185,22 +201,20 @@
 
   ! crust mantle - transition infinite boundary (FS: free surface)
   nnode_trinfb = 0
-  isnode_trinf = .false.
   if (ADD_TRINF) then
-  do i_elmt = 1,NSPEC2D_BOTTOM_TRINF
-    ispec = ibelm_bottom_trinfinite(i_elmt)
-    k = 1 ! bottom face
-    do j = 1,NGLLY
-      do i = 1,NGLLX
-        isnode_trinf(ibool_trinfinite(i,j,k,ispec)) = .true.
+    do i_elmt = 1,NSPEC2D_BOTTOM_TRINF
+      ispec = ibelm_bottom_trinfinite(i_elmt)
+      k = 1 ! bottom face
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          isnode_trinf(ibool_trinfinite(i,j,k,ispec)) = .true.
+        enddo
       enddo
     enddo
-  enddo
-  nnode_trinfb = count(isnode_trinf)
+    nnode_trinfb = count(isnode_trinf)
   endif
 
   ! crust mantle - infinite boundary (FS: free surface)
-  isnode_inf = .false.
   do i_elmt = 1,NSPEC2D_BOTTOM_INF
     ispec = ibelm_bottom_infinite(i_elmt)
     k = 1 ! bottom face
@@ -217,13 +231,13 @@
 
   ! indexify global nodes and store in a region array
   ! inner core
-  inode_ic=(/ (inode, inode = 1,NGLOB_INNER_CORE) /)
-
+  inode_ic(:) = (/ (inode, inode = 1,NGLOB_INNER_CORE) /)
   inode = NGLOB_INNER_CORE
+
   ! outer core
   ! ICB
   ! copy common boundary nodes
-  isnode_oc = .false.
+  isnode_oc(:) = .false.
   do i_elmt = 1,NSPEC2D_BOTTOM_OC
     ispec_oc = ibelm_bottom_outer_core(i_elmt)
     ispec_ic = ibelm_top_inner_core(i_elmt)
@@ -231,9 +245,9 @@
     k_ic = NGLLZ ! top face
     do j = 1,NGLLY
       do i = 1,NGLLX
-        ibool_oc=ibool_outer_core(i,j,k_oc,ispec_oc)
-        ibool_ic=ibool_inner_core(i,j,k_ic,ispec_ic)
-        inode_oc(ibool_oc)=inode_ic(ibool_ic)
+        ibool_oc = ibool_outer_core(i,j,k_oc,ispec_oc)
+        ibool_ic = ibool_inner_core(i,j,k_ic,ispec_ic)
+        inode_oc(ibool_oc) = inode_ic(ibool_ic)
         isnode_oc(ibool_oc) = .true.
       enddo
     enddo
@@ -243,11 +257,11 @@
     do k = 1,NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
-          ibool_oc=ibool_outer_core(i,j,k,i_elmt)
+          ibool_oc = ibool_outer_core(i,j,k,i_elmt)
            if (.not. isnode_oc(ibool_oc)) then
               isnode_oc(ibool_oc) = .true.
               inode = inode+1
-              inode_oc(ibool_oc)=inode
+              inode_oc(ibool_oc) = inode
            endif
         enddo
       enddo
@@ -257,16 +271,16 @@
   ! crust-mantle
   ! CMB
   ! copy common boundary nodes
-  isnode_cm = .false.
+  isnode_cm(:) = .false.
   do i_elmt = 1,NSPEC2D_BOTTOM_CM
     ispec_cm = ibelm_bottom_crust_mantle(i_elmt)
     ispec_oc = ibelm_top_outer_core(i_elmt)
     k_cm = 1; k_oc = NGLLZ
     do j = 1,NGLLY
       do i = 1,NGLLX
-        ibool_cm=ibool_crust_mantle(i,j,k_cm,ispec_cm)
-        ibool_oc=ibool_outer_core(i,j,k_oc,ispec_oc)
-        inode_cm(ibool_cm)=inode_oc(ibool_oc)
+        ibool_cm = ibool_crust_mantle(i,j,k_cm,ispec_cm)
+        ibool_oc = ibool_outer_core(i,j,k_oc,ispec_oc)
+        inode_cm(ibool_cm) = inode_oc(ibool_oc)
         isnode_cm(ibool_cm) = .true.
       enddo
     enddo
@@ -276,11 +290,11 @@
     do k = 1,NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
-          ibool_cm=ibool_crust_mantle(i,j,k,i_elmt)
+          ibool_cm = ibool_crust_mantle(i,j,k,i_elmt)
           if (.not. isnode_cm(ibool_cm)) then
             isnode_cm(ibool_cm) = .true.
             inode = inode+1
-            inode_cm(ibool_cm)=inode
+            inode_cm(ibool_cm) = inode
           endif
         enddo
       enddo
@@ -291,16 +305,16 @@
     ! transition infinite
     ! FS
     ! copy common boundary nodes
-    isnode_trinf = .false.
+    isnode_trinf(:) = .false.
     do i_elmt = 1,NSPEC2D_BOTTOM_TRINF
       ispec_trinf = ibelm_bottom_trinfinite(i_elmt)
       ispec_cm = ibelm_top_crust_mantle(i_elmt)
       k_trinf = 1; k_cm = NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
-          ibool_trinf=ibool_trinfinite(i,j,k_trinf,ispec_trinf)
-          ibool_cm=ibool_crust_mantle(i,j,k_cm,ispec_cm)
-          inode_trinf(ibool_trinf)=inode_cm(ibool_cm)
+          ibool_trinf = ibool_trinfinite(i,j,k_trinf,ispec_trinf)
+          ibool_cm = ibool_crust_mantle(i,j,k_cm,ispec_cm)
+          inode_trinf(ibool_trinf) = inode_cm(ibool_cm)
           isnode_trinf(ibool_trinf) = .true.
         enddo
       enddo
@@ -310,11 +324,11 @@
       do k = 1,NGLLZ
         do j = 1,NGLLY
           do i = 1,NGLLX
-            ibool_trinf=ibool_trinfinite(i,j,k,i_elmt)
+            ibool_trinf = ibool_trinfinite(i,j,k,i_elmt)
             if (.not. isnode_trinf(ibool_trinf)) then
               isnode_trinf(ibool_trinf) = .true.
               inode = inode+1
-              inode_trinf(ibool_trinf)=inode
+              inode_trinf(ibool_trinf) = inode
             endif
           enddo
         enddo
@@ -324,16 +338,16 @@
     ! infinite
     ! FS
     ! copy common boundary nodes
-    isnode_inf = .false.
+    isnode_inf(:) = .false.
     do i_elmt = 1,NSPEC2D_BOTTOM_INF
       ispec_inf = ibelm_bottom_infinite(i_elmt)
       ispec_trinf = ibelm_top_trinfinite(i_elmt)
       k_inf = 1; k_trinf = NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
-          ibool_inf=ibool_infinite(i,j,k_inf,ispec_inf)
-          ibool_trinf=ibool_trinfinite(i,j,k_trinf,ispec_trinf)
-          inode_inf(ibool_inf)=inode_trinf(ibool_trinf)
+          ibool_inf = ibool_infinite(i,j,k_inf,ispec_inf)
+          ibool_trinf = ibool_trinfinite(i,j,k_trinf,ispec_trinf)
+          inode_inf(ibool_inf) = inode_trinf(ibool_trinf)
           isnode_inf(ibool_inf) = .true.
         enddo
       enddo
@@ -343,11 +357,11 @@
       do k = 1,NGLLZ
         do j = 1,NGLLY
           do i = 1,NGLLX
-            ibool_inf=ibool_infinite(i,j,k,i_elmt)
+            ibool_inf = ibool_infinite(i,j,k,i_elmt)
             if (.not. isnode_inf(ibool_inf)) then
               isnode_inf(ibool_inf) = .true.
               inode = inode+1
-              inode_inf(ibool_inf)=inode
+              inode_inf(ibool_inf) = inode
             endif
           enddo
         enddo
@@ -357,16 +371,16 @@
     ! infinite
     ! FS
     ! copy common boundary nodes
-    isnode_inf = .false.
+    isnode_inf(:) = .false.
     do i_elmt = 1,NSPEC2D_BOTTOM_INF
       ispec_inf = ibelm_bottom_infinite(i_elmt)
       ispec_cm = ibelm_top_crust_mantle(i_elmt)
       k_inf = 1; k_cm = NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
-          ibool_inf=ibool_infinite(i,j,k_inf,ispec_inf)
-          ibool_cm=ibool_crust_mantle(i,j,k_cm,ispec_cm)
-          inode_inf(ibool_inf)=inode_cm(ibool_cm)
+          ibool_inf = ibool_infinite(i,j,k_inf,ispec_inf)
+          ibool_cm = ibool_crust_mantle(i,j,k_cm,ispec_cm)
+          inode_inf(ibool_inf) = inode_cm(ibool_cm)
           isnode_inf(ibool_inf) = .true.
         enddo
       enddo
@@ -376,11 +390,11 @@
       do k = 1,NGLLZ
         do j = 1,NGLLY
           do i = 1,NGLLX
-            ibool_inf=ibool_infinite(i,j,k,i_elmt)
+            ibool_inf = ibool_infinite(i,j,k,i_elmt)
             if (.not. isnode_inf(ibool_inf)) then
               isnode_inf(ibool_inf) = .true.
               inode = inode+1
-              inode_inf(ibool_inf)=inode
+              inode_inf(ibool_inf) = inode
             endif
           enddo
         enddo
@@ -396,13 +410,13 @@
 
   ! global degrees of freedoms
   allocate(nf(1,nnode)) ! only gravitational potential
-  nf = 0
+  nf(:,:) = 0
 
   ! activate freedoms
 
   ! freedoms of fictitious cube in inner core are deactivated
   do i_elmt = 1,NSPEC_INNER_CORE
-    if (idoubling_inner_core(i_elmt) == IFLAG_IN_FICTITIOUS_CUBE)cycle
+    if (idoubling_inner_core(i_elmt) == IFLAG_IN_FICTITIOUS_CUBE) cycle
     do k = 1,NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
@@ -455,85 +469,92 @@
   do i_node = 1,nnode
     if (nf(1,i_node) > 0) then
       inode = inode+1
-      nf(1,i_node)=inode
+      nf(1,i_node) = inode
     endif
   enddo
   neq = inode
 
-  allocate(gdof_ic(NGLOB_INNER_CORE),gdof_oc(NGLOB_OUTER_CORE), &
-           gdof_cm(NGLOB_CRUST_MANTLE),gdof_trinf(NGLOB_TRINFINITE),gdof_inf(NGLOB_INFINITE))
+  allocate(gdof_ic(NGLOB_INNER_CORE), &
+           gdof_oc(NGLOB_OUTER_CORE), &
+           gdof_cm(NGLOB_CRUST_MANTLE), &
+           gdof_trinf(NGLOB_TRINFINITE), &
+           gdof_inf(NGLOB_INFINITE),stat=ier)
+  if (ier /= 0) stop 'Error allocating gdof_ic,.. arrays'
   ! store gdof in a region array
-  gdof_ic(:)=nf(1,inode_ic)
-  gdof_oc(:)=nf(1,inode_oc)
-  gdof_cm(:)=nf(1,inode_cm)
-  gdof_trinf(:)=nf(1,inode_trinf)
-  gdof_inf(:)=nf(1,inode_inf)
+  gdof_ic(:) = nf(1,inode_ic)
+  gdof_oc(:) = nf(1,inode_oc)
+  gdof_cm(:) = nf(1,inode_cm)
+  gdof_trinf(:) = nf(1,inode_trinf)
+  gdof_inf(:) = nf(1,inode_inf)
+
+  deallocate(nf)
+
   !-------------------------------------------------------------------------------
 
   ! WARNING: ONLY APPLICABLE FOR 5 TO 3 SOLVER
   ! Level-1 solver---------------
   ! count nodes for 1st level solver
   ! active GLL points
-  isgll = .false.
+  is_active_gll(:) = .false.
   inum = 0
   do k = 1,NGLLZ,2
     do j = 1,NGLLY,2
       do i = 1,NGLLX,2
         inum = inum+1
         igll = NGLLY*NGLLX*(k-1)+NGLLX*(j-1)+i
-        isgll(igll) = .true.
-        igll_on(inum)=igll
+        is_active_gll(igll) = .true.
+        igll_active_on(inum) = igll
       enddo
     enddo
   enddo
 
   ! active nodes
   ! inner core
-  isnode_ic = .false.
+  isnode_ic(:) = .false.
   do i_elmt = 1,NSPEC_INNER_CORE
-    isnode_ic(inode_elmt_ic(igll_on,i_elmt)) = .true.
+    isnode_ic(inode_elmt_ic(igll_active_on(:),i_elmt)) = .true.
   enddo
   nnode_ic1 = count(isnode_ic)
 
   ! outer core
-  isnode_oc = .false.
+  isnode_oc(:) = .false.
   do i_elmt = 1,NSPEC_OUTER_CORE
-    isnode_oc(inode_elmt_oc(igll_on,i_elmt)) = .true.
+    isnode_oc(inode_elmt_oc(igll_active_on(:),i_elmt)) = .true.
   enddo
   nnode_oc1 = count(isnode_oc)
 
   ! crust mantle
-  isnode_cm = .false.
+  isnode_cm(:) = .false.
   do i_elmt = 1,NSPEC_CRUST_MANTLE
-    isnode_cm(inode_elmt_cm(igll_on,i_elmt)) = .true.
+    isnode_cm(inode_elmt_cm(igll_active_on(:),i_elmt)) = .true.
   enddo
   nnode_cm1 = count(isnode_cm)
 
   ! transition infinite
   if (ADD_TRINF) then
-    isnode_trinf = .false.
+    isnode_trinf(:) = .false.
     do i_elmt = 1,NSPEC_TRINFINITE
-      isnode_trinf(inode_elmt_trinf(igll_on,i_elmt)) = .true.
+      isnode_trinf(inode_elmt_trinf(igll_active_on(:),i_elmt)) = .true.
     enddo
     nnode_trinf1 = count(isnode_trinf)
   endif
 
   ! infinite
-  isnode_inf = .false.
+  isnode_inf(:) = .false.
   do i_elmt = 1,NSPEC_INFINITE
-    isnode_inf(inode_elmt_inf(igll_on,i_elmt)) = .true.
+    isnode_inf(inode_elmt_inf(igll_active_on(:),i_elmt)) = .true.
   enddo
   nnode_inf1 = count(isnode_inf)
 
   ! find active nodes and mirror to orginal nodes
   ! inner core
   allocate(nmir_ic(nnode_ic))
-  nmir_ic = 0
+  nmir_ic(:) = 0
   inode = 0
   do i_node = 1,nnode_ic
     if (isnode_ic(i_node)) then
       inode = inode+1
-      nmir_ic(i_node)=inode
+      nmir_ic(i_node) = inode
     endif
   enddo
   if (inode /= nnode_ic1) then
@@ -544,12 +565,12 @@
 
   ! outer core
   allocate(nmir_oc(nnode_oc))
-  nmir_oc = 0
+  nmir_oc(:) = 0
   inode = 0
   do i_node = 1,nnode_oc
     if (isnode_oc(i_node)) then
       inode = inode+1
-      nmir_oc(i_node)=inode
+      nmir_oc(i_node) = inode
     endif
   enddo
   if (inode /= nnode_oc1) then
@@ -559,12 +580,12 @@
 
   ! crust mantle
   allocate(nmir_cm(nnode_cm))
-  nmir_cm = 0
+  nmir_cm(:) = 0
   inode = 0
   do i_node = 1,nnode_cm
     if (isnode_cm(i_node)) then
       inode = inode+1
-      nmir_cm(i_node)=inode
+      nmir_cm(i_node) = inode
     endif
   enddo
   if (inode /= nnode_cm1) then
@@ -575,7 +596,7 @@
   ! transition infinite
   if (ADD_TRINF) then
     allocate(nmir_trinf(nnode_trinf))
-    nmir_trinf = 0
+    nmir_trinf(:) = 0
     inode = 0
     do i_node = 1,nnode_trinf
       if (isnode_trinf(i_node)) then
@@ -591,12 +612,12 @@
 
   ! infinite
   allocate(nmir_inf(nnode_inf))
-  nmir_inf = 0
+  nmir_inf(:) = 0
   inode = 0
   do i_node = 1,nnode_inf
     if (isnode_inf(i_node)) then
       inode = inode+1
-      nmir_inf(i_node)=inode
+      nmir_inf(i_node) = inode
     endif
   enddo
   if (inode /= nnode_inf1) then
@@ -607,83 +628,87 @@
   ! store ibool1 in 1D linear mapping
   ! inner core
   do i_elmt = 1,NSPEC_INNER_CORE
-    inode_elmt_ic1(:,i_elmt) = nmir_ic(inode_elmt_ic(igll_on,i_elmt))
+    inode_elmt_ic1(:,i_elmt) = nmir_ic(inode_elmt_ic(igll_active_on(:),i_elmt))
   enddo
   call synchronize_all()
 
   ! outer core
   do i_elmt = 1,NSPEC_OUTER_CORE
-    inode_elmt_oc1(:,i_elmt) = nmir_oc(inode_elmt_oc(igll_on,i_elmt))
+    inode_elmt_oc1(:,i_elmt) = nmir_oc(inode_elmt_oc(igll_active_on(:),i_elmt))
   enddo
   call synchronize_all()
 
   ! crust mantle
   do i_elmt = 1,NSPEC_CRUST_MANTLE
-    inode_elmt_cm1(:,i_elmt) = nmir_cm(inode_elmt_cm(igll_on,i_elmt))
+    inode_elmt_cm1(:,i_elmt) = nmir_cm(inode_elmt_cm(igll_active_on(:),i_elmt))
   enddo
   call synchronize_all()
 
   ! transtion infinite
   if (ADD_TRINF) then
     do i_elmt = 1,NSPEC_TRINFINITE
-      inode_elmt_trinf1(:,i_elmt) = nmir_trinf(inode_elmt_trinf(igll_on,i_elmt))
+      inode_elmt_trinf1(:,i_elmt) = nmir_trinf(inode_elmt_trinf(igll_active_on(:),i_elmt))
     enddo
   endif
   call synchronize_all()
 
   ! infinite
   do i_elmt = 1,NSPEC_INFINITE
-    inode_elmt_inf1(:,i_elmt) = nmir_inf(inode_elmt_inf(igll_on,i_elmt))
+    inode_elmt_inf1(:,i_elmt) = nmir_inf(inode_elmt_inf(igll_active_on(:),i_elmt))
   enddo
   call synchronize_all()
 
+  ! counts all nodes
   allocate(isnode(nnode))
-  isnode = .false.
+  isnode(:) = .false.
+
   do i_elmt = 1,NSPEC_INNER_CORE
-    isnode(inode_ic(inode_elmt_ic(igll_on,i_elmt))) = .true.
+    isnode(inode_ic(inode_elmt_ic(igll_active_on(:),i_elmt))) = .true.
   enddo
-  !isnode=.false.
   do i_elmt = 1,NSPEC_OUTER_CORE
-    isnode(inode_oc(inode_elmt_oc(igll_on,i_elmt))) = .true.
+    isnode(inode_oc(inode_elmt_oc(igll_active_on(:),i_elmt))) = .true.
   enddo
-  !isnode=.false.
   do i_elmt = 1,NSPEC_CRUST_MANTLE
-    isnode(inode_cm(inode_elmt_cm(igll_on,i_elmt))) = .true.
+    isnode(inode_cm(inode_elmt_cm(igll_active_on(:),i_elmt))) = .true.
   enddo
-  !isnode=.false.
   if (ADD_TRINF) then
-  do i_elmt = 1,NSPEC_TRINFINITE
-    isnode(inode_trinf(inode_elmt_trinf(igll_on,i_elmt))) = .true.
-  enddo
+    do i_elmt = 1,NSPEC_TRINFINITE
+      isnode(inode_trinf(inode_elmt_trinf(igll_active_on(:),i_elmt))) = .true.
+    enddo
   endif
-  !isnode=.false.
   do i_elmt = 1,NSPEC_INFINITE
-    isnode(inode_inf(inode_elmt_inf(igll_on,i_elmt))) = .true.
+    isnode(inode_inf(inode_elmt_inf(igll_active_on(:),i_elmt))) = .true.
   enddo
 
   nnode1 = count(isnode)
 
   ! node mirror of the entire model
   allocate(nmir(nnode))
+  nmir(:) = 0
   inode1 = 0
   do i_node = 1,nnode
     if (isnode(i_node)) then
       inode1 = inode1+1
-      nmir(i_node)=inode1
-
+      nmir(i_node) = inode1
     endif
   enddo
-
   if (inode1 /= nnode1) then
     print *,inode1,nnode1
     write(*,'(/,a)')'ERROR: counted level-1 active nodes mismatch!'
     stop
   endif
 
-  ! find inode_ic1,inode_oc1,inode_cm1,inode_inf1
-  allocate(inode_ic1(nnode_ic1),inode_oc1(nnode_oc1),inode_cm1(nnode_cm1), &
-           inode_trinf1(nnode_trinf1),inode_inf1(nnode_inf1))
   call synchronize_all()
+
+  ! find inode_ic1,inode_oc1,inode_cm1,inode_inf1
+  allocate(inode_ic1(nnode_ic1), &
+           inode_oc1(nnode_oc1), &
+           inode_cm1(nnode_cm1), &
+           inode_trinf1(nnode_trinf1), &
+           inode_inf1(nnode_inf1),stat=ier)
+  if (ier /= 0) stop 'Error allocating inode_ic1,.. arrays'
+  inode_ic1(:) = 0; inode_oc1(:) = 0; inode_cm1(:) = 0
+  inode_trinf1(:) = 0; inode_inf1(:) = 0
 
   ! inner core
   do i_node = 1,nnode_ic!nnode_ic1
@@ -691,7 +716,6 @@
       inode_ic1(nmir_ic(i_node)) = nmir(inode_ic(i_node))
     endif
   enddo
-  !print *,'inode_ic1:',minval(inode_ic1),maxval(inode_ic1),nnode1
   call synchronize_all()
 
   ! outer core
@@ -700,7 +724,6 @@
       inode_oc1(nmir_oc(i_node)) = nmir(inode_oc(i_node))
     endif
   enddo
-  !print *,'inode_oc1:',minval(inode_oc1),maxval(inode_oc1),nnode1
   call synchronize_all()
 
   ! crust mantle
@@ -709,13 +732,7 @@
       inode_cm1(nmir_cm(i_node)) = nmir(inode_cm(i_node))
     endif
   enddo
-  !print *,'inode_cm1:',minval(inode_cm1),maxval(inode_cm1),nnode1
-  !if (myrank==0) then
-  !  open(101,file="check_error_index_region",action='write',status='replace')
-  !  write(101,'(i5)')inode_cm1
-  !  close(101)
-  !endif
-  !call synchronize_all()
+  call synchronize_all()
 
   ! transition infinite
   if (ADD_TRINF) then
@@ -739,13 +756,13 @@
 
   ! global degrees of freedoms
   allocate(nf1(1,nnode1)) ! only gravitational potential
-  nf1 = 0
+  nf1(:,:) = 0
 
   ! activate freedoms
 
   ! freedoms of fictitious cube in inner core are deactivated
   do i_elmt = 1,NSPEC_INNER_CORE
-    if (idoubling_inner_core(i_elmt) == IFLAG_IN_FICTITIOUS_CUBE)cycle
+    if (idoubling_inner_core(i_elmt) == IFLAG_IN_FICTITIOUS_CUBE) cycle
     do i = 1,NGLLCUBE_INF
       ibool = inode_elmt_ic1(i,i_elmt)
       nf1(1,inode_ic1(ibool)) = 1
@@ -755,16 +772,17 @@
 
   ! outer core
   ! all freedoms are active
-  nf1(1,inode_oc1) = 1
+  nf1(1,inode_oc1(:)) = 1
 
   ! crust-mantle
   ! all freedoms are active
-  nf1(1,inode_cm1) = 1
+  nf1(1,inode_cm1(:)) = 1
 
   ! transition infinite
   if (ADD_TRINF) then
-    nf1(1,inode_trinf1) = 1
+    nf1(1,inode_trinf1(:)) = 1
   endif
+
   call synchronize_all()
 
   ! infinite element
@@ -790,21 +808,28 @@
   do i_node = 1,nnode1
     if (nf1(1,i_node) > 0) then
       inode1 = inode1+1
-      nf1(1,i_node)=inode1
+      nf1(1,i_node) = inode1
     endif
   enddo
   neq1 = inode1
 
   call synchronize_all()
 
-  allocate(gdof_ic1(nnode_ic1),gdof_oc1(nnode_oc1),gdof_cm1(nnode_cm1), &
-           gdof_trinf1(nnode_trinf1),gdof_inf1(nnode_inf1))
+  allocate(gdof_ic1(nnode_ic1), &
+           gdof_oc1(nnode_oc1), &
+           gdof_cm1(nnode_cm1), &
+           gdof_trinf1(nnode_trinf1), &
+           gdof_inf1(nnode_inf1),stat=ier)
+  if (ier /= 0) stop 'Error allocating gdof_ic1,.. arrays'
   ! store gdof in a region array
   gdof_ic1(:) = nf1(1,inode_ic1)
   gdof_oc1(:) = nf1(1,inode_oc1)
   gdof_cm1(:) = nf1(1,inode_cm1)
   if (ADD_TRINF) gdof_trinf1(:) = nf1(1,inode_trinf1)
   gdof_inf1(:) = nf1(1,inode_inf1)
+
+  deallocate(nf1)
+
   !-------------------------------------------------------------------------------
 
   call synchronize_all()
@@ -815,23 +840,26 @@
   ! inner core
   num_interfaces_inner_core1 = num_interfaces_inner_core
   allocate(my_neighbors_inner_core1(num_interfaces_inner_core1))
-  my_neighbors_inner_core1 = my_neighbors_inner_core
+  if (num_interfaces_inner_core1 > 0) my_neighbors_inner_core1(:) = my_neighbors_inner_core(:)
+
   allocate(isibool_interface_ic(max_nibool_interfaces_ic,num_interfaces_inner_core1), &
-  nibool_interfaces_inner_core1(num_interfaces_inner_core1))
-  isibool_interface_ic = .false.
+           nibool_interfaces_inner_core1(num_interfaces_inner_core1))
+  isibool_interface_ic(:,:) = .false.
+  nibool_interfaces_inner_core1(:) = 0
   do i = 1,num_interfaces_inner_core1
     do j = 1,nibool_interfaces_inner_core(i)
       isibool_interface_ic(j,i) = isnode_ic(ibool_interfaces_inner_core(j,i))
     enddo
     nibool_interfaces_inner_core1(i) = count(isibool_interface_ic(:,i))
   enddo
-  call synchronize_all()
+  if (num_interfaces_inner_core1 > 0) then
+    max_nibool_interfaces_inner_core1 = maxval(nibool_interfaces_inner_core1)
+  else
+    max_nibool_interfaces_inner_core1 = 0
+  endif
 
-  max_nibool_interfaces_inner_core1 = maxval(nibool_interfaces_inner_core1)
-  allocate(ibool_interfaces_inner_core1(max_nibool_interfaces_inner_core1, &
-  num_interfaces_inner_core1))
-  ibool_interfaces_inner_core1 = 0
-
+  allocate(ibool_interfaces_inner_core1(max_nibool_interfaces_inner_core1,num_interfaces_inner_core1))
+  ibool_interfaces_inner_core1(:,:) = 0
   do i = 1,num_interfaces_inner_core1
     inum = 0
     do j = 1,nibool_interfaces_inner_core(i)
@@ -841,26 +869,31 @@
       endif
     enddo
   enddo
-  call synchronize_all()
+  deallocate(isibool_interface_ic)
 
   ! outer core
   num_interfaces_outer_core1 = num_interfaces_outer_core
   allocate(my_neighbors_outer_core1(num_interfaces_outer_core1))
-  my_neighbors_outer_core1 = my_neighbors_outer_core
-  allocate(isibool_interface_oc(max_nibool_interfaces_oc,num_interfaces_outer_core1), &
-  nibool_interfaces_outer_core1(num_interfaces_outer_core1))
+  if (num_interfaces_outer_core1 > 0) my_neighbors_outer_core1(:) = my_neighbors_outer_core(:)
 
-  isibool_interface_oc = .false.
+  allocate(isibool_interface_oc(max_nibool_interfaces_oc,num_interfaces_outer_core1), &
+           nibool_interfaces_outer_core1(num_interfaces_outer_core1))
+  isibool_interface_oc(:,:) = .false.
+  nibool_interfaces_outer_core1(:) = 0
   do i = 1,num_interfaces_outer_core1
     do j = 1,nibool_interfaces_outer_core(i)
       isibool_interface_oc(j,i) = isnode_oc(ibool_interfaces_outer_core(j,i))
     enddo
     nibool_interfaces_outer_core1(i) = count(isibool_interface_oc(:,i))
   enddo
-  max_nibool_interfaces_outer_core1 = maxval(nibool_interfaces_outer_core1)
-  allocate(ibool_interfaces_outer_core1(max_nibool_interfaces_outer_core1, &
-  num_interfaces_outer_core1))
-  ibool_interfaces_outer_core1 = 0
+  if (num_interfaces_outer_core1 > 0) then
+    max_nibool_interfaces_outer_core1 = maxval(nibool_interfaces_outer_core1)
+  else
+    max_nibool_interfaces_outer_core1 = 0
+  endif
+
+  allocate(ibool_interfaces_outer_core1(max_nibool_interfaces_outer_core1,num_interfaces_outer_core1))
+  ibool_interfaces_outer_core1(:,:) = 0
   do i = 1,num_interfaces_outer_core1
     inum = 0
     do j = 1,nibool_interfaces_outer_core(i)
@@ -870,25 +903,31 @@
       endif
     enddo
   enddo
+  deallocate(isibool_interface_oc)
 
   ! crust mantle
   num_interfaces_crust_mantle1 = num_interfaces_crust_mantle
   allocate(my_neighbors_crust_mantle1(num_interfaces_crust_mantle1))
-  my_neighbors_crust_mantle1 = my_neighbors_crust_mantle
-  allocate(isibool_interface_cm(max_nibool_interfaces_cm,num_interfaces_crust_mantle1), &
-  nibool_interfaces_crust_mantle1(num_interfaces_crust_mantle1))
+  if (num_interfaces_crust_mantle1 > 0) my_neighbors_crust_mantle1(:) = my_neighbors_crust_mantle(:)
 
-  isibool_interface_cm = .false.
+  allocate(isibool_interface_cm(max_nibool_interfaces_cm,num_interfaces_crust_mantle1), &
+           nibool_interfaces_crust_mantle1(num_interfaces_crust_mantle1))
+  isibool_interface_cm(:,:) = .false.
+  nibool_interfaces_crust_mantle1(:) = 0
   do i = 1,num_interfaces_crust_mantle1
     do j = 1,nibool_interfaces_crust_mantle(i)
       isibool_interface_cm(j,i) = isnode_cm(ibool_interfaces_crust_mantle(j,i))
     enddo
     nibool_interfaces_crust_mantle1(i) = count(isibool_interface_cm(:,i))
   enddo
-  max_nibool_interfaces_crust_mantle1 = maxval(nibool_interfaces_crust_mantle1)
-  allocate(ibool_interfaces_crust_mantle1(max_nibool_interfaces_crust_mantle1, &
-  num_interfaces_crust_mantle1))
-  ibool_interfaces_crust_mantle1 = 0
+  if (num_interfaces_crust_mantle1 > 0) then
+    max_nibool_interfaces_crust_mantle1 = maxval(nibool_interfaces_crust_mantle1)
+  else
+    max_nibool_interfaces_crust_mantle1 = 0
+  endif
+
+  allocate(ibool_interfaces_crust_mantle1(max_nibool_interfaces_crust_mantle1,num_interfaces_crust_mantle1))
+  ibool_interfaces_crust_mantle1(:,:) = 0
   do i = 1,num_interfaces_crust_mantle1
     inum = 0
     do j = 1,nibool_interfaces_crust_mantle(i)
@@ -898,26 +937,32 @@
       endif
     enddo
   enddo
+  deallocate(isibool_interface_cm)
 
   ! transition infinite
   if (ADD_TRINF) then
     num_interfaces_trinfinite1 = num_interfaces_trinfinite
     allocate(my_neighbors_trinfinite1(num_interfaces_trinfinite1))
-    my_neighbors_trinfinite1 = my_neighbors_trinfinite
-    allocate(isibool_interface_trinf(max_nibool_interfaces_trinfinite,num_interfaces_trinfinite1), &
-    nibool_interfaces_trinfinite1(num_interfaces_trinfinite1))
+    if (num_interfaces_trinfinite1 > 0) my_neighbors_trinfinite1(:) = my_neighbors_trinfinite(:)
 
-    isibool_interface_trinf = .false.
+    allocate(isibool_interface_trinf(max_nibool_interfaces_trinfinite,num_interfaces_trinfinite1), &
+             nibool_interfaces_trinfinite1(num_interfaces_trinfinite1))
+    isibool_interface_trinf(:,:) = .false.
+    nibool_interfaces_trinfinite1(:) = 0
     do i = 1,num_interfaces_trinfinite1
       do j = 1,nibool_interfaces_trinfinite(i)
         isibool_interface_trinf(j,i) = isnode_trinf(ibool_interfaces_trinfinite(j,i))
       enddo
       nibool_interfaces_trinfinite1(i) = count(isibool_interface_trinf(:,i))
     enddo
-    max_nibool_interfaces_trinfinite1 = maxval(nibool_interfaces_trinfinite1)
-    allocate(ibool_interfaces_trinfinite1(max_nibool_interfaces_trinfinite1, &
-    num_interfaces_trinfinite1))
-    ibool_interfaces_trinfinite1 = 0
+    if (num_interfaces_trinfinite1 > 0) then
+      max_nibool_interfaces_trinfinite1 = maxval(nibool_interfaces_trinfinite1)
+    else
+      max_nibool_interfaces_trinfinite1 = 0
+    endif
+
+    allocate(ibool_interfaces_trinfinite1(max_nibool_interfaces_trinfinite1,num_interfaces_trinfinite1))
+    ibool_interfaces_trinfinite1(:,:) = 0
     do i = 1,num_interfaces_trinfinite1
       inum = 0
       do j = 1,nibool_interfaces_trinfinite(i)
@@ -927,26 +972,32 @@
         endif
       enddo
     enddo
+    deallocate(isibool_interface_trinf)
   endif
 
   ! infinite
   num_interfaces_infinite1 = num_interfaces_infinite
   allocate(my_neighbors_infinite1(num_interfaces_infinite1))
-  my_neighbors_infinite1 = my_neighbors_infinite
-  allocate(isibool_interface_inf(max_nibool_interfaces_infinite,num_interfaces_infinite1), &
-  nibool_interfaces_infinite1(num_interfaces_infinite1))
+  if (num_interfaces_infinite1 > 0) my_neighbors_infinite1(:) = my_neighbors_infinite(:)
 
-  isibool_interface_inf = .false.
+  allocate(isibool_interface_inf(max_nibool_interfaces_infinite,num_interfaces_infinite1), &
+           nibool_interfaces_infinite1(num_interfaces_infinite1))
+  isibool_interface_inf(:,:) = .false.
+  nibool_interfaces_infinite1(:) = 0
   do i = 1,num_interfaces_infinite1
     do j = 1,nibool_interfaces_infinite(i)
       isibool_interface_inf(j,i) = isnode_inf(ibool_interfaces_infinite(j,i))
     enddo
     nibool_interfaces_infinite1(i) = count(isibool_interface_inf(:,i))
   enddo
-  max_nibool_interfaces_infinite1 = maxval(nibool_interfaces_infinite1)
-  allocate(ibool_interfaces_infinite1(max_nibool_interfaces_infinite1, &
-  num_interfaces_infinite1))
-  ibool_interfaces_infinite1 = 0
+  if (num_interfaces_infinite1 > 0) then
+    max_nibool_interfaces_infinite1 = maxval(nibool_interfaces_infinite1)
+  else
+    max_nibool_interfaces_infinite1 = 0
+  endif
+
+  allocate(ibool_interfaces_infinite1(max_nibool_interfaces_infinite1,num_interfaces_infinite1))
+  ibool_interfaces_infinite1(:,:) = 0
   do i = 1,num_interfaces_infinite1
     inum = 0
     do j = 1,nibool_interfaces_infinite(i)
@@ -956,13 +1007,17 @@
       endif
     enddo
   enddo
+  deallocate(isibool_interface_inf)
+
+  call synchronize_all()
+
   !-------------------------------------------------------------------------------
 
   ! node map with unique elements required for interpolation
   ! WARNING: isnode_ic, isnode_oc etc. will no longer represent the
   ! active/deactive nodes for Level-1 solver after following segement
-  inode_map_ic=-1
-  isnode_ic = .false.
+  inode_map_ic(:,:) = -1
+  isnode_ic(:) = .false.
   do i_elmt = 1,NSPEC_INNER_CORE
     if (idoubling_inner_core(i_elmt) == IFLAG_IN_FICTITIOUS_CUBE)cycle
     do i = 1,NGLLCUBE
@@ -977,8 +1032,8 @@
 
   call synchronize_all()
 
-  inode_map_oc=-1
-  isnode_oc = .false.
+  inode_map_oc(:,:) = -1
+  isnode_oc(:) = .false.
   do i_elmt = 1,NSPEC_OUTER_CORE
     do i = 1,NGLLCUBE
       inode = inode_elmt_oc(i,i_elmt)
@@ -990,8 +1045,8 @@
     enddo
   enddo
 
-  inode_map_cm=-1
-  isnode_cm = .false.
+  inode_map_cm(:,:) = -1
+  isnode_cm(:) = .false.
   do i_elmt = 1,NSPEC_CRUST_MANTLE
     do i = 1,NGLLCUBE
       inode = inode_elmt_cm(i,i_elmt)
@@ -1004,8 +1059,8 @@
   enddo
 
   if (ADD_TRINF) then
-    inode_map_trinf=-1
-    isnode_trinf = .false.
+    inode_map_trinf(:,:) = -1
+    isnode_trinf(:) = .false.
     do i_elmt = 1,NSPEC_TRINFINITE
       do i = 1,NGLLCUBE
         inode = inode_elmt_trinf(i,i_elmt)
@@ -1018,8 +1073,8 @@
     enddo
   endif
 
-  inode_map_inf=-1
-  isnode_inf = .false.
+  inode_map_inf(:,:) = -1
+  isnode_inf(:) = .false.
   do i_elmt = 1,NSPEC_INFINITE
     do i = 1,NGLLCUBE
       inode = inode_elmt_inf(i,i_elmt)
@@ -1032,6 +1087,11 @@
   enddo
 
   call synchronize_all()
+
+  ! free temporary arrays
+  deallocate(isnode_ic,isnode_oc,isnode_cm,isnode_trinf,isnode_inf)
+  deallocate(inode_ic,inode_oc,inode_cm,inode_trinf,inode_inf)
+  deallocate(inode_ic1,inode_oc1,inode_cm1,inode_trinf1,inode_inf1)
 
   end subroutine get_index_region
 

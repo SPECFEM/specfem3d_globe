@@ -40,9 +40,6 @@
     call flush_IMAIN()
   endif
 
-  ! safety stop
-  stop 'FULL_GRAVITY not fully implemented yet'
-
   ! compute and store integration coefficients
   call SIEM_prepare_solver_preintegrate3()
   call SIEM_prepare_solver_preintegrate()
@@ -53,7 +50,10 @@
   call SIEM_prepare_solver_poisson()
 
   ! create sparse matrix
-  if (POISSON_SOLVER == PETSC) call SIEM_prepare_solver_sparse()
+  if (POISSON_SOLVER == PETSC) call SIEM_prepare_solver_sparse_petsc()
+
+  ! safety stop
+  stop 'FULL_GRAVITY not fully implemented yet'
 
   end subroutine SIEM_prepare_solver
 
@@ -61,9 +61,9 @@
 !-------------------------------------------------------------------------------
 !
 
-  subroutine prepare_solver_preintegrate()
+  subroutine SIEM_prepare_solver_preintegrate()
 
-  use specfem_par, only: CUSTOM_REAL,NDIM,NGLLX,NGLLY,NGLLZ,NGLLCUBE
+  use specfem_par, only: myrank,CUSTOM_REAL,IMAIN,NDIM,NGLLX,NGLLY,NGLLZ,NGLLCUBE
 
   use specfem_par_crustmantle, only: ibool_crust_mantle,NSPEC_CRUST_MANTLE, &
     xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
@@ -96,7 +96,7 @@
 
   integer,parameter :: ngnod = 8
 
-  integer :: i,i_elmt !,j,k
+  integer :: i,i_elmt,ier
   integer :: ignod(ngnod)
   real(kind=CUSTOM_REAL) :: detjac,rho(NGLLCUBE)
 
@@ -111,12 +111,43 @@
 
   real(kind=CUSTOM_REAL) :: coord(ngnod,NDIM),jac(NDIM,NDIM)
 
-  ! allocates arrays to avoid error about exceeding stack size limit
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) "  preintegrating solver arrays"
+    call flush_IMAIN()
+  endif
+
+  ! array allocations
+  allocate(storederiv_cm(NDIM,NGLLCUBE,NGLLCUBE,NSPEC_CRUST_MANTLE), &
+           storerhojw_cm(NGLLCUBE,NSPEC_CRUST_MANTLE),stat=ier)
+  if (ier /= 0) stop 'Error allocating storederiv_cm,.. arrays'
+  storederiv_cm(:,:,:,:) = 0.0_CUSTOM_REAL
+  storerhojw_cm(:,:) = 0.0_CUSTOM_REAL
+
+  allocate(storederiv_ic(NDIM,NGLLCUBE,NGLLCUBE,NSPEC_INNER_CORE), &
+           storerhojw_ic(NGLLCUBE,NSPEC_INNER_CORE),stat=ier)
+  if (ier /= 0) stop 'Error allocating storederiv_ic,.. arrays'
+  storederiv_ic(:,:,:,:) = 0.0_CUSTOM_REAL
+  storerhojw_ic(:,:) = 0.0_CUSTOM_REAL
+
+  allocate(storederiv_oc(NDIM,NGLLCUBE,NGLLCUBE,NSPEC_OUTER_CORE), &
+           storerhojw_oc(NGLLCUBE,NSPEC_OUTER_CORE),stat=ier)
+  if (ier /= 0) stop 'Error allocating storederiv_oc,.. arrays'
+  storederiv_oc(:,:,:,:) = 0.0_CUSTOM_REAL
+  storerhojw_oc(:,:) = 0.0_CUSTOM_REAL
+
+  ! allocates local arrays to avoid error about exceeding stack size limit
   allocate(dshape_hex8(NDIM,ngnod,NGLLCUBE), &
            dlagrange_gll(NDIM,NGLLCUBE,NGLLCUBE))
   dshape_hex8(:,:,:) = 0.0_kdble
   dlagrange_gll(:,:,:) = 0.0_kdble
 
+  ! GLL quadrature
+  allocate(lagrange_gll(NGLLCUBE,NGLLCUBE),stat=ier)
+  if (ier /= 0) stop 'Error allocating lagrange_gll array'
+  lagrange_gll(:,:) = 0.d0
+
+  ! Legendre polynomials
   call zwgljd(xigll,wxgll,NGLLX,jalpha,jbeta)
   call zwgljd(etagll,wygll,NGLLY,jalpha,jbeta)
   call zwgljd(zetagll,wzgll,NGLLZ,jalpha,jbeta)
@@ -128,8 +159,6 @@
   call gll_quadrature(NDIM,NGLLX,NGLLY,NGLLZ,NGLLCUBE,gll_points,gll_weights,lagrange_gll,dlagrange_gll)
 
   ! inner core
-  storederiv_ic = 0.0_CUSTOM_REAL
-  storerhojw_ic = 0.0_CUSTOM_REAL
   do i_elmt = 1,NSPEC_INNER_CORE
     ! suppress fictitious elements in central cube
     if (idoubling_inner_core(i_elmt) == IFLAG_IN_FICTITIOUS_CUBE) cycle
@@ -146,23 +175,22 @@
     ignod(7) = ibool_inner_core(NGLLX,NGLLY,NGLLZ,i_elmt)
     ignod(8) = ibool_inner_core(1,NGLLY,NGLLZ,i_elmt)
 
-    coord(:,1) = xstore_inner_core(ignod)
-    coord(:,2) = ystore_inner_core(ignod)
-    coord(:,3) = zstore_inner_core(ignod)
-    rho = reshape(rhostore_inner_core(:,:,:,i_elmt),(/NGLLCUBE/))
+    coord(:,1) = xstore_inner_core(ignod(:))
+    coord(:,2) = ystore_inner_core(ignod(:))
+    coord(:,3) = zstore_inner_core(ignod(:))
+
+    rho(:) = reshape(rhostore_inner_core(:,:,:,i_elmt),(/NGLLCUBE/))
 
     do i = 1,NGLLCUBE
-      jac = real(matmul(dshape_hex8(:,:,i),coord),kind=CUSTOM_REAL)
+      jac(:,:) = real(matmul(dshape_hex8(:,:,i),coord),kind=CUSTOM_REAL)
       detjac = determinant(jac)
       call invert(jac)
       storederiv_ic(:,:,i,i_elmt) = real(matmul(jac,dlagrange_gll(:,i,:)),kind=CUSTOM_REAL)
       storerhojw_ic(i,i_elmt) = real(rho(i)*detjac*gll_weights(i),kind=CUSTOM_REAL)
-      enddo
+    enddo
   enddo
 
   ! outer core
-  storederiv_oc = 0.0_CUSTOM_REAL
-  storerhojw_oc = 0.0_CUSTOM_REAL
   do i_elmt = 1,NSPEC_OUTER_CORE
     ! EXODUS order NOT indicial order
     ! bottom corner nodes
@@ -176,13 +204,14 @@
     ignod(7) = ibool_outer_core(NGLLX,NGLLY,NGLLZ,i_elmt)
     ignod(8) = ibool_outer_core(1,NGLLY,NGLLZ,i_elmt)
 
-    coord(:,1) = xstore_outer_core(ignod)
-    coord(:,2) = ystore_outer_core(ignod)
-    coord(:,3) = zstore_outer_core(ignod)
-    rho = reshape(rhostore_outer_core(:,:,:,i_elmt),(/NGLLCUBE/))
+    coord(:,1) = xstore_outer_core(ignod(:))
+    coord(:,2) = ystore_outer_core(ignod(:))
+    coord(:,3) = zstore_outer_core(ignod(:))
+
+    rho(:) = reshape(rhostore_outer_core(:,:,:,i_elmt),(/NGLLCUBE/))
 
     do i = 1,NGLLCUBE
-      jac = real(matmul(dshape_hex8(:,:,i),coord),kind=CUSTOM_REAL)
+      jac(:,:) = real(matmul(dshape_hex8(:,:,i),coord),kind=CUSTOM_REAL)
       detjac = determinant(jac)
       call invert(jac)
       storederiv_oc(:,:,i,i_elmt) = real(matmul(jac,dlagrange_gll(:,i,:)),kind=CUSTOM_REAL)
@@ -191,8 +220,6 @@
   enddo
 
   ! crust mantle
-  storederiv_cm = 0.0_CUSTOM_REAL
-  storerhojw_cm = 0.0_CUSTOM_REAL
   do i_elmt = 1,NSPEC_CRUST_MANTLE
     ! EXODUS order NOT indicial order
     ! bottom corner nodes
@@ -206,13 +233,14 @@
     ignod(7) = ibool_crust_mantle(NGLLX,NGLLY,NGLLZ,i_elmt)
     ignod(8) = ibool_crust_mantle(1,NGLLY,NGLLZ,i_elmt)
 
-    coord(:,1) = xstore_crust_mantle(ignod)
-    coord(:,2) = ystore_crust_mantle(ignod)
-    coord(:,3) = zstore_crust_mantle(ignod)
-    rho = reshape(rhostore_crust_mantle(:,:,:,i_elmt),(/NGLLCUBE/))
+    coord(:,1) = xstore_crust_mantle(ignod(:))
+    coord(:,2) = ystore_crust_mantle(ignod(:))
+    coord(:,3) = zstore_crust_mantle(ignod(:))
+
+    rho(:) = reshape(rhostore_crust_mantle(:,:,:,i_elmt),(/NGLLCUBE/))
 
     do i = 1,NGLLCUBE
-      jac = real(matmul(dshape_hex8(:,:,i),coord),kind=CUSTOM_REAL)
+      jac(:,:) = real(matmul(dshape_hex8(:,:,i),coord),kind=CUSTOM_REAL)
       detjac = determinant(jac)
       call invert(jac)
       storederiv_cm(:,:,i,i_elmt) = real(matmul(jac,dlagrange_gll(:,i,:)),kind=CUSTOM_REAL)
@@ -231,18 +259,21 @@
     !    enddo
     !  enddo
     !endif
-
   enddo
 
-  end subroutine prepare_solver_preintegrate
+  ! free temporary arrays
+  deallocate(dshape_hex8,dlagrange_gll)
+
+  end subroutine SIEM_prepare_solver_preintegrate
 
 !
 !-------------------------------------------------------------------------------
 !
 
-  subroutine prepare_solver_preintegrate3()
+  subroutine SIEM_prepare_solver_preintegrate3()
 
-  use constants, only: CUSTOM_REAL,NDIM,NGLLX,NGLLY,NGLLZ,NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF, &
+  use constants, only: myrank,CUSTOM_REAL,IMAIN,NDIM,NGLLX,NGLLY,NGLLZ, &
+    NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF, &
     IFLAG_IN_FICTITIOUS_CUBE
 
   use specfem_par_crustmantle, only: ibool_crust_mantle,NSPEC_CRUST_MANTLE, &
@@ -266,8 +297,8 @@
 
   integer,parameter :: ngnod = 8
 
-  integer :: i,i_elmt
-  integer :: ignod(ngnod) !dnx,dny,dnz,
+  integer :: i,i_elmt,ier
+  integer :: ignod(ngnod)
   real(kind=CUSTOM_REAL) :: detjac,rho(NGLLCUBE_INF)
 
   real(kind=kdble),parameter :: jalpha=0.0_kdble,jbeta=0.0_kdble,zero=0.0_kdble
@@ -280,24 +311,53 @@
 
   real(kind=CUSTOM_REAL) :: coord(ngnod,NDIM),jac(NDIM,NDIM)
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) "  preintegrating Level-1 solver arrays"
+    call flush_IMAIN()
+  endif
+
+  ! array allocations
+  allocate(storederiv_cm1(NDIM,NGLLCUBE_INF,NGLLCUBE_INF,NSPEC_CRUST_MANTLE), &
+           storerhojw_cm1(NGLLCUBE_INF,NSPEC_CRUST_MANTLE), &
+           storejw_cm1(NGLLCUBE_INF,NSPEC_CRUST_MANTLE),stat=ier)
+  if (ier /= 0) stop 'Error allocating storederiv_cm1,.. arrays'
+  storederiv_cm1(:,:,:,:) = 0.0_CUSTOM_REAL
+  storerhojw_cm1(:,:) = 0.0_CUSTOM_REAL
+  storejw_cm1(:,:) = 0.0_CUSTOM_REAL
+
+  allocate(storederiv_ic1(NDIM,NGLLCUBE_INF,NGLLCUBE_INF,NSPEC_INNER_CORE), &
+           storerhojw_ic1(NGLLCUBE_INF,NSPEC_INNER_CORE),stat=ier)
+  if (ier /= 0) stop 'Error allocating storederiv_ic1,.. arrays'
+  storederiv_ic1(:,:,:,:) = 0.0_CUSTOM_REAL
+  storerhojw_ic1(:,:) = 0.0_CUSTOM_REAL
+
+  allocate(storederiv_oc1(NDIM,NGLLCUBE_INF,NGLLCUBE_INF,NSPEC_OUTER_CORE), &
+           storerhojw_oc1(NGLLCUBE_INF,NSPEC_OUTER_CORE),stat=ier)
+  if (ier /= 0) stop 'Error allocating storederiv_oc1,.. arrays'
+  storederiv_oc1(:,:,:,:) = 0.0_CUSTOM_REAL
+  storerhojw_oc1(:,:) = 0.0_CUSTOM_REAL
+
+  ! GLL quadrature
+  allocate(lagrange_gll1(NGLLCUBE_INF,NGLLCUBE_INF),stat=ier)
+  if (ier /= 0) stop 'Error allocating lagrange_gll1 array'
+  lagrange_gll1(:,:) = 0.d0
+
+  ! Legendre polynomials
   call zwgljd(xigll,wxgll,NGLLX_INF,jalpha,jbeta)
   call zwgljd(etagll,wygll,NGLLY_INF,jalpha,jbeta)
   call zwgljd(zetagll,wzgll,NGLLZ_INF,jalpha,jbeta)
 
   ! get derivatives of shape functions for 8-noded hex
-  call dshape_function_hex8(NDIM,ngnod,NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF,xigll,etagll, &
-                            zetagll,dshape_hex8)
+  call dshape_function_hex8(NDIM,ngnod,NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF,xigll,etagll,zetagll,dshape_hex8)
 
   ! compute gauss-lobatto-legendre quadrature information
-  call gll_quadrature(NDIM,NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF,gll_points1,gll_weights1, &
-                      lagrange_gll1,dlagrange_gll1)
+  call gll_quadrature(NDIM,NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF,gll_points1,gll_weights1,lagrange_gll1,dlagrange_gll1)
 
   ! inner core
-  storederiv_ic1 = 0.0_CUSTOM_REAL
-  storerhojw_ic1 = 0.0_CUSTOM_REAL
   do i_elmt = 1,NSPEC_INNER_CORE
     ! suppress fictitious elements in central cube
-    if (idoubling_inner_core(i_elmt) == IFLAG_IN_FICTITIOUS_CUBE)cycle
+    if (idoubling_inner_core(i_elmt) == IFLAG_IN_FICTITIOUS_CUBE) cycle
 
     ! EXODUS order NOT indicial order
     ! bottom corner nodes
@@ -311,13 +371,14 @@
     ignod(7) = ibool_inner_core(NGLLX,NGLLY,NGLLZ,i_elmt)
     ignod(8) = ibool_inner_core(1,NGLLY,NGLLZ,i_elmt)
 
-    coord(:,1) = xstore_inner_core(ignod)
-    coord(:,2) = ystore_inner_core(ignod)
-    coord(:,3) = zstore_inner_core(ignod)
-    rho = reshape(rhostore_inner_core(1:NGLLX:2,1:NGLLY:2,1:NGLLZ:2,i_elmt),(/NGLLCUBE_INF/))
+    coord(:,1) = xstore_inner_core(ignod(:))
+    coord(:,2) = ystore_inner_core(ignod(:))
+    coord(:,3) = zstore_inner_core(ignod(:))
+
+    rho(:) = reshape(rhostore_inner_core(1:NGLLX:2,1:NGLLY:2,1:NGLLZ:2,i_elmt),(/NGLLCUBE_INF/))
 
     do i = 1,NGLLCUBE_INF
-      jac = real(matmul(dshape_hex8(:,:,i),coord),kind=CUSTOM_REAL)
+      jac(:,:) = real(matmul(dshape_hex8(:,:,i),coord),kind=CUSTOM_REAL)
       detjac = determinant(jac)
       call invert(jac)
       storederiv_ic1(:,:,i,i_elmt) = real(matmul(jac,dlagrange_gll1(:,i,:)),kind=CUSTOM_REAL)
@@ -326,8 +387,6 @@
   enddo
 
   ! outer core
-  storederiv_oc1 = 0.0_CUSTOM_REAL
-  storerhojw_oc1 = 0.0_CUSTOM_REAL
   do i_elmt = 1,NSPEC_OUTER_CORE
     ! EXODUS order NOT indicial order
     ! bottom corner nodes
@@ -341,13 +400,14 @@
     ignod(7) = ibool_outer_core(NGLLX,NGLLY,NGLLZ,i_elmt)
     ignod(8) = ibool_outer_core(1,NGLLY,NGLLZ,i_elmt)
 
-    coord(:,1) = xstore_outer_core(ignod)
-    coord(:,2) = ystore_outer_core(ignod)
-    coord(:,3) = zstore_outer_core(ignod)
-    rho = reshape(rhostore_outer_core(1:NGLLX:2,1:NGLLY:2,1:NGLLZ:2,i_elmt), (/NGLLCUBE_INF/))
+    coord(:,1) = xstore_outer_core(ignod(:))
+    coord(:,2) = ystore_outer_core(ignod(:))
+    coord(:,3) = zstore_outer_core(ignod(:))
+
+    rho(:) = reshape(rhostore_outer_core(1:NGLLX:2,1:NGLLY:2,1:NGLLZ:2,i_elmt), (/NGLLCUBE_INF/))
 
     do i = 1,NGLLCUBE_INF
-      jac = real(matmul(dshape_hex8(:,:,i),coord),kind=CUSTOM_REAL)
+      jac(:,:) = real(matmul(dshape_hex8(:,:,i),coord),kind=CUSTOM_REAL)
       detjac = determinant(jac)
       call invert(jac)
       storederiv_oc1(:,:,i,i_elmt) = real(matmul(jac,dlagrange_gll1(:,i,:)),kind=CUSTOM_REAL)
@@ -356,9 +416,6 @@
   enddo
 
   ! crust mantle
-  storederiv_cm1 = 0.0_CUSTOM_REAL
-  storerhojw_cm1 = 0.0_CUSTOM_REAL
-  storejw_cm1 = 0.0_CUSTOM_REAL
   do i_elmt = 1,NSPEC_CRUST_MANTLE
     ! EXODUS order NOT indicial order
     ! bottom corner nodes
@@ -372,13 +429,14 @@
     ignod(7) = ibool_crust_mantle(NGLLX,NGLLY,NGLLZ,i_elmt)
     ignod(8) = ibool_crust_mantle(1,NGLLY,NGLLZ,i_elmt)
 
-    coord(:,1) = xstore_crust_mantle(ignod)
-    coord(:,2) = ystore_crust_mantle(ignod)
-    coord(:,3) = zstore_crust_mantle(ignod)
-    rho = reshape(rhostore_crust_mantle(1:NGLLX:2,1:NGLLY:2,1:NGLLZ:2,i_elmt), (/NGLLCUBE_INF/))
+    coord(:,1) = xstore_crust_mantle(ignod(:))
+    coord(:,2) = ystore_crust_mantle(ignod(:))
+    coord(:,3) = zstore_crust_mantle(ignod(:))
+
+    rho(:) = reshape(rhostore_crust_mantle(1:NGLLX:2,1:NGLLY:2,1:NGLLZ:2,i_elmt), (/NGLLCUBE_INF/))
 
     do i = 1,NGLLCUBE_INF
-      jac = real(matmul(dshape_hex8(:,:,i),coord),kind=CUSTOM_REAL)
+      jac(:,:) = real(matmul(dshape_hex8(:,:,i),coord),kind=CUSTOM_REAL)
       detjac = determinant(jac)
       call invert(jac)
       storederiv_cm1(:,:,i,i_elmt) = real(matmul(jac,dlagrange_gll1(:,i,:)),kind=CUSTOM_REAL)
@@ -387,7 +445,7 @@
     enddo
   enddo
 
-  end subroutine prepare_solver_preintegrate3
+  end subroutine SIEM_prepare_solver_preintegrate3
 
 !
 !-------------------------------------------------------------------------------
@@ -396,9 +454,7 @@
 ! TODO: check this why is it so slow poisson_stiffness is very slow due to loop
 ! of jacobian and etc. If we store jacobian before hand it should be faster!
 
-  subroutine prepare_solver_poisson()
-
-  use siem_math_library_mpi, only: maxscal,minscal
+  subroutine SIEM_prepare_solver_poisson()
 
   use specfem_par
   use specfem_par_crustmantle
@@ -413,33 +469,44 @@
                           poisson_stiffnessINF3
 
   implicit none
+  integer :: ier
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) "  allocating poisson level-1 solver arrays"
+    write(IMAIN,*) "  allocating Poisson Level-1 solver arrays"
     call flush_IMAIN()
   endif
 
+  ! allocate inode arrays
+  allocate(inode_elmt_cm(NGLLCUBE,NSPEC_CRUST_MANTLE), &
+           inode_elmt_ic(NGLLCUBE,NSPEC_INNER_CORE), &
+           inode_elmt_oc(NGLLCUBE,NSPEC_OUTER_CORE), &
+           inode_elmt_trinf(NGLLCUBE,NSPEC_TRINFINITE), &
+           inode_elmt_inf(NGLLCUBE,NSPEC_INFINITE),stat=ier)
+  if (ier /= 0) stop 'Error allocating inode_elmt_cm,.. arrays'
+  inode_elmt_cm(:,:) = 0; inode_elmt_ic(:,:) = 0; inode_elmt_oc(:,:) = 0
+  inode_elmt_trinf(:,:) = 0; inode_elmt_inf(:,:) = 0
+
+  allocate(inode_elmt_cm1(NGLLCUBE_INF,NSPEC_CRUST_MANTLE), &
+           inode_elmt_ic1(NGLLCUBE_INF,NSPEC_INNER_CORE), &
+           inode_elmt_oc1(NGLLCUBE_INF,NSPEC_OUTER_CORE), &
+           inode_elmt_trinf1(NGLLCUBE_INF,NSPEC_TRINFINITE), &
+           inode_elmt_inf1(NGLLCUBE_INF,NSPEC_INFINITE),stat=ier)
+  if (ier /= 0) stop 'Error allocating inode_elmt_cm1,.. arrays'
+  inode_elmt_cm1(:,:) = 0; inode_elmt_ic1(:,:) = 0; inode_elmt_oc1(:,:) = 0
+  inode_elmt_trinf1(:,:) = 0; inode_elmt_inf1(:,:) = 0
+
+  allocate(inode_map_ic(2,NGLOB_INNER_CORE), &
+           inode_map_oc(2,NGLOB_OUTER_CORE), &
+           inode_map_cm(2,NGLOB_CRUST_MANTLE), &
+           inode_map_trinf(2,NGLOB_TRINFINITE), &
+           inode_map_inf(2,NGLOB_INFINITE),stat=ier)
+  if (ier /= 0) stop 'Error allocating inode_map_ic,.. arrays'
+  inode_map_ic(:,:) = 0; inode_map_oc(:,:) = 0; inode_map_cm(:,:) = 0
+  inode_map_trinf(:,:) = 0; inode_map_inf(:,:) = 0
+
   ! indexify regions
   call get_index_region()
-
-  ! allocate inode arrays
-  allocate(inode_elmt_cm(NGLLCUBE,NSPEC_CRUST_MANTLE))
-  allocate(inode_elmt_cm1(NGLLCUBE_INF,NSPEC_CRUST_MANTLE))
-  allocate(inode_elmt_ic(NGLLCUBE,NSPEC_INNER_CORE))
-  allocate(inode_elmt_ic1(NGLLCUBE_INF,NSPEC_INNER_CORE))
-  allocate(inode_elmt_oc(NGLLCUBE,NSPEC_OUTER_CORE))
-  allocate(inode_elmt_oc1(NGLLCUBE_INF,NSPEC_OUTER_CORE))
-
-  ! trinfinite arrays
-  if (ADD_TRINF) then
-    allocate(inode_elmt_trinf(NGLLCUBE,NSPEC_TRINFINITE))
-    allocate(inode_elmt_trinf1(NGLLCUBE_INF,NSPEC_TRINFINITE))
-  endif
-
-  ! infinite arrays
-  allocate(inode_elmt_inf(NGLLCUBE,NSPEC_INFINITE))
-  allocate(inode_elmt_inf1(NGLLCUBE_INF,NSPEC_INFINITE))
 
   ! Level-1 solver-------------------
   allocate(storekmat_crust_mantle1(NGLLCUBE_INF,NGLLCUBE_INF,NSPEC_CRUST_MANTLE), &
@@ -573,7 +640,7 @@
   if (POISSON_SOLVER_5GLL) then
     ! user output
     if (myrank == 0) then
-      write(IMAIN,*) "  allocating poisson level-2 solver arrays"
+      write(IMAIN,*) "  allocating Poisson Level-2 solver arrays"
       call flush_IMAIN()
     endif
 
@@ -683,7 +750,7 @@
     !--------------------Level-2 solver
   endif
 
-  end subroutine prepare_solver_poisson
+  end subroutine SIEM_prepare_solver_poisson
 
 !
 !-------------------------------------------------------------------------------
@@ -696,7 +763,7 @@
 ! HISTORY
 !   Sep 30,2013
 
-  subroutine prepare_solver_sparse()
+  subroutine SIEM_prepare_solver_sparse_petsc()
 
   use specfem_par
   use specfem_par_crustmantle
@@ -735,9 +802,13 @@
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) "  preparing sparse matrix solver"
+    write(IMAIN,*) "  preparing PETSc sparse matrix solver"
     call flush_IMAIN()
   endif
+
+  !debug
+  if (myrank == 0) print *
+  if (myrank == 0) print *,'PETSc sparse matrix solver: --------------------------------------------------'
 
   !===============================================================================
   ! Level-1 solver
@@ -760,8 +831,8 @@
 
   !debug
   if (myrank == 0) then
-    print *,' -- Elemental DOFs for IC : ', nedof_ic1
-    print *,' -- Maximum DOFs (nmax1)  : ', nmax1
+    print *,'PETSc sparse matrix solver: -- Elemental DOFs for IC : ', nedof_ic1
+    print *,'PETSc sparse matrix solver: -- Maximum DOFs (nmax1)  : ', nmax1
   endif
 
   ! Allocate map for each region
@@ -806,20 +877,19 @@
            maxval(ggdof_cm1),maxval(ggdof_trinf1),maxval(ggdof_inf1) /) ))
 
   !debug
-  if (myrank == 0) write(*,'(a,i12)')' -- Total global degrees of freedom1: ',ngdof1
+  if (myrank == 0) print *,'PETSc sparse matrix solver: -- Total global degrees of freedom1: ',ngdof1
 
   ! stage 0: store all elements
   ncount = 0
   ! inner core
   do i_elmt = 1,NSPEC_INNER_CORE
-    ! Skip fictitious inner core cube
-    if (idoubling_inner_core(i_elmt) == IFLAG_IN_FICTITIOUS_CUBE)cycle
+    ! suppress fictitious elements in central cube
+    if (idoubling_inner_core(i_elmt) == IFLAG_IN_FICTITIOUS_CUBE) cycle
 
     ! Note: gdof_ic1 defined in specfem_par_innercore
     ! Fetch gdof for IC element only on NGLLCUBE_INF points
     gdof_elmt1 = reshape(gdof_ic1(inode_elmt_ic1(:,i_elmt)),(/NEDOF1/))
     ggdof_elmt1 = reshape(ggdof_ic1(:,inode_elmt_ic1(:,i_elmt)),(/NEDOF1/))
-    !if (myrank==0) print *,'ICkmat zeros1:',count(storekmat_inner_core1(:,:,i_elmt)==0.0_CUSTOM_REAL)
     do i = 1,nedof_ic1
       do j = 1,nedof_ic1
         igdof = gdof_elmt1(imap_ic(i))
@@ -848,7 +918,6 @@
         igdof = gdof_elmt1(imap_oc(i))
         jgdof = gdof_elmt1(imap_oc(j))
         if (igdof > 0 .and. jgdof > 0 .and. storekmat_outer_core1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
-          !if (myrank==0) write(1111,*) igdof,jgdof,storekmat_outer_core1(i,j,i_elmt)
           ncount = ncount+1
           row0(ncount) = igdof
           col0(ncount) = jgdof
@@ -863,7 +932,6 @@
   do i_elmt = 1,NSPEC_CRUST_MANTLE
     gdof_elmt1 = reshape(gdof_cm1(inode_elmt_cm1(:,i_elmt)),(/NEDOF1/))
     ggdof_elmt1 = reshape(ggdof_cm1(:,inode_elmt_cm1(:,i_elmt)),(/NEDOF1/))
-    !if (myrank==0) print *,'CMkmat zeros1:',count(storekmat_crust_mantle1(:,:,i_elmt)==0.0_CUSTOM_REAL)
     do i = 1,nedof_cm1
       do j = 1,nedof_cm1
         igdof = gdof_elmt1(imap_cm(i))
@@ -883,7 +951,6 @@
   do i_elmt = 1,NSPEC_TRINFINITE
     gdof_elmt1 = reshape(gdof_trinf1(inode_elmt_trinf1(:,i_elmt)),(/NEDOF1/))
     ggdof_elmt1 = reshape(ggdof_trinf1(:,inode_elmt_trinf1(:,i_elmt)),(/NEDOF1/))
-    !if (myrank==0) print *,'TRINFkmat zeros1:',count(storekmat_trinfinite1(:,:,i_elmt)==0.0_CUSTOM_REAL)
     do i = 1,nedof_trinf1
       do j = 1,nedof_trinf1
         igdof = gdof_elmt1(imap_trinf(i))
@@ -903,7 +970,6 @@
   do i_elmt = 1,NSPEC_INFINITE
     gdof_elmt1 = reshape(gdof_inf1(inode_elmt_inf1(:,i_elmt)),(/NEDOF1/))
     ggdof_elmt1 = reshape(ggdof_inf1(:,inode_elmt_inf1(:,i_elmt)),(/NEDOF1/))
-    !if (myrank==0) print *,'INFkmat zeros1:',count(storekmat_infinite1(:,:,i_elmt)==0.0_CUSTOM_REAL)
     do i = 1,nedof_inf1
       do j = 1,nedof_inf1
         igdof = gdof_elmt1(imap_inf(i))
@@ -927,7 +993,7 @@
   nsparse1 = maxval(iorder)
 
   !debug
-  if (myrank == 0) write(*,'(a,1x,i0,1x,a,1x,i0)')'  neq1:',neq1,' Nsparse1:',nsparse1
+  if (myrank == 0) print *,'PETSc sparse matrix solver: -- neq1:',neq1,' Nsparse1:',nsparse1
   call synchronize_all()
 
   allocate(krow_sparse1(nsparse1),kcol_sparse1(nsparse1))
@@ -948,7 +1014,7 @@
   ! check
   if (minval(krow_sparse1) < 1 .or. minval(kcol_sparse1) < 1 .or. &
       minval(kgrow_sparse1) < 1 .or. minval(kgcol_sparse1) < 1) then
-    write(*,*) 'ERROR: local and global indices are less than 1!'
+    print *,'ERROR: PETSc sparse matrix solver: local and global indices are less than 1!'
     stop 'Error local and global indices are less than 1'
   endif
 
@@ -968,7 +1034,7 @@
 
   do i = 1,nsparse1
     if (kgrow_sparse1(i) /= l2gdof1(krow_sparse1(i)) .or. kgcol_sparse1(i) /= l2gdof1(kcol_sparse1(i))) then
-      print *,'VERY STRANGE!!!!!'
+      print *,'Error: PETSc sparse matrix solver: VERY STRANGE!!!!!'
       stop 'Error very strange sparse dof numbers should not occur'
     endif
   enddo
@@ -978,11 +1044,11 @@
   gmax = maxvec(l2gdof1(1:))
 
   !debug
-  if (myrank == 0) write(*,'(a,1x,i0,1x,i0)')'  l2gdof1 range:',gmin,gmax
+  if (myrank == 0) print *,'PETSc sparse matrix solver: -- l2gdof1 range:',gmin,gmax
   call synchronize_all()
 
   if (minval(l2gdof1(1:)) < 0) then
-    write(*,*) 'ERROR: local-to-global indices are less than 1!'
+    print *,'ERROR: PETSc sparse matrix solver: local-to-global indices are less than 1!'
     stop 'Error local-to-global indices are less than 1'
   endif
 
@@ -1004,7 +1070,7 @@
     allocate(col0(nmax),row0(nmax),gcol0(nmax),grow0(nmax),kmat0(nmax))
 
     !debug
-    if (myrank == 0) print *,'nedof_ic = ',nedof_ic,nmax
+    if (myrank == 0) print *,'PETSc sparse matrix solver: -- nedof_ic = ',nedof_ic,nmax
 
     allocate(imap_ic(nedof_ic),imap_oc(nedof_oc),imap_cm(nedof_cm), &
              imap_trinf(nedof_trinf),imap_inf(nedof_inf))
@@ -1041,17 +1107,17 @@
                                maxval(ggdof_trinf),maxval(ggdof_inf) /) ))
 
     !debug
-    if (myrank == 0) write(*,'(a,i12)')'  Total global degrees of freedom:',ngdof
+    if (myrank == 0) print *,'PETSc sparse matrix solver: -- Total global degrees of freedom:',ngdof
 
     ! stage 0: store all elements
     ncount = 0
     ! inner core
     do i_elmt = 1,NSPEC_INNER_CORE
-      if (idoubling_inner_core(i_elmt) == IFLAG_IN_FICTITIOUS_CUBE)cycle
+      ! suppress fictitious elements in central cube
+      if (idoubling_inner_core(i_elmt) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+
       gdof_elmt = reshape(gdof_ic(inode_elmt_ic(:,i_elmt)),(/NEDOF/))
       ggdof_elmt = reshape(ggdof_ic(:,inode_elmt_ic(:,i_elmt)),(/NEDOF/))
-      !if (myrank==0) print *,'ICkmat zeros:',count(storekmat_inner_core(:,:,i_elmt)==0.0_CUSTOM_REAL)
-      !if (myrank==0 .and. i_elmt==1)print *,'kmat:',storekmat_inner_core(1,:,i_elmt)
       do i = 1,nedof_ic
         do j = 1,nedof_ic
           igdof = gdof_elmt(imap_ic(i))
@@ -1091,7 +1157,6 @@
     do i_elmt = 1,NSPEC_CRUST_MANTLE
       gdof_elmt = reshape(gdof_cm(inode_elmt_cm(:,i_elmt)),(/NEDOF/))
       ggdof_elmt = reshape(ggdof_cm(:,inode_elmt_cm(:,i_elmt)),(/NEDOF/))
-      !if (myrank==0) print *,'CMkmat zeros:',count(storekmat_crust_mantle(:,:,i_elmt)==0.0_CUSTOM_REAL)
       do i = 1,nedof_cm
         do j = 1,nedof_cm
           igdof = gdof_elmt(imap_cm(i))
@@ -1111,7 +1176,6 @@
     do i_elmt = 1,NSPEC_TRINFINITE
       gdof_elmt = reshape(gdof_trinf(inode_elmt_trinf(:,i_elmt)),(/NEDOF/))
       ggdof_elmt = reshape(ggdof_trinf(:,inode_elmt_trinf(:,i_elmt)),(/NEDOF/))
-      !if (myrank==0) print *,'TRINFkmat zeros:',count(storekmat_trinfinite(:,:,i_elmt)==0.0_CUSTOM_REAL)
       do i = 1,nedof_trinf
         do j = 1,nedof_trinf
           igdof = gdof_elmt(imap_trinf(i))
@@ -1131,7 +1195,6 @@
     do i_elmt = 1,NSPEC_INFINITE
       gdof_elmt = reshape(gdof_inf(inode_elmt_inf(:,i_elmt)),(/NEDOF/))
       ggdof_elmt = reshape(ggdof_inf(:,inode_elmt_inf(:,i_elmt)),(/NEDOF/))
-      !if (myrank==0) print *,'INFkmat zeros:',count(storekmat_infinite(:,:,i_elmt)==0.0_CUSTOM_REAL)
       do i = 1,nedof_inf
         do j = 1,nedof_inf
           igdof = gdof_elmt(imap_inf(i))
@@ -1155,7 +1218,7 @@
     nsparse = maxval(iorder)
 
     !debug
-    if (myrank == 0) write(*,'(a,1x,i0,1x,a,1x,i0)')'  neq:',neq,' Nsparse:',nsparse
+    if (myrank == 0) print *,'PETSc sparse matrix solver: -- neq:',neq,' Nsparse:',nsparse
 
     allocate(krow_sparse(nsparse),kcol_sparse(nsparse))
     allocate(kgrow_sparse(nsparse),kgcol_sparse(nsparse))
@@ -1174,7 +1237,7 @@
     ! check
     if (minval(krow_sparse) < 1 .or. minval(kcol_sparse) < 1 .or. &
         minval(kgrow_sparse) < 1 .or. minval(kgcol_sparse) < 1) then
-      write(*,*) 'ERROR: local and global indices are less than 1!'
+      print *,'ERROR: PETSc sparse matrix solver: local and global indices are less than 1!'
       stop 'Error local and global indices are less than 1'
     endif
 
@@ -1195,17 +1258,18 @@
     l2gdof = l2gdof-1 ! PETSC uses 0 indexing
 
     !debug
-    if (myrank == 0) write(*,'(a,1x,i0,1x,i0)')'  l2gdof range:',minval(l2gdof(1:)),maxval(l2gdof(1:))
+    if (myrank == 0) print *,'PETSc sparse matrix solver: -- l2gdof range:',minval(l2gdof(1:)),maxval(l2gdof(1:))
     call synchronize_all()
 
     if (minval(l2gdof(1:)) < 1) then
-      write(*,*) 'ERROR: local-to-global indices are less than 1!'
+      print *,'ERROR: PETSc sparse matrix solver: local-to-global indices are less than 1!'
       stop 'Error local-to-global indices are less than 1'
     endif
   endif
 
   !debug
-  if (myrank == 0) write(*,'(a)')'--------------------------------------------------'
+  if (myrank == 0) print *,'PETSc sparse matrix solver: --------------------------------------------------'
+  if (myrank == 0) print *
 
-  end subroutine prepare_solver_sparse
+  end subroutine SIEM_prepare_solver_sparse_petsc
 
