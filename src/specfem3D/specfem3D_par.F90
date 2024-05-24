@@ -1214,31 +1214,29 @@ module specfem_par_full_gravity
 
   double precision,dimension(NGLLCUBE,NGLLCUBE) :: lagrange_gll
 
-! TODO: full gravity is not working yet, needs to fully implement solver...
-#ifdef USE_PETSC_NOT_WORKING_YET
+  !real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_ic       ! pgrav_ic(NGLOB_INNER_CORE)
+  !real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_oc       ! pgrav_oc(NGLOB_OUTER_CORE)
+  !real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_cm       ! pgrav_cm(NGLOB_CRUST_MANTLE)
+  !real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_trinf    ! pgrav_trinf(NGLOB_TRINFINITE)
+  !real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_inf      ! pgrav_inf(NGLOB_INFINITE)
 
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_ic       ! pgrav_ic(NGLOB_INNER_CORE)
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_oc       ! pgrav_oc(NGLOB_OUTER_CORE)
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_cm       ! pgrav_cm(NGLOB_CRUST_MANTLE)
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_trinf    ! pgrav_trinf(NGLOB_TRINFINITE)
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_inf      ! pgrav_inf(NGLOB_INFINITE)
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon, load, pgrav
+
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_ic1, pgrav_oc1, pgrav_cm1, pgrav_trinf1, pgrav_inf1
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon1, load1, pgrav1, pgrav1_oldrun
 
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: WEvector
+  !real(kind=CUSTOM_REAL),dimension(:),allocatable :: WEvector
 
   ! Adjoint arrays for Poisson Equation:
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_ic     ! b_pgrav_ic(NGLOB_INNER_CORE_ADJOINT)
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_oc     ! b_pgrav_oc(NGLOB_OUTER_CORE_ADJOINT)
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_cm     ! b_pgrav_cm(NGLOB_CRUST_MANTLE_ADJOINT)
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_trinf  ! b_pgrav_trinf(NGLOB_TRINFINITE_ADJOINT)
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_inf    ! b_pgrav_inf(NGLOB_INFINITE_ADJOINT)
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_dprecon, b_load, b_pgrav
+  !real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_ic     ! b_pgrav_ic(NGLOB_INNER_CORE_ADJOINT)
+  !real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_oc     ! b_pgrav_oc(NGLOB_OUTER_CORE_ADJOINT)
+  !real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_cm     ! b_pgrav_cm(NGLOB_CRUST_MANTLE_ADJOINT)
+  !real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_trinf  ! b_pgrav_trinf(NGLOB_TRINFINITE_ADJOINT)
+  !real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_inf    ! b_pgrav_inf(NGLOB_INFINITE_ADJOINT)
+  !real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_dprecon, b_load, b_pgrav
+
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_ic1, b_pgrav_oc1, b_pgrav_cm1, b_pgrav_trinf1, b_pgrav_inf1
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_dprecon1, b_load1, b_pgrav1
-
-#endif
 
   ! number of global degrees of freedom
   integer :: ngdof,nsparse
@@ -1358,6 +1356,21 @@ module specfem_par_full_gravity
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon_infinite
   real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable :: storekmat_infinite1
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon_infinite1
+
+  ! Full gravity kernels
+  ! density kernel 1 (related to gravity matrix \Pi)
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rho1siem_kl_crust_mantle
+  ! density kernel 2
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: rho2siem_kl_crust_mantle
+
+  ! for the Euler scheme for rotation in linear indexing
+  real(kind=CUSTOM_REAL),dimension(:,:), allocatable :: A_array_rotationL,B_array_rotationL
+
+  ! for the Euler scheme for rotation in linear indexing for 3-GLLX points
+  real(kind=CUSTOM_REAL),dimension(:,:), allocatable :: A_array_rotationL3,B_array_rotationL3
+
+  ! for the adjoint Euler scheme for rotation in linear indexing for 3-GLLX points
+  real(kind=CUSTOM_REAL),dimension(:,:), allocatable :: b_A_array_rotationL3, b_B_array_rotationL3
 
 end module specfem_par_full_gravity
 

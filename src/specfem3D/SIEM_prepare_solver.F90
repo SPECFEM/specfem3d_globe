@@ -404,15 +404,13 @@
   use specfem_par_crustmantle
   use specfem_par_innercore
   use specfem_par_outercore
+  use specfem_par_trinfinite
+  use specfem_par_infinite
 
   use specfem_par_full_gravity
 
-! TODO: full gravity is not working yet, needs to fully implement solver...
-#ifdef USE_PETSC_NOT_WORKING_YET
-
   use siem_poisson, only: poisson_stiffness,poisson_stiffnessINF,poisson_stiffness3, &
                           poisson_stiffnessINF3
-#endif
 
   implicit none
 
@@ -421,9 +419,6 @@
     write(IMAIN,*) "  allocating poisson level-1 solver arrays"
     call flush_IMAIN()
   endif
-
-! TODO: full gravity is not working yet, needs to fully implement solver...
-#ifdef USE_PETSC_NOT_WORKING_YET
 
   ! indexify regions
   call get_index_region()
@@ -435,11 +430,13 @@
   allocate(inode_elmt_ic1(NGLLCUBE_INF,NSPEC_INNER_CORE))
   allocate(inode_elmt_oc(NGLLCUBE,NSPEC_OUTER_CORE))
   allocate(inode_elmt_oc1(NGLLCUBE_INF,NSPEC_OUTER_CORE))
+
   ! trinfinite arrays
   if (ADD_TRINF) then
     allocate(inode_elmt_trinf(NGLLCUBE,NSPEC_TRINFINITE))
     allocate(inode_elmt_trinf1(NGLLCUBE_INF,NSPEC_TRINFINITE))
   endif
+
   ! infinite arrays
   allocate(inode_elmt_inf(NGLLCUBE,NSPEC_INFINITE))
   allocate(inode_elmt_inf1(NGLLCUBE_INF,NSPEC_INFINITE))
@@ -465,6 +462,17 @@
   if (SIMULATION_TYPE == 3) then
     allocate(b_load1(0:neq1), b_pgrav_ic1(nnode_ic1), b_pgrav_oc1(nnode_oc1), &
              b_pgrav_cm1(nnode_cm1), b_pgrav_trinf1(nnode_trinf1), b_pgrav_inf1(nnode_inf1))
+  endif
+
+  allocate(A_array_rotationL(NGLLCUBE,NSPEC_OUTER_CORE_ROTATION), &
+           B_array_rotationL(NGLLCUBE,NSPEC_OUTER_CORE_ROTATION))
+
+  allocate(A_array_rotationL3(NGLLCUBE_INF,NSPEC_OUTER_CORE_ROTATION), &
+           B_array_rotationL3(NGLLCUBE_INF,NSPEC_OUTER_CORE_ROTATION))
+
+  if (SIMULATION_TYPE == 3) then
+    allocate(b_A_array_rotationL3(NGLLCUBE_INF,NSPEC_OUTER_CORE_ROTATION), &
+             b_B_array_rotationL3(NGLLCUBE_INF,NSPEC_OUTER_CORE_ROTATION))
   endif
 
   ! crust mantle
@@ -558,8 +566,8 @@
 
   ! invert preconditioner
   !dprecon1(1:)=1.0_CUSTOM_REAL/dprecon1(1:)
-  !-----------------Level-1 solver
 
+  !-----------------Level-1 solver
 
   ! Level-2 solver------------------
   if (POISSON_SOLVER_5GLL) then
@@ -616,19 +624,19 @@
     ! assemble across the MPI processes in a region
     ! crust_mantle
     call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE,dprecon_crust_mantle, &
-                             num_interfaces_crust_mantle,max_nibool_interfaces_crust_mantle, &
+                             num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                              nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
                              my_neighbors_crust_mantle)
 
     ! outer core
     call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_OUTER_CORE,dprecon_outer_core, &
-                             num_interfaces_outer_core,max_nibool_interfaces_outer_core, &
+                             num_interfaces_outer_core,max_nibool_interfaces_oc, &
                              nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
                              my_neighbors_outer_core)
 
     ! inner core
     call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_INNER_CORE,dprecon_inner_core, &
-                             num_interfaces_inner_core,max_nibool_interfaces_inner_core, &
+                             num_interfaces_inner_core,max_nibool_interfaces_ic, &
                              nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
                              my_neighbors_inner_core)
 
@@ -675,8 +683,6 @@
     !--------------------Level-2 solver
   endif
 
-#endif
-
   end subroutine prepare_solver_poisson
 
 !
@@ -715,8 +721,7 @@
   integer :: nmax1 !,nsparse1
   integer :: nedof_ic1,nedof_oc1,nedof_cm1,nedof_trinf1,nedof_inf1
   integer :: gdof_elmt1(NEDOF1),ggdof_elmt1(NEDOF1)
-  integer,allocatable :: imap_ic(:),imap_oc(:),imap_cm(:),imap_trinf(:), &
-  imap_inf(:)
+  integer,allocatable :: imap_ic(:),imap_oc(:),imap_cm(:),imap_trinf(:),imap_inf(:)
   integer,allocatable :: ind0(:),iorder(:),row0(:),col0(:),grow0(:),gcol0(:)
   real(kind=CUSTOM_REAL),allocatable :: kmat0(:)
 
@@ -854,7 +859,6 @@
     enddo
   enddo
 
-
   ! crust mantle
   do i_elmt = 1,NSPEC_CRUST_MANTLE
     gdof_elmt1 = reshape(gdof_cm1(inode_elmt_cm1(:,i_elmt)),(/NEDOF1/))
@@ -915,7 +919,6 @@
     enddo
   enddo
 
-
   ! stage 1: assemble duplicates
   ! sort global indices
   allocate(ind0(ncount),iorder(ncount))
@@ -941,8 +944,10 @@
     kgrow_sparse1(iorder(i_count)) = grow0(i_count)
     kgcol_sparse1(iorder(i_count)) = gcol0(i_count)
   enddo
-  if (minval(krow_sparse1) < 1.or.minval(kcol_sparse1) < 1.or.                  &
-      minval(kgrow_sparse1) < 1.or.minval(kgcol_sparse1) < 1) then
+
+  ! check
+  if (minval(krow_sparse1) < 1 .or. minval(kcol_sparse1) < 1 .or. &
+      minval(kgrow_sparse1) < 1 .or. minval(kgcol_sparse1) < 1) then
     write(*,*) 'ERROR: local and global indices are less than 1!'
     stop 'Error local and global indices are less than 1'
   endif
@@ -962,7 +967,7 @@
   l2gdof1(gdof_inf1) = ggdof_inf1(1,:)
 
   do i = 1,nsparse1
-    if (kgrow_sparse1(i) /= l2gdof1(krow_sparse1(i)).or.kgcol_sparse1(i) /= l2gdof1(kcol_sparse1(i))) then
+    if (kgrow_sparse1(i) /= l2gdof1(krow_sparse1(i)) .or. kgcol_sparse1(i) /= l2gdof1(kcol_sparse1(i))) then
       print *,'VERY STRANGE!!!!!'
       stop 'Error very strange sparse dof numbers should not occur'
     endif
@@ -997,7 +1002,6 @@
            NSPEC_TRINFINITE*(nedof_trinf*nedof_trinf)+                      &
            NSPEC_INFINITE*(nedof_inf*nedof_inf)
     allocate(col0(nmax),row0(nmax),gcol0(nmax),grow0(nmax),kmat0(nmax))
-    !allocate(col0(nmax),row0(nmax),gcol0(nmax),grow0(nmax))
 
     !debug
     if (myrank == 0) print *,'nedof_ic = ',nedof_ic,nmax
@@ -1082,6 +1086,7 @@
         enddo
       enddo
     enddo
+
     ! crust mantle
     do i_elmt = 1,NSPEC_CRUST_MANTLE
       gdof_elmt = reshape(gdof_cm(inode_elmt_cm(:,i_elmt)),(/NEDOF/))
@@ -1101,6 +1106,7 @@
         enddo
       enddo
     enddo
+
     ! transition infinite
     do i_elmt = 1,NSPEC_TRINFINITE
       gdof_elmt = reshape(gdof_trinf(inode_elmt_trinf(:,i_elmt)),(/NEDOF/))
@@ -1120,6 +1126,7 @@
         enddo
       enddo
     enddo
+
     ! infinite
     do i_elmt = 1,NSPEC_INFINITE
       gdof_elmt = reshape(gdof_inf(inode_elmt_inf(:,i_elmt)),(/NEDOF/))
@@ -1163,8 +1170,10 @@
       kgrow_sparse(iorder(i_count)) = grow0(i_count)
       kgcol_sparse(iorder(i_count)) = gcol0(i_count)
     enddo
-    if (minval(krow_sparse) < 1.or.minval(kcol_sparse) < 1.or.                  &
-        minval(kgrow_sparse) < 1.or.minval(kgcol_sparse) < 1) then
+
+    ! check
+    if (minval(krow_sparse) < 1 .or. minval(kcol_sparse) < 1 .or. &
+        minval(kgrow_sparse) < 1 .or. minval(kgcol_sparse) < 1) then
       write(*,*) 'ERROR: local and global indices are less than 1!'
       stop 'Error local and global indices are less than 1'
     endif
@@ -1197,8 +1206,6 @@
 
   !debug
   if (myrank == 0) write(*,'(a)')'--------------------------------------------------'
-
-  return
 
   end subroutine prepare_solver_sparse
 

@@ -635,7 +635,7 @@ end module siem_math_library_mpi
 
 module siem_gll_library
 
-  integer,parameter :: kdble=selected_real_kind(15) ! double precision
+  integer,parameter :: kdble = selected_real_kind(15) ! double precision
 
   private :: endw1,endw2,gammaf,jacg
 

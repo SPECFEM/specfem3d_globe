@@ -35,7 +35,7 @@
 !PETSC documentation
 
 !-------------------------------------------------------------------------------
-module solver_petsc
+module siem_solver_petsc
 
   !#include "petsc/finclude/petscsys.h"
   !#include "petsc/finclude/petscvec.h"
@@ -1622,7 +1622,7 @@ contains
 
   end subroutine petsc_finalize
 
-end module solver_petsc
+end module siem_solver_petsc
 
 #endif
 
