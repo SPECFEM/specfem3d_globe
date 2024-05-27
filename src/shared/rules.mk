@@ -80,7 +80,7 @@ shared_OBJECTS = \
 	$O/rthetaphi_xyz.shared.o \
 	$O/save_header_file.shared.o \
 	$O/search_kdtree.shared.o \
-	$O/SIEM_math_library.sharedmpi.o \
+	$O/SIEM_math_library.shared.o \
 	$O/smooth_weights_vec.shared.o \
 	$O/sort_array_coordinates.shared.o \
 	$O/spline_routines.shared.o \
@@ -219,10 +219,7 @@ $O/%.shared.o: $S/%.f90 $O/shared_par.shared_module.o
 $O/%.shared.o: $S/%.F90 $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.sharedmpi.o: $S/%.f90 $O/shared_par.shared_module.o $O/read_parameter_file.shared.o $O/read_value_parameters.shared.o
-	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
-
-$O/%.sharedmpi.o: $S/%.F90 $O/shared_par.shared_module.o $O/read_parameter_file.shared.o $O/read_value_parameters.shared.o
+$O/%.sharedmpi.o: $S/%.f90 $O/shared_par.shared_module.o
 	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 ## adios

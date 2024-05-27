@@ -397,12 +397,9 @@ end module siem_math_library
 ! MPI math library
 module siem_math_library_mpi
 
-  use mpi
   use constants, only: CUSTOM_REAL
 
   implicit none
-
-  include "precision.h"
 
   private :: iminscal,fminscal
   private :: iminvec,fminvec
@@ -449,9 +446,8 @@ contains
   implicit none
   integer,intent(in)::scal
   integer :: gmin
-  integer :: ierr
 
-  call MPI_ALLREDUCE(scal,gmin,1,MPI_INTEGER,MPI_MIN,MPI_COMM_WORLD,ierr)
+  call min_all_all_i(scal,gmin)
 
   return
   end function iminscal
@@ -465,9 +461,8 @@ contains
   implicit none
   real(kind=CUSTOM_REAL),intent(in)::scal
   real(kind=CUSTOM_REAL) :: gmin
-  integer :: ierr
 
-  call MPI_ALLREDUCE(scal,gmin,1,CUSTOM_MPI_TYPE,MPI_MIN,MPI_COMM_WORLD,ierr)
+  call min_all_all_cr(scal,gmin)
 
   return
   end function fminscal
@@ -481,9 +476,8 @@ contains
   implicit none
   integer,intent(in)::scal
   integer :: gmax
-  integer :: ierr
 
-  call MPI_ALLREDUCE(scal,gmax,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ierr)
+  call max_all_all_i(scal,gmax)
 
   return
   end function imaxscal
@@ -497,9 +491,8 @@ contains
   implicit none
   real(kind=CUSTOM_REAL),intent(in)::scal
   real(kind=CUSTOM_REAL) :: gmax
-  integer :: ierr
 
-  call MPI_ALLREDUCE(scal,gmax,1,CUSTOM_MPI_TYPE,MPI_MAX,MPI_COMM_WORLD,ierr)
+  call max_all_all_cr(scal,gmax)
 
   return
   end function fmaxscal
@@ -510,11 +503,10 @@ contains
   implicit none
   integer,intent(in)::vec(:)
   integer :: lmax,gmax ! local and global
-  integer :: ierr
 
   lmax = maxval(vec)
 
-  call MPI_ALLREDUCE(lmax,gmax,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ierr)
+  call max_all_all_i(lmax,gmax)
 
   return
   end function imaxvec
@@ -525,11 +517,10 @@ contains
   implicit none
   real(kind=CUSTOM_REAL),intent(in)::vec(:)
   real(kind=CUSTOM_REAL) :: lmax,gmax ! local and global
-  integer :: ierr
 
   lmax = maxval(vec)
 
-  call MPI_ALLREDUCE(lmax,gmax,1,CUSTOM_MPI_TYPE,MPI_MAX,MPI_COMM_WORLD,ierr)
+  call max_all_all_cr(lmax,gmax)
 
   return
   end function fmaxvec
@@ -540,11 +531,10 @@ contains
   implicit none
   integer,intent(in)::vec(:)
   integer :: lmin,gmin ! local and global
-  integer :: ierr
 
   lmin = minval(vec)
 
-  call MPI_ALLREDUCE(lmin,gmin,1,MPI_INTEGER,MPI_MIN,MPI_COMM_WORLD,ierr)
+  call min_all_all_i(lmin,gmin)
 
   return
   end function iminvec
@@ -555,11 +545,10 @@ contains
   implicit none
   real(kind=CUSTOM_REAL),intent(in)::vec(:)
   real(kind=CUSTOM_REAL) :: lmin,gmin ! local and global
-  integer :: ierr
 
   lmin = minval(vec)
 
-  call MPI_ALLREDUCE(lmin,gmin,1,CUSTOM_MPI_TYPE,MPI_MIN,MPI_COMM_WORLD,ierr)
+  call min_all_all_cr(lmin,gmin)
 
   return
   end function fminvec
@@ -573,9 +562,8 @@ contains
   implicit none
   integer,intent(in)::scal
   integer :: gsum
-  integer :: ierr
 
-  call MPI_ALLREDUCE(scal,gsum,1,MPI_INTEGER,MPI_SUM,MPI_COMM_WORLD,ierr)
+  call sum_all_all_i(scal,gsum)
 
   return
   end function isumscal
@@ -589,31 +577,29 @@ contains
   implicit none
   real(kind=CUSTOM_REAL),intent(in)::scal
   real(kind=CUSTOM_REAL) :: gsum
-  integer :: ierr
 
-  call MPI_ALLREDUCE(scal,gsum,1,CUSTOM_MPI_TYPE,MPI_SUM,MPI_COMM_WORLD,ierr)
+  call sum_all_all_cr(scal,gsum)
 
   return
   end function fsumscal
 
   !=======================================================
 
-  function dot_product_par(vec1,vec2) result(gdot)
+  function dot_product_all_proc(vec1,vec2) result(gdot)
   !
   ! this finds global dot product of two vectors across the processors
   !
   implicit none
   real(kind=CUSTOM_REAL),intent(in)::vec1(:),vec2(:)
   real(kind=CUSTOM_REAL) :: ldot,gdot
-  integer :: ierr
 
   ! find local dot
   ldot = dot_product(vec1,vec2)
 
-  call MPI_ALLREDUCE(ldot,gdot,1,CUSTOM_MPI_TYPE,MPI_SUM,MPI_COMM_WORLD,ierr)
+  call sum_all_all_cr(ldot,gdot)
 
   return
-  end function dot_product_par
+  end function dot_product_all_proc
 
 end module siem_math_library_mpi
 

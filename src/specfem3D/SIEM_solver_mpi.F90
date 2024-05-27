@@ -31,7 +31,7 @@ module siem_solver_mpi
 
   use constants, only: myrank,CUSTOM_REAL
 
-  use siem_math_library_mpi, only: maxvec,dot_product_par
+  use siem_math_library_mpi, only: maxvec,dot_product_all_proc
 
   implicit none
 
@@ -90,8 +90,8 @@ contains
 
     call product_stiffness_vector(neq,p_g,kp)
 
-    rz = dot_product_par(r,z_g)
-    alpha = rz/dot_product_par(p_g,kp)
+    rz = dot_product_all_proc(r,z_g)
+    alpha = rz/dot_product_all_proc(p_g,kp)
     u_g = u_g+alpha*p_g
 
     maxp = maxvec(abs(p_g)); maxu = maxvec(abs(u_g))
@@ -107,8 +107,8 @@ contains
 
     call scatter_and_assemble(neq,z,z_g)
 
-    !beta = dot_product_par(r,z_g)/rz ! Fletcher–Reeves
-    beta = dot_product_par(r-r0,z_g)/rz !  Polak–Ribière
+    !beta = dot_product_all_proc(r,z_g)/rz ! Fletcher–Reeves
+    beta = dot_product_all_proc(r-r0,z_g)/rz !  Polak–Ribière
 
     p = z + beta*p
   enddo pcg
@@ -172,9 +172,9 @@ contains
 
     call product_stiffness_vector(neq,p_g,kp)
 
-    rz = dot_product_par(r,r_g)
-    pkp = dot_product_par(p_g,kp)
-    alpha = rz/pkp !rz/dot_product_par(p_g,kp)
+    rz = dot_product_all_proc(r,r_g)
+    pkp = dot_product_all_proc(p_g,kp)
+    alpha = rz/pkp !rz/dot_product_all_proc(p_g,kp)
     u_g = u_g+alpha*p_g
 
     maxp = maxvec(abs(p_g)); maxu = maxvec(abs(u_g))
@@ -187,8 +187,8 @@ contains
 
     call scatter_and_assemble(neq,r,r_g)
 
-    beta = dot_product_par(r,r_g)/rz ! Fletcher–Reeves
-    !beta = dot_product_par(r-r0,r_g)/rz !  Polak–Ribière
+    beta = dot_product_all_proc(r,r_g)/rz ! Fletcher–Reeves
+    !beta = dot_product_all_proc(r-r0,r_g)/rz !  Polak–Ribière
 
     p = r + beta*p
   enddo pcg
@@ -250,8 +250,8 @@ contains
 
     call product_stiffness_vector3(neq,p_g,kp)
 
-    rz = dot_product_par(r,r_g)
-    pkp = dot_product_par(p_g,kp)
+    rz = dot_product_all_proc(r,r_g)
+    pkp = dot_product_all_proc(p_g,kp)
     !if (abs(pkp)==zero)return
     alpha = rz/pkp
     u_g = u_g+alpha*p_g
@@ -267,8 +267,8 @@ contains
 
     call scatter_and_assemble3(neq,r,r_g)
 
-    beta = dot_product_par(r,r_g)/rz ! Fletcher–Reeves
-    !beta = dot_product_par(r-r0,r_g)/rz !PR: Polak–Ribière
+    beta = dot_product_all_proc(r,r_g)/rz ! Fletcher–Reeves
+    !beta = dot_product_all_proc(r-r0,r_g)/rz !PR: Polak–Ribière
 
     p = r + beta*p
   enddo pcg
@@ -330,8 +330,8 @@ contains
 
     call product_stiffness_vector(neq,p_g,kp)
 
-    rz = dot_product_par(r,z_g)
-    alpha = rz/dot_product_par(p_g,kp)
+    rz = dot_product_all_proc(r,z_g)
+    alpha = rz/dot_product_all_proc(p_g,kp)
     u_g = u_g+alpha*p_g
 
     maxp = maxvec(abs(p_g)); maxu = maxvec(abs(u_g))
@@ -345,8 +345,8 @@ contains
 
     call scatter_and_assemble(neq,z,z_g)
 
-    !beta = dot_product_par(r,z_g)/rz ! Fletcher–Reeves
-    beta = dot_product_par(r-r0,z_g)/rz !  Polak–Ribière
+    !beta = dot_product_all_proc(r,z_g)/rz ! Fletcher–Reeves
+    beta = dot_product_all_proc(r-r0,z_g)/rz !  Polak–Ribière
 
     p = z + beta*p
   enddo pcg
@@ -410,8 +410,8 @@ contains
 
     call product_stiffness_vector3(neq,p_g,kp)
 
-    rz = dot_product_par(r,z_g)
-    alpha = rz/dot_product_par(p_g,kp)
+    rz = dot_product_all_proc(r,z_g)
+    alpha = rz/dot_product_all_proc(p_g,kp)
     u_g = u_g+alpha*p_g
 
     maxp = maxvec(abs(p_g)); maxu = maxvec(abs(u_g))
@@ -424,7 +424,7 @@ contains
     z = dprecon_g*r
     !print *,'pcg_bp8'
     call scatter_and_assemble3(neq,z,z_g)
-    beta = dot_product_par(r-r0,z_g)/rz !PR: Polak–Ribière
+    beta = dot_product_all_proc(r-r0,z_g)/rz !PR: Polak–Ribière
     p = z+beta*p
   enddo pcg
 

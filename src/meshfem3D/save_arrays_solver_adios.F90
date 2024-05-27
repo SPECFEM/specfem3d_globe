@@ -571,7 +571,7 @@
   ints_to_reduce(3) = NSPEC2DMAX_XMIN_XMAX
   ints_to_reduce(4) = NSPEC2DMAX_YMIN_YMAX
 
-  call max_allreduce_i(ints_to_reduce,num_ints_to_reduce)
+  call max_all_all_veci(ints_to_reduce,num_ints_to_reduce)
 
   NSPEC2D_TOP_wmax          = ints_to_reduce(1)
   NSPEC2D_BOTTOM_wmax       = ints_to_reduce(2)
@@ -891,7 +891,7 @@
   ints_to_reduce(4) = num_colors_outer
   ints_to_reduce(5) = num_colors_inner
 
-  call max_allreduce_i(ints_to_reduce,num_ints_to_reduce)
+  call max_all_all_veci(ints_to_reduce,num_ints_to_reduce)
 
   num_interfaces_wmax        = ints_to_reduce(1)
   max_nibool_interfaces_wmax = ints_to_reduce(2)

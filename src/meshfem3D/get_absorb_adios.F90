@@ -190,7 +190,7 @@
 
   ! since different slice will have different number of absorbing faces,
   ! for adios we determine the maximum size for the local_dim assignements of the arrays
-  call max_allreduce_singlei(num_abs_boundary_faces,num_abs_boundary_faces_max)
+  call max_all_all_i(num_abs_boundary_faces,num_abs_boundary_faces_max)
 
   ! create a prefix for the file name such as LOCAL_PATH/regX_
   !call create_name_database_adios(reg_name,iregion,LOCAL_PATH)
