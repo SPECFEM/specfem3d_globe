@@ -47,14 +47,15 @@ contains
 !-------------------------------------------------------------------------------
 ! petsc SP solver preconditioned conjugate-gradient solver
 
-  subroutine pcpetsc_cg_solver(myid,neq,u_g,f,dprecon_g,cg_iter)
+  subroutine pcpetsc_cg_solver(myid,neq,u_g,f,dprecon_g)
 
   implicit none
   integer,intent(in) :: myid,neq
   real(kind=CUSTOM_REAL),dimension(0:neq),intent(inout) :: u_g
   real(kind=CUSTOM_REAL),dimension(0:neq),intent(in) :: f,dprecon_g
-  integer,intent(out) :: cg_iter
 
+  ! local parameters
+  integer :: iter
   real(kind=CUSTOM_REAL) :: alpha,beta,rz,maxp,maxu
   real(kind=CUSTOM_REAL),dimension(0:neq) :: kp,p,p_g,r,r0,z,z_g!,r_g
 
@@ -85,7 +86,7 @@ contains
   p = z
 
   ! pcg iteration
-  pcg: do cg_iter = 1,CG_MAXITER
+  pcg: do iter = 1,CG_MAXITER
     call scatter_and_assemble(neq,p,p_g)
 
     call product_stiffness_vector(neq,p_g,kp)
@@ -127,14 +128,15 @@ contains
 
 ! conjugate-gradient solver
 
-  subroutine cg_solver(myid,neq,u_g,f,cg_iter)
+  subroutine cg_solver(myid,neq,u_g,f)
 
   implicit none
   integer,intent(in) :: myid,neq
   real(kind=CUSTOM_REAL),dimension(0:neq),intent(inout) :: u_g
   real(kind=CUSTOM_REAL),dimension(0:neq),intent(in) :: f
-  integer,intent(out) :: cg_iter
 
+  ! local parameters
+  integer :: iter
   real(kind=CUSTOM_REAL) :: alpha,beta,pkp,rz,maxp,maxu
   real(kind=CUSTOM_REAL),dimension(0:neq) :: kp,p,p_g
 
@@ -167,7 +169,7 @@ contains
   p = r
 
   ! pcg iteration
-  pcg: do cg_iter = 1,CG_MAXITER
+  pcg: do iter = 1,CG_MAXITER
     call scatter_and_assemble(neq,p,p_g)
 
     call product_stiffness_vector(neq,p_g,kp)
@@ -207,14 +209,15 @@ contains
 
 ! conjugate-gradient solver
 
-  subroutine cg_solver3(myid,neq,u_g,f,cg_iter)
+  subroutine cg_solver3(myid,neq,u_g,f)
 
   implicit none
   integer,intent(in) :: myid,neq
   real(kind=CUSTOM_REAL),dimension(0:neq),intent(inout) :: u_g
   real(kind=CUSTOM_REAL),dimension(0:neq),intent(in) :: f
-  integer,intent(out) :: cg_iter
 
+  ! local parameters
+  integer :: iter
   real(kind=CUSTOM_REAL) :: alpha,beta,pkp,rz,maxf,maxp,maxu
   real(kind=CUSTOM_REAL),dimension(0:neq) :: kp,p,p_g,r0,r,r_g
 
@@ -245,7 +248,7 @@ contains
   p = r
 
   ! pcg iteration
-  pcg: do cg_iter = 1,CG_MAXITER
+  pcg: do iter = 1,CG_MAXITER
     call scatter_and_assemble3(neq,p,p_g)
 
     call product_stiffness_vector3(neq,p_g,kp)
@@ -287,14 +290,15 @@ contains
 
 ! diagonally preconditioned conjugate-gradient solver
 
-  subroutine diagpcg_solver(myid,neq,u_g,f,dprecon_g,cg_iter)
+  subroutine diagpcg_solver(myid,neq,u_g,f,dprecon_g)
 
   implicit none
   integer,intent(in) :: myid,neq
   real(kind=CUSTOM_REAL),dimension(0:neq),intent(inout) :: u_g
   real(kind=CUSTOM_REAL),dimension(0:neq),intent(in) :: f,dprecon_g
-  integer,intent(out) :: cg_iter
 
+  ! local parameters
+  integer :: iter
   real(kind=CUSTOM_REAL) :: alpha,beta,rz,maxp,maxu
   real(kind=CUSTOM_REAL),dimension(0:neq) :: kp,p,p_g,r,r0,z,z_g!,r_g
 
@@ -325,7 +329,7 @@ contains
   p = z
 
   ! pcg iteration
-  pcg: do cg_iter = 1,CG_MAXITER
+  pcg: do iter = 1,CG_MAXITER
     call scatter_and_assemble(neq,p,p_g)
 
     call product_stiffness_vector(neq,p_g,kp)
@@ -365,14 +369,15 @@ contains
 
 ! diagonally preconditioned conjugate-gradient solver
 
-  subroutine diagpcg_solver3(myid,neq,u_g,f,dprecon_g,cg_iter)
+  subroutine diagpcg_solver3(myid,neq,u_g,f,dprecon_g)
 
   implicit none
   integer,intent(in) :: myid,neq
   real(kind=CUSTOM_REAL),dimension(0:neq),intent(inout) :: u_g
   real(kind=CUSTOM_REAL),dimension(0:neq),intent(in) :: f,dprecon_g
-  integer,intent(out) :: cg_iter
 
+  ! local parameters
+  integer :: iter
   real(kind=CUSTOM_REAL) :: alpha,beta,rz,maxp,maxu
   real(kind=CUSTOM_REAL),dimension(0:neq) :: kp,p,p_g,r0,r,z,z_g!,r_g
 
@@ -403,7 +408,7 @@ contains
 
   p = z
   ! pcg iteration
-  pcg: do cg_iter = 1,CG_MAXITER
+  pcg: do iter = 1,CG_MAXITER
     call scatter_and_assemble3(neq,p,p_g)
     !call assemble_ghosts(myid,ngpart,maxngnode,nndof,neq,p,p_g) !,gdof)
     !print *,'pcg_bp4'

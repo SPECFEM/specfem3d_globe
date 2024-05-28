@@ -685,8 +685,4 @@
     iregion0 = iter_region
   enddo
 
-  ! full gravity kernels
-  ! TODO: check if this can be put into the solver and/or if CALC_GRAVITY_KERNELS is needed
-  !if (SIMULATION_TYPE == 3 .and. FULL_GRAVITY) CALC_GRAVITY_KERNELS = .true.
-
   end subroutine rcp_SIEM_set_mesh_parameters

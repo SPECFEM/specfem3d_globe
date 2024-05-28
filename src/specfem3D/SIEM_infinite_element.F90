@@ -309,7 +309,7 @@ contains
   real(kind=kdble),parameter :: one=1.0_kdble
 
   if (iface < 1.or.iface > 6) then
-    write(*,*) 'ERROR: illegal outer face ID:',iface
+    print *,'ERROR: illegal outer face ID:',iface
     stop
   endif
 
@@ -374,7 +374,7 @@ contains
 !  real(kind=kdble),parameter :: one=1.0_kdble,two=2.0_kdble
 !
 !  if (nenod /= 3) then
-!    write(*,*) 'ERROR: infinite element is currently implemented only for 3 nodes!'
+!    print *,'ERROR: infinite element is currently implemented only for 3 nodes!'
 !    stop
 !  endif
 !
@@ -407,8 +407,7 @@ contains
   real(kind=kdble),parameter :: one=1.0_kdble
 
   if (nenod /= 3) then
-    write(*,*) 'ERROR: infinite element is currently implemented only for 3 nodes!'
-    stop
+    stop 'ERROR: infinite element is currently implemented only for 3 nodes!'
   endif
 
   fac = one/(one-xi)
@@ -440,8 +439,7 @@ contains
   real(kind=kdble),parameter :: one=1.0_kdble
 
   if (nenod /= 3) then
-    write(*,*) 'ERROR: infinite element is currently implemented only for 3 nodes!'
-    stop
+    stop 'ERROR: infinite element is currently implemented only for 3 nodes!'
   endif
 
   fac = one/(one-xi)
@@ -532,8 +530,7 @@ contains
                                 two = 2.0_kdble,tol = 1.0e-12_kdble,zero = 0.0_kdble,zerotol = 1.0e-12_kdble
 
   if (n < 1) then
-    write(*,*) 'ERROR: number of quadrature points must be > 1!'
-    stop
+    stop 'ERROR: number of quadrature points must be > 1!'
   endif
 
   x = zero; w = zero
@@ -558,8 +555,7 @@ contains
   do i = 1,100
     if (maxval(abs(x-xold)) <= zerotol) exit
     if (i >= 100) then
-      write(*,*) 'ERROR: Legendre Vandermonde matrix does not converge!'
-      stop
+      stop 'ERROR: Legendre Vandermonde matrix does not converge!'
     endif
 
     xold = x;

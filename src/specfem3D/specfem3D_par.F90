@@ -1213,29 +1213,32 @@ module specfem_par_full_gravity
   integer :: neq, neq1, b_neq, b_neq1, nnode, nnode1
   double precision,dimension(:,:),allocatable :: lagrange_gll
 
-  !real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_ic       ! pgrav_ic(NGLOB_INNER_CORE)
-  !real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_oc       ! pgrav_oc(NGLOB_OUTER_CORE)
-  !real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_cm       ! pgrav_cm(NGLOB_CRUST_MANTLE)
-  !real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_trinf    ! pgrav_trinf(NGLOB_TRINFINITE)
-  !real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_inf      ! pgrav_inf(NGLOB_INFINITE)
-
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon, gravload, pgrav
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_ic       ! pgrav_ic(NGLOB_INNER_CORE)
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_oc       ! pgrav_oc(NGLOB_OUTER_CORE)
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_cm       ! pgrav_cm(NGLOB_CRUST_MANTLE)
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_trinf    ! pgrav_trinf(NGLOB_TRINFINITE)
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_inf      ! pgrav_inf(NGLOB_INFINITE)
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon, gravload
 
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_ic1, pgrav_oc1, pgrav_cm1, pgrav_trinf1, pgrav_inf1
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon1, gravload1, pgrav1, pgrav1_oldrun
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav1, pgrav1_oldrun
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon1, gravload1
 
   !real(kind=CUSTOM_REAL),dimension(:),allocatable :: WEvector
 
   ! Adjoint arrays for Poisson Equation:
-  !real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_ic     ! b_pgrav_ic(NGLOB_INNER_CORE_ADJOINT)
-  !real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_oc     ! b_pgrav_oc(NGLOB_OUTER_CORE_ADJOINT)
-  !real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_cm     ! b_pgrav_cm(NGLOB_CRUST_MANTLE_ADJOINT)
-  !real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_trinf  ! b_pgrav_trinf(NGLOB_TRINFINITE_ADJOINT)
-  !real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_inf    ! b_pgrav_inf(NGLOB_INFINITE_ADJOINT)
-  !real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_dprecon, b_gravload, b_pgrav
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_ic     ! b_pgrav_ic(NGLOB_INNER_CORE_ADJOINT)
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_oc     ! b_pgrav_oc(NGLOB_OUTER_CORE_ADJOINT)
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_cm     ! b_pgrav_cm(NGLOB_CRUST_MANTLE_ADJOINT)
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_trinf  ! b_pgrav_trinf(NGLOB_TRINFINITE_ADJOINT)
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_inf    ! b_pgrav_inf(NGLOB_INFINITE_ADJOINT)
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_dprecon, b_gravload
 
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_ic1, b_pgrav_oc1, b_pgrav_cm1, b_pgrav_trinf1, b_pgrav_inf1
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_dprecon1, b_gravload1, b_pgrav1
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav1
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_dprecon1, b_gravload1
 
   ! number of global degrees of freedom
   integer :: ngdof,nsparse
@@ -1264,10 +1267,14 @@ module specfem_par_full_gravity
   logical,dimension(NGLLCUBE) :: is_active_gll
 
   ! parameters for ENSIGHT GOLD files
-  character(len=20) :: ptail
-  integer :: twidth
+  !character(len=20) :: ptail
+  !integer :: twidth
+  !integer :: nnode4_ic,nnode4_oc,nnode4_cm
+  !integer,allocatable :: inode4_ic(:),inode4_oc(:),inode4_cm(:)
 
-  ! Inbuilt solver nondim scaling:
+  ! CG solver scaling
+  logical, parameter :: cg_isscale = .true.
+  ! Inbuilt solver nondim scaling
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: ndscale1, ndscale
 
   ! full gravity arrays
@@ -1361,6 +1368,11 @@ module specfem_par_full_gravity
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rho1siem_kl_crust_mantle
   ! density kernel 2
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: rho2siem_kl_crust_mantle
+  ! 1. and 2. gravity kernel
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable ::  gknl1, gknl2
+
+  ! for debugging only: delete at some point
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: debug_rho_kl_cm ! (5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT)
 
   ! for the Euler scheme for rotation in linear indexing
   real(kind=CUSTOM_REAL),dimension(:,:), allocatable :: A_array_rotationL,B_array_rotationL

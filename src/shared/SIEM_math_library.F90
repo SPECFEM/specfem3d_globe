@@ -64,7 +64,7 @@ contains
     det = det - jac(1,2)*(jac(2,1)*jac(3,3) - jac(3,1)*jac(2,3))
     det = det + jac(1,3)*(jac(2,1)*jac(3,2) - jac(3,1)*jac(2,2))
   case default
-    write(*,*) 'ERROR: wrong dimension for jacobian matrix!'
+    stop 'ERROR: wrong dimension for jacobian matrix!'
   end select
 
   return
@@ -651,9 +651,9 @@ contains
 
   ! check that the parameter file is correct
   if (ngnod /= 8) then
-    write(*,*) 'ERROR: elements must have 8 geometrical nodes!'
-    stop
+    stop 'ERROR: elements must have 8 geometrical nodes!'
   endif
+
   !print *,'after:',ndim,ngnod,ngll
   ! compute the derivatives of 3d shape functions
   !dshape_hex8=zero
@@ -720,23 +720,21 @@ contains
 
     ! sum of derivative of shape functions should be zero
     if (abs(sum_dshapexi) > zerotol) then
-      write(*,*) 'ERROR: derivative xi shape functions!'
-      stop
+      stop 'ERROR: derivative xi shape functions!'
     endif
 
     if (abs(sum_dshapeeta) > zerotol) then
-      write(*,*) 'ERROR: derivative eta shape functions!'
-      stop
+      stop 'ERROR: derivative eta shape functions!'
     endif
 
     if (abs(sum_dshapezeta) > zerotol) then
-      write(*,*) 'ERROR: derivative gamma shape functions!'
+      print *,'ERROR: derivative gamma shape functions!'
       print *,ngllx,nglly,ngllz,sum_dshapexi,sum_dshapeeta,sum_dshapezeta,zerotol
       print *,xigll
       print *,etagll
       print *,zetagll
-      if (all(xigll == etagll))print *,'yes0'
-      if (all(xigll == zetagll))print *,'yes1'
+      if (all(xigll == etagll)) print *,'yes0'
+      if (all(xigll == zetagll)) print *,'yes1'
       stop
     endif
   enddo
@@ -778,8 +776,7 @@ contains
 
   ! check that the parameter file is correct
   if (ngnod /= 8) then
-    write(*,*) 'ERROR: elements must have 8 geometrical nodes!'
-    stop
+    stop 'ERROR: elements must have 8 geometrical nodes!'
   endif
 
   ! compute the derivatives of 3d shape functions
@@ -832,16 +829,13 @@ contains
 
   ! sum of derivative of shape functions should be zero
   if (abs(sum_dshapexi) > zerotol) then
-    write(*,*) 'ERROR: derivative xi shape functions!'
-    stop
+    stop 'ERROR: derivative xi shape functions!'
   endif
   if (abs(sum_dshapeeta) > zerotol) then
-    write(*,*) 'ERROR: derivative eta shape functions!'
-    stop
+    stop 'ERROR: derivative eta shape functions!'
   endif
   if (abs(sum_dshapezeta) > zerotol) then
-    write(*,*) 'ERROR: derivative gamma shape functions!'
-    stop
+    stop 'ERROR: derivative gamma shape functions!'
   endif
 
   end subroutine dshape_function_hex8_point
@@ -1943,13 +1937,11 @@ contains
   pdm1 = zero
 
   if (np <= 0) then
-    write(*,*) 'ERROR: number of Gauss points < 1!'
-    stop
+    stop 'ERROR: number of Gauss points < 1!'
   endif
 
   if ((alpha <= -one) .or. (beta <= -one)) then
-    write(*,*) 'ERROR: alpha and beta must be greater than -1!'
-    stop
+    stop 'ERROR: alpha and beta must be greater than -1!'
   endif
 
   if (np == 1) then
@@ -2018,20 +2010,17 @@ contains
   pd  = zero
 
   if (np <= 1) then
-    write(*,*) 'ERROR: number of Gauss-Lobatto points < 2!'
-    stop
+    stop 'ERROR: number of Gauss-Lobatto points < 2!'
   endif
 
   ! with spectral elements, use at least 3 points
   if (np < 3) then
-    write(*,*) 'WARNING: number of Gauss-Lobatto points < 3!'
-    !stop
+    stop 'WARNING: number of Gauss-Lobatto points < 3!'
   endif
   !if (np <= 2) stop 'minimum number of Gauss-Lobatto points for the SEM is 3'
 
   if ((alpha <= -one) .or. (beta <= -one)) then
-    write(*,*) 'ERROR: alpha and beta must be greater than -1!'
-    stop
+    stop 'ERROR: alpha and beta must be greater than -1!'
   endif
 
   if (nm1 > 0) then

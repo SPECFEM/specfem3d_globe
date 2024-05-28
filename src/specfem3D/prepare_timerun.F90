@@ -843,11 +843,16 @@
 
   ! free up memory by deallocating arrays that are no more needed
 
+  use specfem_par, only: FULL_GRAVITY
+
   use specfem_par_crustmantle
   use specfem_par_outercore
   use specfem_par_innercore
 
   implicit none
+
+  ! full gravity still needs xstore,.. arrays
+  if (FULL_GRAVITY) return
 
   ! old x/y/z array not needed anymore
   deallocate(xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle)

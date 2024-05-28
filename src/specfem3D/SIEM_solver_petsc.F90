@@ -25,9 +25,6 @@
 !
 !=====================================================================
 
-! TODO: full gravity is not working yet, needs to fully implement solver...
-#ifdef USE_PETSC
-
 !AUTHORS:
 !Hom Nath Gharti
 !Stefano Zhampini
@@ -84,6 +81,7 @@
 
 module siem_solver_petsc
 
+#ifdef USE_PETSC
 ! PETSc
 ! all of PETSc
 !#include "petsc/finclude/petsc.h"
@@ -110,8 +108,11 @@ module siem_solver_petsc
   !use petscis, only: tIS
 
   use petscksp
+#endif
 
-  use constants_solver, only: myrank, &
+  use constants, only: myrank,CUSTOM_REAL
+
+  use constants_solver, only: &
     nproc => NPROCTOT_VAL
 
   use specfem_par_full_gravity, only: &
@@ -141,6 +142,7 @@ module siem_solver_petsc
 
   implicit none
 
+#ifdef USE_PETSC
   ! to match PETSc types:
   !PetscInt :: i
   !PetscReal :: x
@@ -189,7 +191,6 @@ module siem_solver_petsc
   type(tMat)              :: Amat1,Fmat1
   type(tKSP)              :: ksp1
   type(tPC)               :: pc1
-  PetscInt                :: iter1
   PetscInt                :: solver_type1 ! solver type
 
   ! For communications from local to global
@@ -212,7 +213,6 @@ module siem_solver_petsc
   type(tKSP)              :: b_ksp1
   type(tMat)              :: b_Fmat1 ! not used unless MUMPS chosen (not implemented)
   type(tPC)               :: b_pc1
-  PetscInt                :: b_iter1
   PetscInt                :: b_solver_type1 ! solver type
 
   ! For communications from local to global
@@ -224,10 +224,10 @@ module siem_solver_petsc
   type(tKSP)              :: ksp
   type(tPC)               :: pc
   PetscErrorCode          :: ierr
-  PetscInt                :: iter
   PetscInt                :: nzeros_max,nzeros_min,nzerosoff_max
   PetscInt                :: ngdof_part1
   PetscInt                :: ig0,ig1
+#endif
 
 contains
 
@@ -236,6 +236,7 @@ contains
 !===============================================================================
   subroutine petsc_initialize1()
 
+#ifdef USE_PETSC
   use constants, only: NNDOF
 
   use specfem_par, only: ADD_TRINF,SIMULATION_TYPE
@@ -270,9 +271,9 @@ contains
 
   character(len=10) :: char_myrank
 
-  if (myrank == 0) write(*,*)
-  if (myrank == 0) write(*,*) ' ---------- Initialise PETSC: ---------- '
-  if (myrank == 0) write(*,*)
+  if (myrank == 0) print *
+  if (myrank == 0) print *,' ---------- Initialise PETSC: ---------- '
+  if (myrank == 0) print *
 
   call PetscInitialize(PETSC_NULL_CHARACTER,ierr); CHECK_PETSC_ERROR(ierr)
 
@@ -290,8 +291,8 @@ contains
   !nzeros=nzeros
   !nzeros=5*nzeros
 
-  if (myrank == 0) write(*,*) 'nzeros in 1th index:',nzeros(1)
-  if (myrank == 0) write(*,*) 'ngdof1:',ngdof1,' nzeros_max:',nzeros_max,' nzeros_min:', &
+  if (myrank == 0) print *,'nzeros in 1th index:',nzeros(1)
+  if (myrank == 0) print *,'ngdof1:',ngdof1,' nzeros_max:',nzeros_max,' nzeros_min:', &
                               nzeros_min,count(krow_sparse1 == 1)
 
   ! precompute ownership range OR partion layout
@@ -321,8 +322,7 @@ contains
     endif
   else
     ! Error
-    write(*,*) 'ERROR: illegal value of "np0"!'
-    stop 'Illegal value of np0'
+    stop 'ERROR: illegal value of "np0"!'
   endif
 
   allocate(nzeros_row(ng))
@@ -398,7 +398,7 @@ contains
   call VecMin(iproc_gvec1,PETSC_NULL_INTEGER,pmin,ierr)
   call VecMax(iproc_gvec1,PETSC_NULL_INTEGER,pmax,ierr)
 
-  if (myrank == 0) write(*,*) 'iproc range',pmin,pmax; call synchronize_all()
+  if (myrank == 0) print *,'iproc range',pmin,pmax; call synchronize_all()
 
   ! copy solution to local array
   allocate(iproc_array1(neq1),rproc_array1(neq1))
@@ -406,7 +406,7 @@ contains
 
   iproc_array1 = int(rproc_array1)
 
-  if (myrank == 0) write(*,*) 'vector3 iproc',minval(iproc_array1),maxval(iproc_array1)
+  if (myrank == 0) print *,'vector3 iproc',minval(iproc_array1),maxval(iproc_array1)
   call synchronize_all()
 
   !!TODO: use local scatter
@@ -524,7 +524,7 @@ contains
   call VecRestoreArrayF90(nself_gvec1,rnself_array1,ierr)
   call VecDestroy(nself_gvec1,ierr)
 
-  if (myrank == 0) write(*,*) 'maximum value of nself:',maxval(nself_array1)
+  if (myrank == 0) print *,'maximum value of nself:',maxval(nself_array1)
 
   ! factor for maximum number of interfaces for each nondiagonal entry of the stiffness matrix
   ! the factor below is valid ONLY for rectagular partitioning of the global model
@@ -557,7 +557,7 @@ contains
     ir = krow_sparse1(i)
     ic = kcol_sparse1(i)
     if (l2gdof1(ir) /= igr.or.l2gdof1(ic) /= igc) then
-      write(*,*) 'strange:',l2gdof1(ir),igr,l2gdof1(ic),igc
+      print *,'Error: strange:',l2gdof1(ir),igr,l2gdof1(ic),igc
       stop
     endif
     if (igr /= igr0) then
@@ -641,7 +641,8 @@ contains
   nnzero_diag1 = int(nzeror_darray1(1:n))
   nnzero_diag1 = nnzero_diag1-nself_array1
 
-  if (myrank == 0) write(*,*) n,minval(nzeror_darray1),maxval(nzeror_darray1), &
+  !debug
+  if (myrank == 0) print *, n,minval(nzeror_darray1),maxval(nzeror_darray1), &
                               minval(nnzero_diag1),maxval(nnzero_diag1)
   call synchronize_all()
 
@@ -697,7 +698,8 @@ contains
   call VecAssemblyEnd(nzeror_gvec1,ierr); CHECK_PETSC_ERROR(ierr)
   call VecGetLocalSize(nzeror_gvec1,n,ierr); CHECK_PETSC_ERROR(ierr)
 
-  if (myrank == 0) write(*,*) 'size of vector:',ng,n,minval(kgrow_sparse1),ig0
+  !debug
+  if (myrank == 0) print *,'size of vector:',ng,n,minval(kgrow_sparse1),ig0
 
   call VecGetArrayF90(nzeror_gvec1,nzeror_array1,ierr); CHECK_PETSC_ERROR(ierr)
 
@@ -719,11 +721,13 @@ contains
   call MatGetOwnershipRange(Amat1,istart,iend,ierr); CHECK_PETSC_ERROR(ierr)
   call synchronize_all()
 
+  ! check
   if (istart /= ig0 .or. iend-1 /= ig1) then
-    write(*,*) 'ERROR: ownership range mismatch!'
-    write(*,*) 'ownership range:',myrank,istart,ig0,iend-1,ig1,nzeros_row(1)
+    print *,'ERROR: ownership range mismatch!'
+    print *,'ownership range:',myrank,istart,ig0,iend-1,ig1,nzeros_row(1)
     stop
   endif
+
   deallocate(nzeros)
 
   ! Create forward solver
@@ -745,7 +749,7 @@ contains
   !  call KSPSetTolerances(b_ksp1,KSP_RTOL1,KSP_ATOL1,KSP_DTOL1,KSP_MAXITER1,ierr); CHECK_PETSC_ERROR(ierr)
   !  call KSPSetFromOptions(b_ksp1,ierr)
   !  if (myrank==0) then
-  !    write(*,*) ' Created adjoint linear KSP solver...'
+  !    print *,' Created adjoint linear KSP solver...'
   !  endif
   !endif
 
@@ -788,15 +792,28 @@ contains
   call KSPSetTolerances(b_ksp1,KSP_RTOL1,KSP_ATOL1,KSP_DTOL1,KSP_MAXITER1,ierr); CHECK_PETSC_ERROR(ierr)
   call KSPSetFromOptions(b_ksp1,ierr)
 
+  !debug
+  if (myrank == 0) print *,' ---------- Finished PETSC initialisation ---------- '
+
+#else
+  ! no PETSc compilation support
+  ! compilation without ADIOS support
   if (myrank == 0) then
-    write(*,*) ' ---------- Finished PETSC initialisation ---------- '
+    print *, "Error: PETSc solver enabled without PETSc Support."
+    print *, "To enable ADIOS support, reconfigure with --with-petsc flag."
   endif
+  ! safety stop
+  call exit_MPI(myrank,"Error PETSc solver: petsc_initialize1 called without compilation support")
+
+#endif
 
   end subroutine petsc_initialize1
 
 !
 !===============================================================================
 !
+
+#ifdef USE_PETSC
 
   subroutine create_linear_solver(stype, l_ksp, l_Amat, l_pc, l_fmat)
 
@@ -808,6 +825,7 @@ contains
   ! l_ksp: the local KSP (ksp1 or b_ksp1 etc)
   ! l_Amat: local A matrix - I think always Amat1
   ! l_pc:   local preconditioner e.g pc1
+
   use specfem_par, only: myrank, SIMULATION_TYPE
 
   implicit none
@@ -830,20 +848,19 @@ contains
   call KSPSetReusePreconditioner(l_ksp,PETSC_TRUE,ierr)
 
   if (stype == COMMAND) then
-    if (myrank == 0) write(*,*) 'Solver type: provided via command'
+    if (myrank == 0) print *,'Solver type: provided via command'
   else if (stype == CG) then
     ! CONJUGATE GRADIENT
-    if (myrank == 0) write(*,*) 'Solver type: CG'
+    if (myrank == 0) print *,'Solver type: CG'
     call KSPSetType(l_ksp,KSPCG,ierr); CHECK_PETSC_ERROR(ierr)
     ! Fetch preconditioner
     call KSPGetPC(l_ksp,l_pc,ierr); CHECK_PETSC_ERROR(ierr)
     call PCFactorSetShiftType(l_pc,MAT_SHIFT_POSITIVE_DEFINITE,ierr); CHECK_PETSC_ERROR(ierr)
   else if (stype == SUPERLU) then
     ! SUPER LU
-    if (myrank == 0) write(*,*) 'Solver type: SUPERLU'
+    if (myrank == 0) print *,'Solver type: SUPERLU'
     if (SIMULATION_TYPE == 3) then
-      write(*,*) ' ERROR: SUPERLU not implemented for adjoint sims yet.'
-      stop
+      stop ' ERROR: SUPERLU not implemented for adjoint sims yet.'
     endif
     flg_ilu    = PETSC_FALSE;
     flg_lu     = PETSC_FALSE;
@@ -871,9 +888,10 @@ contains
       !call MatSuperluSetILUDropTol(l_fmat,1.e-8,ierr); CHECK_PETSC_ERROR(ierr)
     endif
   else if (stype == MUMPS) then
-    if (myrank == 0) write(*,*) 'Solver type: MUMPS'
-    write(*,*) 'ERROR - WE commented out MUMPS stuff due to syntax error'
-    stop
+    if (myrank == 0) print *,'Solver type: MUMPS'
+
+    stop 'ERROR - WE commented out MUMPS stuff due to syntax error'
+
     flg_lu    = PETSC_FALSE;
     flg_ch    = PETSC_FALSE;
     ! version < 3.8.0
@@ -906,11 +924,15 @@ contains
 
   end subroutine create_linear_solver
 
+#endif
+
 !
 !===============================================================================
 !
 
   subroutine petsc_set_matrix1()
+
+#ifdef USE_PETSC
 
   use constants, only: CUSTOM_REAL,IFLAG_IN_FICTITIOUS_CUBE,NGLLCUBE_INF
 
@@ -1075,31 +1097,68 @@ contains
 
   call synchronize_all()
 
+#else
+  ! no PETSc compilation support
+  ! compilation without ADIOS support
+  if (myrank == 0) then
+    print *, "Error: PETSc solver enabled without PETSc Support."
+    print *, "To enable ADIOS support, reconfigure with --with-petsc flag."
+  endif
+  ! safety stop
+  call exit_MPI(myrank,"Error PETSc solver: petsc_set_matrix1 called without compilation support")
+
+#endif
+
   end subroutine petsc_set_matrix1
 
 !
 !===============================================================================
 !
 
+
   subroutine petsc_set_vector1(rload1)
 
+#ifdef USE_PETSC
   use constants, only: IFLAG_IN_FICTITIOUS_CUBE,NGLLCUBE_INF
 
   use specfem_par_full_gravity, only: l2gdof1
+#endif
 
   implicit none
 
-  PetscScalar,intent(in) :: rload1(0:)
+  !PetscScalar,intent(in) :: rload1(0:)
+  real(kind=CUSTOM_REAL), intent(in) :: rload1(0:)
+
+#ifdef USE_PETSC
   PetscScalar :: zero
+
+  ! types required by VecSetValues:
+  !   VecSetValues(Vec x, PetscInt ni, const PetscInt ix[], const PetscScalar y[], InsertMode iora)
+  ! the scalar array must be a PetscScalar type, this might differ from a real(kind=CUSTOM_REAL) type
+  PetscScalar :: y(0:size(rload1(0:)))
+
+  y(0:) = rload1(0:)
 
   zero = 0.0
   call VecSet(bvec1,zero,ierr)
-  call VecSetValues(bvec1,neq1,l2gdof1(1:),rload1(1:),ADD_VALUES,ierr);
+  !call VecSetValues(bvec1,neq1,l2gdof1(1:),rload1(1:),ADD_VALUES,ierr)
+  call VecSetValues(bvec1,neq1,l2gdof1(1:),y(1:),ADD_VALUES,ierr);
 
   ! assemble vector
   call VecAssemblyBegin(bvec1,ierr)
   call VecAssemblyEnd(bvec1,ierr)
-  !if (myrank==0) write(*,*) 'vector setting & assembly complete!'
+
+#else
+  ! no PETSc compilation support
+  ! compilation without ADIOS support
+  if (myrank == 0) then
+    print *, "Error: PETSc solver enabled without PETSc Support."
+    print *, "To enable ADIOS support, reconfigure with --with-petsc flag."
+  endif
+  ! safety stop
+  call exit_MPI(myrank,"Error PETSc solver: petsc_set_vector1 called without compilation support")
+
+#endif
 
   end subroutine petsc_set_vector1
 
@@ -1109,19 +1168,43 @@ contains
 
   subroutine petsc_set_backward_vector1(b_rload1)
 
+#ifdef USE_PETSC
   use specfem_par_full_gravity, only: l2gdof1, neq1
+#endif
 
   implicit none
-  PetscScalar,intent(in) :: b_rload1(0:)
+  !PetscScalar,intent(in) :: b_rload1(0:)
+  real(kind=CUSTOM_REAL), intent(in) :: b_rload1(0:)
+
+#ifdef USE_PETSC
   PetscScalar :: zero
+  ! types required by VecSetValues:
+  !   VecSetValues(Vec x, PetscInt ni, const PetscInt ix[], const PetscScalar y[], InsertMode iora)
+  ! the scalar array must be a PetscScalar type, this might differ from a real(kind=CUSTOM_REAL) type
+  PetscScalar :: y(0:size(b_rload1(0:)))
+
+  y(0:) = b_rload1(0:)
 
   zero = 0.0
   call VecSet(b_bvec1,zero,ierr)
-  call VecSetValues(b_bvec1,neq1,l2gdof1(1:),b_rload1(1:),ADD_VALUES,ierr);
+  !call VecSetValues(b_bvec1,neq1,l2gdof1(1:),b_rload1(1:),ADD_VALUES,ierr)
+  call VecSetValues(b_bvec1,neq1,l2gdof1(1:),y(1:),ADD_VALUES,ierr);
 
   ! assemble vector
   call VecAssemblyBegin(b_bvec1,ierr)
   call VecAssemblyEnd(b_bvec1,ierr)
+
+#else
+  ! no PETSc compilation support
+  ! compilation without ADIOS support
+  if (myrank == 0) then
+    print *, "Error: PETSc solver enabled without PETSc Support."
+    print *, "To enable ADIOS support, reconfigure with --with-petsc flag."
+  endif
+  ! safety stop
+  call exit_MPI(myrank,"Error PETSc solver: petsc_set_backward_vector1 called without compilation support")
+
+#endif
 
   end subroutine petsc_set_backward_vector1
 
@@ -1129,18 +1212,46 @@ contains
 !===============================================================================
 !
 
-  subroutine petsc_solve1(sdata1,iter,ireason)
+  subroutine petsc_solve1(sdata1)
 
   implicit none
-  PetscInt :: iter
-  PetscScalar :: sdata1(:)
-  PetscInt :: ireason
+  !PetscScalar :: sdata1(:)
+  real(kind=CUSTOM_REAL) :: sdata1(:)
 
-  call KSPSolve(ksp1,bvec1,xvec1,ierr)
-  call KSPGetConvergedReason(ksp1,ireason,ierr)
-  call KSPGetIterationNumber(ksp1,iter,ierr)
+#ifdef USE_PETSC
+  ! local parameters
+  PetscInt :: iter,ireason
+  ! petsc type array
+  PetscScalar :: y(size(sdata1))
 
-  call scatter_globalvec1(xvec1, sdata1)
+  call KSPSolve(ksp1,bvec1,xvec1,ierr); CHECK_PETSC_ERROR(ierr)
+  call KSPGetConvergedReason(ksp1,ireason,ierr); CHECK_PETSC_ERROR(ierr)
+  call KSPGetIterationNumber(ksp1,iter,ierr); CHECK_PETSC_ERROR(ierr)
+
+  !debug
+  !if (myrank == 0) print *,'debug: petsc_solve1: converged reason: ',ireason
+
+  !call scatter_globalvec1_backward(xvec1, sdata1)
+
+  ! explict conversion to PetscScalar array
+  y(:) = sdata1(:)
+
+  call scatter_globalvec1(xvec1, y)
+
+  ! return values
+  sdata1(:) = y(:)
+
+#else
+  ! no PETSc compilation support
+  ! compilation without ADIOS support
+  if (myrank == 0) then
+    print *, "Error: PETSc solver enabled without PETSc Support."
+    print *, "To enable ADIOS support, reconfigure with --with-petsc flag."
+  endif
+  ! safety stop
+  call exit_MPI(myrank,"Error PETSc solver: petsc_solve1 called without compilation support")
+
+#endif
 
   end subroutine petsc_solve1
 
@@ -1148,18 +1259,46 @@ contains
 !===============================================================================
 !
 
-  subroutine petsc_backward_solve1(b_sdata1,b_iter,b_ireason)
+  subroutine petsc_backward_solve1(b_sdata1)
 
   implicit none
-  PetscInt :: b_iter
-  PetscScalar :: b_sdata1(:)
-  PetscInt :: b_ireason
+  !PetscScalar :: b_sdata1(:)
+  real(kind=CUSTOM_REAL) :: b_sdata1(:)
 
-  call KSPSolve(b_ksp1,b_bvec1,b_xvec1,ierr)
-  call KSPGetConvergedReason(b_ksp1,b_ireason,ierr)
-  call KSPGetIterationNumber(b_ksp1,b_iter,ierr)
+#ifdef USE_PETSC
+  ! local parameters
+  PetscInt :: b_iter,b_ireason
+  ! petsc type array
+  PetscScalar :: y(size(b_sdata1))
 
-  call scatter_globalvec1_backward(b_xvec1, b_sdata1)
+  call KSPSolve(b_ksp1,b_bvec1,b_xvec1,ierr); CHECK_PETSC_ERROR(ierr)
+  call KSPGetConvergedReason(b_ksp1,b_ireason,ierr); CHECK_PETSC_ERROR(ierr)
+  call KSPGetIterationNumber(b_ksp1,b_iter,ierr); CHECK_PETSC_ERROR(ierr)
+
+  !debug
+  !if (myrank == 0) print *,'debug: petsc_backward_solve1: converged reason: ',b_ireason
+
+  !call scatter_globalvec1_backward(b_xvec1, b_sdata1)
+
+  ! explict conversion to PetscScalar array
+  y(:) = b_sdata1(:)
+
+  call scatter_globalvec1_backward(b_xvec1, y)
+
+  ! return values
+  b_sdata1(:) = y(:)
+
+#else
+  ! no PETSc compilation support
+  ! compilation without ADIOS support
+  if (myrank == 0) then
+    print *, "Error: PETSc solver enabled without PETSc Support."
+    print *, "To enable ADIOS support, reconfigure with --with-petsc flag."
+  endif
+  ! safety stop
+  call exit_MPI(myrank,"Error PETSc solver: petsc_backward_solve1 called without compilation support")
+
+#endif
 
   end subroutine petsc_backward_solve1
 
@@ -1193,6 +1332,8 @@ contains
 !===============================================================================
 !
 
+#ifdef USE_PETSC
+
   subroutine scatter_globalvec1(global_vec,larray)
 
   implicit none
@@ -1206,6 +1347,7 @@ contains
   call VecScatterBegin(vscat1,global_vec,local_vec1,INSERT_VALUES,SCATTER_FORWARD,ierr); CHECK_PETSC_ERROR(ierr)
   call VecScatterEnd(vscat1,global_vec,local_vec1,INSERT_VALUES,SCATTER_FORWARD,ierr); CHECK_PETSC_ERROR(ierr)
   call VecGetSize(local_vec1,n,ierr)
+
   call VecGetArrayF90(local_vec1,array_data,ierr); CHECK_PETSC_ERROR(ierr)
 
   larray(1:n) = array_data(1:n)
@@ -1213,9 +1355,13 @@ contains
 
   end subroutine scatter_globalvec1
 
+#endif
+
 !
 !===============================================================================
 !
+
+#ifdef USE_PETSC
 
   subroutine scatter_globalvec1_backward(b_global_vec,b_larray)
 
@@ -1230,6 +1376,7 @@ contains
   call VecScatterBegin(b_vscat1, b_global_vec, b_local_vec1,INSERT_VALUES,SCATTER_FORWARD,ierr); CHECK_PETSC_ERROR(ierr)
   call VecScatterEnd(b_vscat1, b_global_vec, b_local_vec1,INSERT_VALUES,SCATTER_FORWARD,ierr); CHECK_PETSC_ERROR(ierr)
   call VecGetSize(b_local_vec1, b_n,ierr)
+
   call VecGetArrayF90(b_local_vec1, b_array_data,ierr); CHECK_PETSC_ERROR(ierr)
 
   b_larray(1:b_n) = b_array_data(1:b_n)
@@ -1237,12 +1384,15 @@ contains
 
   end subroutine scatter_globalvec1_backward
 
+#endif
+
 !
 !===============================================================================
 !
 
   subroutine petsc_zero_initialguess1()
 
+#ifdef USE_PETSC
   implicit none
   PetscScalar :: zero
 
@@ -1253,6 +1403,18 @@ contains
   call VecAssemblyBegin(xvec1,ierr)
   call VecAssemblyEnd(xvec1,ierr)
 
+#else
+  ! no PETSc compilation support
+  ! compilation without ADIOS support
+  if (myrank == 0) then
+    print *, "Error: PETSc solver enabled without PETSc Support."
+    print *, "To enable ADIOS support, reconfigure with --with-petsc flag."
+  endif
+  ! safety stop
+  call exit_MPI(myrank,"Error PETSc solver: petsc_zero_initialguess1 called without compilation support")
+
+#endif
+
   end subroutine petsc_zero_initialguess1
 
 !
@@ -1261,6 +1423,7 @@ contains
 
   subroutine petsc_zero_backwards_initialguess1()
 
+#ifdef USE_PETSC
   implicit none
   PetscScalar :: zero
 
@@ -1270,6 +1433,18 @@ contains
   ! assemble vector
   call VecAssemblyBegin(b_xvec1,ierr)
   call VecAssemblyEnd(b_xvec1,ierr)
+
+#else
+  ! no PETSc compilation support
+  ! compilation without ADIOS support
+  if (myrank == 0) then
+    print *, "Error: PETSc solver enabled without PETSc Support."
+    print *, "To enable ADIOS support, reconfigure with --with-petsc flag."
+  endif
+  ! safety stop
+  call exit_MPI(myrank,"Error PETSc solver: petsc_zero_backwards_initialguess1 called without compilation support")
+
+#endif
 
   end subroutine petsc_zero_backwards_initialguess1
 
@@ -1317,6 +1492,7 @@ contains
 
   subroutine petsc_finalize1()
 
+#ifdef USE_PETSC
   use specfem_par, only: SIMULATION_TYPE
 
   implicit none
@@ -1339,6 +1515,18 @@ contains
     call VecScatterDestroy(b_vscat1,ierr)
   endif
 
+#else
+  ! no PETSc compilation support
+  ! compilation without ADIOS support
+  if (myrank == 0) then
+    print *, "Error: PETSc solver enabled without PETSc Support."
+    print *, "To enable ADIOS support, reconfigure with --with-petsc flag."
+  endif
+  ! safety stop
+  call exit_MPI(myrank,"Error PETSc solver: petsc_finalize1 called without compilation support")
+
+#endif
+
   end subroutine petsc_finalize1
 
 
@@ -1348,6 +1536,7 @@ contains
 
   subroutine petsc_initialize()
 
+#ifdef USE_PETSC
   implicit none
   PetscInt :: istart,iend
   PetscInt :: nzeros_max,nzeros_min
@@ -1360,7 +1549,6 @@ contains
   call PetscInitialize(PETSC_NULL_CHARACTER,ierr); CHECK_PETSC_ERROR(ierr)
 
   !call PetscOptionsGetInt(PETSC_NULL_CHARACTER,'-n',ngdof,flg,ierr)
-  !if (myrank==0) write(*,*) 'hi0!'
   !call synchronize_all()
 
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1378,7 +1566,8 @@ contains
   nzeros_max = maxvec(nzeros)
   nzeros_min = minvec(nzeros)
 
-  if (myrank == 0) write(*,*) 'ngdof:',ngdof,' nzeros_max:',nzeros_max,' nzeros_min:',nzeros_min
+  !debug
+  if (myrank == 0) print *,'ngdof:',ngdof,' nzeros_max:',nzeros_max,' nzeros_min:',nzeros_min
 
   call MatCreate(PETSC_COMM_WORLD,Amat,ierr); CHECK_PETSC_ERROR(ierr)
   call MatSetType(Amat,MATMPIAIJ,ierr); CHECK_PETSC_ERROR(ierr)
@@ -1389,14 +1578,18 @@ contains
   call MatSetFromOptions(Amat,ierr); CHECK_PETSC_ERROR(ierr)
   call MatGetOwnershipRange(Amat,istart,iend,ierr); CHECK_PETSC_ERROR(ierr)
 
-  if (myrank == 0) write(*,*) 'actual global index range:',minval(kgrow_sparse),maxval(kgrow_sparse)
-  write(*,*) 'global index:',myrank,istart,iend,iend-istart
+  !debug
+  if (myrank == 0) print *,'actual global index range:',minval(kgrow_sparse),maxval(kgrow_sparse)
+
+  !debug
+  print *,'global index:',myrank,istart,iend,iend-istart
   call synchronize_all()
 
   deallocate(nzeros)
   call synchronize_all()
 
-  if (myrank == 0) write(*,*) 'matrix'
+  !debug
+  if (myrank == 0) print *,'matrix'
   call synchronize_all()
 
   ! Create vectors.  Note that we form 1 vector from scratch and
@@ -1409,7 +1602,8 @@ contains
   call VecDuplicate(xvec,bvec,ierr); CHECK_PETSC_ERROR(ierr)
   call VecDuplicate(xvec,uvec,ierr); CHECK_PETSC_ERROR(ierr)
 
-  if (myrank == 0) write(*,*) 'vector'
+  !debug
+  if (myrank == 0) print *,'vector'
 
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   ! Create the linear solver and set various options
@@ -1425,14 +1619,20 @@ contains
   call KSPSetOperators(ksp,Amat,Amat,ierr); CHECK_PETSC_ERROR(ierr) ! version >= 3.5
 
   call KSPSetType(ksp,KSPCG,ierr); CHECK_PETSC_ERROR(ierr)
-  if (myrank == 0) write(*,*) 'ksp0'
+
+  !debug
+  if (myrank == 0) print *,'ksp0'
 
   call KSPGetPC(ksp,pc,ierr); CHECK_PETSC_ERROR(ierr)
   call PCSetType(pc,PCHYPRE,ierr); CHECK_PETSC_ERROR(ierr)
-  if (myrank == 0) write(*,*) 'ksp1'
+
+  !debug
+  if (myrank == 0) print *,'ksp1'
 
   call KSPSetTolerances(ksp,KSP_RTOL,KSP_ATOL,KSP_DTOL,KSP_MAXITER,ierr); CHECK_PETSC_ERROR(ierr)
-  if (myrank == 0) write(*,*) 'ksp2'
+
+  !debug
+  if (myrank == 0) print *,'ksp2'
 
   !  Set runtime options, e.g.,
   !    -ksp_type < type> -pc_type < type> -ksp_monitor -ksp_KSP_RTOL < KSP_RTOL>
@@ -1440,6 +1640,18 @@ contains
   !  KSPSetFromOptions() is called _after_ any other customization
   !  routines.
   call KSPSetFromOptions(ksp,ierr); CHECK_PETSC_ERROR(ierr)
+
+#else
+  ! no PETSc compilation support
+  ! compilation without ADIOS support
+  if (myrank == 0) then
+    print *, "Error: PETSc solver enabled without PETSc Support."
+    print *, "To enable ADIOS support, reconfigure with --with-petsc flag."
+  endif
+  ! safety stop
+  call exit_MPI(myrank,"Error PETSc solver: petsc_initialize called without compilation support")
+
+#endif
 
   end subroutine petsc_initialize
 
@@ -1449,6 +1661,7 @@ contains
 
   subroutine petsc_set_matrix()
 
+#ifdef USE_PETSC
   use constants, only: CUSTOM_REAL,NEDOF,IFLAG_IN_FICTITIOUS_CUBE
 
   use specfem_par, only: NSPEC_INNER_CORE, &
@@ -1590,6 +1803,18 @@ contains
   ! free temporary arrays
   deallocate(varr)
 
+#else
+  ! no PETSc compilation support
+  ! compilation without ADIOS support
+  if (myrank == 0) then
+    print *, "Error: PETSc solver enabled without PETSc Support."
+    print *, "To enable ADIOS support, reconfigure with --with-petsc flag."
+  endif
+  ! safety stop
+  call exit_MPI(myrank,"Error PETSc solver: petsc_set_matrix called without compilation support")
+
+#endif
+
   end subroutine petsc_set_matrix
 
 !
@@ -1598,6 +1823,7 @@ contains
 
   subroutine petsc_set_vector()
 
+#ifdef USE_PETSC
   use specfem_par_full_gravity, only: l2gdof,gravload
 
   implicit none
@@ -1629,7 +1855,18 @@ contains
   ! assemble vector
   call VecAssemblyBegin(bvec,ierr); CHECK_PETSC_ERROR(ierr)
   call VecAssemblyEnd(bvec,ierr); CHECK_PETSC_ERROR(ierr)
-  !if (myrank==0) write(*,*) 'vector setting & assembly complete!'
+
+#else
+  ! no PETSc compilation support
+  ! compilation without ADIOS support
+  if (myrank == 0) then
+    print *, "Error: PETSc solver enabled without PETSc Support."
+    print *, "To enable ADIOS support, reconfigure with --with-petsc flag."
+  endif
+  ! safety stop
+  call exit_MPI(myrank,"Error PETSc solver: petsc_set_vector called without compilation support")
+
+#endif
 
   end subroutine petsc_set_vector
 
@@ -1637,14 +1874,19 @@ contains
 !===============================================================================
 !
 
-  subroutine petsc_solve(sdata,cg_iter)
+  subroutine petsc_solve(sdata)
 
+#ifdef USE_PETSC
   use petscksp, only: KSPSolve, KSPView, KSPGetConvergedReason, KSPGetIterationNumber
+#endif
 
   implicit none
-  PetscScalar :: sdata(:)
-  PetscInt :: cg_iter
-  PetscInt :: ireason
+  !PetscScalar :: sdata(:)
+  real(kind=CUSTOM_REAL) :: sdata(:)
+
+#ifdef USE_PETSC
+  ! local parameters
+  PetscInt :: iter,ireason
 
   call KSPSolve(ksp,bvec,xvec,ierr); CHECK_PETSC_ERROR(ierr)
 
@@ -1657,18 +1899,33 @@ contains
   ! Check the error
   !call VecAXPY(xvec,none,uvec,ierr); CHECK_PETSC_ERROR(ierr)
   !call VecNorm(xvec,NORM_2,norm,ierr); CHECK_PETSC_ERROR(ierr)
-  call KSPGetConvergedReason(ksp,ireason,ierr); CHECK_PETSC_ERROR(ierr)
-  call KSPGetIterationNumber(ksp,cg_iter,ierr); CHECK_PETSC_ERROR(ierr)
 
-  if (myrank < 1) then
-    write(*,*) 'converged reason',ireason
-    write(*,*) 'Iterations:',cg_iter
+  call KSPGetConvergedReason(ksp,ireason,ierr); CHECK_PETSC_ERROR(ierr)
+  call KSPGetIterationNumber(ksp,iter,ierr); CHECK_PETSC_ERROR(ierr)
+
+  !debug
+  if (myrank == 0) then
+    print *,'Converged reason:',ireason
+    print *,'Iterations      :',iter
   endif
+
   !if (norm > 1.e-12) then
   !  write(*,'(a,e11.4,a,i5)')'Norm of error:',norm,', Iterations:',its
   !else
   !  write(*,'(a,i5,a)')'Norm of error < 1.e-12, Iterations:',its
   !endif
+
+#else
+  ! no PETSc compilation support
+  ! compilation without ADIOS support
+  if (myrank == 0) then
+    print *, "Error: PETSc solver enabled without PETSc Support."
+    print *, "To enable ADIOS support, reconfigure with --with-petsc flag."
+  endif
+  ! safety stop
+  call exit_MPI(myrank,"Error PETSc solver: petsc_solve called without compilation support")
+
+#endif
 
   end subroutine petsc_solve
 
@@ -1678,6 +1935,7 @@ contains
 
   subroutine petsc_finalize()
 
+#ifdef USE_PETSC
   use petscvec, only: VecDestroy
   use petscmat, only: MatDestroy
   use petscksp, only: KSPDestroy
@@ -1697,11 +1955,25 @@ contains
 
   call PetscFinalize(ierr); CHECK_PETSC_ERROR(ierr)
 
+#else
+  ! no PETSc compilation support
+  ! compilation without ADIOS support
+  if (myrank == 0) then
+    print *, "Error: PETSc solver enabled without PETSc Support."
+    print *, "To enable ADIOS support, reconfigure with --with-petsc flag."
+  endif
+  ! safety stop
+  call exit_MPI(myrank,"Error PETSc solver: petsc_finalize called without compilation support")
+
+#endif
+
   end subroutine petsc_finalize
 
 !
 !===============================================================================
 !
+
+#ifdef USE_PETSC
 
   subroutine check_petsc_err(ierr,line)
 
@@ -1735,7 +2007,7 @@ contains
 
   end subroutine check_petsc_err
 
-end module siem_solver_petsc
-
 #endif
+
+end module siem_solver_petsc
 

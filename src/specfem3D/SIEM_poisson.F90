@@ -499,18 +499,18 @@ contains
 
   !! crust-mantle
   !call poisson_load_onlyrho3(1,nspec_crust_mantle, &
-  !                           nglob_crust_mantle,ibool_crust_mantle,xstore0_crust_mantle,ystore0_crust_mantle, &
-  !                           zstore0_crust_mantle,rhostore_crust_mantle,nnode_cm1,inode_elmt_cm1,load_cm)
+  !                           nglob_crust_mantle,ibool_crust_mantle,xstore_crust_mantle,ystore_crust_mantle, &
+  !                           zstore_crust_mantle,rhostore_crust_mantle,nnode_cm1,inode_elmt_cm1,load_cm)
   !
   !! outer core
   !call poisson_load_onlyrho3(2,nspec_outer_core, &
-  !                           nglob_outer_core,ibool_outer_core,xstore0_outer_core,ystore0_outer_core, &
-  !                           zstore0_outer_core,rhostore_outer_core,nnode_oc1,inode_elmt_oc1,load_oc)
+  !                           nglob_outer_core,ibool_outer_core,xstore_outer_core,ystore_outer_core, &
+  !                           zstore_outer_core,rhostore_outer_core,nnode_oc1,inode_elmt_oc1,load_oc)
   !
   !! inner core
   !call poisson_load_onlyrho3(3,nspec_inner_core, &
-  !                           nglob_inner_core,ibool_inner_core,xstore0_inner_core,ystore0_inner_core, &
-  !                           zstore0_inner_core,rhostore_inner_core,nnode_ic1,inode_elmt_ic1,load_ic)
+  !                           nglob_inner_core,ibool_inner_core,xstore_inner_core,ystore_inner_core, &
+  !                           zstore_inner_core,rhostore_inner_core,nnode_ic1,inode_elmt_ic1,load_ic)
 
   ! crust-mantle
   call poisson_load_onlyrhoFAST3(IREGION_CRUST_MANTLE,nspec_crust_mantle, &
@@ -675,8 +675,8 @@ contains
 
   ! inner core
   !call poisson_load_solid(IREGION_INNER_CORE,nspec_inner_core, &
-  !                        nglob_inner_core,ibool_inner_core,xstore0_inner_core,ystore0_inner_core, &
-  !                        zstore0_inner_core,rhostore_inner_core,displ_inner_core,load_ic)
+  !                        nglob_inner_core,ibool_inner_core,xstore_inner_core,ystore_inner_core, &
+  !                        zstore_inner_core,rhostore_inner_core,displ_inner_core,load_ic)
 
   call poisson_load_solidFAST(IREGION_INNER_CORE,nspec_inner_core, &
                               nglob_inner_core,ibool_inner_core,storederiv_ic,storerhojw_ic,displ_inner_core, &
@@ -684,8 +684,8 @@ contains
 
   ! crust-mantle
   !call poisson_load_solid(IREGION_CRUST_MANTLE,nspec_crust_mantle, &
-  !                        nglob_crust_mantle,ibool_crust_mantle,xstore0_crust_mantle,ystore0_crust_mantle, &
-  !                        zstore0_crust_mantle,rhostore_crust_mantle,displ_crust_mantle,load_cm)
+  !                        nglob_crust_mantle,ibool_crust_mantle,xstore_crust_mantle,ystore_crust_mantle, &
+  !                        zstore_crust_mantle,rhostore_crust_mantle,displ_crust_mantle,load_cm)
 
   call poisson_load_solidFAST(IREGION_CRUST_MANTLE,nspec_crust_mantle, &
                               nglob_crust_mantle,ibool_crust_mantle,storederiv_cm,storerhojw_cm, &
@@ -700,7 +700,7 @@ contains
   !                        displ_outer_core,load_oc)
 
   !call poisson_load_fluidNEW(nspec_outer_core,nglob_outer_core,ibool_outer_core, &
-  !                           xstore0_outer_core,ystore0_outer_core,zstore0_outer_core,rhostore_outer_core, &
+  !                           xstore_outer_core,ystore_outer_core,zstore_outer_core,rhostore_outer_core, &
   !                           time,deltat,two_omega_earth,A_array_rotationL,B_array_rotationL, &
   !                           displ_outer_core,load_oc)
 
@@ -2418,7 +2418,7 @@ contains
   do i_elmt = 1,nelmt
     ! suppress fictitious elements in central cube
     if (iregion == IREGION_INNER_CORE) then
-      if (idoubling_inner_core(i_elmt) == IFLAG_IN_FICTITIOUS_CUBE)cycle
+      if (idoubling_inner_core(i_elmt) == IFLAG_IN_FICTITIOUS_CUBE) cycle
     endif
 
     !ignod=reshape(ibool(1:NGLLX:dnx,1:NGLLY:dny,1:NGLLZ:dnz,i_elmt),(/ngnod/)) ! this is wrong!!!!
@@ -2430,9 +2430,9 @@ contains
     ignod(5) = ibool(1,1,NGLLZ,i_elmt);         ignod(6) = ibool(NGLLX,1,NGLLZ,i_elmt)
     ignod(7) = ibool(NGLLX,NGLLY,NGLLZ,i_elmt); ignod(8) = ibool(1,NGLLY,NGLLZ,i_elmt)
 
-    coord(:,1) = xstore(ignod)
-    coord(:,2) = ystore(ignod)
-    coord(:,3) = zstore(ignod)
+    coord(:,1) = xstore(ignod(:))
+    coord(:,2) = ystore(ignod(:))
+    coord(:,3) = zstore(ignod(:))
 
     egdof = reshape(ibool(:,:,:,i_elmt),(/NGLLCUBE/))
     do i = 1,NGLLCUBE

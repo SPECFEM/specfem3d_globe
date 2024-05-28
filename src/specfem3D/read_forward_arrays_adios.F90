@@ -187,6 +187,15 @@
   call read_adios_perform(myadios_file)
   call delete_adios_selection(sel)
 
+  ! full gravity
+  if (FULL_GRAVITY_VAL) then
+    !TODO: implement full gravity adios read forward
+    stop 'FULL_GRAVITY read_intermediate_forward_arrays_adios() not fully implemented yet'
+    !read(55) neq1
+    !allocate(pgrav1_oldrun(0:neq1))
+    !read(55) pgrav1_oldrun
+  endif
+
   ! closes ADIOS handler to the restart file.
   call close_file_adios_read_and_finalize_method(myadios_file)
   call delete_adios_group(myadios_group,group_name)
@@ -342,6 +351,15 @@
 
     call read_adios_perform(myadios_file)
     call delete_adios_selection(sel)
+  endif
+
+  if (FULL_GRAVITY_VAL) then
+    ! Read in the gravity
+    !TODO: implement full gravity adios read forward
+    stop 'FULL_GRAVITY read_forward_arrays_adios() not fully implemented yet'
+    !read(55) b_neq
+    !read(55) b_neq1
+    !read(55) b_pgrav1
   endif
 
   ! closes ADIOS handler to the restart file.

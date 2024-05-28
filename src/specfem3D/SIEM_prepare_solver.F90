@@ -511,26 +511,65 @@
   ! Level-1 solver-------------------
   allocate(storekmat_crust_mantle1(NGLLCUBE_INF,NGLLCUBE_INF,NSPEC_CRUST_MANTLE), &
            dprecon_crust_mantle1(nnode_cm1))
+  storekmat_crust_mantle1(:,:,:) = 0.0_CUSTOM_REAL; dprecon_crust_mantle1(:) = 0.0_CUSTOM_REAL
+
   allocate(storekmat_outer_core1(NGLLCUBE_INF,NGLLCUBE_INF,NSPEC_OUTER_CORE), &
            dprecon_outer_core1(nnode_oc1))
+  storekmat_outer_core1(:,:,:) = 0.0_CUSTOM_REAL; dprecon_outer_core1(:) = 0.0_CUSTOM_REAL
+
   allocate(storekmat_inner_core1(NGLLCUBE_INF,NGLLCUBE_INF,NSPEC_INNER_CORE), &
            dprecon_inner_core1(nnode_ic1))
+  storekmat_inner_core1(:,:,:) = 0.0_CUSTOM_REAL; dprecon_inner_core1(:) = 0.0_CUSTOM_REAL
+
   if (ADD_TRINF) then
     allocate(storekmat_trinfinite1(NGLLCUBE_INF,NGLLCUBE_INF,NSPEC_TRINFINITE), &
              dprecon_trinfinite1(nnode_trinf1))
+    storekmat_trinfinite1(:,:,:) = 0.0_CUSTOM_REAL; dprecon_trinfinite1(:) = 0.0_CUSTOM_REAL
   endif
   allocate(storekmat_infinite1(NGLLCUBE_INF,NGLLCUBE_INF,NSPEC_INFINITE), &
            dprecon_infinite1(nnode_inf1))
+  storekmat_infinite1(:,:,:) = 0.0_CUSTOM_REAL; dprecon_infinite1(:) = 0.0_CUSTOM_REAL
 
-  allocate(dprecon1(0:neq1),gravload1(0:neq1),pgrav_ic1(nnode_ic1), &
-           pgrav_oc1(nnode_oc1),pgrav_cm1(nnode_cm1),pgrav_trinf1(nnode_trinf1), &
+  ! Allocate gravity perturbation arrays
+  allocate(pgrav_ic(NGLOB_INNER_CORE), &
+           pgrav_oc(NGLOB_OUTER_CORE), &
+           pgrav_cm(NGLOB_CRUST_MANTLE), &
+           pgrav_trinf(NGLOB_TRINFINITE), &
+           pgrav_inf(NGLOB_INFINITE),stat=ier)
+  if (ier /= 0) stop 'Error allocating pgrav_ic,.. arrays'
+  pgrav_ic(:) = 0.0_CUSTOM_REAL; pgrav_oc(:) = 0.0_CUSTOM_REAL; pgrav_cm(:) = 0.0_CUSTOM_REAL;
+  pgrav_trinf(:) = 0.0_CUSTOM_REAL; pgrav_inf(:) = 0.0_CUSTOM_REAL
+
+  allocate(pgrav_ic1(nnode_ic1),pgrav_oc1(nnode_oc1),pgrav_cm1(nnode_cm1),pgrav_trinf1(nnode_trinf1), &
            pgrav_inf1(nnode_inf1))
+  pgrav_ic1(:) = 0.0_CUSTOM_REAL; pgrav_oc1(:) = 0.0_CUSTOM_REAL; pgrav_cm1(:) = 0.0_CUSTOM_REAL;
+  pgrav_trinf1(:) = 0.0_CUSTOM_REAL; pgrav_inf1(:) = 0.0_CUSTOM_REAL
+
+  allocate(dprecon1(0:neq1),gravload1(0:neq1))
+  dprecon1(:) = 0.0_CUSTOM_REAL; gravload1(:) = 0.0_CUSTOM_REAL
 
   if (SIMULATION_TYPE == 3) then
-    allocate(b_gravload1(0:neq1), b_pgrav_ic1(nnode_ic1), b_pgrav_oc1(nnode_oc1), &
-             b_pgrav_cm1(nnode_cm1), b_pgrav_trinf1(nnode_trinf1), b_pgrav_inf1(nnode_inf1))
+    allocate(b_pgrav_ic(NGLOB_INNER_CORE_ADJOINT), &
+             b_pgrav_oc(NGLOB_OUTER_CORE_ADJOINT), &
+             b_pgrav_cm(NGLOB_CRUST_MANTLE_ADJOINT), &
+             b_pgrav_trinf(NGLOB_TRINFINITE_ADJOINT), &
+             b_pgrav_inf(NGLOB_INFINITE_ADJOINT),stat=ier)
+    if (ier /= 0) stop 'Error allocating b_pgrav_ic,.. arrays'
+    b_pgrav_ic(:) = 0.0_CUSTOM_REAL; b_pgrav_oc(:) = 0.0_CUSTOM_REAL; b_pgrav_cm(:) = 0.0_CUSTOM_REAL;
+    b_pgrav_trinf(:) = 0.0_CUSTOM_REAL; b_pgrav_inf(:) = 0.0_CUSTOM_REAL
+
+    allocate(b_pgrav_ic1(nnode_ic1), b_pgrav_oc1(nnode_oc1),b_pgrav_cm1(nnode_cm1), b_pgrav_trinf1(nnode_trinf1), &
+             b_pgrav_inf1(nnode_inf1),stat=ier)
+    if (ier /= 0) stop 'Error allocating b_pgrav_ic,.. arrays'
+    b_pgrav_ic1(:) = 0.0_CUSTOM_REAL; b_pgrav_oc1(:) = 0.0_CUSTOM_REAL; b_pgrav_cm1(:) = 0.0_CUSTOM_REAL;
+    b_pgrav_trinf1(:) = 0.0_CUSTOM_REAL; b_pgrav_inf1(:) = 0.0_CUSTOM_REAL
+
+    allocate(b_gravload1(0:neq1),stat=ier)
+    if (ier /= 0) stop 'Error allocating b_gravload1 array'
+    b_gravload1(:) = 0.0_CUSTOM_REAL
   endif
 
+  ! rotation arrays
   allocate(A_array_rotationL(NGLLCUBE,NSPEC_OUTER_CORE_ROTATION), &
            B_array_rotationL(NGLLCUBE,NSPEC_OUTER_CORE_ROTATION))
 
@@ -540,6 +579,21 @@
   if (SIMULATION_TYPE == 3) then
     allocate(b_A_array_rotationL3(NGLLCUBE_INF,NSPEC_OUTER_CORE_ROTATION), &
              b_B_array_rotationL3(NGLLCUBE_INF,NSPEC_OUTER_CORE_ROTATION))
+  endif
+
+  ! kernels
+  if (SIMULATION_TYPE == 3) then
+    ! Full gravity density kernels - must be integrated using SIEM after.
+    allocate(rho1siem_kl_crust_mantle(3,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             rho2siem_kl_crust_mantle(3,3,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT))
+
+    ! initialise
+    rho1siem_kl_crust_mantle(:,:,:,:,:)   = 0._CUSTOM_REAL
+    rho2siem_kl_crust_mantle(:,:,:,:,:,:) = 0._CUSTOM_REAL
+
+    ! for debugging
+    allocate(debug_rho_kl_cm(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT))
+    debug_rho_kl_cm(:,:,:,:,:) = 0.0_CUSTOM_REAL
   endif
 
   ! crust mantle
@@ -646,17 +700,27 @@
 
     allocate(storekmat_crust_mantle(NGLLCUBE,NGLLCUBE,NSPEC_CRUST_MANTLE), &
              dprecon_crust_mantle(NGLOB_CRUST_MANTLE))
+    storekmat_crust_mantle(:,:,:) = 0.0_CUSTOM_REAL; dprecon_crust_mantle(:) = 0.0_CUSTOM_REAL
+
     allocate(storekmat_outer_core(NGLLCUBE,NGLLCUBE,NSPEC_OUTER_CORE), &
              dprecon_outer_core(NGLOB_OUTER_CORE))
+    storekmat_outer_core(:,:,:) = 0.0_CUSTOM_REAL; dprecon_outer_core(:) = 0.0_CUSTOM_REAL
+
     allocate(storekmat_inner_core(NGLLCUBE,NGLLCUBE,NSPEC_INNER_CORE), &
              dprecon_inner_core(NGLOB_INNER_CORE))
+    storekmat_inner_core(:,:,:) = 0.0_CUSTOM_REAL; dprecon_inner_core(:) = 0.0_CUSTOM_REAL
+
     if (ADD_TRINF) then
       allocate(storekmat_trinfinite(NGLLCUBE,NGLLCUBE,NSPEC_TRINFINITE), &
-      dprecon_trinfinite(NGLOB_TRINFINITE))
+               dprecon_trinfinite(NGLOB_TRINFINITE))
+      storekmat_trinfinite(:,:,:) = 0.0_CUSTOM_REAL; dprecon_trinfinite(:) = 0.0_CUSTOM_REAL
     endif
     allocate(storekmat_infinite(NGLLCUBE,NGLLCUBE,NSPEC_INFINITE), &
              dprecon_infinite(NGLOB_INFINITE))
+    storekmat_infinite1(:,:,:) = 0.0_CUSTOM_REAL; dprecon_infinite1(:) = 0.0_CUSTOM_REAL
+
     allocate(dprecon(0:neq),gravload(0:neq))
+    dprecon(:) = 0.0_CUSTOM_REAL; gravload(:) = 0.0_CUSTOM_REAL
 
     ! better to make dprecon_* local rather than global
 
@@ -725,24 +789,24 @@
     call synchronize_all()
 
     ! assemble across the different regions in a process
-    dprecon = zero
+    dprecon(:) = zero
     ! crust_mantle
-    dprecon(gdof_cm) = dprecon(gdof_cm)+dprecon_crust_mantle
+    dprecon(gdof_cm(:)) = dprecon(gdof_cm(:)) + dprecon_crust_mantle(:)
 
     ! outer core
-    dprecon(gdof_oc) = dprecon(gdof_oc)+dprecon_outer_core
+    dprecon(gdof_oc(:)) = dprecon(gdof_oc(:)) + dprecon_outer_core(:)
 
     ! inner core
-    dprecon(gdof_ic) = dprecon(gdof_ic)+dprecon_inner_core
+    dprecon(gdof_ic(:)) = dprecon(gdof_ic(:)) + dprecon_inner_core(:)
 
     ! transition infinite
 
     if (ADD_TRINF) then
-      dprecon(gdof_trinf) = dprecon(gdof_trinf)+dprecon_trinfinite
+      dprecon(gdof_trinf(:)) = dprecon(gdof_trinf(:)) + dprecon_trinfinite(:)
     endif
 
     ! infinite
-    dprecon(gdof_inf) = dprecon(gdof_inf)+dprecon_infinite
+    dprecon(gdof_inf(:)) = dprecon(gdof_inf(:)) + dprecon_infinite(:)
 
     dprecon(0) = 0.0_CUSTOM_REAL
 

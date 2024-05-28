@@ -403,7 +403,7 @@
   endif ! if (ADD_TRINF)
 
   if (inode /= nnode) then
-    write(*,*) 'ERROR: numbers of global nodes mismatch!',inode,nnode
+    print *,'ERROR: numbers of global nodes mismatch!',inode,nnode
     call synchronize_all()
     call exit_MPI(myrank,'Invalid number of global nodes')
   endif

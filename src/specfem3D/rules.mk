@@ -114,10 +114,13 @@ specfem3D_SOLVER_OBJECTS += \
 	$O/read_mesh_parameters.solverstatic.o \
 	$O/read_mesh_databases.solverstatic.o \
 	$O/read_topography_bathymetry.solverstatic.o \
+	$O/SIEM_compute_kernels.solverstatic.o \
 	$O/SIEM_index_region.solverstatic.o \
 	$O/SIEM_infinite_element.solverstatic.o \
+	$O/SIEM_iterate.solverstatic.o \
 	$O/SIEM_poisson.solverstatic.o \
 	$O/SIEM_prepare_solver.solverstatic.o \
+	$O/SIEM_solve.solverstatic.o \
 	$O/SIEM_solver_mpi.solverstatic.o \
 	$O/SIEM_solver_petsc.solverstatic.o \
 	$O/save_forward_arrays.solverstatic.o \
@@ -152,6 +155,7 @@ specfem3D_MODULES = \
 	$(FC_MODDIR)/siem_infinite_element.$(FC_MODEXT) \
 	$(FC_MODDIR)/siem_poisson.$(FC_MODEXT) \
 	$(FC_MODDIR)/siem_solver_mpi.$(FC_MODEXT) \
+	$(FC_MODDIR)/siem_solver_petsc.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
 
 # These files come from the shared directory
@@ -400,9 +404,15 @@ $O/make_gravity.solver.o: $O/model_prem.shared.o $O/model_Sohl.shared.o $O/model
 $O/initialize_simulation.solverstatic.o: ${SETUP}/version.fh
 
 # SIEM
+$O/SIEM_compute_kernels.solverstatic.o: $O/SIEM_math_library.shared.o $O/SIEM_poisson.solverstatic.o \
+																				$O/SIEM_solver_petsc.solverstatic.o $O/SIEM_solver_mpi.solverstatic.o
 $O/SIEM_infinite_element.solverstatic.o: $O/SIEM_math_library.shared.o
+$O/SIEM_iterate.solverstatic.o: $O/SIEM_math_library.shared.o $O/SIEM_poisson.solverstatic.o \
+																$O/SIEM_solver_petsc.solverstatic.o $O/SIEM_solver_mpi.solverstatic.o
 $O/SIEM_poisson.solverstatic.o: $O/SIEM_math_library.shared.o $O/SIEM_infinite_element.solverstatic.o
 $O/SIEM_prepare_solver.solverstatic.o: $O/SIEM_math_library.shared.o $O/SIEM_poisson.solverstatic.o
+$O/SIEM_solve.solverstatic.o: $O/SIEM_math_library.shared.o $O/SIEM_poisson.solverstatic.o \
+															$O/SIEM_solver_petsc.solverstatic.o $O/SIEM_solver_mpi.solverstatic.o
 $O/SIEM_solver_mpi.solverstatic.o: $O/SIEM_math_library.shared.o
 $O/SIEM_solver_petsc.solverstatic.o: $O/SIEM_math_library.shared.o
 
