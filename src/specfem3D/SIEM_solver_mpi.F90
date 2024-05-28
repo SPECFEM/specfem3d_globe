@@ -35,6 +35,8 @@ module siem_solver_mpi
 
   implicit none
 
+  private
+
   ! maximum number of iteration for conjugate gradient solver
   integer, parameter :: CG_MAXITER = 10000
 
@@ -42,85 +44,95 @@ module siem_solver_mpi
   real(kind=CUSTOM_REAL), parameter :: CG_TOL  = 1.0e-7_CUSTOM_REAL, &
                                        CG_TOL1 = 1.0e-7_CUSTOM_REAL
 
+  ! public functions
+  public :: cg_solver
+  public :: cg_solver3
+  public :: diagpcg_solver
+  public :: diagpcg_solver3
+  public :: interpolate3to5
+
 contains
 
 !-------------------------------------------------------------------------------
+
 ! petsc SP solver preconditioned conjugate-gradient solver
 
-  subroutine pcpetsc_cg_solver(myid,neq,u_g,f,dprecon_g)
+! not used so far...
 
-  implicit none
-  integer,intent(in) :: myid,neq
-  real(kind=CUSTOM_REAL),dimension(0:neq),intent(inout) :: u_g
-  real(kind=CUSTOM_REAL),dimension(0:neq),intent(in) :: f,dprecon_g
-
-  ! local parameters
-  integer :: iter
-  real(kind=CUSTOM_REAL) :: alpha,beta,rz,maxp,maxu
-  real(kind=CUSTOM_REAL),dimension(0:neq) :: kp,p,p_g,r,r0,z,z_g!,r_g
-
-  real(kind=CUSTOM_REAL),parameter :: zero=0.0_CUSTOM_REAL,zerotol=1.0e-12_CUSTOM_REAL
-
-  ! all global array variables are both MPI and regionally assembled.
-  ! local array variables are regionally assembled.
-  ! for MPI assembly of such array, we have to scatter again to region with
-  ! regionally assembled values.
-
-  ! PCG solver
-
-  ! check if RHS is 0
-  if (maxvec(abs(f)) <= zerotol) then
-    u_g = zero
-    return
-  endif
-  kp = zero
-  if (maxval(abs(u_g)) > zero) then
-    call product_stiffness_vector(neq,u_g,kp)
-  endif
-  ! assemble kp across the regions
-  r = f-kp
-  z = dprecon_g*r
-
-  call scatter_and_assemble(neq,z,z_g)
-
-  p = z
-
-  ! pcg iteration
-  pcg: do iter = 1,CG_MAXITER
-    call scatter_and_assemble(neq,p,p_g)
-
-    call product_stiffness_vector(neq,p_g,kp)
-
-    rz = dot_product_all_proc(r,z_g)
-    alpha = rz/dot_product_all_proc(p_g,kp)
-    u_g = u_g+alpha*p_g
-
-    maxp = maxvec(abs(p_g)); maxu = maxvec(abs(u_g))
-    !if (abs(alpha)*maxvec(abs(p_g))/maxvec(abs(u_g)) <= CG_TOL) then
-    if (abs(alpha)*maxp/maxu <= CG_TOL) then
-      return
-    endif
-    r0 = r
-    r = r-alpha*kp
-
-    ! solve using single precision petsc solver
-    z = dprecon_g*r
-
-    call scatter_and_assemble(neq,z,z_g)
-
-    !beta = dot_product_all_proc(r,z_g)/rz ! Fletcher–Reeves
-    beta = dot_product_all_proc(r-r0,z_g)/rz !  Polak–Ribière
-
-    p = z + beta*p
-  enddo pcg
-
-  if (myid == 0) write(*,'(a)')'ERROR: PCG solver doesn''t converge!'
-  call synchronize_all()
-
-  ! abort
-  call exit_MPI(myrank,'PCG solver does not converge')
-
-  end subroutine pcpetsc_cg_solver
+!  subroutine pcpetsc_cg_solver(myid,neq,u_g,f,dprecon_g)
+!
+!  implicit none
+!  integer,intent(in) :: myid,neq
+!  real(kind=CUSTOM_REAL),dimension(0:neq),intent(inout) :: u_g
+!  real(kind=CUSTOM_REAL),dimension(0:neq),intent(in) :: f,dprecon_g
+!
+!  ! local parameters
+!  integer :: iter
+!  real(kind=CUSTOM_REAL) :: alpha,beta,rz,maxp,maxu
+!  real(kind=CUSTOM_REAL),dimension(0:neq) :: kp,p,p_g,r,r0,z,z_g!,r_g
+!
+!  real(kind=CUSTOM_REAL),parameter :: zero=0.0_CUSTOM_REAL,zerotol=1.0e-12_CUSTOM_REAL
+!
+!  ! all global array variables are both MPI and regionally assembled.
+!  ! local array variables are regionally assembled.
+!  ! for MPI assembly of such array, we have to scatter again to region with
+!  ! regionally assembled values.
+!
+!  ! PCG solver
+!
+!  ! check if RHS is 0
+!  if (maxvec(abs(f)) <= zerotol) then
+!    u_g = zero
+!    return
+!  endif
+!  kp = zero
+!  if (maxval(abs(u_g)) > zero) then
+!    call product_stiffness_vector(neq,u_g,kp)
+!  endif
+!  ! assemble kp across the regions
+!  r = f-kp
+!  z = dprecon_g*r
+!
+!  call scatter_and_assemble(neq,z,z_g)
+!
+!  p = z
+!
+!  ! pcg iteration
+!  pcg: do iter = 1,CG_MAXITER
+!    call scatter_and_assemble(neq,p,p_g)
+!
+!    call product_stiffness_vector(neq,p_g,kp)
+!
+!    rz = dot_product_all_proc(r,z_g)
+!    alpha = rz/dot_product_all_proc(p_g,kp)
+!    u_g = u_g+alpha*p_g
+!
+!    maxp = maxvec(abs(p_g)); maxu = maxvec(abs(u_g))
+!    !if (abs(alpha)*maxvec(abs(p_g))/maxvec(abs(u_g)) <= CG_TOL) then
+!    if (abs(alpha)*maxp/maxu <= CG_TOL) then
+!      return
+!    endif
+!    r0 = r
+!    r = r-alpha*kp
+!
+!    ! solve using single precision petsc solver
+!    z = dprecon_g*r
+!
+!    call scatter_and_assemble(neq,z,z_g)
+!
+!    !beta = dot_product_all_proc(r,z_g)/rz ! Fletcher–Reeves
+!    beta = dot_product_all_proc(r-r0,z_g)/rz !  Polak–Ribière
+!
+!    p = z + beta*p
+!  enddo pcg
+!
+!  if (myid == 0) write(*,'(a)')'ERROR: PCG solver doesn''t converge!'
+!  call synchronize_all()
+!
+!  ! abort
+!  call exit_MPI(myrank,'PCG solver does not converge')
+!
+!  end subroutine pcpetsc_cg_solver
 
 !
 !===============================================================================

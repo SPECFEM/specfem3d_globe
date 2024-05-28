@@ -79,9 +79,13 @@
     pgrav,pgrav_ic,pgrav_oc,pgrav_cm,pgrav_trinf,pgrav_inf
 
   use siem_math_library_mpi, only: maxvec
-  use siem_solver_petsc, only: petsc_set_vector1,petsc_solve1
+
+  use siem_solver_petsc, only: petsc_set_vector1,petsc_solve1, &
+    petsc_set_vector,petsc_solve
+
   use siem_poisson, only: compute_poisson_load,compute_poisson_rhoload, &
                           compute_poisson_load3,compute_poisson_rhoload3,poisson_gravity
+
   use siem_solver_mpi, only: cg_solver,cg_solver3,diagpcg_solver,diagpcg_solver3, interpolate3to5
 
   implicit none

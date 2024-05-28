@@ -142,6 +142,8 @@ module siem_solver_petsc
 
   implicit none
 
+  private
+
 #ifdef USE_PETSC
   ! to match PETSc types:
   !PetscInt :: i
@@ -182,22 +184,22 @@ module siem_solver_petsc
   PetscInt, parameter     :: COMMAND = 0, CG = 1, SUPERLU = 2, MUMPS = 3
 
   ! module variables
-  PetscBool               :: flg,flg_ch,flg_lu,flg_ilu
-  PetscInt                :: ival,icntl
-  PetscReal               :: val
+  !PetscBool               :: flg,flg_ch,flg_lu,flg_ilu
+  !PetscInt                :: ival,icntl
+  !PetscReal               :: val
 
   ! Level-1 solver
   type(tVec)              :: xvec1,bvec1,uvec1,local_vec1
-  type(tMat)              :: Amat1,Fmat1
+  type(tMat)              :: Amat1 !,Fmat1
   type(tKSP)              :: ksp1
   type(tPC)               :: pc1
-  PetscInt                :: solver_type1 ! solver type
+  !PetscInt                :: solver_type1 ! solver type
 
   ! For communications from local to global
-  type(tVecScatter)       :: pscat1,vscat1
+  type(tVecScatter)       :: vscat1 !,pscat1
 
   ! Stores l2g map info
-  ISLocalToGlobalMapping  :: l2gmap
+  !ISLocalToGlobalMapping  :: l2gmap
 
   !PetscBool              ::flg
 
@@ -211,12 +213,10 @@ module siem_solver_petsc
   !        I think we can probably use b_pc1 = pc1 but unsure
   type(tVec)              :: b_xvec1, b_bvec1, b_local_vec1
   type(tKSP)              :: b_ksp1
-  type(tMat)              :: b_Fmat1 ! not used unless MUMPS chosen (not implemented)
   type(tPC)               :: b_pc1
-  PetscInt                :: b_solver_type1 ! solver type
 
   ! For communications from local to global
-  type(tVecScatter)       :: b_pscat1, b_vscat1
+  type(tVecScatter)       :: b_vscat1
 
   ! Level-2 solver
   type(tVec)              :: xvec,bvec,uvec
@@ -225,9 +225,20 @@ module siem_solver_petsc
   type(tPC)               :: pc
   PetscErrorCode          :: ierr
   PetscInt                :: nzeros_max,nzeros_min,nzerosoff_max
-  PetscInt                :: ngdof_part1
   PetscInt                :: ig0,ig1
 #endif
+
+  ! public function
+  public :: petsc_initialize1
+  public :: petsc_initialize
+  public :: petsc_set_vector1
+  public :: petsc_set_vector
+  public :: petsc_set_matrix1
+  public :: petsc_set_matrix
+  public :: petsc_solve1
+  public :: petsc_solve
+  public :: petsc_zero_initialguess1
+  public :: petsc_zero_backwards_initialguess1
 
 contains
 
@@ -731,7 +742,7 @@ contains
   deallocate(nzeros)
 
   ! Create forward solver
-  !solver_type1=CG
+  !solver_type1 = CG
   !call create_linear_solver(solver_type1, ksp1, Amat1, pc1, Fmat1)
 
   !call KSPSetTolerances(ksp1,KSP_RTOL1,KSP_ATOL1,KSP_DTOL1,KSP_MAXITER1,ierr); CHECK_PETSC_ERROR(ierr)
@@ -744,11 +755,11 @@ contains
   !call KSPSetFromOptions(ksp1,ierr)
 
   ! Create adjoint solver:
-  !if (SIMULATION_TYPE==3) then
+  !if (SIMULATION_TYPE == 3) then
   !  call create_linear_solver(solver_type1, b_ksp1, Amat1, pc1, Fmat1)
   !  call KSPSetTolerances(b_ksp1,KSP_RTOL1,KSP_ATOL1,KSP_DTOL1,KSP_MAXITER1,ierr); CHECK_PETSC_ERROR(ierr)
   !  call KSPSetFromOptions(b_ksp1,ierr)
-  !  if (myrank==0) then
+  !  if (myrank == 0) then
   !    print *,' Created adjoint linear KSP solver...'
   !  endif
   !endif
@@ -760,7 +771,7 @@ contains
   ! COMMAND: define from the command
   ! SUPERLU: SuperLU solver
   ! MUMPS: MUMPS solver
-  !solver_type1=CG
+  !solver_type1 = CG
   ! Create linear solver context
 
   call KSPCreate(PETSC_COMM_WORLD,ksp1,ierr)
@@ -815,114 +826,116 @@ contains
 
 #ifdef USE_PETSC
 
-  subroutine create_linear_solver(stype, l_ksp, l_Amat, l_pc, l_fmat)
+! not used so far...
 
-  ! Create the linear solver and set various options
-  ! stype: Solver type - options available are
-  !   COMMAND   define from the command
-  !   SUPERLU   SuperLU solver
-  !   MUMPS     MUMPS solver
-  ! l_ksp: the local KSP (ksp1 or b_ksp1 etc)
-  ! l_Amat: local A matrix - I think always Amat1
-  ! l_pc:   local preconditioner e.g pc1
-
-  use specfem_par, only: myrank, SIMULATION_TYPE
-
-  implicit none
-
-  PetscInt :: stype
-  type(tKSP) :: l_ksp
-  type(tMat) :: l_Amat, l_fmat
-  type(tPC) :: l_pc
-
-  ! Create linear solver context
-  call KSPCreate(PETSC_COMM_WORLD,l_ksp,ierr)
-  ! Set operators. Here the matrix that defines the linear system
-  ! also serves as the preconditioning matrix.
-  !call KSPSetOperators(ksp1,Amat1,Amat1,SAME_PRECONDITIONER,ierr) ! version < 3.5
-  call KSPSetOperators(l_ksp,l_Amat,l_Amat,ierr) ! version >= 3.5
-
-  call KSPSetInitialGuessNonzero(l_ksp,PETSC_TRUE,ierr); CHECK_PETSC_ERROR(ierr)
-  !since the euqutions are nondimensionalized, the scaling is unnecessary?
-  call KSPSetDiagonalScale(l_ksp,PETSC_TRUE,ierr); CHECK_PETSC_ERROR(ierr)
-  call KSPSetReusePreconditioner(l_ksp,PETSC_TRUE,ierr)
-
-  if (stype == COMMAND) then
-    if (myrank == 0) print *,'Solver type: provided via command'
-  else if (stype == CG) then
-    ! CONJUGATE GRADIENT
-    if (myrank == 0) print *,'Solver type: CG'
-    call KSPSetType(l_ksp,KSPCG,ierr); CHECK_PETSC_ERROR(ierr)
-    ! Fetch preconditioner
-    call KSPGetPC(l_ksp,l_pc,ierr); CHECK_PETSC_ERROR(ierr)
-    call PCFactorSetShiftType(l_pc,MAT_SHIFT_POSITIVE_DEFINITE,ierr); CHECK_PETSC_ERROR(ierr)
-  else if (stype == SUPERLU) then
-    ! SUPER LU
-    if (myrank == 0) print *,'Solver type: SUPERLU'
-    if (SIMULATION_TYPE == 3) then
-      stop ' ERROR: SUPERLU not implemented for adjoint sims yet.'
-    endif
-    flg_ilu    = PETSC_FALSE;
-    flg_lu     = PETSC_FALSE;
-    ! version < 3.8.0
-    !call PetscOptionsGetBool(PETSC_NULL_CHARACTER,"-use_superlu_lu",flg_lu,flg,ierr);
-    call PetscOptionsGetBool(PETSC_NULL_OPTIONS,PETSC_NULL_CHARACTER, &
-          "-use_superlu_lu",flg_lu,flg,ierr); CHECK_PETSC_ERROR(ierr)
-    !call PetscOptionsGetBool(PETSC_NULL_CHARACTER,"-use_superlu_ilu",flg_ilu,flg,ierr);
-    if (flg_lu .or. flg_ilu) then
-      call KSPSetType(l_ksp,KSPPREONLY,ierr); CHECK_PETSC_ERROR(ierr)
-      call KSPGetPC(l_ksp,l_pc,ierr); CHECK_PETSC_ERROR(ierr)
-      if (flg_lu) then
-        call PCSetType(l_pc,PCLU,ierr); CHECK_PETSC_ERROR(ierr)
-      else if (flg_ilu) then
-        call PCSetType(l_pc,PCILU,ierr); CHECK_PETSC_ERROR(ierr)
-      endif
-      call PCFactorSetShiftType(l_pc,MAT_SHIFT_POSITIVE_DEFINITE,ierr); CHECK_PETSC_ERROR(ierr)
-      ! version < 3.9
-      !call PCFactorSetMatSolverPackage(l_pc,MATSOLVERSUPERLU,ierr)
-      call PCFactorSetMatSolverType(l_pc,MATSOLVERSUPERLU,ierr); CHECK_PETSC_ERROR(ierr)
-      ! version < 3.9
-      !call PCFactorSetUpMatSolverPackage(l_pc,ierr); ! call MatGetFactor() to create F
-      call PCFactorSetUpMatSolverType(l_pc,ierr); CHECK_PETSC_ERROR(ierr)
-      call PCFactorGetMatrix(l_pc,l_fmat,ierr); CHECK_PETSC_ERROR(ierr)
-      !call MatSuperluSetILUDropTol(l_fmat,1.e-8,ierr); CHECK_PETSC_ERROR(ierr)
-    endif
-  else if (stype == MUMPS) then
-    if (myrank == 0) print *,'Solver type: MUMPS'
-
-    stop 'ERROR - WE commented out MUMPS stuff due to syntax error'
-
-    flg_lu    = PETSC_FALSE;
-    flg_ch    = PETSC_FALSE;
-    ! version < 3.8.0
-    ! call PetscOptionsGetBool(PETSC_NULL_CHARACTER,"-use_mumps_ch",flg_ch,flg,ierr);
-     call PetscOptionsGetBool(PETSC_NULL_OPTIONS,PETSC_NULL_CHARACTER, &
-          "-use_mumps_ch",flg_ch,flg,ierr);
-    if (flg_lu .or. flg_ch) then
-      call KSPSetType(l_ksp,KSPPREONLY,ierr); CHECK_PETSC_ERROR(ierr)
-      call KSPGetPC(l_ksp,l_pc,ierr); CHECK_PETSC_ERROR(ierr)
-      if (flg_lu) then
-        call PCSetType(l_pc,PCLU,ierr); CHECK_PETSC_ERROR(ierr)
-      else if (flg_ch) then
-        ! set MUMPS id%SYM=1
-        call MatSetOption(l_Amat,MAT_SPD,PETSC_TRUE,ierr); CHECK_PETSC_ERROR(ierr)
-        call PCSetType(l_pc,PCCHOLESKY,ierr);
-      endif
-      call PCFactorSetShiftType(l_pc,MAT_SHIFT_POSITIVE_DEFINITE,ierr); CHECK_PETSC_ERROR(ierr)
-      ! version < 3.9
-      !call PCFactorSetMatSolverPackage(l_pc,MATSOLVERMUMPS,ierr);
-      !call PCFactorSetUpMatSolverPackage(l_pc,ierr); ! call MatGetFactor() to create F
-      !call PCFactorSetMatSolverType(l_pc,MATSOLVERMUMPS,ierr);
-      !call PCFactorSetUpMatSolverType(l_pc,ierr); ! call MatGetFactor() to create F
-      !call PCFactorGetMatrix(l_pc,l_fmat,ierr);
-      icntl = 7; ival = 2;
-      !call MatMumpsSetIcntl(l_fmat,icntl,ival,ierr);
-      icntl = 1; val = 0.0;
-      !call MatMumpsSetCntl(l_fmat,icntl,val,ierr);
-    endif
-  endif
-
-  end subroutine create_linear_solver
+!  subroutine create_linear_solver(stype, l_ksp, l_Amat, l_pc, l_fmat)
+!
+!  ! Create the linear solver and set various options
+!  ! stype: Solver type - options available are
+!  !   COMMAND   define from the command
+!  !   SUPERLU   SuperLU solver
+!  !   MUMPS     MUMPS solver
+!  ! l_ksp: the local KSP (ksp1 or b_ksp1 etc)
+!  ! l_Amat: local A matrix - I think always Amat1
+!  ! l_pc:   local preconditioner e.g pc1
+!
+!  use specfem_par, only: myrank, SIMULATION_TYPE
+!
+!  implicit none
+!
+!  PetscInt :: stype
+!  type(tKSP) :: l_ksp
+!  type(tMat) :: l_Amat, l_fmat
+!  type(tPC) :: l_pc
+!
+!  ! Create linear solver context
+!  call KSPCreate(PETSC_COMM_WORLD,l_ksp,ierr)
+!  ! Set operators. Here the matrix that defines the linear system
+!  ! also serves as the preconditioning matrix.
+!  !call KSPSetOperators(ksp1,Amat1,Amat1,SAME_PRECONDITIONER,ierr) ! version < 3.5
+!  call KSPSetOperators(l_ksp,l_Amat,l_Amat,ierr) ! version >= 3.5
+!
+!  call KSPSetInitialGuessNonzero(l_ksp,PETSC_TRUE,ierr); CHECK_PETSC_ERROR(ierr)
+!  !since the euqutions are nondimensionalized, the scaling is unnecessary?
+!  call KSPSetDiagonalScale(l_ksp,PETSC_TRUE,ierr); CHECK_PETSC_ERROR(ierr)
+!  call KSPSetReusePreconditioner(l_ksp,PETSC_TRUE,ierr)
+!
+!  if (stype == COMMAND) then
+!    if (myrank == 0) print *,'Solver type: provided via command'
+!  else if (stype == CG) then
+!    ! CONJUGATE GRADIENT
+!    if (myrank == 0) print *,'Solver type: CG'
+!    call KSPSetType(l_ksp,KSPCG,ierr); CHECK_PETSC_ERROR(ierr)
+!    ! Fetch preconditioner
+!    call KSPGetPC(l_ksp,l_pc,ierr); CHECK_PETSC_ERROR(ierr)
+!    call PCFactorSetShiftType(l_pc,MAT_SHIFT_POSITIVE_DEFINITE,ierr); CHECK_PETSC_ERROR(ierr)
+!  else if (stype == SUPERLU) then
+!    ! SUPER LU
+!    if (myrank == 0) print *,'Solver type: SUPERLU'
+!    if (SIMULATION_TYPE == 3) then
+!      stop ' ERROR: SUPERLU not implemented for adjoint sims yet.'
+!    endif
+!    flg_ilu    = PETSC_FALSE;
+!    flg_lu     = PETSC_FALSE;
+!    ! version < 3.8.0
+!    !call PetscOptionsGetBool(PETSC_NULL_CHARACTER,"-use_superlu_lu",flg_lu,flg,ierr);
+!    call PetscOptionsGetBool(PETSC_NULL_OPTIONS,PETSC_NULL_CHARACTER, &
+!          "-use_superlu_lu",flg_lu,flg,ierr); CHECK_PETSC_ERROR(ierr)
+!    !call PetscOptionsGetBool(PETSC_NULL_CHARACTER,"-use_superlu_ilu",flg_ilu,flg,ierr);
+!    if (flg_lu .or. flg_ilu) then
+!      call KSPSetType(l_ksp,KSPPREONLY,ierr); CHECK_PETSC_ERROR(ierr)
+!      call KSPGetPC(l_ksp,l_pc,ierr); CHECK_PETSC_ERROR(ierr)
+!      if (flg_lu) then
+!        call PCSetType(l_pc,PCLU,ierr); CHECK_PETSC_ERROR(ierr)
+!      else if (flg_ilu) then
+!        call PCSetType(l_pc,PCILU,ierr); CHECK_PETSC_ERROR(ierr)
+!      endif
+!      call PCFactorSetShiftType(l_pc,MAT_SHIFT_POSITIVE_DEFINITE,ierr); CHECK_PETSC_ERROR(ierr)
+!      ! version < 3.9
+!      !call PCFactorSetMatSolverPackage(l_pc,MATSOLVERSUPERLU,ierr)
+!      call PCFactorSetMatSolverType(l_pc,MATSOLVERSUPERLU,ierr); CHECK_PETSC_ERROR(ierr)
+!      ! version < 3.9
+!      !call PCFactorSetUpMatSolverPackage(l_pc,ierr); ! call MatGetFactor() to create F
+!      call PCFactorSetUpMatSolverType(l_pc,ierr); CHECK_PETSC_ERROR(ierr)
+!      call PCFactorGetMatrix(l_pc,l_fmat,ierr); CHECK_PETSC_ERROR(ierr)
+!      !call MatSuperluSetILUDropTol(l_fmat,1.e-8,ierr); CHECK_PETSC_ERROR(ierr)
+!    endif
+!  else if (stype == MUMPS) then
+!    if (myrank == 0) print *,'Solver type: MUMPS'
+!
+!    stop 'ERROR - WE commented out MUMPS stuff due to syntax error'
+!
+!    flg_lu    = PETSC_FALSE;
+!    flg_ch    = PETSC_FALSE;
+!    ! version < 3.8.0
+!    ! call PetscOptionsGetBool(PETSC_NULL_CHARACTER,"-use_mumps_ch",flg_ch,flg,ierr);
+!     call PetscOptionsGetBool(PETSC_NULL_OPTIONS,PETSC_NULL_CHARACTER, &
+!          "-use_mumps_ch",flg_ch,flg,ierr);
+!    if (flg_lu .or. flg_ch) then
+!      call KSPSetType(l_ksp,KSPPREONLY,ierr); CHECK_PETSC_ERROR(ierr)
+!      call KSPGetPC(l_ksp,l_pc,ierr); CHECK_PETSC_ERROR(ierr)
+!      if (flg_lu) then
+!        call PCSetType(l_pc,PCLU,ierr); CHECK_PETSC_ERROR(ierr)
+!      else if (flg_ch) then
+!        ! set MUMPS id%SYM=1
+!        call MatSetOption(l_Amat,MAT_SPD,PETSC_TRUE,ierr); CHECK_PETSC_ERROR(ierr)
+!        call PCSetType(l_pc,PCCHOLESKY,ierr);
+!      endif
+!      call PCFactorSetShiftType(l_pc,MAT_SHIFT_POSITIVE_DEFINITE,ierr); CHECK_PETSC_ERROR(ierr)
+!      ! version < 3.9
+!      !call PCFactorSetMatSolverPackage(l_pc,MATSOLVERMUMPS,ierr);
+!      !call PCFactorSetUpMatSolverPackage(l_pc,ierr); ! call MatGetFactor() to create F
+!      !call PCFactorSetMatSolverType(l_pc,MATSOLVERMUMPS,ierr);
+!      !call PCFactorSetUpMatSolverType(l_pc,ierr); ! call MatGetFactor() to create F
+!      !call PCFactorGetMatrix(l_pc,l_fmat,ierr);
+!      icntl = 7; ival = 2;
+!      !call MatMumpsSetIcntl(l_fmat,icntl,ival,ierr);
+!      icntl = 1; val = 0.0;
+!      !call MatMumpsSetCntl(l_fmat,icntl,val,ierr);
+!    endif
+!  endif
+!
+!  end subroutine create_linear_solver
 
 #endif
 
@@ -1166,47 +1179,49 @@ contains
 !===============================================================================
 !
 
-  subroutine petsc_set_backward_vector1(b_rload1)
+! not used so far...
 
-#ifdef USE_PETSC
-  use specfem_par_full_gravity, only: l2gdof1, neq1
-#endif
-
-  implicit none
-  !PetscScalar,intent(in) :: b_rload1(0:)
-  real(kind=CUSTOM_REAL), intent(in) :: b_rload1(0:)
-
-#ifdef USE_PETSC
-  PetscScalar :: zero
-  ! types required by VecSetValues:
-  !   VecSetValues(Vec x, PetscInt ni, const PetscInt ix[], const PetscScalar y[], InsertMode iora)
-  ! the scalar array must be a PetscScalar type, this might differ from a real(kind=CUSTOM_REAL) type
-  PetscScalar :: y(0:size(b_rload1(0:)))
-
-  y(0:) = b_rload1(0:)
-
-  zero = 0.0
-  call VecSet(b_bvec1,zero,ierr)
-  !call VecSetValues(b_bvec1,neq1,l2gdof1(1:),b_rload1(1:),ADD_VALUES,ierr)
-  call VecSetValues(b_bvec1,neq1,l2gdof1(1:),y(1:),ADD_VALUES,ierr);
-
-  ! assemble vector
-  call VecAssemblyBegin(b_bvec1,ierr)
-  call VecAssemblyEnd(b_bvec1,ierr)
-
-#else
-  ! no PETSc compilation support
-  ! compilation without ADIOS support
-  if (myrank == 0) then
-    print *, "Error: PETSc solver enabled without PETSc Support."
-    print *, "To enable ADIOS support, reconfigure with --with-petsc flag."
-  endif
-  ! safety stop
-  call exit_MPI(myrank,"Error PETSc solver: petsc_set_backward_vector1 called without compilation support")
-
-#endif
-
-  end subroutine petsc_set_backward_vector1
+!  subroutine petsc_set_backward_vector1(b_rload1)
+!
+!#ifdef USE_PETSC
+!  use specfem_par_full_gravity, only: l2gdof1, neq1
+!#endif
+!
+!  implicit none
+!  !PetscScalar,intent(in) :: b_rload1(0:)
+!  real(kind=CUSTOM_REAL), intent(in) :: b_rload1(0:)
+!
+!#ifdef USE_PETSC
+!  PetscScalar :: zero
+!  ! types required by VecSetValues:
+!  !   VecSetValues(Vec x, PetscInt ni, const PetscInt ix[], const PetscScalar y[], InsertMode iora)
+!  ! the scalar array must be a PetscScalar type, this might differ from a real(kind=CUSTOM_REAL) type
+!  PetscScalar :: y(0:size(b_rload1(0:)))
+!
+!  y(0:) = b_rload1(0:)
+!
+!  zero = 0.0
+!  call VecSet(b_bvec1,zero,ierr)
+!  !call VecSetValues(b_bvec1,neq1,l2gdof1(1:),b_rload1(1:),ADD_VALUES,ierr)
+!  call VecSetValues(b_bvec1,neq1,l2gdof1(1:),y(1:),ADD_VALUES,ierr);
+!
+!  ! assemble vector
+!  call VecAssemblyBegin(b_bvec1,ierr)
+!  call VecAssemblyEnd(b_bvec1,ierr)
+!
+!#else
+!  ! no PETSc compilation support
+!  ! compilation without ADIOS support
+!  if (myrank == 0) then
+!    print *, "Error: PETSc solver enabled without PETSc Support."
+!    print *, "To enable ADIOS support, reconfigure with --with-petsc flag."
+!  endif
+!  ! safety stop
+!  call exit_MPI(myrank,"Error PETSc solver: petsc_set_backward_vector1 called without compilation support")
+!
+!#endif
+!
+!  end subroutine petsc_set_backward_vector1
 
 !
 !===============================================================================
@@ -1259,48 +1274,50 @@ contains
 !===============================================================================
 !
 
-  subroutine petsc_backward_solve1(b_sdata1)
+! not used so far...
 
-  implicit none
-  !PetscScalar :: b_sdata1(:)
-  real(kind=CUSTOM_REAL) :: b_sdata1(:)
-
-#ifdef USE_PETSC
-  ! local parameters
-  PetscInt :: b_iter,b_ireason
-  ! petsc type array
-  PetscScalar :: y(size(b_sdata1))
-
-  call KSPSolve(b_ksp1,b_bvec1,b_xvec1,ierr); CHECK_PETSC_ERROR(ierr)
-  call KSPGetConvergedReason(b_ksp1,b_ireason,ierr); CHECK_PETSC_ERROR(ierr)
-  call KSPGetIterationNumber(b_ksp1,b_iter,ierr); CHECK_PETSC_ERROR(ierr)
-
-  !debug
-  !if (myrank == 0) print *,'debug: petsc_backward_solve1: converged reason: ',b_ireason
-
-  !call scatter_globalvec1_backward(b_xvec1, b_sdata1)
-
-  ! explict conversion to PetscScalar array
-  y(:) = b_sdata1(:)
-
-  call scatter_globalvec1_backward(b_xvec1, y)
-
-  ! return values
-  b_sdata1(:) = y(:)
-
-#else
-  ! no PETSc compilation support
-  ! compilation without ADIOS support
-  if (myrank == 0) then
-    print *, "Error: PETSc solver enabled without PETSc Support."
-    print *, "To enable ADIOS support, reconfigure with --with-petsc flag."
-  endif
-  ! safety stop
-  call exit_MPI(myrank,"Error PETSc solver: petsc_backward_solve1 called without compilation support")
-
-#endif
-
-  end subroutine petsc_backward_solve1
+!  subroutine petsc_backward_solve1(b_sdata1)
+!
+!  implicit none
+!  !PetscScalar :: b_sdata1(:)
+!  real(kind=CUSTOM_REAL) :: b_sdata1(:)
+!
+!#ifdef USE_PETSC
+!  ! local parameters
+!  PetscInt :: b_iter,b_ireason
+!  ! petsc type array
+!  PetscScalar :: y(size(b_sdata1))
+!
+!  call KSPSolve(b_ksp1,b_bvec1,b_xvec1,ierr); CHECK_PETSC_ERROR(ierr)
+!  call KSPGetConvergedReason(b_ksp1,b_ireason,ierr); CHECK_PETSC_ERROR(ierr)
+!  call KSPGetIterationNumber(b_ksp1,b_iter,ierr); CHECK_PETSC_ERROR(ierr)
+!
+!  !debug
+!  !if (myrank == 0) print *,'debug: petsc_backward_solve1: converged reason: ',b_ireason
+!
+!  !call scatter_globalvec1_backward(b_xvec1, b_sdata1)
+!
+!  ! explict conversion to PetscScalar array
+!  y(:) = b_sdata1(:)
+!
+!  call scatter_globalvec1_backward(b_xvec1, y)
+!
+!  ! return values
+!  b_sdata1(:) = y(:)
+!
+!#else
+!  ! no PETSc compilation support
+!  ! compilation without ADIOS support
+!  if (myrank == 0) then
+!    print *, "Error: PETSc solver enabled without PETSc Support."
+!    print *, "To enable ADIOS support, reconfigure with --with-petsc flag."
+!  endif
+!  ! safety stop
+!  call exit_MPI(myrank,"Error PETSc solver: petsc_backward_solve1 called without compilation support")
+!
+!#endif
+!
+!  end subroutine petsc_backward_solve1
 
 !
 !===============================================================================
@@ -1363,26 +1380,28 @@ contains
 
 #ifdef USE_PETSC
 
-  subroutine scatter_globalvec1_backward(b_global_vec,b_larray)
+! not used so far...
 
-  implicit none
-
-  type(tVec) :: b_global_vec
-  PetscScalar :: b_larray(:)
-
-  PetscInt :: b_n
-  PetscScalar,pointer :: b_array_data(:)
-
-  call VecScatterBegin(b_vscat1, b_global_vec, b_local_vec1,INSERT_VALUES,SCATTER_FORWARD,ierr); CHECK_PETSC_ERROR(ierr)
-  call VecScatterEnd(b_vscat1, b_global_vec, b_local_vec1,INSERT_VALUES,SCATTER_FORWARD,ierr); CHECK_PETSC_ERROR(ierr)
-  call VecGetSize(b_local_vec1, b_n,ierr)
-
-  call VecGetArrayF90(b_local_vec1, b_array_data,ierr); CHECK_PETSC_ERROR(ierr)
-
-  b_larray(1:b_n) = b_array_data(1:b_n)
-  call VecRestoreArrayF90(b_local_vec1, b_array_data,ierr); CHECK_PETSC_ERROR(ierr)
-
-  end subroutine scatter_globalvec1_backward
+!  subroutine scatter_globalvec1_backward(b_global_vec,b_larray)
+!
+!  implicit none
+!
+!  type(tVec) :: b_global_vec
+!  PetscScalar :: b_larray(:)
+!
+!  PetscInt :: b_n
+!  PetscScalar,pointer :: b_array_data(:)
+!
+!  call VecScatterBegin(b_vscat1, b_global_vec, b_local_vec1,INSERT_VALUES,SCATTER_FORWARD,ierr); CHECK_PETSC_ERROR(ierr)
+!  call VecScatterEnd(b_vscat1, b_global_vec, b_local_vec1,INSERT_VALUES,SCATTER_FORWARD,ierr); CHECK_PETSC_ERROR(ierr)
+!  call VecGetSize(b_local_vec1, b_n,ierr)
+!
+!  call VecGetArrayF90(b_local_vec1, b_array_data,ierr); CHECK_PETSC_ERROR(ierr)
+!
+!  b_larray(1:b_n) = b_array_data(1:b_n)
+!  call VecRestoreArrayF90(b_local_vec1, b_array_data,ierr); CHECK_PETSC_ERROR(ierr)
+!
+!  end subroutine scatter_globalvec1_backward
 
 #endif
 
@@ -1490,44 +1509,46 @@ contains
 !===============================================================================
 !
 
-  subroutine petsc_finalize1()
+! not used so far...
 
-#ifdef USE_PETSC
-  use specfem_par, only: SIMULATION_TYPE
-
-  implicit none
-
-  ! Free work space.  All PETSc objects should be destroyed when they
-  ! are no longer needed.
-
-  call VecDestroy(xvec1,ierr)
-  call VecDestroy(uvec1,ierr)
-  call VecDestroy(bvec1,ierr)
-  call MatDestroy(Amat1,ierr)
-  call KSPDestroy(ksp1,ierr)
-  call VecScatterDestroy(vscat1,ierr)
-  call PetscFinalize(ierr)
-
-  if (SIMULATION_TYPE == 3) then
-    call VecDestroy(b_xvec1,ierr)
-    call VecDestroy(b_bvec1,ierr)
-    call KSPDestroy(b_ksp1,ierr)
-    call VecScatterDestroy(b_vscat1,ierr)
-  endif
-
-#else
-  ! no PETSc compilation support
-  ! compilation without ADIOS support
-  if (myrank == 0) then
-    print *, "Error: PETSc solver enabled without PETSc Support."
-    print *, "To enable ADIOS support, reconfigure with --with-petsc flag."
-  endif
-  ! safety stop
-  call exit_MPI(myrank,"Error PETSc solver: petsc_finalize1 called without compilation support")
-
-#endif
-
-  end subroutine petsc_finalize1
+!  subroutine petsc_finalize1()
+!
+!#ifdef USE_PETSC
+!  use specfem_par, only: SIMULATION_TYPE
+!
+!  implicit none
+!
+!  ! Free work space.  All PETSc objects should be destroyed when they
+!  ! are no longer needed.
+!
+!  call VecDestroy(xvec1,ierr)
+!  call VecDestroy(uvec1,ierr)
+!  call VecDestroy(bvec1,ierr)
+!  call MatDestroy(Amat1,ierr)
+!  call KSPDestroy(ksp1,ierr)
+!  call VecScatterDestroy(vscat1,ierr)
+!  call PetscFinalize(ierr)
+!
+!  if (SIMULATION_TYPE == 3) then
+!    call VecDestroy(b_xvec1,ierr)
+!    call VecDestroy(b_bvec1,ierr)
+!    call KSPDestroy(b_ksp1,ierr)
+!    call VecScatterDestroy(b_vscat1,ierr)
+!  endif
+!
+!#else
+!  ! no PETSc compilation support
+!  ! compilation without ADIOS support
+!  if (myrank == 0) then
+!    print *, "Error: PETSc solver enabled without PETSc Support."
+!    print *, "To enable ADIOS support, reconfigure with --with-petsc flag."
+!  endif
+!  ! safety stop
+!  call exit_MPI(myrank,"Error PETSc solver: petsc_finalize1 called without compilation support")
+!
+!#endif
+!
+!  end subroutine petsc_finalize1
 
 
 !===============================================================================
@@ -1933,41 +1954,43 @@ contains
 !===============================================================================
 !
 
-  subroutine petsc_finalize()
+! not used so far...
 
-#ifdef USE_PETSC
-  use petscvec, only: VecDestroy
-  use petscmat, only: MatDestroy
-  use petscksp, only: KSPDestroy
-
-  implicit none
-
-  ! Free work space.  All PETSc objects should be destroyed when they
-  ! are no longer needed.
-
-  call VecDestroy(xvec,ierr); CHECK_PETSC_ERROR(ierr)
-  call VecDestroy(uvec,ierr); CHECK_PETSC_ERROR(ierr)
-  call VecDestroy(bvec,ierr); CHECK_PETSC_ERROR(ierr)
-
-  call MatDestroy(Amat,ierr); CHECK_PETSC_ERROR(ierr)
-
-  call KSPDestroy(ksp,ierr); CHECK_PETSC_ERROR(ierr)
-
-  call PetscFinalize(ierr); CHECK_PETSC_ERROR(ierr)
-
-#else
-  ! no PETSc compilation support
-  ! compilation without ADIOS support
-  if (myrank == 0) then
-    print *, "Error: PETSc solver enabled without PETSc Support."
-    print *, "To enable ADIOS support, reconfigure with --with-petsc flag."
-  endif
-  ! safety stop
-  call exit_MPI(myrank,"Error PETSc solver: petsc_finalize called without compilation support")
-
-#endif
-
-  end subroutine petsc_finalize
+!  subroutine petsc_finalize()
+!
+!#ifdef USE_PETSC
+!  use petscvec, only: VecDestroy
+!  use petscmat, only: MatDestroy
+!  use petscksp, only: KSPDestroy
+!
+!  implicit none
+!
+!  ! Free work space.  All PETSc objects should be destroyed when they
+!  ! are no longer needed.
+!
+!  call VecDestroy(xvec,ierr); CHECK_PETSC_ERROR(ierr)
+!  call VecDestroy(uvec,ierr); CHECK_PETSC_ERROR(ierr)
+!  call VecDestroy(bvec,ierr); CHECK_PETSC_ERROR(ierr)
+!
+!  call MatDestroy(Amat,ierr); CHECK_PETSC_ERROR(ierr)
+!
+!  call KSPDestroy(ksp,ierr); CHECK_PETSC_ERROR(ierr)
+!
+!  call PetscFinalize(ierr); CHECK_PETSC_ERROR(ierr)
+!
+!#else
+!  ! no PETSc compilation support
+!  ! compilation without ADIOS support
+!  if (myrank == 0) then
+!    print *, "Error: PETSc solver enabled without PETSc Support."
+!    print *, "To enable ADIOS support, reconfigure with --with-petsc flag."
+!  endif
+!  ! safety stop
+!  call exit_MPI(myrank,"Error PETSc solver: petsc_finalize called without compilation support")
+!
+!#endif
+!
+!  end subroutine petsc_finalize
 
 !
 !===============================================================================

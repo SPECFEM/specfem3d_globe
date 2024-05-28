@@ -34,7 +34,8 @@
   use specfem_par_innercore, only: idoubling_inner_core
   use specfem_par_full_gravity
 
-  use siem_solver_petsc, only: petsc_initialize1,petsc_initialize,petsc_set_matrix1,petsc_set_matrix, &
+  use siem_solver_petsc, only: petsc_initialize1,petsc_initialize, &
+                               petsc_set_matrix1,petsc_set_matrix, &
                                petsc_zero_initialguess1,petsc_zero_backwards_initialguess1
 
   implicit none
@@ -486,9 +487,12 @@
     neq1,neq,cg_isscale, &
     is_active_gll,igll_active_on
 
-  use siem_solver_petsc, only: petsc_set_vector1,petsc_zero_initialguess1,petsc_solve1
+  use siem_solver_petsc, only: petsc_zero_initialguess1,petsc_set_vector1,petsc_solve1, &
+    petsc_set_vector,petsc_solve
+
   use siem_poisson, only: compute_poisson_load,compute_poisson_rhoload,compute_poisson_load3, &
                           compute_poisson_rhoload3,poisson_gravity
+
   use siem_solver_mpi, only: cg_solver,cg_solver3,diagpcg_solver,diagpcg_solver3, interpolate3to5
 
   implicit none
