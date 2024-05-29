@@ -1371,14 +1371,12 @@
 !!-----------------------------------------------------------
 
 ! maximum number of iteration for conjugate gradient solver
-  integer, parameter :: BUILTIN = 0, PETSC = 1
+  integer, parameter :: ISOLVER_BUILTIN = 0, ISOLVER_PETSC = 1
 
-! by default, the Poisson solver needs the PETSc library
-  integer, parameter :: POISSON_SOLVER = PETSC            ! or BUILTIN
-  logical, parameter :: POISSON_SOLVER_5GLL = .false.
+! Level-2 solver
+  logical, parameter :: USE_POISSON_SOLVER_5GLL = .false.
 
-! if the following parameter is .true., contribution of the perturbed gravity is
-! discarded in compute force routines, perturbed gravity is still computed from
-! the density perturbation.
+! If the following parameter is .true., contribution of the perturbed gravity is discarded in compute force routines
+! (perturbed gravity is still computed from the density perturbation)
   logical, parameter :: DISCARD_GCONTRIB = .false.
 
