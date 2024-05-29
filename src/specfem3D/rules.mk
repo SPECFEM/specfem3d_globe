@@ -117,8 +117,8 @@ specfem3D_SOLVER_OBJECTS += \
 	$O/SIEM_compute_kernels.solverstatic.o \
 	$O/SIEM_index_region.solverstatic.o \
 	$O/SIEM_infinite_element.solverstatic.o \
-	$O/SIEM_iterate.solverstatic.o \
 	$O/SIEM_poisson.solverstatic.o \
+	$O/SIEM_prepare_iteration.solverstatic.o \
 	$O/SIEM_prepare_solver.solverstatic.o \
 	$O/SIEM_solve.solverstatic.o \
 	$O/SIEM_solver_mpi.solverstatic.o \
@@ -407,9 +407,9 @@ $O/initialize_simulation.solverstatic.o: ${SETUP}/version.fh
 $O/SIEM_compute_kernels.solverstatic.o: $O/SIEM_math_library.shared.o $O/SIEM_poisson.solverstatic.o \
 																				$O/SIEM_solver_petsc.solverstatic.o $O/SIEM_solver_mpi.solverstatic.o
 $O/SIEM_infinite_element.solverstatic.o: $O/SIEM_math_library.shared.o
-$O/SIEM_iterate.solverstatic.o: $O/SIEM_math_library.shared.o $O/SIEM_poisson.solverstatic.o \
-																$O/SIEM_solver_petsc.solverstatic.o $O/SIEM_solver_mpi.solverstatic.o
 $O/SIEM_poisson.solverstatic.o: $O/SIEM_math_library.shared.o $O/SIEM_infinite_element.solverstatic.o
+$O/SIEM_prepare_iteration.solverstatic.o: $O/SIEM_math_library.shared.o $O/SIEM_poisson.solverstatic.o \
+																$O/SIEM_solver_petsc.solverstatic.o $O/SIEM_solver_mpi.solverstatic.o
 $O/SIEM_prepare_solver.solverstatic.o: $O/SIEM_math_library.shared.o $O/SIEM_poisson.solverstatic.o
 $O/SIEM_solve.solverstatic.o: $O/SIEM_math_library.shared.o $O/SIEM_poisson.solverstatic.o \
 															$O/SIEM_solver_petsc.solverstatic.o $O/SIEM_solver_mpi.solverstatic.o

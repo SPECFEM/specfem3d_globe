@@ -54,10 +54,11 @@ contains
   integer,parameter :: ndim = 3,ngnod = 8
 
   integer :: i,k,i_elmt
-  integer :: dnx,dny,dnz,egdof(NGLLCUBE),ignod(ngnod)
+  integer :: egdof(NGLLCUBE),ignod(ngnod) !,dnx,dny,dnz
   real(kind=CUSTOM_REAL) :: detjac
 
   real(kind=kdble),parameter :: jalpha=0.0_kdble,jbeta=0.0_kdble,zero=0.0_kdble
+
   real(kind=kdble) :: xigll(NGLLX),wxgll(NGLLX),etagll(NGLLY),wygll(NGLLY), &
                       zetagll(NGLLZ),wzgll(NGLLZ)
   real(kind=kdble) :: dshape_hex8(ndim,ngnod,NGLLCUBE),gll_weights(NGLLCUBE), &
@@ -87,8 +88,10 @@ contains
   call gll_quadrature(ndim,NGLLX,NGLLY,NGLLZ,NGLLCUBE,gll_points,gll_weights, &
                       lagrange_gll,dlagrange_gll)
 
-  dnx = NGLLX-1; dny = NGLLY-1; dnz = NGLLZ-1
-  storekmat = zero; dprecon = zero
+  !dnx = NGLLX-1; dny = NGLLY-1; dnz = NGLLZ-1
+
+  storekmat(:,:,:) = zero; dprecon(:) = zero
+
   do i_elmt = 1,nelmt
     ! suppress fictitious elements in central cube
     if (iregion == IREGION_INNER_CORE) then
@@ -154,7 +157,7 @@ contains
   !integer,parameter :: nipinf=8,nipx=8
 
   integer :: i,k,i_elmt
-  integer :: egdof(NGLLCUBE),ignod(ngnod) !dnx,dny,dnz,
+  integer :: egdof(NGLLCUBE),ignod(ngnod) !,dnx,dny,dnz
   real(kind=CUSTOM_REAL),parameter :: one=1.0_CUSTOM_REAL,zero=0.0_CUSTOM_REAL
   real(kind=CUSTOM_REAL) :: detjac
   real(kind=CUSTOM_REAL) :: coordinf(nginf,ndim),deriv(ndim,NGLLCUBE)
@@ -185,8 +188,10 @@ contains
   !call shape_function_infiniteGLHEX8ZW_GQ(ndim,NGLLX,NGLLY,NGLLZ,NGLLCUBE,nipx,nipinf, &
   !                                        iface,shape_infinite,dshape_infinite,lagrange_gl,dlagrange_gl,GLw)
 
-  !dnx=NGLLX-1; dny=NGLLY-1; dnz=NGLLZ-2
-  storekmat = zero; dprecon = zero
+  !dnx = NGLLX-1; dny = NGLLY-1; dnz = NGLLZ-2
+
+  storekmat(:,:,:) = zero; dprecon(:) = zero
+
   do i_elmt = 1,nelmt
     !ignod=reshape(ibool(1:NGLLX:dnx,1:NGLLY:dny,1:NGLLZ-1:dnz,i_elmt),(/ngnod/))
     ! indicial order NOT EXODUS order!!!
@@ -242,7 +247,6 @@ contains
                               NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF
 
   use specfem_par_innercore, only: idoubling_inner_core
-  !use specfem_par_crustmantle, only: rmassz_crust_mantle !TODO: remove this
 
   use siem_gll_library
   use siem_math_library, only: determinant,invert
@@ -256,12 +260,13 @@ contains
   integer,parameter :: ndim = 3,ngnod = 8
 
   integer :: i,k,i_elmt
-  integer :: dnx,dny,dnz,egdof(NGLLCUBE_INF),ignod(ngnod)
+  integer :: egdof(NGLLCUBE_INF),ignod(ngnod) !,dnx,dny,dnz
   real(kind=CUSTOM_REAL) :: detjac
 
   real(kind=kdble),parameter :: jalpha=0.0_kdble,jbeta=0.0_kdble,zero=0.0_kdble
+
   real(kind=kdble) :: xigll1(NGLLX_INF),wxgll1(NGLLX_INF),etagll1(NGLLY_INF), &
-  wygll1(NGLLY_INF),zetagll1(NGLLZ_INF),wzgll1(NGLLZ_INF)
+                      wygll1(NGLLY_INF),zetagll1(NGLLZ_INF),wzgll1(NGLLZ_INF)
   real(kind=kdble) :: dshape_hex8(ndim,ngnod,NGLLCUBE_INF),gll_weights(NGLLCUBE_INF), &
                       gll_points(ndim,NGLLCUBE_INF), &
                       lagrange_gll(NGLLCUBE_INF,NGLLCUBE_INF),dlagrange_gll(ndim,NGLLCUBE_INF,NGLLCUBE_INF)
@@ -281,8 +286,10 @@ contains
   call gll_quadrature(ndim,NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF,gll_points,gll_weights, &
                       lagrange_gll,dlagrange_gll)
 
-  dnx = NGLLX-1; dny = NGLLY-1; dnz = NGLLZ-1
-  storekmat = zero; dprecon = zero
+  !dnx = NGLLX-1; dny = NGLLY-1; dnz = NGLLZ-1
+
+  storekmat(:,:,:) = zero; dprecon(:) = zero
+
   do i_elmt = 1,nelmt
     ! suppress fictitious elements in central cube
     if (iregion == IREGION_INNER_CORE) then
@@ -313,7 +320,7 @@ contains
     enddo
     storekmat(:,:,i_elmt) = kmat
     do k = 1,NGLLCUBE_INF
-      dprecon(egdof(k))=dprecon(egdof(k))+kmat(k,k)
+      dprecon(egdof(k)) = dprecon(egdof(k))+kmat(k,k)
     enddo
   enddo
 
@@ -369,8 +376,10 @@ contains
   !call shape_function_infiniteGLHEX8ZW_GQ(ndim,NGLLX,NGLLY,NGLLZ,NGLLCUBE,nipx,nipinf, &
   !                                        iface,shape_infinite,dshape_infinite,lagrange_gl,dlagrange_gl,GLw)
 
-  !dnx=NGLLX-1; dny=NGLLY-1; dnz=NGLLZ-2
-  storekmat = zero; dprecon = zero
+  !dnx = NGLLX-1; dny = NGLLY-1; dnz = NGLLZ-2
+
+  storekmat(:,:,:) = zero; dprecon(:) = zero
+
   do i_elmt = 1,nelmt
     !ignod=reshape(ibool(1:NGLLX:dnx,1:NGLLY:dny,1:NGLLZ-1:dnz,i_elmt),(/ngnod/))
     ! indicial order NOT EXODUS order!!!
@@ -437,10 +446,6 @@ contains
   real(kind=CUSTOM_REAL) :: load_ic(NGLOB_INNER_CORE),load_oc(NGLOB_OUTER_CORE), &
                             load_cm(NGLOB_CRUST_MANTLE)
 
-  !note: NGLLCUBE = NGLLX*NGLLY*NGLLZ
-
-  gravload(:) = 0.0_CUSTOM_REAL
-
   ! crust-mantle
   call poisson_load_onlyrhoFAST(IREGION_CRUST_MANTLE,nspec_crust_mantle, &
                                 nglob_crust_mantle,ibool_crust_mantle,storerhojw_cm,load_cm)
@@ -454,9 +459,11 @@ contains
                                 nglob_inner_core,ibool_inner_core,storerhojw_ic,load_ic)
 
   ! infinite
-  ! this region has no contrbution
+  ! this region has no contribution
 
   ! assemble across the regions but not MPI
+  gravload(:) = 0.0_CUSTOM_REAL
+
   ! crust_mantle
   gravload(gdof_cm(:)) = gravload(gdof_cm(:)) + load_cm(:)
 
@@ -465,9 +472,6 @@ contains
 
   ! inner core
   gravload(gdof_ic(:)) = gravload(gdof_ic(:)) + load_ic(:)
-
-  ! infinite
-  ! there no contribution from infinite region
 
   gravload(0) = 0.0_CUSTOM_REAL
 
@@ -494,8 +498,6 @@ contains
                             load_cm(nnode_cm1)
 
   !note: NGLLCUBE = NGLLX*NGLLY*NGLLZ
-
-  gravload1(:) = 0.0_CUSTOM_REAL
 
   !! crust-mantle
   !call poisson_load_onlyrho3(1,nspec_crust_mantle, &
@@ -528,6 +530,8 @@ contains
   ! this region has no contribution
 
   ! assemble across the regions but not MPI
+  gravload1(:) = 0.0_CUSTOM_REAL
+
   ! crust_mantle
   gravload1(gdof_cm1(:)) = gravload1(gdof_cm1(:)) + load_cm(:)
 
@@ -536,9 +540,6 @@ contains
 
   ! inner core
   gravload1(gdof_ic1(:)) = gravload1(gdof_ic1(:)) + load_ic(:)
-
-  ! infinite
-  ! there is no contribution from infinite region
 
   gravload1(0) = 0.0_CUSTOM_REAL
 
@@ -574,8 +575,8 @@ contains
   integer :: egdof(NGLLCUBE_INF)
 
   ! Based off of poisson_load_solid3FAST
-  gravload1(:) = 0.0_CUSTOM_REAL
   load_cm(:) = zero
+
   do i_elmt = 1,nspec_crust_mantle
     evalue(:) = reshape(rho1siem_kl_crust_mantle(component,1:NGLLX:2,1:NGLLY:2,1:NGLLZ:2,i_elmt),(/NGLLCUBE_INF/))
     eload(:) = zero
@@ -587,6 +588,8 @@ contains
   enddo
 
   ! assemble across the regions but not MPI
+  gravload1(:) = 0.0_CUSTOM_REAL
+
   ! crust_mantle -  multiply by 4*PI*G! or scaled
   gravload1(gdof_cm1(:)) = gravload1(gdof_cm1(:)) + 4.0_CUSTOM_REAL * load_cm(:)
   gravload1(0) = 0.0_CUSTOM_REAL
@@ -620,10 +623,9 @@ contains
   integer :: egdof(NGLLCUBE_INF)
   real(kind=CUSTOM_REAL) :: load_cm(nnode_cm1), evalue(NGLLCUBE_INF), eload(NGLLCUBE_INF)
 
-  gravload1(:) = 0.0_CUSTOM_REAL
-
   ! Based off of poisson_load_solid3FAST
   load_cm(:) = zero
+
   do i_elmt = 1,nspec_crust_mantle
     evalue(:) = reshape(rho2siem_kl_crust_mantle(icomp,jcomp,1:NGLLX:2,1:NGLLY:2,1:NGLLZ:2,i_elmt),(/NGLLCUBE_INF/))
     eload(:) = zero
@@ -633,7 +635,10 @@ contains
     egdof(:) = inode_elmt_cm1(:,i_elmt)
     load_cm(egdof(:)) = load_cm(egdof(:)) + eload(:)
   enddo
+
   ! assemble across the regions but not MPI
+  gravload1(:) = 0.0_CUSTOM_REAL
+
   ! crust_mantle -  multiply by 4*PI*G! or scaled
   gravload1(gdof_cm1(:)) = gravload1(gdof_cm1(:)) + 4.0_CUSTOM_REAL * load_cm(:)
   gravload1(0) = 0.0_CUSTOM_REAL
@@ -647,13 +652,13 @@ contains
   subroutine compute_poisson_load()
 
   use constants, only: IREGION_INNER_CORE,IREGION_CRUST_MANTLE, &
-    NGLLX,NGLLY,NGLLZ,NGLLCUBE
+    NGLLX,NGLLY,NGLLZ,NGLLCUBE,C_LDDRK
 
   use constants_solver, only: NSPEC_INNER_CORE, &
     NSPEC_OUTER_CORE,NSPEC_CRUST_MANTLE,NGLOB_INNER_CORE,NGLOB_OUTER_CORE, &
     NGLOB_CRUST_MANTLE
 
-  use specfem_par, only: deltat,it,DT,t0,scale_t_inv,two_omega_earth
+  use specfem_par, only: deltat,it,DT,t0,istage,USE_LDDRK,scale_t_inv,two_omega_earth
 
   use specfem_par_crustmantle, only: displ_crust_mantle,ibool_crust_mantle
   use specfem_par_outercore, only: displ_outer_core,ibool_outer_core
@@ -666,12 +671,8 @@ contains
     A_array_rotationL,B_array_rotationL
 
   implicit none
-  real(kind=CUSTOM_REAL) :: time
+  real(kind=CUSTOM_REAL) :: timeval
   real(kind=CUSTOM_REAL) :: load_ic(NGLOB_INNER_CORE),load_oc(NGLOB_OUTER_CORE),load_cm(NGLOB_CRUST_MANTLE)
-
-  !NGLLCUBE = NGLLX*NGLLY*NGLLZ
-
-  gravload(:) = 0.0_CUSTOM_REAL
 
   ! inner core
   !call poisson_load_solid(IREGION_INNER_CORE,nspec_inner_core, &
@@ -692,26 +693,38 @@ contains
                               displ_crust_mantle,load_cm)
 
   ! outer core
-  ! time
-  time = real((dble(it-1)*DT-t0)*scale_t_inv,kind=CUSTOM_REAL)
+  ! current simulated time
+  if (USE_LDDRK) then
+    ! LDDRK
+    ! note: the LDDRK scheme updates displacement after the stiffness computations and
+    !       after adding boundary/coupling/source terms.
+    !       thus, at each time loop step it, displ(:) is still at (n) and not (n+1) like for the Newmark scheme
+    !       when entering this routine. we therefore at an additional -DT to have the corresponding timing
+    !       for the source.
+    timeval = real((dble(it-1-1)*DT + dble(C_LDDRK(istage))*DT - t0)*scale_t_inv, kind=CUSTOM_REAL)
+  else
+    timeval = real((dble(it-1)*DT - t0)*scale_t_inv, kind=CUSTOM_REAL)
+  endif
 
-  !call poisson_load_fluid(time,deltat,two_omega_earth,NSPEC_OUTER_CORE, &
+  !call poisson_load_fluid(timeval,deltat,two_omega_earth,NSPEC_OUTER_CORE, &
   !                        NGLOB_OUTER_CORE,A_array_rotation,B_array_rotation,rhostore_outer_core, &
   !                        displ_outer_core,load_oc)
 
   !call poisson_load_fluidNEW(nspec_outer_core,nglob_outer_core,ibool_outer_core, &
   !                           xstore_outer_core,ystore_outer_core,zstore_outer_core,rhostore_outer_core, &
-  !                           time,deltat,two_omega_earth,A_array_rotationL,B_array_rotationL, &
+  !                           timeval,deltat,two_omega_earth,A_array_rotationL,B_array_rotationL, &
   !                           displ_outer_core,load_oc)
 
   call poisson_load_fluidNEWFAST(nspec_outer_core,nglob_outer_core,ibool_outer_core, &
-                                 storederiv_oc,storerhojw_oc,time,deltat,two_omega_earth,A_array_rotationL, &
+                                 storederiv_oc,storerhojw_oc,timeval,deltat,two_omega_earth,A_array_rotationL, &
                                  B_array_rotationL,displ_outer_core,load_oc)
 
   ! infinite
-  ! this region has no contrbution
+  ! this region has no contribution
 
   ! assemble across the regions but not MPI
+  gravload(:) = 0.0_CUSTOM_REAL
+
   ! crust_mantle
   gravload(gdof_cm(:)) = gravload(gdof_cm(:)) + load_cm(:)
 
@@ -720,9 +733,6 @@ contains
 
   ! inner core
   gravload(gdof_ic(:)) = gravload(gdof_ic(:)) + load_ic(:)
-
-  ! infinite
-  ! there no contribution from infinite region
 
   gravload(0) = 0.0_CUSTOM_REAL
 
@@ -735,13 +745,13 @@ contains
   subroutine compute_poisson_load3()
 
   use constants, only: IREGION_INNER_CORE,IREGION_CRUST_MANTLE, &
-    NGLLX,NGLLY,NGLLZ,NGLLCUBE
+    NGLLX,NGLLY,NGLLZ,NGLLCUBE,C_LDDRK
 
   use constants_solver, only: NSPEC_INNER_CORE, &
     NSPEC_OUTER_CORE,NSPEC_CRUST_MANTLE,NGLOB_INNER_CORE,NGLOB_OUTER_CORE, &
     NGLOB_CRUST_MANTLE
 
-  use specfem_par, only: deltat,it,DT,t0,scale_t_inv,two_omega_earth
+  use specfem_par, only: deltat,it,DT,t0,istage,USE_LDDRK,scale_t_inv,two_omega_earth
 
   use specfem_par_crustmantle, only: displ_crust_mantle,ibool_crust_mantle
   use specfem_par_outercore, only: displ_outer_core,ibool_outer_core
@@ -754,10 +764,8 @@ contains
     A_array_rotationL3,B_array_rotationL3
 
   implicit none
-  real(kind=CUSTOM_REAL) :: time
+  real(kind=CUSTOM_REAL) :: timeval
   real(kind=CUSTOM_REAL) :: load_ic(nnode_ic1),load_oc(nnode_oc1),load_cm(nnode_cm1)
-
-  gravload1(:) = 0.0_CUSTOM_REAL
 
   ! inner core
   call poisson_load_solid3FAST(IREGION_INNER_CORE,nspec_inner_core, &
@@ -770,18 +778,30 @@ contains
                                displ_crust_mantle,nnode_cm1,inode_elmt_cm1,load_cm)
 
   ! outer core
-  ! time
-  time = real((dble(it-1)*DT-t0)*scale_t_inv,kind=CUSTOM_REAL)
+  ! current simulated time
+  if (USE_LDDRK) then
+    ! LDDRK
+    ! note: the LDDRK scheme updates displacement after the stiffness computations and
+    !       after adding boundary/coupling/source terms.
+    !       thus, at each time loop step it, displ(:) is still at (n) and not (n+1) like for the Newmark scheme
+    !       when entering this routine. we therefore at an additional -DT to have the corresponding timing
+    !       for the source.
+    timeval = real((dble(it-1-1)*DT + dble(C_LDDRK(istage))*DT - t0)*scale_t_inv, kind=CUSTOM_REAL)
+  else
+    timeval = real((dble(it-1)*DT - t0)*scale_t_inv, kind=CUSTOM_REAL)
+  endif
 
   call poisson_load_fluidNEW3FAST(nspec_outer_core,nglob_outer_core, &
-                                  ibool_outer_core,storederiv_oc1,storerhojw_oc1,time,deltat,two_omega_earth, &
+                                  ibool_outer_core,storederiv_oc1,storerhojw_oc1,timeval,deltat,two_omega_earth, &
                                   A_array_rotationL3,B_array_rotationL3,displ_outer_core,nnode_oc1,inode_elmt_oc1, &
                                   load_oc)
 
   ! infinite
-  ! this region has no contrbution
+  ! this region has no contribution
 
   ! assemble across the regions but not MPI
+  gravload1(:) = 0.0_CUSTOM_REAL
+
   ! crust_mantle
   gravload1(gdof_cm1(:)) = gravload1(gdof_cm1(:)) + load_cm(:)
 
@@ -802,13 +822,13 @@ contains
   subroutine compute_backward_poisson_load3()
 
   use constants, only: IREGION_INNER_CORE,IREGION_CRUST_MANTLE, &
-    NGLLX,NGLLY,NGLLZ,NGLLCUBE
+    NGLLX,NGLLY,NGLLZ,NGLLCUBE,C_LDDRK
 
   use constants_solver, only: NSPEC_INNER_CORE, &
     NSPEC_OUTER_CORE,NSPEC_CRUST_MANTLE,NGLOB_INNER_CORE,NGLOB_OUTER_CORE, &
     NGLOB_CRUST_MANTLE
 
-  use specfem_par, only: b_deltat,it,DT,t0,scale_t_inv,two_omega_earth
+  use specfem_par, only: b_deltat,it,DT,t0,istage,USE_LDDRK,scale_t_inv,two_omega_earth
 
   use specfem_par_crustmantle, only: b_displ_crust_mantle,ibool_crust_mantle
   use specfem_par_outercore, only: b_displ_outer_core,ibool_outer_core
@@ -821,11 +841,9 @@ contains
     b_A_array_rotationL3,b_B_array_rotationL3
 
   implicit none
-  real(kind=CUSTOM_REAL) :: time
+  real(kind=CUSTOM_REAL) :: timeval
   ! local loads
   real(kind=CUSTOM_REAL) :: b_load_ic(nnode_ic1),b_load_oc(nnode_oc1),b_load_cm(nnode_cm1)
-
-  b_gravload1(:) = 0.0_CUSTOM_REAL
 
   ! inner core
   call poisson_load_solid3FAST(IREGION_INNER_CORE,nspec_inner_core, &
@@ -838,21 +856,32 @@ contains
                                b_displ_crust_mantle,nnode_cm1,inode_elmt_cm1,b_load_cm)
 
   ! outer core
-  ! time
-  time = real((dble(it-1)*DT-t0)*scale_t_inv,kind=CUSTOM_REAL)
+  ! current simulated time
+  if (USE_LDDRK) then
+    ! LDDRK
+    ! note: the LDDRK scheme updates displacement after the stiffness computations and
+    !       after adding boundary/coupling/source terms.
+    !       thus, at each time loop step it, displ(:) is still at (n) and not (n+1) like for the Newmark scheme
+    !       when entering this routine. we therefore at an additional -DT to have the corresponding timing
+    !       for the source.
+    timeval = real((dble(it-1-1)*DT + dble(C_LDDRK(istage))*DT - t0)*scale_t_inv, kind=CUSTOM_REAL)
+  else
+    timeval = real((dble(it-1)*DT - t0)*scale_t_inv, kind=CUSTOM_REAL)
+  endif
 
   ! WE - unsure on whether to use b_deltat or deltat
   ! Note that two_omega_earth is already reversed
   call poisson_load_fluidNEW3FAST(nspec_outer_core,nglob_outer_core, &
-                                  ibool_outer_core,storederiv_oc1,storerhojw_oc1,time,b_deltat,two_omega_earth, &
+                                  ibool_outer_core,storederiv_oc1,storerhojw_oc1,timeval,b_deltat,two_omega_earth, &
                                   b_A_array_rotationL3, b_B_array_rotationL3,b_displ_outer_core,nnode_oc1,inode_elmt_oc1, &
                                   b_load_oc)
 
   ! infinite
-  ! this region has no contrbution
-
+  ! this region has no contribution
 
   ! assemble across the regions but not MPI
+  b_gravload1(:) = 0.0_CUSTOM_REAL
+
   ! crust_mantle
   b_gravload1(gdof_cm1(:)) = b_gravload1(gdof_cm1(:)) + b_load_cm(:)
 
@@ -897,9 +926,9 @@ contains
   real(kind=CUSTOM_REAL) :: detjac,rho(NGLLCUBE)
 
   real(kind=kdble),parameter :: jalpha=0.0_kdble,jbeta=0.0_kdble,zero=0.0_kdble
+
   real(kind=kdble) :: xigll(NGLLX),wxgll(NGLLX),etagll(NGLLY),wygll(NGLLY), &
                       zetagll(NGLLZ),wzgll(NGLLZ)
-
   real(kind=kdble) :: gll_weights(NGLLCUBE),gll_points(ndim,NGLLCUBE), &
                       dshape_hex8(ndim,ngnod,NGLLCUBE)
 
@@ -929,7 +958,9 @@ contains
                       lagrange_gll,dlagrange_gll)
 
   !TODO: can store deriv, and detjac*gll_weights(i) for speeding up
+
   load(:) = 0.0_CUSTOM_REAL
+
   do i_elmt = 1,nelmt
     ! suppress fictitious elements in central cube
     if (iregion == IREGION_INNER_CORE) then
@@ -1004,9 +1035,9 @@ contains
   real(kind=CUSTOM_REAL) :: detjac,rho(NGLLCUBE_INF)
 
   real(kind=kdble),parameter :: jalpha=0.0_kdble,jbeta=0.0_kdble,zero=0.0_kdble
-  real(kind=kdble) :: xigll(NGLLX_INF),wxgll(NGLLX_INF),etagll(NGLLY_INF),wygll(NGLLY_INF), &
-  zetagll(NGLLZ_INF),wzgll(NGLLZ_INF)
 
+  real(kind=kdble) :: xigll(NGLLX_INF),wxgll(NGLLX_INF),etagll(NGLLY_INF),wygll(NGLLY_INF), &
+                      zetagll(NGLLZ_INF),wzgll(NGLLZ_INF)
   real(kind=kdble) :: gll_weights(NGLLCUBE_INF),gll_points(ndim,NGLLCUBE_INF),lagrange_gll(NGLLCUBE_INF,NGLLCUBE_INF), &
                       dlagrange_gll(ndim,NGLLCUBE_INF,NGLLCUBE_INF),dshape_hex8(ndim,ngnod,NGLLCUBE_INF)
 
@@ -1026,10 +1057,12 @@ contains
   call gll_quadrature(ndim,NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF,gll_points,gll_weights, &
                       lagrange_gll,dlagrange_gll)
 
-  !dnx=NGLLX-1; dny=NGLLY-1; dnz=NGLLZ-1
+  !dnx = NGLLX-1; dny = NGLLY-1; dnz = NGLLZ-1
 
   !TODO: can store deriv, and detjac*gll_weights(i) for speeding up
+
   load(:) = 0.0_CUSTOM_REAL
+
   do i_elmt = 1,nelmt
     ! suppress fictitious elements in central cube
     if (iregion == IREGION_INNER_CORE) then
@@ -1102,6 +1135,7 @@ contains
   real(kind=CUSTOM_REAL),parameter :: zero=0.0_CUSTOM_REAL
 
   load(:) = zero
+
   do i_elmt = 1,nelmt
     ! suppress fictitious elements in central cube
     if (iregion == IREGION_INNER_CORE) then
@@ -1154,14 +1188,17 @@ contains
   integer,parameter :: ngnod = 8
   integer :: i,i_elmt
   integer :: egdof(NGLLCUBE_INF),egdof1(NGLLCUBE_INF)
-  real(kind=CUSTOM_REAL) :: divs,deriv(ndim,NGLLCUBE_INF),edisp(NDIM,NGLLCUBE_INF),eload(NGLLCUBE_INF)
+  real(kind=CUSTOM_REAL) :: divs
+  real(kind=CUSTOM_REAL) :: deriv(NDIM,NGLLCUBE_INF),edisp(NDIM,NGLLCUBE_INF),eload(NGLLCUBE_INF)
+
   real(kind=CUSTOM_REAL),parameter :: zero=0.0_CUSTOM_REAL
 
   load(:) = zero
+
   do i_elmt = 1,nelmt
     ! suppress fictitious elements in central cube
     if (iregion == IREGION_INNER_CORE) then
-      if (idoubling_inner_core(i_elmt) == IFLAG_IN_FICTITIOUS_CUBE)cycle
+      if (idoubling_inner_core(i_elmt) == IFLAG_IN_FICTITIOUS_CUBE) cycle
     endif
 
     egdof1(:) = reshape(ibool(1:NGLLX:2,1:NGLLY:2,1:NGLLZ:2,i_elmt),(/NGLLCUBE_INF/))
@@ -1170,8 +1207,9 @@ contains
 
     eload(:) = zero
     do i = 1,NGLLCUBE_INF
-      deriv = storederiv(:,:,i,i_elmt)
-      divs = dot_product(deriv(1,:),edisp(1,:)) + dot_product(deriv(2,:),edisp(2,:)) + &
+      deriv(:,:) = storederiv(:,:,i,i_elmt)
+      divs = dot_product(deriv(1,:),edisp(1,:)) + &
+             dot_product(deriv(2,:),edisp(2,:)) + &
              dot_product(deriv(3,:),edisp(3,:)) ! rho should be included here
       eload(:) = eload(:) + real(storerhojw(i,i_elmt)*divs*lagrange_gll1(i,:),kind=CUSTOM_REAL)
     enddo
@@ -1203,7 +1241,7 @@ contains
 
   integer,intent(in) :: iregion,nelmt,nnode,nnode1
   integer,intent(in) :: ibool(NGLLX,NGLLY,NGLLZ,nelmt),ibool1(NGLLCUBE_INF,nelmt)
-  real(kind=CUSTOM_REAL),intent(in) ::  storederiv(NDIM,NGLLCUBE_INF,NGLLCUBE_INF,nelmt),storerhojw(NGLLCUBE_INF,nelmt)
+  real(kind=CUSTOM_REAL),intent(in) :: storederiv(NDIM,NGLLCUBE_INF,NGLLCUBE_INF,nelmt),storerhojw(NGLLCUBE_INF,nelmt)
   real(kind=CUSTOM_REAL),intent(in) :: disp(NDIM,nnode)
   real(kind=CUSTOM_REAL),intent(out) :: load(nnode1)
 
@@ -1211,9 +1249,11 @@ contains
   integer :: i,i_elmt
   integer :: egdof(NGLLCUBE_INF),egdof1(NGLLCUBE_INF)
   real(kind=CUSTOM_REAL) :: deriv(ndim,NGLLCUBE_INF),edisp(NDIM,NGLLCUBE_INF),eload(NGLLCUBE_INF)
+
   real(kind=CUSTOM_REAL),parameter :: zero=0.0_CUSTOM_REAL
 
   load(:) = zero
+
   do i_elmt = 1,nelmt
     ! suppress fictitious elements in central cube
     if (iregion == IREGION_INNER_CORE) then
@@ -1241,7 +1281,7 @@ contains
 !===========================================
 !
 
-  subroutine poisson_load_fluid(time,deltat,two_omega_earth,NSPEC,NGLOB, &
+  subroutine poisson_load_fluid(timeval,deltat,two_omega_earth,NSPEC,NGLOB, &
                                 A_array_rotation,B_array_rotation,rhostore,displfluid,load)
 
   use constants, only: NGLLX,NGLLY,NGLLZ
@@ -1267,7 +1307,7 @@ contains
   integer :: NSPEC,NGLOB
 
   ! for the Euler scheme for rotation
-  real(kind=CUSTOM_REAL) :: time,deltat,two_omega_earth
+  real(kind=CUSTOM_REAL) :: timeval,deltat,two_omega_earth
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: A_array_rotation,B_array_rotation,rhostore
 
   ! displacement and acceleration
@@ -1333,8 +1373,8 @@ contains
             ! store the source for the Euler scheme for A_rotation and B_rotation
             two_omega_deltat = deltat * two_omega_earth
 
-            cos_two_omega_t = cos(two_omega_earth*time)
-            sin_two_omega_t = sin(two_omega_earth*time)
+            cos_two_omega_t = cos(two_omega_earth*timeval)
+            sin_two_omega_t = sin(two_omega_earth*timeval)
 
             ! time step deltat of Euler scheme is included in the source
             source_euler_A(i,j,k) = two_omega_deltat                              &
@@ -1399,7 +1439,7 @@ contains
 !===========================================
 !
 
-  subroutine poisson_load_fluid3(time,deltat,two_omega_earth,NSPEC,NGLOB, &
+  subroutine poisson_load_fluid3(timeval,deltat,two_omega_earth,NSPEC,NGLOB, &
                                  A_array_rotation,B_array_rotation,rhostore,displfluid,load)
 
   use constants, only: NGLLX,NGLLY,NGLLZ,NGLLCUBE_INF
@@ -1424,7 +1464,7 @@ contains
 
   integer,intent(in) :: NSPEC,NGLOB
   ! for the Euler scheme for rotation
-  real(kind=CUSTOM_REAL) :: time,deltat,two_omega_earth
+  real(kind=CUSTOM_REAL) :: timeval,deltat,two_omega_earth
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: A_array_rotation,B_array_rotation,rhostore
 
   ! displacement and acceleration
@@ -1490,8 +1530,8 @@ contains
             ! store the source for the Euler scheme for A_rotation and B_rotation
             two_omega_deltat = deltat * two_omega_earth
 
-            cos_two_omega_t = cos(two_omega_earth*time)
-            sin_two_omega_t = sin(two_omega_earth*time)
+            cos_two_omega_t = cos(two_omega_earth*timeval)
+            sin_two_omega_t = sin(two_omega_earth*timeval)
 
             ! time step deltat of Euler scheme is included in the source
             source_euler_A(i,j,k) = two_omega_deltat &
@@ -1557,7 +1597,7 @@ contains
 !
 
   subroutine poisson_load_fluidNEW(nelmt,nnode,ibool,xstore,ystore,zstore, &
-                                   rhostore,time,deltat,two_omega_earth,A_array_rot,B_array_rot,dispf,load)
+                                   rhostore,timeval,deltat,two_omega_earth,A_array_rot,B_array_rot,dispf,load)
 
   use constants, only: NGLLX,NGLLY,NGLLZ,NGLLCUBE
   use constants_solver, only: ROTATION_VAL
@@ -1571,7 +1611,7 @@ contains
   integer,intent(in) :: ibool(NGLLX,NGLLY,NGLLZ,nelmt)
   real(kind=CUSTOM_REAL),intent(in) :: xstore(nnode),ystore(nnode),zstore(nnode), &
                                        rhostore(NGLLX,NGLLY,NGLLZ,nelmt)
-  real(kind=CUSTOM_REAL),intent(in) :: time,deltat,two_omega_earth
+  real(kind=CUSTOM_REAL),intent(in) :: timeval,deltat,two_omega_earth
   real(kind=CUSTOM_REAL),dimension(NGLLCUBE,nelmt),intent(inout) :: A_array_rot,B_array_rot
   real(kind=CUSTOM_REAL),intent(in) :: dispf(1,nnode) !\chi
   real(kind=CUSTOM_REAL),intent(out) :: load(nnode)
@@ -1583,9 +1623,9 @@ contains
   real(kind=CUSTOM_REAL) :: detjac(NGLLCUBE),rho(NGLLCUBE)
 
   real(kind=kdble),parameter :: jalpha=0.0_kdble,jbeta=0.0_kdble,zero=0.0_kdble
+
   real(kind=kdble) :: xigll(NGLLX),wxgll(NGLLX),etagll(NGLLY),wygll(NGLLY), &
                       zetagll(NGLLZ),wzgll(NGLLZ)
-
   real(kind=kdble) :: gll_weights(NGLLCUBE),gll_points(ndim,NGLLCUBE), &
                       dshape_hex8(ndim,ngnod,NGLLCUBE)
 
@@ -1621,10 +1661,12 @@ contains
   call gll_quadrature(ndim,NGLLX,NGLLY,NGLLZ,NGLLCUBE,gll_points,gll_weights, &
                       lagrange_gll,dlagrange_gll)
 
-  !dnx=NGLLX-1; dny=NGLLY-1; dnz=NGLLZ-1
+  !dnx = NGLLX-1; dny = NGLLY-1; dnz = NGLLZ-1
 
   !TODO: can store deriv, and detjac*gll_weights(i) for speeding up
+
   load(:) = zero
+
   do i_elmt = 1,nelmt
     !ignod=reshape(ibool(1:NGLLX:dnx,1:NGLLY:dny,1:NGLLZ:dnz,i_elmt),(/ngnod/)) ! this is wrong
     ! EXODUS order NOT indicial order
@@ -1658,8 +1700,8 @@ contains
         ! store the source for the Euler scheme for A_rotation and B_rotation
         two_omega_deltat = deltat*two_omega_earth
 
-        cos_two_omega_t = cos(two_omega_earth*time)
-        sin_two_omega_t = sin(two_omega_earth*time)
+        cos_two_omega_t = cos(two_omega_earth*timeval)
+        sin_two_omega_t = sin(two_omega_earth*timeval)
 
         ! time step deltat of Euler scheme is included in the source
         source_euler_A(i) = two_omega_deltat*(cos_two_omega_t*gradchi(2,1)+         &
@@ -1707,7 +1749,7 @@ contains
 !
 
   subroutine poisson_load_fluidNEW3(nelmt,nnode,ibool,xstore,ystore,zstore, &
-                                    rhostore,time,deltat,two_omega_earth,A_array_rot,B_array_rot,dispf,nnode1, &
+                                    rhostore,timeval,deltat,two_omega_earth,A_array_rot,B_array_rot,dispf,nnode1, &
                                     ibool1,load)
 
   use constants, only: NGLLX,NGLLY,NGLLZ,NGLLCUBE,NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF
@@ -1722,7 +1764,7 @@ contains
   integer,intent(in) :: ibool(NGLLX,NGLLY,NGLLZ,nelmt),ibool1(NGLLCUBE_INF,nelmt)
   real(kind=CUSTOM_REAL),intent(in) :: xstore(nnode),ystore(nnode),zstore(nnode), &
                                        rhostore(NGLLX,NGLLY,NGLLZ,nelmt)
-  real(kind=CUSTOM_REAL),intent(in) :: time,deltat,two_omega_earth
+  real(kind=CUSTOM_REAL),intent(in) :: timeval,deltat,two_omega_earth
   real(kind=CUSTOM_REAL),dimension(NGLLCUBE_INF,nelmt),intent(inout) :: A_array_rot,B_array_rot
   real(kind=CUSTOM_REAL),intent(in) :: dispf(1,nnode) !\chi
   real(kind=CUSTOM_REAL),intent(out) :: load(nnode1)
@@ -1734,9 +1776,9 @@ contains
   real(kind=CUSTOM_REAL) :: detjac(NGLLCUBE_INF),rho(NGLLCUBE_INF)
 
   real(kind=kdble),parameter :: jalpha=0.0_kdble,jbeta=0.0_kdble,zero=0.0_kdble
+
   real(kind=kdble) :: xigll(NGLLX_INF),wxgll(NGLLX_INF),etagll(NGLLY_INF),wygll(NGLLY_INF), &
                       zetagll(NGLLZ_INF),wzgll(NGLLZ_INF)
-
   real(kind=kdble) :: gll_weights(NGLLCUBE_INF),gll_points(ndim,NGLLCUBE_INF), &
                       lagrange_gll(NGLLCUBE_INF,NGLLCUBE_INF),dlagrange_gll(ndim,NGLLCUBE_INF,NGLLCUBE_INF), &
                       dshape_hex8(ndim,ngnod,NGLLCUBE_INF)
@@ -1759,10 +1801,12 @@ contains
   call gll_quadrature(ndim,NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF,gll_points,gll_weights, &
                       lagrange_gll,dlagrange_gll)
 
-  !dnx=NGLLX-1; dny=NGLLY-1; dnz=NGLLZ-1
+  !dnx = NGLLX-1; dny = NGLLY-1; dnz = NGLLZ-1
 
   !TODO: can store deriv, and detjac*gll_weights(i) for speeding up
+
   load(:) = zero
+
   do i_elmt = 1,nelmt
     !ignod=reshape(ibool(1:NGLLX:dnx,1:NGLLY:dny,1:NGLLZ:dnz,i_elmt),(/ngnod/))
     ! this is wrong
@@ -1798,8 +1842,8 @@ contains
         ! store the source for the Euler scheme for A_rotation and B_rotation
         two_omega_deltat = deltat*two_omega_earth
 
-        cos_two_omega_t = cos(two_omega_earth*time)
-        sin_two_omega_t = sin(two_omega_earth*time)
+        cos_two_omega_t = cos(two_omega_earth*timeval)
+        sin_two_omega_t = sin(two_omega_earth*timeval)
 
         ! time step deltat of Euler scheme is included in the source
         source_euler_A(i) = two_omega_deltat*(cos_two_omega_t*gradchi(2,1)+         &
@@ -1844,7 +1888,7 @@ contains
 !
 
   subroutine poisson_load_fluidNEWFAST(nelmt,nnode,ibool,storederiv,storerhojw, &
-                                       time,deltat,two_omega_earth,A_array_rot,B_array_rot,dispf,load)
+                                       timeval,deltat,two_omega_earth,A_array_rot,B_array_rot,dispf,load)
 
   use constants, only: NDIM,NGLLX,NGLLY,NGLLZ,NGLLCUBE
   use constants_solver, only: ROTATION_VAL
@@ -1857,7 +1901,7 @@ contains
   integer,intent(in) :: nelmt,nnode
   integer,intent(in) :: ibool(NGLLX,NGLLY,NGLLZ,nelmt)
   real(kind=CUSTOM_REAL),intent(in) :: storederiv(NDIM,NGLLCUBE,NGLLCUBE,nelmt),storerhojw(NGLLCUBE,nelmt)
-  real(kind=CUSTOM_REAL),intent(in) :: time,deltat,two_omega_earth
+  real(kind=CUSTOM_REAL),intent(in) :: timeval,deltat,two_omega_earth
   real(kind=CUSTOM_REAL),dimension(NGLLCUBE,nelmt),intent(inout) :: A_array_rot,B_array_rot
   real(kind=CUSTOM_REAL),intent(in) :: dispf(1,nnode) !\chi
   real(kind=CUSTOM_REAL),intent(out) :: load(nnode)
@@ -1880,6 +1924,7 @@ contains
   deriv(:,:,:) = 0.0_CUSTOM_REAL
 
   load(:) = zero
+
   do i_elmt = 1,nelmt
     egdof = reshape(ibool(:,:,:,i_elmt),(/NGLLCUBE/))
     echi(:,1) = dispf(1,egdof)
@@ -1896,8 +1941,8 @@ contains
         ! store the source for the Euler scheme for A_rotation and B_rotation
         two_omega_deltat = deltat*two_omega_earth
 
-        cos_two_omega_t = cos(two_omega_earth*time)
-        sin_two_omega_t = sin(two_omega_earth*time)
+        cos_two_omega_t = cos(two_omega_earth*timeval)
+        sin_two_omega_t = sin(two_omega_earth*timeval)
 
         ! time step deltat of Euler scheme is included in the source
         source_euler_A(i) = two_omega_deltat*(cos_two_omega_t*gradchi(2,1)+         &
@@ -1945,7 +1990,7 @@ contains
 !
 
   subroutine poisson_load_fluidNEW3FAST(nelmt,nnode,ibool,storederiv,storerhojw, &
-                                        time,deltat,two_omega_earth,A_array_rot,B_array_rot,dispf,nnode1,ibool1,load)
+                                        timeval,deltat,two_omega_earth,A_array_rot,B_array_rot,dispf,nnode1,ibool1,load)
 
   use constants, only: NDIM,NGLLX,NGLLY,NGLLZ,NGLLCUBE,NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF
   use constants_solver, only: ROTATION_VAL
@@ -1958,7 +2003,7 @@ contains
   integer,intent(in) :: nelmt,nnode,nnode1
   integer,intent(in) :: ibool(NGLLX,NGLLY,NGLLZ,nelmt),ibool1(NGLLCUBE_INF,nelmt)
   real(kind=CUSTOM_REAL),intent(in) :: storederiv(NDIM,NGLLCUBE_INF,NGLLCUBE_INF,nelmt),storerhojw(NGLLCUBE_INF,nelmt)
-  real(kind=CUSTOM_REAL),intent(in) :: time,deltat,two_omega_earth
+  real(kind=CUSTOM_REAL),intent(in) :: timeval,deltat,two_omega_earth
   real(kind=CUSTOM_REAL),dimension(NGLLCUBE_INF,nelmt),intent(inout) :: A_array_rot,B_array_rot
   real(kind=CUSTOM_REAL),intent(in) :: dispf(1,nnode) !\chi
   real(kind=CUSTOM_REAL),intent(out) :: load(nnode1)
@@ -1979,6 +2024,7 @@ contains
   !                    lagrange_gll,dlagrange_gll)
 
   load(:) = zero
+
   do i_elmt = 1,nelmt
     egdof1 = reshape(ibool(1:NGLLX:2,1:NGLLY:2,1:NGLLZ:2,i_elmt),(/NGLLCUBE_INF/))
     egdof = ibool1(:,i_elmt)
@@ -1996,8 +2042,8 @@ contains
         ! store the source for the Euler scheme for A_rotation and B_rotation
         two_omega_deltat = deltat*two_omega_earth
 
-        cos_two_omega_t = cos(two_omega_earth*time)
-        sin_two_omega_t = sin(two_omega_earth*time)
+        cos_two_omega_t = cos(two_omega_earth*timeval)
+        sin_two_omega_t = sin(two_omega_earth*timeval)
 
         ! time step deltat of Euler scheme is included in the source
         source_euler_A(i) = two_omega_deltat*(cos_two_omega_t*gradchi(2,1)+         &
@@ -2067,9 +2113,9 @@ contains
   real(kind=CUSTOM_REAL) :: detjac,eload(NGLLCUBE),rho(NGLLCUBE)
 
   real(kind=kdble),parameter :: jalpha=0.0_kdble,jbeta=0.0_kdble,zero=0.0_kdble
+
   real(kind=kdble) :: xigll(NGLLX),wxgll(NGLLX),etagll(NGLLY),wygll(NGLLY), &
                       zetagll(NGLLZ),wzgll(NGLLZ)
-
   real(kind=kdble) :: gll_weights(NGLLCUBE),gll_points(ndim,NGLLCUBE),dshape_hex8(ndim,ngnod,NGLLCUBE)
 
   real(kind=CUSTOM_REAL) :: coord(ngnod,ndim),jac(ndim,ndim)
@@ -2095,10 +2141,12 @@ contains
   call gll_quadrature(ndim,NGLLX,NGLLY,NGLLZ,NGLLCUBE,gll_points,gll_weights, &
                       lagrange_gll,dlagrange_gll)
 
-  !dnx=NGLLX-1; dny=NGLLY-1; dnz=NGLLZ-1
+  !dnx = NGLLX-1; dny = NGLLY-1; dnz = NGLLZ-1
 
   !TODO: can store deriv, and detjac*gll_weights(i) for speeding up
+
   load(:) = zero
+
   do i_elmt = 1,nelmt
     ! suppress fictitious elements in central cube
     if (iregion == IREGION_INNER_CORE) then
@@ -2169,9 +2217,9 @@ contains
   real(kind=CUSTOM_REAL) :: detjac,eload(NGLLCUBE_INF),rho(NGLLCUBE_INF)
 
   real(kind=kdble),parameter :: jalpha=0.0_kdble,jbeta=0.0_kdble,zero=0.0_kdble
+
   real(kind=kdble) :: xigll(NGLLX_INF),wxgll(NGLLX_INF),etagll(NGLLY_INF),wygll(NGLLY_INF), &
                       zetagll(NGLLZ_INF),wzgll(NGLLZ_INF)
-
   real(kind=kdble) :: gll_weights(NGLLCUBE_INF),gll_points(ndim,NGLLCUBE_INF),lagrange_gll(NGLLCUBE_INF,NGLLCUBE_INF), &
                       dlagrange_gll(ndim,NGLLCUBE_INF,NGLLCUBE_INF),dshape_hex8(ndim,ngnod,NGLLCUBE_INF)
 
@@ -2189,14 +2237,16 @@ contains
   call gll_quadrature(ndim,NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF,gll_points,gll_weights, &
                       lagrange_gll,dlagrange_gll)
 
-  !dnx=NGLLX-1; dny=NGLLY-1; dnz=NGLLZ-1
+  !dnx = NGLLX-1; dny = NGLLY-1; dnz = NGLLZ-1
 
   !TODO: can store deriv, and detjac*gll_weights(i) for speeding up
+
   load(:) = zero
+
   do i_elmt = 1,nelmt
     ! suppress fictitious elements in central cube
     if (iregion == IREGION_INNER_CORE) then
-      if (idoubling_inner_core(i_elmt) == IFLAG_IN_FICTITIOUS_CUBE)cycle
+      if (idoubling_inner_core(i_elmt) == IFLAG_IN_FICTITIOUS_CUBE) cycle
     endif
 
     !ignod=reshape(ibool(1:NGLLX:dnx,1:NGLLY:dny,1:NGLLZ:dnz,i_elmt),(/ngnod/)) ! this is wrong
@@ -2274,7 +2324,9 @@ contains
                       lagrange_gll,dlagrange_gll)
 
   !TODO: can store deriv, and detjac*gll_weights(i) for speeding up
+
   load(:) = zero
+
   do i_elmt = 1,nelmt
     ! suppress fictitious elements in central cube
     if (iregion == IREGION_INNER_CORE) then
@@ -2337,6 +2389,7 @@ contains
   !TODO: can store deriv, and detjac*gll_weights(i) for speeding up
 
   load(:) = zero
+
   do i_elmt = 1,nelmt
     ! suppress fictitious elements in central cube
     if (iregion == IREGION_INNER_CORE) then
@@ -2360,13 +2413,12 @@ contains
 !===========================================
 !
 
-  subroutine poisson_gravity(iregion,nelmt,nnode,ibool,xstore,ystore,zstore,pgrav, &
-                             gradphi)
+  subroutine poisson_gravity(iregion,nelmt,nnode,ibool,xstore,ystore,zstore, &
+                             pgrav,gradphi)
 
   use constants, only: IFLAG_IN_FICTITIOUS_CUBE,IREGION_INNER_CORE,NGLLX,NGLLY,NGLLZ,NGLLCUBE
 
   use specfem_par_innercore, only: idoubling_inner_core
-  !use specfem_par_crustmantle, only: rmassz_crust_mantle !TODO: remove this
 
   use siem_gll_library
   use siem_math_library, only: determinant,invert
@@ -2374,17 +2426,18 @@ contains
   implicit none
   integer,intent(in) :: iregion,nelmt,nnode
   integer,intent(in) :: ibool(NGLLX,NGLLY,NGLLZ,nelmt)
-  real(kind=CUSTOM_REAL),intent(in) ::  xstore(nnode),ystore(nnode),zstore(nnode)
+  real(kind=CUSTOM_REAL),intent(in) :: xstore(nnode),ystore(nnode),zstore(nnode)
   real(kind=CUSTOM_REAL),intent(in) :: pgrav(nnode)
   real(kind=CUSTOM_REAL),intent(out) :: gradphi(3,NGLLCUBE,nelmt)
 
   integer,parameter :: ndim = 3,ngnod = 8
 
   integer :: i,i_elmt
-  integer :: dnx,dny,dnz,egdof(NGLLCUBE),ignod(ngnod)
+  integer :: egdof(NGLLCUBE),ignod(ngnod) !,dnx,dny,dnz
   real(kind=CUSTOM_REAL) :: detjac
 
   real(kind=kdble),parameter :: jalpha=0.0_kdble,jbeta=0.0_kdble,zero=0.0_kdble
+
   real(kind=kdble) :: xigll(NGLLX),wxgll(NGLLX),etagll(NGLLY),wygll(NGLLY), &
                       zetagll(NGLLZ),wzgll(NGLLZ)
   real(kind=kdble) :: dshape_hex8(ndim,ngnod,NGLLCUBE),gll_weights(NGLLCUBE), &
@@ -2413,8 +2466,10 @@ contains
   call gll_quadrature(ndim,NGLLX,NGLLY,NGLLZ,NGLLCUBE,gll_points,gll_weights, &
                       lagrange_gll,dlagrange_gll)
 
-  dnx = NGLLX-1; dny = NGLLY-1; dnz = NGLLZ-1
-  gradphi = zero
+  !dnx = NGLLX-1; dny = NGLLY-1; dnz = NGLLZ-1
+
+  gradphi(:,:,:) = zero
+
   do i_elmt = 1,nelmt
     ! suppress fictitious elements in central cube
     if (iregion == IREGION_INNER_CORE) then

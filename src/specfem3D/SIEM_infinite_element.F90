@@ -64,26 +64,28 @@ contains
   real(kind=kdble),dimension(ngllz) :: gllpz,gllwz,igllpz,igllwz ! GLL points and weights
   real(kind=kdble),dimension(ndim,ngllx) :: lagrange_x,lagrange_dx
   real(kind=kdble),dimension(ndim,2) :: lagrangeINF_x,lagrangeINF_dx
-  integer :: iINF !,ngllxINF(ndim)
+  integer :: iINF
 
+  iINF = 0
   ddir = one
+
   if (iface == 1) then
-    iINF = 2; ddir=-one
+    iINF = 2; ddir = -one
   else if (iface == 2) then
     iINF = 1; ddir = one
   else if (iface == 3) then
     iINF = 2; ddir = one
   else if (iface == 4) then
-    iINF = 1; ddir=-one
+    iINF = 1; ddir = -one
   else if (iface == 5) then
-    iINF = 3; ddir=-one
+    iINF = 3; ddir = -one
   else if (iface == 6) then
     iINF = 3; ddir = one
   endif
 
-  nipx(1)=ngllx
-  nipx(2)=nglly
-  nipx(3)=ngllz
+  nipx(1) = ngllx
+  nipx(2) = nglly
+  nipx(3) = ngllz
 
   ! compute everything in indexed order
   ! get GLL points
@@ -195,19 +197,20 @@ contains
 !  real(kind=kdble),dimension(nipx) :: igllpz,igllwz ! GLL points and weights
 !  real(kind=kdble),dimension(ndim,ngllx) :: lagrange_x,lagrange_dx
 !  real(kind=kdble),dimension(ndim,2) :: lagrangeINF_x,lagrangeINF_dx
-!  integer :: iINF !,ngllxINF(ndim)
+!  integer :: iINF
 !
+!  iINF = 0
 !  ddir = one
 !  if (iface == 1) then
-!    iINF = 2; ddir=-one
+!    iINF = 2; ddir = -one
 !  else if (iface == 2) then
 !    iINF = 1; ddir = one
 !  else if (iface == 3) then
 !    iINF = 2; ddir = one
 !  else if (iface == 4) then
-!    iINF = 1; ddir=-one
+!    iINF = 1; ddir = -one
 !  else if (iface == 5) then
-!    iINF = 3; ddir=-one
+!    iINF = 3; ddir = -one
 !  else if (iface == 6) then
 !    iINF = 3; ddir = one
 !  endif
@@ -319,16 +322,19 @@ contains
   ngllxINF(2) = nglly
   ngllxINF(3) = ngllz
 
+  iINF = 0
+  ddir = one
+
   if (iface == 1) then
-    iINF = 2; ddir=-one
+    iINF = 2; ddir = -one
   else if (iface == 2) then
     iINF = 1; ddir = one
   else if (iface == 3) then
     iINF = 2; ddir = one
   else if (iface == 4) then
-    iINF = 1; ddir=-one
+    iINF = 1; ddir = -one
   else if (iface == 5) then
-    iINF = 3; ddir=-one
+    iINF = 3; ddir = -one
   else if (iface == 6) then
     iINF = 3; ddir = one
   endif
@@ -346,7 +352,7 @@ contains
     do j = ngllxINF0(2),ngllxINF(2),inc(2)
       do i = ngllxINF0(1),ngllxINF(1),inc(1)
         inum = inum+1
-        gnodinf(inum) = nglly*ngllx*(k-1)+ngllx*(j-1)+i
+        gnodinf(inum) = nglly*ngllx*(k-1) + ngllx*(j-1)+i
       enddo
     enddo
   enddo

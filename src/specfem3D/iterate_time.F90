@@ -46,9 +46,6 @@
   ! energy curve outputs
   if (OUTPUT_ENERGY) call it_open_energy_curve_file()
 
-  ! full gravity
-  if (FULL_GRAVITY) call SIEM_prepare_iterate()
-
 !
 !   s t a r t   t i m e   i t e r a t i o n s
 !
@@ -254,9 +251,14 @@
     call resort_array(Mesh_pointer)
   endif
 
-  ! full gravity: calculate the gravity kernels (convolution) using SIEM
-  if (SIMULATION_TYPE == 3 .and. FULL_GRAVITY) then
-    call SIEM_compute_gravity_kernels()
+  ! full gravity
+  if (FULL_GRAVITY) then
+    ! calculate the gravity kernels (convolution) using SIEM
+    if (SIMULATION_TYPE == 3) then
+      call SIEM_compute_gravity_kernels()
+    endif
+    ! finalize
+    call SIEM_finalize()
   endif
 
   ! close the huge file that contains a dump of all the time steps to disk

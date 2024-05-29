@@ -28,21 +28,59 @@
   subroutine SIEM_prepare_solver()
 
   use specfem_par
+  use specfem_par_full_gravity
 
   implicit none
+
+  ! timing
+  double precision :: tstart,tstart0,tCPU
+  double precision, external :: wtime
 
   ! check if anything to do
   if (.not. FULL_GRAVITY) return
 
   ! user output
   if (myrank == 0) then
+    write(IMAIN,*)
     write(IMAIN,*) "preparing full gravity solver"
+    if (POISSON_SOLVER == ISOLVER_BUILTIN) then
+      write(IMAIN,*) "  Poisson solver: BUILTIN"
+      if (cg_isscale) then
+        write(IMAIN,*) "  using CG w/ scaling"
+      endif
+    else if (POISSON_SOLVER == ISOLVER_PETSC) then
+      write(IMAIN,*) "  Poisson solver: PETSc"
+    else
+      write(IMAIN,*) "  Poisson solver: unknown"
+      call exit_MPI(myrank,'Error Poisson solver invalid, POISSON_SOLVER must be 0 or 1')
+    endif
+    if (USE_POISSON_SOLVER_5GLL) then
+      write(IMAIN,*) "  using Level-1 and Level-2 solver"
+    else
+      write(IMAIN,*) "  using Level-1 solver"
+    endif
+    write(IMAIN,*)
     call flush_IMAIN()
   endif
+
+  ! get MPI starting time
+  tstart = wtime()
+  tstart0 = tstart
 
   ! compute and store integration coefficients
   call SIEM_prepare_solver_preintegrate3()
   call SIEM_prepare_solver_preintegrate()
+
+  ! user output
+  if (myrank == 0) then
+    tCPU = wtime() - tstart
+    write(IMAIN,*) "  Elapsed time for preintegration: ",sngl(tCPU),'(s)'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  ! get MPI starting time
+  tstart = wtime()
 
   ! sets the stiffness matrices for Poisson's solver
   ! calculate dprecon
@@ -50,10 +88,31 @@
   call SIEM_prepare_solver_poisson()
 
   ! create sparse matrix
-  if (POISSON_SOLVER == PETSC) call SIEM_prepare_solver_sparse_petsc()
+  call SIEM_prepare_solver_sparse_petsc()
 
-  ! safety stop
-  stop 'FULL_GRAVITY not fully implemented yet'
+  ! user output
+  if (myrank == 0) then
+    tCPU = wtime() - tstart
+    write(IMAIN,*) "  Elapsed time for solver preparation: ",sngl(tCPU),'(s)'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  ! get MPI starting time
+  tstart = wtime()
+
+  ! full gravity solver setup for time loop iteration
+  call SIEM_prepare_iteration()
+
+  ! user output
+  if (myrank == 0) then
+    tCPU = wtime() - tstart
+    write(IMAIN,*) "  Elapsed time for preparing solver iteration: ",sngl(tCPU),'(s)'
+    tCPU = wtime() - tstart0
+    write(IMAIN,*) "  Total elapsed time for preparing full gravity solver: ",sngl(tCPU),'(s)'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
 
   end subroutine SIEM_prepare_solver
 
@@ -63,26 +122,20 @@
 
   subroutine SIEM_prepare_solver_preintegrate()
 
-  use specfem_par, only: myrank,CUSTOM_REAL,IMAIN,NDIM,NGLLX,NGLLY,NGLLZ,NGLLCUBE
+  use constants, only: myrank,CUSTOM_REAL,IMAIN,NDIM,NGLLX,NGLLY,NGLLZ,NGLLCUBE,IFLAG_IN_FICTITIOUS_CUBE, &
+    USE_POISSON_SOLVER_5GLL
 
   use specfem_par_crustmantle, only: ibool_crust_mantle,NSPEC_CRUST_MANTLE, &
     xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
     rhostore_crust_mantle
 
-  use specfem_par_innercore, only: idoubling_inner_core,IFLAG_IN_FICTITIOUS_CUBE, &
-    ibool_inner_core,NSPEC_INNER_CORE,xstore_inner_core,ystore_inner_core, &
-    zstore_inner_core,rhostore_inner_core
+  use specfem_par_innercore, only: idoubling_inner_core,ibool_inner_core,NSPEC_INNER_CORE, &
+    xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+    rhostore_inner_core
 
   use specfem_par_outercore, only: ibool_outer_core,NSPEC_OUTER_CORE, &
-    xstore_outer_core,ystore_outer_core,zstore_outer_core,rhostore_outer_core
-
-  !use specfem_par_infinite
-  use constants_solver, only: IFLAG_IN_FICTITIOUS_CUBE
-
-  use siem_gll_library, only: kdble,zwgljd,dshape_function_hex8,gll_quadrature
-  use siem_math_library, only: determinant,invert
-
-  use specfem_par_innercore, only: idoubling_inner_core
+    xstore_outer_core,ystore_outer_core,zstore_outer_core, &
+    rhostore_outer_core
 
   use specfem_par_full_gravity, only: lagrange_gll, &
     storederiv_cm,storerhojw_cm, &
@@ -91,6 +144,9 @@
 
   !not used yet...
   !use specfem_par_full_gravity, only: SAVE_JACOBIAN_ENSIGHT,storedetjac_cm
+
+  use siem_gll_library, only: kdble,zwgljd,dshape_function_hex8,gll_quadrature
+  use siem_math_library, only: determinant,invert
 
   implicit none
 
@@ -111,9 +167,12 @@
 
   real(kind=CUSTOM_REAL) :: coord(ngnod,NDIM),jac(NDIM,NDIM)
 
+  ! checks if anything to do
+  if (.not. USE_POISSON_SOLVER_5GLL) return
+
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) "  preintegrating solver arrays"
+    write(IMAIN,*) "  preintegrating Level-2 solver arrays"
     call flush_IMAIN()
   endif
 
@@ -277,21 +336,24 @@
     IFLAG_IN_FICTITIOUS_CUBE
 
   use specfem_par_crustmantle, only: ibool_crust_mantle,NSPEC_CRUST_MANTLE, &
-    xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle,rhostore_crust_mantle
+    xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+    rhostore_crust_mantle
 
   use specfem_par_innercore, only: idoubling_inner_core,ibool_inner_core,NSPEC_INNER_CORE, &
-    xstore_inner_core,ystore_inner_core,zstore_inner_core,rhostore_inner_core
+    xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+    rhostore_inner_core
 
   use specfem_par_outercore, only: ibool_outer_core,NSPEC_OUTER_CORE, &
-    xstore_outer_core,ystore_outer_core,zstore_outer_core,rhostore_outer_core
-
-  use siem_gll_library, only: kdble,zwgljd,dshape_function_hex8,gll_quadrature
-  use siem_math_library, only: determinant,invert
+    xstore_outer_core,ystore_outer_core,zstore_outer_core, &
+    rhostore_outer_core
 
   use specfem_par_full_gravity, only: lagrange_gll1, &
     storederiv_cm1,storerhojw_cm1,storejw_cm1, &
     storederiv_ic1,storerhojw_ic1, &
     storederiv_oc1,storerhojw_oc1
+
+  use siem_gll_library, only: kdble,zwgljd,dshape_function_hex8,gll_quadrature
+  use siem_math_library, only: determinant,invert
 
   implicit none
 
@@ -506,7 +568,7 @@
   inode_map_trinf(:,:) = 0; inode_map_inf(:,:) = 0
 
   ! indexify regions
-  call get_index_region()
+  call SIEM_get_index_region()
 
   ! Level-1 solver-------------------
   allocate(storekmat_crust_mantle1(NGLLCUBE_INF,NGLLCUBE_INF,NSPEC_CRUST_MANTLE), &
@@ -572,13 +634,16 @@
   ! rotation arrays
   allocate(A_array_rotationL(NGLLCUBE,NSPEC_OUTER_CORE_ROTATION), &
            B_array_rotationL(NGLLCUBE,NSPEC_OUTER_CORE_ROTATION))
+  A_array_rotationL(:,:) = 0.0_CUSTOM_REAL; B_array_rotationL(:,:) = 0.0_CUSTOM_REAL
 
   allocate(A_array_rotationL3(NGLLCUBE_INF,NSPEC_OUTER_CORE_ROTATION), &
            B_array_rotationL3(NGLLCUBE_INF,NSPEC_OUTER_CORE_ROTATION))
+  A_array_rotationL3(:,:) = 0.0_CUSTOM_REAL; B_array_rotationL3(:,:) = 0.0_CUSTOM_REAL
 
   if (SIMULATION_TYPE == 3) then
     allocate(b_A_array_rotationL3(NGLLCUBE_INF,NSPEC_OUTER_CORE_ROTATION), &
              b_B_array_rotationL3(NGLLCUBE_INF,NSPEC_OUTER_CORE_ROTATION))
+    b_A_array_rotationL3(:,:) = 0.0_CUSTOM_REAL; b_B_array_rotationL3(:,:) = 0.0_CUSTOM_REAL
   endif
 
   ! kernels
@@ -586,8 +651,6 @@
     ! Full gravity density kernels - must be integrated using SIEM after.
     allocate(rho1siem_kl_crust_mantle(3,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
              rho2siem_kl_crust_mantle(3,3,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT))
-
-    ! initialise
     rho1siem_kl_crust_mantle(:,:,:,:,:)   = 0._CUSTOM_REAL
     rho2siem_kl_crust_mantle(:,:,:,:,:,:) = 0._CUSTOM_REAL
 
@@ -597,10 +660,9 @@
   endif
 
   ! crust mantle
-  call poisson_stiffness3(IREGION_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
-                          NGLOB_CRUST_MANTLE,ibool_crust_mantle,xstore_crust_mantle,ystore_crust_mantle, &
-                          zstore_crust_mantle,nnode_cm1,inode_elmt_cm1,storekmat_crust_mantle1, &
-                          dprecon_crust_mantle1)
+  call poisson_stiffness3(IREGION_CRUST_MANTLE,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
+                          ibool_crust_mantle,xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+                          nnode_cm1,inode_elmt_cm1,storekmat_crust_mantle1,dprecon_crust_mantle1)
 
   ! outer core
   call poisson_stiffness3(IREGION_OUTER_CORE,NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
@@ -620,9 +682,9 @@
   endif
 
   ! infinite layer
-  call poisson_stiffnessINF3(NSPEC_INFINITE,NGLOB_INFINITE,ibool_infinite, &
-                             xstore_infinite,ystore_infinite,zstore_infinite,nnode_inf1,inode_elmt_inf1, &
-                             storekmat_infinite1,dprecon_infinite1)
+  call poisson_stiffnessINF3(NSPEC_INFINITE,NGLOB_INFINITE, &
+                             ibool_infinite,xstore_infinite,ystore_infinite,zstore_infinite, &
+                             nnode_inf1,inode_elmt_inf1,storekmat_infinite1,dprecon_infinite1)
 
   call synchronize_all()
 
@@ -663,23 +725,24 @@
   call synchronize_all()
 
   ! assemble across the different regions in a process
-  dprecon1 = zero
+  dprecon1(:) = zero
+
   ! crust_mantle
-  dprecon1(gdof_cm1) = dprecon1(gdof_cm1)+dprecon_crust_mantle1
+  dprecon1(gdof_cm1(:)) = dprecon1(gdof_cm1(:)) + dprecon_crust_mantle1(:)
 
   ! outer core
-  dprecon1(gdof_oc1) = dprecon1(gdof_oc1)+dprecon_outer_core1
+  dprecon1(gdof_oc1(:)) = dprecon1(gdof_oc1(:)) + dprecon_outer_core1(:)
 
   ! inner core
-  dprecon1(gdof_ic1) = dprecon1(gdof_ic1)+dprecon_inner_core1
+  dprecon1(gdof_ic1(:)) = dprecon1(gdof_ic1(:)) + dprecon_inner_core1(:)
 
   ! transition infinite
   if (ADD_TRINF) then
-    dprecon1(gdof_trinf1) = dprecon1(gdof_trinf1)+dprecon_trinfinite1
+    dprecon1(gdof_trinf1(:)) = dprecon1(gdof_trinf1(:)) + dprecon_trinfinite1(:)
   endif
 
   ! infinite
-  dprecon1(gdof_inf1) = dprecon1(gdof_inf1)+dprecon_infinite1
+  dprecon1(gdof_inf1(:)) = dprecon1(gdof_inf1(:)) + dprecon_infinite1(:)
 
   dprecon1(0) = 0.0_CUSTOM_REAL
 
@@ -691,7 +754,7 @@
   !-----------------Level-1 solver
 
   ! Level-2 solver------------------
-  if (POISSON_SOLVER_5GLL) then
+  if (USE_POISSON_SOLVER_5GLL) then
     ! user output
     if (myrank == 0) then
       write(IMAIN,*) "  allocating Poisson Level-2 solver arrays"
@@ -725,9 +788,9 @@
     ! better to make dprecon_* local rather than global
 
     ! crust mantle
-    call poisson_stiffness(IREGION_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
-                           NGLOB_CRUST_MANTLE,ibool_crust_mantle,xstore_crust_mantle,ystore_crust_mantle, &
-                           zstore_crust_mantle,storekmat_crust_mantle,dprecon_crust_mantle)
+    call poisson_stiffness(IREGION_CRUST_MANTLE,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
+                           ibool_crust_mantle,xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+                           storekmat_crust_mantle,dprecon_crust_mantle)
     ! outer core
     call poisson_stiffness(IREGION_OUTER_CORE,NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
                            ibool_outer_core,xstore_outer_core,ystore_outer_core,zstore_outer_core, &
@@ -772,7 +835,6 @@
                              my_neighbors_inner_core)
 
     ! transition infinite
-
     if (ADD_TRINF) then
       call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_TRINFINITE,dprecon_trinfinite, &
                                num_interfaces_trinfinite,max_nibool_interfaces_trinfinite, &
@@ -790,6 +852,7 @@
 
     ! assemble across the different regions in a process
     dprecon(:) = zero
+
     ! crust_mantle
     dprecon(gdof_cm(:)) = dprecon(gdof_cm(:)) + dprecon_crust_mantle(:)
 
@@ -800,7 +863,6 @@
     dprecon(gdof_ic(:)) = dprecon(gdof_ic(:)) + dprecon_inner_core(:)
 
     ! transition infinite
-
     if (ADD_TRINF) then
       dprecon(gdof_trinf(:)) = dprecon(gdof_trinf(:)) + dprecon_trinfinite(:)
     endif
@@ -854,7 +916,7 @@
   integer :: gdof_elmt1(NEDOF1),ggdof_elmt1(NEDOF1)
   integer,allocatable :: imap_ic(:),imap_oc(:),imap_cm(:),imap_trinf(:),imap_inf(:)
   integer,allocatable :: ind0(:),iorder(:),row0(:),col0(:),grow0(:),gcol0(:)
-  real(kind=CUSTOM_REAL),allocatable :: kmat0(:)
+  !real(kind=CUSTOM_REAL),allocatable :: kmat0(:)
 
   integer :: nglob_ic,nglob_oc,nglob_cm,nglob_trinf,nglob_inf
   integer :: nglob_ic1,nglob_oc1,nglob_cm1,nglob_trinf1,nglob_inf1
@@ -864,15 +926,34 @@
 
   integer :: gmin,gmax
 
+  ! checks if anything to do
+  if (POISSON_SOLVER /= ISOLVER_PETSC) return
+
   ! user output
   if (myrank == 0) then
     write(IMAIN,*) "  preparing PETSc sparse matrix solver"
     call flush_IMAIN()
   endif
 
+  ! check PETSc compilation support
+#ifdef USE_PETSC
+  ! has compilation support
+  continue
+#else
+  ! compilation without PETSc support
+  if (myrank == 0) then
+    print *, "Error: PETSc solver enabled without PETSc Support."
+    print *, "       To enable PETSc support, reconfigure with --with-petsc flag."
+    print *
+  endif
+  call synchronize_all()
+  ! safety stop
+  call exit_MPI(myrank,"Error PETSc solver: PETSc solver setup called without compilation support")
+#endif
+
   !debug
   if (myrank == 0) print *
-  if (myrank == 0) print *,'PETSc sparse matrix solver: --------------------------------------------------'
+  if (myrank == 0) print *,'PETSc solver: --------------------------------------------------'
 
   !===============================================================================
   ! Level-1 solver
@@ -885,66 +966,102 @@
   nedof_inf1 = NEDOFPHI1
 
   ! Maximum DOF in array - number of elements * Element_dof^2
-  nmax1 = NSPEC_INNER_CORE*(nedof_ic1*nedof_ic1)+                                &
-          NSPEC_OUTER_CORE*(nedof_oc1*nedof_oc1)+                                 &
-          NSPEC_CRUST_MANTLE*(nedof_cm1*nedof_cm1)+                               &
-          NSPEC_TRINFINITE*(nedof_trinf1*nedof_trinf1)+                           &
+  nmax1 = NSPEC_INNER_CORE*(nedof_ic1*nedof_ic1) + &
+          NSPEC_OUTER_CORE*(nedof_oc1*nedof_oc1) + &
+          NSPEC_CRUST_MANTLE*(nedof_cm1*nedof_cm1) + &
+          NSPEC_TRINFINITE*(nedof_trinf1*nedof_trinf1) + &
           NSPEC_INFINITE*(nedof_inf1*nedof_inf1)
 
-  allocate(col0(nmax1),row0(nmax1),gcol0(nmax1),grow0(nmax1),kmat0(nmax1))
+  allocate(col0(nmax1),row0(nmax1),gcol0(nmax1),grow0(nmax1))
+  col0(:) = 0; row0(:) = 0; gcol0(:) = 0; grow0(:) = 0
+
+  !allocate(kmat0(nmax1))
+  !kmat0(:) = 0.0_CUSTOM_REAL
 
   !debug
   if (myrank == 0) then
-    print *,'PETSc sparse matrix solver: -- Elemental DOFs for IC : ', nedof_ic1
-    print *,'PETSc sparse matrix solver: -- Maximum DOFs (nmax1)  : ', nmax1
+    print *,'PETSc solver: -- Elemental DOFs for IC : ', nedof_ic1
+    print *,'PETSc solver: -- Maximum DOFs (nmax1)  : ', nmax1
   endif
 
   ! Allocate map for each region
   allocate(imap_ic(nedof_ic1),imap_oc(nedof_oc1),imap_cm(nedof_cm1), &
            imap_trinf(nedof_trinf1),imap_inf(nedof_inf1))
 
-  ! I THINK THIS SYNTAX MEANS CREATE A RANGE?
+  ! initializes arrays with (1,2,3,..,27)
   imap_ic = (/ (i,i = 1,NGLLCUBE_INF) /) !(/ imapu1, imapphi1 /)
   imap_oc = (/ (i,i = 1,NGLLCUBE_INF) /) !(/ imapchi1, imapp1, imapphi1 /)
   imap_cm = (/ (i,i = 1,NGLLCUBE_INF) /) !(/ imapu1, imapphi1 /)
   imap_trinf = (/ (i,i = 1,NGLLCUBE_INF) /) !(/ imapphi1 /)
   imap_inf = (/ (i,i = 1,NGLLCUBE_INF) /) !(/ imapphi1 /)
 
+  !TODO: check if these imap_* arrays are still valid if multiple degree of freedom are chosen
+  !      current setting in constants.h:
+  !        NNDOFU   = 0 ! displacement components
+  !        NNDOFCHI = 0 ! displacement potential
+  !        NNDOFP   = 0 ! pressure
+  !        NNDOFPHI = 1 ! gravitational potential
+  !      and with
+  !        NEDOF1    = NGLLCUBE_INF * NNDOF
+  !      it follows that currently NEDOF1 == NGLLCUBE_INF == nedof_ic1 == nedof_oc1 == .. etc.
+  !
+  !      for multiple degrees of freedom, NEDOF1 could be different to nedof_ic1 etc.
+  !      and these imap_* arrays might not work anymore.
+  !
+  !      they might need to wrap-around NGLLCUBE_INF, for example: 1,2,..,27,1,2,..,27,1,2,..,27
+  !      this could be done by:
+  !        imap_ic = (/ (mod(i-1,NGLLCUBE_INF)+1, i = 1,nedof_ic1) /)
+  !      however, this depends on how the gdof_ic1(:),.. arrays are ordered by the SIEM_get_index_region() routine.
+  !
+  !      for now, this might work only with gravitational potential as only degree of freedom.
+
+  ! safety check
+  if (nedof_ic1 /= NGLLCUBE_INF .or. nedof_oc1 /= NGLLCUBE_INF .or. nedof_cm1 /= NGLLCUBE_INF .or. &
+      nedof_trinf1 /= NGLLCUBE_INF .or. nedof_inf1 /= NGLLCUBE_INF) then
+    print *,'Error: invalid degrees of freedom for Level-1 solver setup!'
+    print *,'       nedof_ic1, nedof_oc1, nedof_cm1, nedof_trinf1, nedof_inf1 = ', &
+                    nedof_ic1, nedof_oc1, nedof_cm1, nedof_trinf1, nedof_inf1
+    print *,'       for now, all should be equal to NGLLCUBE_INF = ',NGLLCUBE_INF
+    call exit_MPI(myrank,'Error invalid degrees of freedom for Level-1 solver setup')
+  endif
+
   ! read global degrees of freedoms from DATABASE files
-  write(spm,*)myrank
+  write(spm,*) myrank
   fname='DATABASES_MPI/gdof1_proc'//trim(adjustl(spm))
   open(10,file=fname,action='read',status='old')
   ! inner core
-  read(10,*)nglob_ic1                   ! Global DOF in inner core
+  read(10,*) nglob_ic1                   ! Global DOF in inner core
   allocate(ggdof_ic1(NNDOF,nglob_ic1))
-  read(10,*)ggdof_ic1
+  read(10,*) ggdof_ic1
   ! outer core
-  read(10,*)nglob_oc1                   ! Global DOF in outer core
+  read(10,*) nglob_oc1                   ! Global DOF in outer core
   allocate(ggdof_oc1(NNDOF,nglob_oc1))
-  read(10,*)ggdof_oc1
+  read(10,*) ggdof_oc1
   ! crust mantle
-  read(10,*)nglob_cm1                   ! Global DOF in crust mantle
+  read(10,*) nglob_cm1                   ! Global DOF in crust mantle
   allocate(ggdof_cm1(NNDOF,nglob_cm1))
-  read(10,*)ggdof_cm1
+  read(10,*) ggdof_cm1
   ! transition
-  read(10,*)nglob_trinf1                ! Global DOF in transition
+  read(10,*) nglob_trinf1                ! Global DOF in transition
   allocate(ggdof_trinf1(NNDOF,nglob_trinf1))
-  read(10,*)ggdof_trinf1
+  read(10,*) ggdof_trinf1
   ! infinite elements
-  read(10,*)nglob_inf1                  ! Global DOF in infinite
+  read(10,*) nglob_inf1                  ! Global DOF in infinite
   allocate(ggdof_inf1(NNDOF,nglob_inf1))
-  read(10,*)ggdof_inf1
+  read(10,*) ggdof_inf1
   close(10)
 
   ! Find maximum ID (dof value) for any of the regions
   ngdof1 = maxscal(maxval( (/ maxval(ggdof_ic1),maxval(ggdof_oc1), &
-           maxval(ggdof_cm1),maxval(ggdof_trinf1),maxval(ggdof_inf1) /) ))
+                              maxval(ggdof_cm1),maxval(ggdof_trinf1), &
+                              maxval(ggdof_inf1) /) ))
 
   !debug
-  if (myrank == 0) print *,'PETSc sparse matrix solver: -- Total global degrees of freedom1: ',ngdof1
+  if (myrank == 0) print *,'PETSc solver: -- Total global degrees of freedom1: ',ngdof1
 
   ! stage 0: store all elements
   ncount = 0
+
   ! inner core
   do i_elmt = 1,NSPEC_INNER_CORE
     ! suppress fictitious elements in central cube
@@ -952,8 +1069,8 @@
 
     ! Note: gdof_ic1 defined in specfem_par_innercore
     ! Fetch gdof for IC element only on NGLLCUBE_INF points
-    gdof_elmt1 = reshape(gdof_ic1(inode_elmt_ic1(:,i_elmt)),(/NEDOF1/))
-    ggdof_elmt1 = reshape(ggdof_ic1(:,inode_elmt_ic1(:,i_elmt)),(/NEDOF1/))
+    gdof_elmt1(:) = reshape(gdof_ic1(inode_elmt_ic1(:,i_elmt)),(/NEDOF1/))
+    ggdof_elmt1(:) = reshape(ggdof_ic1(:,inode_elmt_ic1(:,i_elmt)),(/NEDOF1/))
     do i = 1,nedof_ic1
       do j = 1,nedof_ic1
         igdof = gdof_elmt1(imap_ic(i))
@@ -975,8 +1092,8 @@
 
   ! outer core
   do i_elmt = 1,NSPEC_OUTER_CORE
-    gdof_elmt1 = reshape(gdof_oc1(inode_elmt_oc1(:,i_elmt)),(/NEDOF1/))
-    ggdof_elmt1 = reshape(ggdof_oc1(:,inode_elmt_oc1(:,i_elmt)),(/NEDOF1/))
+    gdof_elmt1(:) = reshape(gdof_oc1(inode_elmt_oc1(:,i_elmt)),(/NEDOF1/))
+    ggdof_elmt1(:) = reshape(ggdof_oc1(:,inode_elmt_oc1(:,i_elmt)),(/NEDOF1/))
     do i = 1,nedof_oc1
       do j = 1,nedof_oc1
         igdof = gdof_elmt1(imap_oc(i))
@@ -994,8 +1111,8 @@
 
   ! crust mantle
   do i_elmt = 1,NSPEC_CRUST_MANTLE
-    gdof_elmt1 = reshape(gdof_cm1(inode_elmt_cm1(:,i_elmt)),(/NEDOF1/))
-    ggdof_elmt1 = reshape(ggdof_cm1(:,inode_elmt_cm1(:,i_elmt)),(/NEDOF1/))
+    gdof_elmt1(:) = reshape(gdof_cm1(inode_elmt_cm1(:,i_elmt)),(/NEDOF1/))
+    ggdof_elmt1(:) = reshape(ggdof_cm1(:,inode_elmt_cm1(:,i_elmt)),(/NEDOF1/))
     do i = 1,nedof_cm1
       do j = 1,nedof_cm1
         igdof = gdof_elmt1(imap_cm(i))
@@ -1013,8 +1130,8 @@
 
   ! transition infinite
   do i_elmt = 1,NSPEC_TRINFINITE
-    gdof_elmt1 = reshape(gdof_trinf1(inode_elmt_trinf1(:,i_elmt)),(/NEDOF1/))
-    ggdof_elmt1 = reshape(ggdof_trinf1(:,inode_elmt_trinf1(:,i_elmt)),(/NEDOF1/))
+    gdof_elmt1(:) = reshape(gdof_trinf1(inode_elmt_trinf1(:,i_elmt)),(/NEDOF1/))
+    ggdof_elmt1(:) = reshape(ggdof_trinf1(:,inode_elmt_trinf1(:,i_elmt)),(/NEDOF1/))
     do i = 1,nedof_trinf1
       do j = 1,nedof_trinf1
         igdof = gdof_elmt1(imap_trinf(i))
@@ -1032,8 +1149,8 @@
 
   ! infinite
   do i_elmt = 1,NSPEC_INFINITE
-    gdof_elmt1 = reshape(gdof_inf1(inode_elmt_inf1(:,i_elmt)),(/NEDOF1/))
-    ggdof_elmt1 = reshape(ggdof_inf1(:,inode_elmt_inf1(:,i_elmt)),(/NEDOF1/))
+    gdof_elmt1(:) = reshape(gdof_inf1(inode_elmt_inf1(:,i_elmt)),(/NEDOF1/))
+    ggdof_elmt1(:) = reshape(ggdof_inf1(:,inode_elmt_inf1(:,i_elmt)),(/NEDOF1/))
     do i = 1,nedof_inf1
       do j = 1,nedof_inf1
         igdof = gdof_elmt1(imap_inf(i))
@@ -1052,22 +1169,22 @@
   ! stage 1: assemble duplicates
   ! sort global indices
   allocate(ind0(ncount),iorder(ncount))
-  ind0 = neq1*(row0(1:ncount)-1)+col0(1:ncount)
+  ind0(:) = neq1*(row0(1:ncount)-1) + col0(1:ncount)
   call i_uniinv(ind0,iorder)
   nsparse1 = maxval(iorder)
 
   !debug
-  if (myrank == 0) print *,'PETSc sparse matrix solver: -- neq1:',neq1,' Nsparse1:',nsparse1
+  if (myrank == 0) print *,'PETSc solver: -- neq1:',neq1,' Nsparse1:',nsparse1
   call synchronize_all()
 
   allocate(krow_sparse1(nsparse1),kcol_sparse1(nsparse1))
   allocate(kgrow_sparse1(nsparse1),kgcol_sparse1(nsparse1))
 
   !kmat_sparse1=0.0_CUSTOM_REAL
-  krow_sparse1 = -1
-  kcol_sparse1 = -1
-  kgrow_sparse1 = -1
-  kgcol_sparse1 = -1
+  krow_sparse1(:) = -1
+  kcol_sparse1(:) = -1
+  kgrow_sparse1(:) = -1
+  kgcol_sparse1(:) = -1
   do i_count = 1,ncount!nmax
     krow_sparse1(iorder(i_count)) = row0(i_count)
     kcol_sparse1(iorder(i_count)) = col0(i_count)
@@ -1082,19 +1199,21 @@
     stop 'Error local and global indices are less than 1'
   endif
 
-  deallocate(row0,col0,grow0,gcol0,kmat0,ind0,iorder)
+  deallocate(row0,col0,grow0,gcol0)
+  !deallocate(kmat0)
+  deallocate(ind0,iorder)
   deallocate(imap_ic,imap_oc,imap_cm,imap_trinf,imap_inf)
 
   ! stage 2: assemble across processors
 
   ! local DOF to global DOF mapping
   allocate(l2gdof1(0:neq1))
-  l2gdof1 = -1
-  l2gdof1(gdof_ic1) = ggdof_ic1(1,:)
-  l2gdof1(gdof_oc1) = ggdof_oc1(1,:)
-  l2gdof1(gdof_cm1) = ggdof_cm1(1,:)
-  l2gdof1(gdof_trinf1) = ggdof_trinf1(1,:)
-  l2gdof1(gdof_inf1) = ggdof_inf1(1,:)
+  l2gdof1(:) = -1
+  l2gdof1(gdof_ic1(:)) = ggdof_ic1(1,:)
+  l2gdof1(gdof_oc1(:)) = ggdof_oc1(1,:)
+  l2gdof1(gdof_cm1(:)) = ggdof_cm1(1,:)
+  l2gdof1(gdof_trinf1(:)) = ggdof_trinf1(1,:)
+  l2gdof1(gdof_inf1(:)) = ggdof_inf1(1,:)
 
   do i = 1,nsparse1
     if (kgrow_sparse1(i) /= l2gdof1(krow_sparse1(i)) .or. kgcol_sparse1(i) /= l2gdof1(kcol_sparse1(i))) then
@@ -1103,12 +1222,13 @@
     endif
   enddo
 
-  l2gdof1 = l2gdof1-1 ! PETSC uses 0 indexing
+  l2gdof1(:) = l2gdof1(:) - 1 ! PETSC uses 0 indexing
+
   gmin = minvec(l2gdof1(1:))
   gmax = maxvec(l2gdof1(1:))
 
   !debug
-  if (myrank == 0) print *,'PETSc sparse matrix solver: -- l2gdof1 range:',gmin,gmax
+  if (myrank == 0) print *,'PETSc solver: -- l2gdof1 range:',gmin,gmax
   call synchronize_all()
 
   if (minval(l2gdof1(1:)) < 0) then
@@ -1119,7 +1239,7 @@
   !===============================================================================
   ! Level-2 solver
   !===============================================================================
-  if (POISSON_SOLVER_5GLL) then
+  if (USE_POISSON_SOLVER_5GLL) then
     nedof_ic = NEDOFU+NEDOFPHI
     nedof_oc = NEDOFCHI+NEDOFP+NEDOFPHI
     nedof_cm = NEDOFU+NEDOFPHI
@@ -1131,10 +1251,15 @@
            NSPEC_CRUST_MANTLE*(nedof_cm*nedof_cm)+                          &
            NSPEC_TRINFINITE*(nedof_trinf*nedof_trinf)+                      &
            NSPEC_INFINITE*(nedof_inf*nedof_inf)
-    allocate(col0(nmax),row0(nmax),gcol0(nmax),grow0(nmax),kmat0(nmax))
+
+    allocate(col0(nmax),row0(nmax),gcol0(nmax),grow0(nmax))
+    col0(:) = 0; row0(:) = 0; gcol0(:) = 0; grow0(:) = 0
+
+    !allocate(kmat0(nmax))
+    !kmat0(:) = 0.0_CUSTOM_REAL
 
     !debug
-    if (myrank == 0) print *,'PETSc sparse matrix solver: -- nedof_ic = ',nedof_ic,nmax
+    if (myrank == 0) print *,'PETSc solver: -- nedof_ic = ',nedof_ic,nmax
 
     allocate(imap_ic(nedof_ic),imap_oc(nedof_oc),imap_cm(nedof_cm), &
              imap_trinf(nedof_trinf),imap_inf(nedof_inf))
@@ -1171,17 +1296,18 @@
                                maxval(ggdof_trinf),maxval(ggdof_inf) /) ))
 
     !debug
-    if (myrank == 0) print *,'PETSc sparse matrix solver: -- Total global degrees of freedom:',ngdof
+    if (myrank == 0) print *,'PETSc solver: -- Total global degrees of freedom:',ngdof
 
     ! stage 0: store all elements
     ncount = 0
+
     ! inner core
     do i_elmt = 1,NSPEC_INNER_CORE
       ! suppress fictitious elements in central cube
       if (idoubling_inner_core(i_elmt) == IFLAG_IN_FICTITIOUS_CUBE) cycle
 
-      gdof_elmt = reshape(gdof_ic(inode_elmt_ic(:,i_elmt)),(/NEDOF/))
-      ggdof_elmt = reshape(ggdof_ic(:,inode_elmt_ic(:,i_elmt)),(/NEDOF/))
+      gdof_elmt(:) = reshape(gdof_ic(inode_elmt_ic(:,i_elmt)),(/NEDOF/))
+      ggdof_elmt(:) = reshape(ggdof_ic(:,inode_elmt_ic(:,i_elmt)),(/NEDOF/))
       do i = 1,nedof_ic
         do j = 1,nedof_ic
           igdof = gdof_elmt(imap_ic(i))
@@ -1196,12 +1322,11 @@
         enddo
       enddo
     enddo
-    call synchronize_all()
 
     ! outer core
     do i_elmt = 1,NSPEC_OUTER_CORE
-      gdof_elmt = reshape(gdof_oc(inode_elmt_oc(:,i_elmt)),(/NEDOF/))
-      ggdof_elmt = reshape(ggdof_oc(:,inode_elmt_oc(:,i_elmt)),(/NEDOF/))
+      gdof_elmt(:) = reshape(gdof_oc(inode_elmt_oc(:,i_elmt)),(/NEDOF/))
+      ggdof_elmt(:) = reshape(ggdof_oc(:,inode_elmt_oc(:,i_elmt)),(/NEDOF/))
       do i = 1,nedof_oc
         do j = 1,nedof_oc
           igdof = gdof_elmt(imap_oc(i))
@@ -1219,8 +1344,8 @@
 
     ! crust mantle
     do i_elmt = 1,NSPEC_CRUST_MANTLE
-      gdof_elmt = reshape(gdof_cm(inode_elmt_cm(:,i_elmt)),(/NEDOF/))
-      ggdof_elmt = reshape(ggdof_cm(:,inode_elmt_cm(:,i_elmt)),(/NEDOF/))
+      gdof_elmt(:) = reshape(gdof_cm(inode_elmt_cm(:,i_elmt)),(/NEDOF/))
+      ggdof_elmt(:) = reshape(ggdof_cm(:,inode_elmt_cm(:,i_elmt)),(/NEDOF/))
       do i = 1,nedof_cm
         do j = 1,nedof_cm
           igdof = gdof_elmt(imap_cm(i))
@@ -1238,8 +1363,8 @@
 
     ! transition infinite
     do i_elmt = 1,NSPEC_TRINFINITE
-      gdof_elmt = reshape(gdof_trinf(inode_elmt_trinf(:,i_elmt)),(/NEDOF/))
-      ggdof_elmt = reshape(ggdof_trinf(:,inode_elmt_trinf(:,i_elmt)),(/NEDOF/))
+      gdof_elmt(:) = reshape(gdof_trinf(inode_elmt_trinf(:,i_elmt)),(/NEDOF/))
+      ggdof_elmt(:) = reshape(ggdof_trinf(:,inode_elmt_trinf(:,i_elmt)),(/NEDOF/))
       do i = 1,nedof_trinf
         do j = 1,nedof_trinf
           igdof = gdof_elmt(imap_trinf(i))
@@ -1257,8 +1382,8 @@
 
     ! infinite
     do i_elmt = 1,NSPEC_INFINITE
-      gdof_elmt = reshape(gdof_inf(inode_elmt_inf(:,i_elmt)),(/NEDOF/))
-      ggdof_elmt = reshape(ggdof_inf(:,inode_elmt_inf(:,i_elmt)),(/NEDOF/))
+      gdof_elmt(:) = reshape(gdof_inf(inode_elmt_inf(:,i_elmt)),(/NEDOF/))
+      ggdof_elmt(:) = reshape(ggdof_inf(:,inode_elmt_inf(:,i_elmt)),(/NEDOF/))
       do i = 1,nedof_inf
         do j = 1,nedof_inf
           igdof = gdof_elmt(imap_inf(i))
@@ -1277,20 +1402,20 @@
     ! stage 1: assemble duplicates
     ! sort global indices
     allocate(ind0(ncount),iorder(ncount))
-    ind0 = neq*(row0(1:ncount)-1)+col0(1:ncount)
+    ind0(:) = neq*(row0(1:ncount)-1) + col0(1:ncount)
     call i_uniinv(ind0,iorder)
     nsparse = maxval(iorder)
 
     !debug
-    if (myrank == 0) print *,'PETSc sparse matrix solver: -- neq:',neq,' Nsparse:',nsparse
+    if (myrank == 0) print *,'PETSc solver: -- neq:',neq,' Nsparse:',nsparse
 
     allocate(krow_sparse(nsparse),kcol_sparse(nsparse))
     allocate(kgrow_sparse(nsparse),kgcol_sparse(nsparse))
 
-    krow_sparse = -1
-    kcol_sparse = -1
-    kgrow_sparse = -1
-    kgcol_sparse = -1
+    krow_sparse(:) = -1
+    kcol_sparse(:) = -1
+    kgrow_sparse(:) = -1
+    kgcol_sparse(:) = -1
     do i_count = 1,ncount
       krow_sparse(iorder(i_count)) = row0(i_count)
       kcol_sparse(iorder(i_count)) = col0(i_count)
@@ -1305,24 +1430,26 @@
       stop 'Error local and global indices are less than 1'
     endif
 
-    deallocate(row0,col0,grow0,gcol0,kmat0,ind0,iorder)
+    deallocate(row0,col0,grow0,gcol0)
+    !deallocate(kmat0)
+    deallocate(ind0,iorder)
     deallocate(imap_ic,imap_oc,imap_cm,imap_trinf,imap_inf)
 
     ! stage 2: assemble across processors
 
     ! local DOF to global DOF mapping
     allocate(l2gdof(0:neq))
-    l2gdof = -1
-    l2gdof(gdof_ic) = ggdof_ic(1,:)
-    l2gdof(gdof_oc) = ggdof_oc(1,:)
-    l2gdof(gdof_cm) = ggdof_cm(1,:)
-    l2gdof(gdof_trinf) = ggdof_trinf(1,:)
-    l2gdof(gdof_inf) = ggdof_inf(1,:)
+    l2gdof(:) = -1
+    l2gdof(gdof_ic(:)) = ggdof_ic(1,:)
+    l2gdof(gdof_oc(:)) = ggdof_oc(1,:)
+    l2gdof(gdof_cm(:)) = ggdof_cm(1,:)
+    l2gdof(gdof_trinf(:)) = ggdof_trinf(1,:)
+    l2gdof(gdof_inf(:)) = ggdof_inf(1,:)
 
-    l2gdof = l2gdof-1 ! PETSC uses 0 indexing
+    l2gdof(:) = l2gdof(:) - 1 ! PETSC uses 0 indexing
 
     !debug
-    if (myrank == 0) print *,'PETSc sparse matrix solver: -- l2gdof range:',minval(l2gdof(1:)),maxval(l2gdof(1:))
+    if (myrank == 0) print *,'PETSc solver: -- l2gdof range:',minval(l2gdof(1:)),maxval(l2gdof(1:))
     call synchronize_all()
 
     if (minval(l2gdof(1:)) < 1) then
@@ -1332,7 +1459,7 @@
   endif
 
   !debug
-  if (myrank == 0) print *,'PETSc sparse matrix solver: --------------------------------------------------'
+  if (myrank == 0) print *,'PETSc solver: --------------------------------------------------'
   if (myrank == 0) print *
 
   end subroutine SIEM_prepare_solver_sparse_petsc

@@ -68,7 +68,7 @@ contains
 !
 !  ! local parameters
 !  integer :: iter
-!  real(kind=CUSTOM_REAL) :: alpha,beta,rz,maxp,maxu
+!  real(kind=CUSTOM_REAL) :: alpha,beta,pkp,rz,maxp,maxu,tol
 !  real(kind=CUSTOM_REAL),dimension(0:neq) :: kp,p,p_g,r,r0,z,z_g!,r_g
 !
 !  real(kind=CUSTOM_REAL),parameter :: zero=0.0_CUSTOM_REAL,zerotol=1.0e-12_CUSTOM_REAL
@@ -82,9 +82,11 @@ contains
 !
 !  ! check if RHS is 0
 !  if (maxvec(abs(f)) <= zerotol) then
-!    u_g = zero
+!    u_g(:) = zero
+!    ! all done
 !    return
 !  endif
+!
 !  kp = zero
 !  if (maxval(abs(u_g)) > zero) then
 !    call product_stiffness_vector(neq,u_g,kp)
@@ -104,29 +106,46 @@ contains
 !    call product_stiffness_vector(neq,p_g,kp)
 !
 !    rz = dot_product_all_proc(r,z_g)
-!    alpha = rz/dot_product_all_proc(p_g,kp)
-!    u_g = u_g+alpha*p_g
+!    pkp = dot_product_all_proc(p_g,kp)
+!
+!    ! avoids division by zero
+!    if (pkp /= zero) then
+!      alpha = rz / pkp
+!    else
+!      alpha = zero
+!    endif
+!    u_g = u_g + alpha * p_g
 !
 !    maxp = maxvec(abs(p_g)); maxu = maxvec(abs(u_g))
-!    !if (abs(alpha)*maxvec(abs(p_g))/maxvec(abs(u_g)) <= CG_TOL) then
-!    if (abs(alpha)*maxp/maxu <= CG_TOL) then
+!
+!    ! avoids division by zero
+!    if (maxu /= zero) then
+!      tol = abs(alpha) * maxp / maxu
+!    else
+!      tol = abs(alpha) * maxp
+!    endif
+!
+!    if (tol <= CG_TOL) then
+!      ! all done
 !      return
 !    endif
+!
 !    r0 = r
-!    r = r-alpha*kp
+!    r = r - alpha * kp
 !
 !    ! solve using single precision petsc solver
-!    z = dprecon_g*r
+!    z = dprecon_g * r
 !
 !    call scatter_and_assemble(neq,z,z_g)
 !
 !    !beta = dot_product_all_proc(r,z_g)/rz ! Fletcher–Reeves
 !    beta = dot_product_all_proc(r-r0,z_g)/rz !  Polak–Ribière
 !
-!    p = z + beta*p
+!    p = z + beta * p
 !  enddo pcg
 !
-!  if (myid == 0) write(*,'(a)')'ERROR: PCG solver doesn''t converge!'
+!  if (myid == 0) print *,'ERROR: PCG solver doesn''t converge! Tolerance:',tol, &
+!                         'alpha/maxp/maxu',alpha,maxp,maxu
 !  call synchronize_all()
 !
 !  ! abort
@@ -140,20 +159,19 @@ contains
 
 ! conjugate-gradient solver
 
-  subroutine cg_solver(myid,neq,u_g,f)
+  subroutine cg_solver(myid,neq,u_g,f,niter)
 
   implicit none
   integer,intent(in) :: myid,neq
   real(kind=CUSTOM_REAL),dimension(0:neq),intent(inout) :: u_g
   real(kind=CUSTOM_REAL),dimension(0:neq),intent(in) :: f
+  integer, optional :: niter
 
   ! local parameters
   integer :: iter
-  real(kind=CUSTOM_REAL) :: alpha,beta,pkp,rz,maxp,maxu
+  real(kind=CUSTOM_REAL) :: alpha,beta,pkp,rz,maxp,maxu,tol
   real(kind=CUSTOM_REAL),dimension(0:neq) :: kp,p,p_g
-
-! TODO: r0 not necessary
-  real(kind=CUSTOM_REAL),dimension(0:neq) :: r,r0,r_g
+  real(kind=CUSTOM_REAL),dimension(0:neq) :: r,r_g !,r0
 
   real(kind=CUSTOM_REAL),parameter :: zero=0.0_CUSTOM_REAL,zerotol=1.0e-30_CUSTOM_REAL
 
@@ -166,9 +184,13 @@ contains
 
   ! check if RHS is 0
   if (maxvec(abs(f)) <= zerotol) then
-    u_g = zero
+    u_g(:) = zero
+    ! returns number of iterations
+    if (present(niter)) niter = 0
+    ! all done
     return
   endif
+
   kp = zero
   if (maxval(abs(u_g)) > zero) then
     call product_stiffness_vector(neq,u_g,kp)
@@ -188,26 +210,44 @@ contains
 
     rz = dot_product_all_proc(r,r_g)
     pkp = dot_product_all_proc(p_g,kp)
-    alpha = rz/pkp !rz/dot_product_all_proc(p_g,kp)
-    u_g = u_g+alpha*p_g
+
+    ! avoids division by zero
+    if (pkp /= zero) then
+      alpha = rz / pkp
+    else
+      alpha = zero
+    endif
+    u_g = u_g + alpha*p_g
 
     maxp = maxvec(abs(p_g)); maxu = maxvec(abs(u_g))
-    !if (abs(alpha)*maxvec(abs(p_g))/maxvec(abs(u_g)) <= CG_TOL) then
+
+    ! avoids division by zero
+    if (maxu /= zero) then
+      tol = abs(alpha) * maxp / maxu
+    else
+      tol = abs(alpha) * maxp
+    endif
+
     if (abs(alpha)*maxp/maxu <= CG_TOL) then
+      ! returns number of iterations
+      if (present(niter)) niter = iter
+      ! all done
       return
     endif
-    r0 = r
-    r = r-alpha*kp
+
+    !r0 = r
+    r = r - alpha * kp
 
     call scatter_and_assemble(neq,r,r_g)
 
     beta = dot_product_all_proc(r,r_g)/rz ! Fletcher–Reeves
     !beta = dot_product_all_proc(r-r0,r_g)/rz !  Polak–Ribière
 
-    p = r + beta*p
+    p = r + beta * p
   enddo pcg
 
-  if (myid == 0) write(*,'(a,e14.6)')'ERROR: CG solver doesn''t converge! Tolerance:',abs(alpha)*maxp/maxu
+  if (myid == 0) print *,'ERROR: CG solver doesn''t converge! Tolerance:',tol, &
+                         'alpha/maxp/maxu',alpha,maxp,maxu
   call synchronize_all()
 
   ! abort
@@ -221,17 +261,19 @@ contains
 
 ! conjugate-gradient solver
 
-  subroutine cg_solver3(myid,neq,u_g,f)
+  subroutine cg_solver3(myid,neq,u_g,f,niter)
 
   implicit none
   integer,intent(in) :: myid,neq
   real(kind=CUSTOM_REAL),dimension(0:neq),intent(inout) :: u_g
   real(kind=CUSTOM_REAL),dimension(0:neq),intent(in) :: f
+  integer, optional :: niter
 
   ! local parameters
   integer :: iter
-  real(kind=CUSTOM_REAL) :: alpha,beta,pkp,rz,maxf,maxp,maxu
-  real(kind=CUSTOM_REAL),dimension(0:neq) :: kp,p,p_g,r0,r,r_g
+  real(kind=CUSTOM_REAL) :: alpha,beta,pkp,rz,maxf,maxp,maxu,tol
+  real(kind=CUSTOM_REAL),dimension(0:neq) :: kp,p,p_g
+  real(kind=CUSTOM_REAL),dimension(0:neq) :: r,r_g  !,r0
 
   real(kind=CUSTOM_REAL),parameter :: zero=0.0_CUSTOM_REAL,zerotol=1.0e-30_CUSTOM_REAL
 
@@ -240,14 +282,21 @@ contains
   ! for MPI assembly of such array, we have to scatter again to region with
   ! regionally assembled values.
 
-  ! PCG solver
+  ! CG solver
   maxf = maxvec(abs(f))
-  if (myid == 0) print *,'load:',maxf !maxvec(abs(f))
+
+  !debug
+  !if (myid == 0) print *,'CG solver: load: ',maxf
+
   ! check if RHS is 0
   if (maxf <= zerotol) then
-    u_g = zero
+    u_g(:) = zero
+    ! returns number of iterations
+    if (present(niter)) niter = 0
+    ! all done
     return
   endif
+
   kp = zero
   if (maxval(abs(u_g)) > zero) then
     call product_stiffness_vector3(neq,u_g,kp)
@@ -267,28 +316,56 @@ contains
 
     rz = dot_product_all_proc(r,r_g)
     pkp = dot_product_all_proc(p_g,kp)
-    !if (abs(pkp)==zero)return
-    alpha = rz/pkp
-    u_g = u_g+alpha*p_g
+
+    !if (abs(pkp) == zero) then
+    !  !debug
+    !!  if (myid == 0) print *,'CG solver: pkp : ',pkp,' iter: ',iter
+    !  ! returns number of iterations
+    !  if (present(niter)) niter = iter
+    !  ! all done
+    !  return
+    !endif
+
+    ! avoids division by zero
+    if (pkp /= zero) then
+      alpha = rz / pkp
+    else
+      alpha = zero
+    endif
+    u_g = u_g + alpha * p_g
 
     maxp = maxvec(abs(p_g)); maxu = maxvec(abs(u_g))
-    !if (abs(alpha)*maxvec(abs(p_g))/maxvec(abs(u_g)) <= CG_TOL) then
-    if (abs(alpha)*maxp/maxu <= CG_TOL1) then
-      if (myid == 0) print *,'tol:',abs(alpha)*maxp/maxu
+
+    ! avoids division by zero
+    if (maxu /= zero) then
+      tol = abs(alpha) * maxp / maxu
+    else
+      tol = abs(alpha) * maxp
+    endif
+
+    ! checks convergence
+    if (tol <= CG_TOL1) then
+      !debug
+      !if (myid == 0) print *,'CG solver: tol : ',tol,' iter: ',iter
+      ! returns number of iterations
+      if (present(niter)) niter = iter
+      ! all done
       return
     endif
-    r0 = r !PR: Polak–Ribière
-    r = r-alpha*kp
+
+    !r0 = r !PR: Polak–Ribière
+    r = r - alpha * kp
 
     call scatter_and_assemble3(neq,r,r_g)
 
     beta = dot_product_all_proc(r,r_g)/rz ! Fletcher–Reeves
     !beta = dot_product_all_proc(r-r0,r_g)/rz !PR: Polak–Ribière
 
-    p = r + beta*p
+    p = r + beta * p
   enddo pcg
 
-  if (myid == 0) write(*,'(a,e14.6)')'ERROR: CG solver doesn''t converge! Tolerance:',abs(alpha)*maxp/maxu
+  if (myid == 0) print *,'ERROR: CG solver doesn''t converge! Tolerance:',tol, &
+                         'alpha/maxp/maxu',alpha,maxp,maxu
   call synchronize_all()
 
   ! abort
@@ -302,16 +379,17 @@ contains
 
 ! diagonally preconditioned conjugate-gradient solver
 
-  subroutine diagpcg_solver(myid,neq,u_g,f,dprecon_g)
+  subroutine diagpcg_solver(myid,neq,u_g,f,dprecon_g,niter)
 
   implicit none
   integer,intent(in) :: myid,neq
   real(kind=CUSTOM_REAL),dimension(0:neq),intent(inout) :: u_g
   real(kind=CUSTOM_REAL),dimension(0:neq),intent(in) :: f,dprecon_g
+  integer, optional :: niter
 
   ! local parameters
   integer :: iter
-  real(kind=CUSTOM_REAL) :: alpha,beta,rz,maxp,maxu
+  real(kind=CUSTOM_REAL) :: alpha,beta,pkp,rz,maxp,maxu,tol
   real(kind=CUSTOM_REAL),dimension(0:neq) :: kp,p,p_g,r,r0,z,z_g!,r_g
 
   real(kind=CUSTOM_REAL),parameter :: zero=0.0_CUSTOM_REAL,zerotol=1.0e-12_CUSTOM_REAL
@@ -325,9 +403,13 @@ contains
 
   ! check if RHS is 0
   if (maxvec(abs(f)) <= zerotol) then
-    u_g = zero
+    u_g(:) = zero
+    ! returns number of iterations
+    if (present(niter)) niter = 0
+    ! all done
     return
   endif
+
   kp = zero
   if (maxval(abs(u_g)) > zero) then
     call product_stiffness_vector(neq,u_g,kp)
@@ -347,27 +429,47 @@ contains
     call product_stiffness_vector(neq,p_g,kp)
 
     rz = dot_product_all_proc(r,z_g)
-    alpha = rz/dot_product_all_proc(p_g,kp)
-    u_g = u_g+alpha*p_g
+    pkp = dot_product_all_proc(p_g,kp)
+
+    ! avoids division by zero
+    if (pkp /= zero) then
+      alpha = rz / pkp
+    else
+      alpha = zero
+    endif
+    u_g = u_g + alpha * p_g
 
     maxp = maxvec(abs(p_g)); maxu = maxvec(abs(u_g))
+
+    ! avoids division by zero
+    if (maxu /= zero) then
+      tol = abs(alpha) * maxp / maxu
+    else
+      tol = abs(alpha) * maxp
+    endif
+
     !if (abs(alpha)*maxvec(abs(p_g))/maxvec(abs(u_g)) <= CG_TOL) then
-    if (abs(alpha)*maxp/maxu <= CG_TOL) then
+    if (tol <= CG_TOL) then
+      ! returns number of iterations
+      if (present(niter)) niter = iter
+      ! all done
       return
     endif
+
     r0 = r
-    r = r-alpha*kp
-    z = dprecon_g*r
+    r = r - alpha * kp
+    z = dprecon_g * r
 
     call scatter_and_assemble(neq,z,z_g)
 
     !beta = dot_product_all_proc(r,z_g)/rz ! Fletcher–Reeves
     beta = dot_product_all_proc(r-r0,z_g)/rz !  Polak–Ribière
 
-    p = z + beta*p
+    p = z + beta * p
   enddo pcg
 
-  if (myid == 0) write(*,'(a)')'ERROR: PCG solver doesn''t converge!'
+  if (myid == 0) print *,'ERROR: PCG solver doesn''t converge! Tolerance:',tol, &
+                         'alpha/maxp/maxu',alpha,maxp,maxu
   call synchronize_all()
 
   ! abort
@@ -381,16 +483,17 @@ contains
 
 ! diagonally preconditioned conjugate-gradient solver
 
-  subroutine diagpcg_solver3(myid,neq,u_g,f,dprecon_g)
+  subroutine diagpcg_solver3(myid,neq,u_g,f,dprecon_g,niter)
 
   implicit none
   integer,intent(in) :: myid,neq
   real(kind=CUSTOM_REAL),dimension(0:neq),intent(inout) :: u_g
   real(kind=CUSTOM_REAL),dimension(0:neq),intent(in) :: f,dprecon_g
+  integer, optional :: niter
 
   ! local parameters
   integer :: iter
-  real(kind=CUSTOM_REAL) :: alpha,beta,rz,maxp,maxu
+  real(kind=CUSTOM_REAL) :: alpha,beta,pkp,rz,maxf,maxp,maxu,tol
   real(kind=CUSTOM_REAL),dimension(0:neq) :: kp,p,p_g,r0,r,z,z_g!,r_g
 
   real(kind=CUSTOM_REAL),parameter :: zero=0.0_CUSTOM_REAL,zerotol=1.0e-12_CUSTOM_REAL
@@ -401,13 +504,20 @@ contains
   ! regionally assembled values.
 
   ! PCG solver
+  maxf = maxvec(abs(f))
+
+  !debug
+  !if (myid == 0) print *,'PCG solver: max load: ',maxf
 
   ! check if RHS is 0
-  if (maxvec(abs(f)) <= zerotol) then
-    u_g = zero
-    print *,'max load:',maxval(abs(f))
+  if (maxf <= zerotol) then
+    u_g(:) = zero
+    ! returns number of iterations
+    if (present(niter)) niter = 0
+    ! all done
     return
   endif
+
   kp = zero
   if (maxval(abs(u_g)) > zero) then
     call product_stiffness_vector3(neq,u_g,kp)
@@ -428,24 +538,44 @@ contains
     call product_stiffness_vector3(neq,p_g,kp)
 
     rz = dot_product_all_proc(r,z_g)
-    alpha = rz/dot_product_all_proc(p_g,kp)
-    u_g = u_g+alpha*p_g
+    pkp = dot_product_all_proc(p_g,kp)
+
+    ! avoids division by zero
+    if (pkp /= zero) then
+      alpha = rz / pkp
+    else
+      alpha = zero
+    endif
+    u_g = u_g + alpha * p_g
 
     maxp = maxvec(abs(p_g)); maxu = maxvec(abs(u_g))
-    !if (abs(alpha)*maxvec(abs(p_g))/maxvec(abs(u_g)) <= CG_TOL) then
-    if (abs(alpha)*maxp/maxu <= CG_TOL) then
+
+    ! avoids division by zero
+    if (maxu /= zero) then
+      tol = abs(alpha) * maxp / maxu
+    else
+      tol = abs(alpha) * maxp
+    endif
+
+    if (tol <= CG_TOL) then
+      ! returns number of iterations
+      if (present(niter)) niter = iter
+      ! all done
       return
     endif
+
     r0 = r !PR: Polak–Ribière
-    r = r-alpha*kp
-    z = dprecon_g*r
+    r = r - alpha * kp
+    z = dprecon_g * r
+
     !print *,'pcg_bp8'
     call scatter_and_assemble3(neq,z,z_g)
     beta = dot_product_all_proc(r-r0,z_g)/rz !PR: Polak–Ribière
-    p = z+beta*p
+    p = z + beta * p
   enddo pcg
 
-  if (myid == 0) write(*,'(a)')'ERROR: PCG solver doesn''t converge!'
+  if (myid == 0) print *,'ERROR: PCG solver doesn''t converge! Tolerance:',tol, &
+                         'alpha/maxp/maxu',alpha,maxp,maxu
   call synchronize_all()
 
   ! abort

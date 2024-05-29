@@ -1274,7 +1274,7 @@ module specfem_par_full_gravity
 
   ! CG solver scaling
   logical, parameter :: cg_isscale = .true.
-  ! Inbuilt solver nondim scaling
+  ! CG solver non-dim scaling
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: ndscale1, ndscale
 
   ! full gravity arrays

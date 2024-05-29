@@ -26,7 +26,7 @@
 !=====================================================================
 
 
-  subroutine get_index_region()
+  subroutine SIEM_get_index_region()
 
   use constants, only: myrank,NGLLX,NGLLY,NGLLZ,NGLLCUBE,IFLAG_IN_FICTITIOUS_CUBE, &
     NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF,ADD_TRINF
@@ -1093,5 +1093,5 @@
   deallocate(inode_ic,inode_oc,inode_cm,inode_trinf,inode_inf)
   deallocate(inode_ic1,inode_oc1,inode_cm1,inode_trinf1,inode_inf1)
 
-  end subroutine get_index_region
+  end subroutine SIEM_get_index_region
 

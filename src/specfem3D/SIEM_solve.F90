@@ -81,10 +81,9 @@
   use siem_math_library_mpi, only: maxvec
 
   use siem_solver_petsc, only: petsc_set_vector1,petsc_solve1, &
-    petsc_set_vector,petsc_solve
+                               petsc_set_vector,petsc_solve
 
-  use siem_poisson, only: compute_poisson_load,compute_poisson_rhoload, &
-                          compute_poisson_load3,compute_poisson_rhoload3,poisson_gravity
+  use siem_poisson, only: compute_poisson_load,compute_poisson_load3 !,poisson_gravity
 
   use siem_solver_mpi, only: cg_solver,cg_solver3,diagpcg_solver,diagpcg_solver3, interpolate3to5
 
@@ -95,17 +94,19 @@
   real(kind=CUSTOM_REAL),parameter :: rone = 1.0_CUSTOM_REAL
 
   ! load for Level-1 solver
-  gravload1(:) = 0.0_CUSTOM_REAL
-
+  ! Compute the RHS (gravload1)
   call compute_poisson_load3()
 
-  if (POISSON_SOLVER == BUILTIN) then
-    ! Level-1 solver
-    call synchronize_all()
-    !if (myrank==0) print *,'L1 load: ',minval(gravload1),maxval(gravload1)
-    upscale = rone
+  !debug
+  !maxf = maxvec(abs(gravload1))
+  !print *,'debug solve: L1: rank',myrank,' load:',minval(gravload1),maxval(gravload1),' max:',maxf
+
+  ! Level-1 solver
+  if (POISSON_SOLVER == ISOLVER_BUILTIN) then
+    ! builtin solver
     maxf = maxvec(abs(gravload1))
-    if (maxf > zero) upscale = rone/maxf
+    upscale = rone
+    if (maxf > zero) upscale = rone / maxf
 
     if (cg_isscale) then
       gravload1(:) = gravload1(:) * ndscale1(:) * upscale
@@ -114,14 +115,14 @@
 
     call cg_solver3(myrank,neq1,pgrav1,gravload1)
 
-    if (cg_isscale) pgrav1(:) = ndscale1(:) * pgrav1(:) / upscale
+    if (cg_isscale) then
+      pgrav1(:) = ndscale1(:) * pgrav1(:) / upscale
+    endif
   else
     ! PETSc solver
     call petsc_set_vector1(gravload1)
     call petsc_solve1(pgrav1(1:))
   endif
-
-  call synchronize_all()
 
   ! interpolate GLL3 results to GLL5
   pgrav_ic1(:) = pgrav1(gdof_ic1(:))
@@ -157,14 +158,13 @@
   if (ADD_TRINF) pgrav(gdof_trinf(:)) = pgrav_trinf(:)
   pgrav(gdof_inf(:)) = pgrav_inf(:)
 
-  call synchronize_all()
-
   ! Level-2 solver
-  if (POISSON_SOLVER_5GLL) then
-    gravload(:) = ZERO
+  if (USE_POISSON_SOLVER_5GLL) then
+    ! Compute the RHS (gravload)
     call compute_poisson_load()
 
-    if (POISSON_SOLVER == BUILTIN) then
+    if (POISSON_SOLVER == ISOLVER_BUILTIN) then
+      ! builtin solver
       if (cg_isscale) then
         gravload(:) = ndscale(:) * gravload(:)
         pgrav(1:) = pgrav(1:) / ndscale(1:)
@@ -172,34 +172,37 @@
 
       call cg_solver(myrank,neq,pgrav,gravload)
 
-      if (cg_isscale) pgrav(:) = ndscale(:) * pgrav(:)
+      if (cg_isscale) then
+        pgrav(:) = ndscale(:) * pgrav(:)
+      endif
     else
-      ! SOLVER == PETSc
+      ! PETSc solver
       call petsc_set_vector()
       call petsc_solve(pgrav(1:))
     endif
-  endif
 
-  ! set to regional array
-  pgrav_ic(:) = pgrav(gdof_ic(:))
-  pgrav_oc(:) = pgrav(gdof_oc(:))
-  pgrav_cm(:) = pgrav(gdof_cm(:))
-  pgrav_inf(:) = pgrav(gdof_inf(:))
+    ! set to regional array
+    pgrav_ic(:) = pgrav(gdof_ic(:))
+    pgrav_oc(:) = pgrav(gdof_oc(:))
+    pgrav_cm(:) = pgrav(gdof_cm(:))
+    if (ADD_TRINF) pgrav_trinf(:) = pgrav(gdof_trinf(:))
+    pgrav_inf(:) = pgrav(gdof_inf(:))
+  endif
 
   ! TODO: \grad\phi computed here
   !
   ! compute gradphi only for solid regions
   ! call poisson_gravity(IREGION_CRUST_MANTLE,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
-  !                      ibool_crust_mantle,xstore_crust_mantle,ystore_crust_mantle, &
-  !                       zstore_crust_mantle,pgrav_cm,gradphi_cm)
+  !                      ibool_crust_mantle,xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+  !                      pgrav_cm,gradphi_cm)
   !
   ! call poisson_gravity(IREGION_OUTER_CORE,NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
-  !                      ibool_outer_core,xstore_outer_core,ystore_outer_core, &
-  !                      zstore_outer_core,pgrav_oc,gradphi_oc)
+  !                      ibool_outer_core,xstore_outer_core,ystore_outer_core,zstore_outer_core, &
+  !                      pgrav_oc,gradphi_oc)
   !
   ! call poisson_gravity(IREGION_INNER_CORE,NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-  !                      ibool_inner_core,xstore_inner_core,ystore_inner_core, &
-  !                      zstore_inner_core,pgrav_ic,gradphi_ic)
+  !                      ibool_inner_core,xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+  !                      pgrav_ic,gradphi_ic)
 
   end subroutine solve_poisson_equation
 
@@ -226,30 +229,27 @@
     b_pgrav,b_pgrav_ic,b_pgrav_oc,b_pgrav_cm,b_pgrav_trinf,b_pgrav_inf
 
   use siem_solver_petsc, only: petsc_set_vector1,petsc_solve1
-  use siem_poisson, only: compute_poisson_load,compute_poisson_load3, &
-                          poisson_gravity,compute_backward_poisson_load3
+  use siem_poisson, only: compute_backward_poisson_load3 !,poisson_gravity
   use siem_solver_mpi, only: cg_solver,cg_solver3,diagpcg_solver,diagpcg_solver3, interpolate3to5
 
   implicit none
 
   ! safety check
-  if (POISSON_SOLVER == BUILTIN) then
+  if (POISSON_SOLVER == ISOLVER_BUILTIN) then
     print *,'Error. Adjoint FG only implemented for petsc solver'
     stop 'FULL_GRAVITY adjoint FG not fully implemented yet of builtin solver'
   endif
 
   ! load for Level-1 solver
-  b_gravload1(:) = 0.0_CUSTOM_REAL
 
+  ! Compute the RHS (b_gravload1)
   call compute_backward_poisson_load3()
 
-  if (POISSON_SOLVER == PETSC) then
+  if (POISSON_SOLVER == ISOLVER_PETSC) then
     ! PETSc solver
     call petsc_set_vector1(b_gravload1)
     call petsc_solve1(b_pgrav1(1:))
   endif
-
-  call synchronize_all()
 
   ! interpolate GLL3 results to GLL5
   b_pgrav_ic1(:) = b_pgrav1(gdof_ic1(:))
@@ -284,8 +284,6 @@
   b_pgrav(gdof_cm(:)) = b_pgrav_cm(:)
   if (ADD_TRINF) b_pgrav(gdof_trinf(:)) = b_pgrav_trinf(:)
   b_pgrav(gdof_inf(:)) = b_pgrav_inf(:)
-
-  call synchronize_all()
 
   ! TODO: \grad\phi computed here
   !

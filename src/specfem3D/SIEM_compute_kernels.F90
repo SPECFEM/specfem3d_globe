@@ -74,7 +74,7 @@
     is_active_gll,igll_active_on
 
   use siem_math_library_mpi, only: maxvec
-  use siem_poisson, only: compute_grav_kl1_load, compute_poisson_load3
+  use siem_poisson, only: compute_grav_kl1_load
   use siem_solver_petsc, only: petsc_set_vector1, petsc_zero_initialguess1, petsc_solve1
   use siem_solver_mpi, only: interpolate3to5
 
@@ -88,7 +88,7 @@
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: gknl1_cm ! (3,NGLOB_CRUST_MANTLE)
 
   ! safety check
-  if (POISSON_SOLVER == BUILTIN) then
+  if (POISSON_SOLVER == ISOLVER_BUILTIN) then
     !TODO: full gravity builtin solver for kernels
     print *,'ERROR: builtin solver not setup for gravity kernels'
     call exit_MPI(myrank,'Error builtin solver not setup for gravity kernels')
@@ -111,18 +111,15 @@
     if (myrank == 0) print *,'icomponent: ', icomponent
 
     ! Calculate the RHS (gravload1)
-    gravload1(:) = 0.0_CUSTOM_REAL
-
     call compute_grav_kl1_load(icomponent)
 
     !debug
     maxload = maxvec(abs(gravload1))
     if (myrank == 0) print *,'  -- Max load: ', maxload
 
-    if (POISSON_SOLVER == PETSC) then
+    if (POISSON_SOLVER == ISOLVER_PETSC) then
       ! Petsc solver
       call petsc_set_vector1(gravload1)
-      call synchronize_all()
 
       ! Need to zero guess since was previously for poisson eqn
       ! Do we need this - is zero guess set to PETSC_TRUE?
@@ -229,7 +226,7 @@
   real(kind=CUSTOM_REAL),dimension(:,:,:,:,:), allocatable :: div_gknl2_cm
 
   ! safety check
-  if (POISSON_SOLVER == BUILTIN) then
+  if (POISSON_SOLVER == ISOLVER_BUILTIN) then
     !TODO: full gravity builtin solver for kernels
     print *,'ERROR: builtin solver not setup for gravity kernels'
     call exit_MPI(myrank,'Error builtin solver not setup for gravity kernels')
@@ -250,22 +247,19 @@
   ! Solve the equation 9 times!
   do icomponent = 1,3
     do jcomponent = 1,3
-
-      gravload1(:) = 0.0_CUSTOM_REAL
-
       !debug
       if (myrank == 0) print *,'component ', icomponent, jcomponent
 
+      ! Calculate the RHS (gravload1)
       call compute_grav_kl2_load(icomponent, jcomponent)
 
-      if (POISSON_SOLVER == PETSC) then
+      !debug
+      maxload = maxvec(abs(gravload1))
+      if (myrank == 0) print *,'  -- Max load: ', maxload
+
+      if (POISSON_SOLVER == ISOLVER_PETSC) then
         ! PETSc solver
         call petsc_set_vector1(gravload1)
-        call synchronize_all()
-
-        !debug
-        maxload = maxvec(abs(gravload1))
-        if (myrank == 0) print *,'  -- Max load: ', maxload
 
         call petsc_zero_initialguess1()
 
