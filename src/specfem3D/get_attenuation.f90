@@ -80,6 +80,7 @@
   f_c_source = 0.d0
 
   ! gets nspec for this region
+  nspec_region = 0
   select case(iregion_code)
   case (IREGION_CRUST_MANTLE)
     nspec_region = NSPEC_CRUST_MANTLE

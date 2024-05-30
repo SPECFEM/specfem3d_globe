@@ -42,7 +42,7 @@
 
   ! checks if anything to do
   ! undoing attenuation doesn't support the following checkpointing
-  if (UNDO_ATTENUATION ) return
+  if (UNDO_ATTENUATION) return
 
   ! read files back from local disk or MT tape system if restart file
   if (NUMBER_OF_THIS_RUN > 1) then
@@ -103,6 +103,15 @@
       read(IIN) R_xy_inner_core
       read(IIN) R_xz_inner_core
       read(IIN) R_yz_inner_core
+
+      ! full gravity
+      if (FULL_GRAVITY_VAL) then
+        !TODO: implement full gravity adios read forward
+        stop 'FULL_GRAVITY read_forward_arrays_startrun() not fully implemented yet'
+        !read(55) neq1
+        !allocate(pgrav1_oldrun(0:neq1))
+        !read(55) pgrav1_oldrun
+      endif
 
       close(IIN)
     endif
@@ -189,8 +198,24 @@
        read(IIN) b_R_xz_inner_core
        read(IIN) b_R_yz_inner_core
     endif
+
+    if (FULL_GRAVITY_VAL) then
+      ! Read in the gravity
+      !TODO: implement full gravity adios read forward
+      stop 'FULL_GRAVITY read_forward_arrays() not fully implemented yet'
+      !read(55) b_neq
+      !read(55) b_neq1
+      !read(55) b_pgrav1
+    endif
+
     close(IIN)
   endif ! ADIOS_FOR_FORWARD_ARRAYS
+
+  ! full gravity
+  if (FULL_GRAVITY) then
+    ! need to interpolate the gravity values
+    call SIEM_interpolate_gravity()
+  endif
 
   ! transfers fields onto GPU
   if (GPU_MODE) then

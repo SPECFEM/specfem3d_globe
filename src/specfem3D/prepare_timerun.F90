@@ -97,6 +97,9 @@
   ! optimizes array memory layout for better performance
   call prepare_optimized_arrays()
 
+  ! free up memory
+  call prepare_deallocate_unused_arrays()
+
   ! synchronize all the processes
   call synchronize_all()
 
@@ -563,11 +566,6 @@
 !$OMP END PARALLEL
 #endif
 
-  ! old x/y/z array not needed anymore
-  deallocate(xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle)
-  deallocate(xstore_outer_core,ystore_outer_core,zstore_outer_core)
-  deallocate(xstore_inner_core,ystore_inner_core,zstore_inner_core)
-
   end subroutine prepare_timerun_convert_coord
 
 !
@@ -836,3 +834,29 @@
   endif
 
   end subroutine prepare_simultaneous_event_execution_shift_undoatt
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine prepare_deallocate_unused_arrays()
+
+  ! free up memory by deallocating arrays that are no more needed
+
+  use specfem_par, only: FULL_GRAVITY
+
+  use specfem_par_crustmantle
+  use specfem_par_outercore
+  use specfem_par_innercore
+
+  implicit none
+
+  ! full gravity still needs xstore,.. arrays
+  if (FULL_GRAVITY) return
+
+  ! old x/y/z array not needed anymore
+  deallocate(xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle)
+  deallocate(xstore_outer_core,ystore_outer_core,zstore_outer_core)
+  deallocate(xstore_inner_core,ystore_inner_core,zstore_inner_core)
+
+  end subroutine prepare_deallocate_unused_arrays

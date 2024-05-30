@@ -628,6 +628,10 @@
   ! safety check
   if (.not. FULL_GRAVITY) return
 
+  ! checks solver setting
+  if (POISSON_SOLVER /= 0 .and. POISSON_SOLVER /= 1) &
+    stop 'For FULL_GRAVITY calculations, POISSON_SOLVER must be set to either 0 == builtin or 1 == PETSc'
+
   ! start region
   iregion0 = IREGION_CRUST_MANTLE
 
@@ -684,9 +688,5 @@
     ! start region for next region
     iregion0 = iter_region
   enddo
-
-  ! full gravity kernels
-  ! TODO: check if this can be put into the solver and/or if CALC_GRAVITY_KERNELS is needed
-  !if (SIMULATION_TYPE == 3 .and. FULL_GRAVITY) CALC_GRAVITY_KERNELS = .true.
 
   end subroutine rcp_SIEM_set_mesh_parameters

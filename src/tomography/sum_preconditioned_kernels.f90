@@ -389,7 +389,7 @@ subroutine invert_hess( hess_matrix )
   maxh = maxval( abs(hess_matrix) )
 
   ! determines maximum from all slices on main
-  call max_allreduce_cr(maxh,maxh_all)
+  call max_all_all_cr(maxh,maxh_all)
 
   ! user output
   if (myrank == 0) then

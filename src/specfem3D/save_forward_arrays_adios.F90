@@ -78,6 +78,14 @@
   call write_rotation_forward_arrays_adios()
   call write_attenuation_forward_arrays_adios()
 
+  ! full gravity
+  if (FULL_GRAVITY_VAL) then
+    !TODO: implement full gravity adios save forward
+    stop 'FULL_GRAVITY save_intermediate_forward_arrays_adios() not fully implemented yet'
+    !write(IOUT) neq1
+    !write(IOUT pgrav1
+  endif
+
   ! Reset the path to its original value to avoid bugs.
   call write_adios_perform(myadios_fwd_file)
   ! flushes all engines (makes sure i/o is all written out)
@@ -132,6 +140,15 @@
   call write_epsilon_forward_arrays_adios()
   if (ROTATION_VAL) call write_rotation_forward_arrays_adios()
   if (ATTENUATION_VAL) call write_attenuation_forward_arrays_adios()
+
+  ! full gravity
+  if (FULL_GRAVITY_VAL) then
+    !TODO: implement full gravity adios save forward
+    stop 'FULL_GRAVITY save_forward_arrays_adios() not fully implemented yet'
+    !write(IOUT) neq
+    !write(IOUT) neq1
+    !write(IOUT pgrav1
+  endif
 
   ! Reset the path to its original value to avoid bugs.
   call write_adios_perform(myadios_fwd_file)
@@ -288,6 +305,15 @@
   call write_common_forward_arrays_adios()
   if (ROTATION_VAL) call write_rotation_forward_arrays_adios()
   if (ATTENUATION_VAL) call write_attenuation_forward_arrays_adios()
+
+  ! full gravity
+  if (FULL_GRAVITY_VAL) then
+    !TODO: implement full gravity adios save forward
+    stop 'FULL_GRAVITY save_forward_arrays_undoatt_adios() not fully implemented yet'
+    !write(IOUT) neq
+    !write(IOUT) neq1
+    !write(IOUT pgrav1
+  endif
 
   ! perform writing
   if (ADIOS_SAVE_ALL_SNAPSHOTS_IN_ONE_FILE) then

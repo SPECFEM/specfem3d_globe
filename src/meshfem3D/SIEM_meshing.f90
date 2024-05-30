@@ -247,6 +247,8 @@
   use constants
   use shared_parameters, only: RINF
 
+  use siem_math_library, only: i_uniinv
+
   use meshfem_par, only: xstore,ystore,zstore, &
     NSPEC_REGIONS,NGLOB_REGIONS
 
@@ -458,7 +460,7 @@
     pz = (/ xstoret(1,1,NGLLZ,1),ystoret(1,1,NGLLZ,1),zstoret(1,1,NGLLZ,1) /)
 
     !hmin=minval((/ distance(po,px,NDIM),distance(po,py,NDIM),distance(po,pz,NDIM) /))
-    hmin = distance(po,pz,NDIM) ! only vertical distance
+    hmin = distance_dble(po,pz,NDIM) ! only vertical distance
 
     ! find the common minimum across all processors
     ! local minimum gives the error, particularly in more infinite layers during
@@ -477,7 +479,7 @@
 
   ! compute mirror nodes
   do i = 1,nsnode
-    r1 = distance(xpole,xs(:,i,1),NDIM)
+    r1 = distance_dble(xpole,xs(:,i,1),NDIM)
 
     RINF = r1 + hmin_glob ! infinite surface radius
     if (RINF <= r1) then
@@ -681,7 +683,8 @@
 
 contains
 
-  function distance(x1,x2,n) result (r)
+  function distance_dble(x1,x2,n) result (r)
+  ! distance function in double precision
     implicit none
     integer,intent(in) :: n
     double precision,intent(in) :: x1(n),x2(n)
@@ -690,228 +693,6 @@ contains
     dx(:) = x1(:) - x2(:)
     r = sqrt(sum(dx*dx))
     return
-  end function distance
-
-  !=======================================================
-
-  ! Author: Michel Olagnon
-  ! orderpack 2.0
-  ! source: http://www.Fortran-2000.com/rank/
-
-  subroutine i_uniinv (XDONT, IGOEST)
-    ! UNIINV = Merge-sort inverse ranking of an array, with removal of
-    ! duplicate entries.
-    ! this routine is similar to pure merge-sort ranking, but on
-    ! the last pass, it sets indices in IGOEST to the rank
-    ! of the value in the ordered set with duplicates removed.
-    ! for performance reasons, the first 2 passes are taken
-    ! out of the standard loop, and use dedicated coding.
-    implicit none
-    integer,intent(in)  :: XDONT(:)
-    integer,intent(out) :: IGOEST(:)
-
-    integer :: XTST, XDONA, XDONB
-    integer, dimension (SIZE(IGOEST)) :: JWRKT, IRNGT
-    integer :: LMTNA, LMTNC, IRNG, IRNG1, IRNG2, NUNI
-    integer :: NVAL, IIND, IWRKD, IWRK, IWRKF, JINDA, IINDA, IINDB
-
-    NVAL = Min (SIZE(XDONT), SIZE(IGOEST))
-    select case (NVAL)
-    case (:0)
-      return
-    case (1)
-      IGOEST (1) = 1
-      return
-    case default
-      continue
-    end select
-
-    ! fill-in the index array, creating ordered couples
-    do IIND = 2, NVAL, 2
-      if (XDONT(IIND-1) < XDONT(IIND)) then
-        IRNGT (IIND-1) = IIND - 1
-        IRNGT (IIND) = IIND
-      else
-        IRNGT (IIND-1) = IIND
-        IRNGT (IIND) = IIND - 1
-      endif
-    enddo
-    if (modulo(NVAL,2) /= 0) then
-      IRNGT (NVAL) = NVAL
-    endif
-
-    ! we will now have ordered subsets A - B - A - B - ...
-    ! and merge A and B couples into     C   -   C   - ...
-    LMTNA = 2
-    LMTNC = 4
-
-    ! first iteration. The length of the ordered subsets goes from 2 to 4
-    do
-      if (NVAL <= 4) Exit
-      ! loop on merges of A and B into C
-      do IWRKD = 0, NVAL - 1, 4
-        if ((IWRKD+4) > NVAL) then
-          if ((IWRKD+2) >= NVAL) Exit
-          !   1 2 3
-          if (XDONT(IRNGT(IWRKD+2)) <= XDONT(IRNGT(IWRKD+3))) Exit
-          !   1 3 2
-          if (XDONT(IRNGT(IWRKD+1)) <= XDONT(IRNGT(IWRKD+3))) then
-            IRNG2 = IRNGT (IWRKD+2)
-            IRNGT (IWRKD+2) = IRNGT (IWRKD+3)
-            IRNGT (IWRKD+3) = IRNG2
-            !   3 1 2
-          else
-            IRNG1 = IRNGT (IWRKD+1)
-            IRNGT (IWRKD+1) = IRNGT (IWRKD+3)
-            IRNGT (IWRKD+3) = IRNGT (IWRKD+2)
-            IRNGT (IWRKD+2) = IRNG1
-          endif
-          exit
-        endif
-        !   1 2 3 4
-        if (XDONT(IRNGT(IWRKD+2)) <= XDONT(IRNGT(IWRKD+3))) Cycle
-        !   1 3 x x
-        if (XDONT(IRNGT(IWRKD+1)) <= XDONT(IRNGT(IWRKD+3))) then
-          IRNG2 = IRNGT (IWRKD+2)
-          IRNGT (IWRKD+2) = IRNGT (IWRKD+3)
-          if (XDONT(IRNG2) <= XDONT(IRNGT(IWRKD+4))) then
-            !   1 3 2 4
-            IRNGT (IWRKD+3) = IRNG2
-          else
-            !   1 3 4 2
-            IRNGT (IWRKD+3) = IRNGT (IWRKD+4)
-            IRNGT (IWRKD+4) = IRNG2
-          endif
-          !   3 x x x
-        else
-          IRNG1 = IRNGT (IWRKD+1)
-          IRNG2 = IRNGT (IWRKD+2)
-          IRNGT (IWRKD+1) = IRNGT (IWRKD+3)
-          if (XDONT(IRNG1) <= XDONT(IRNGT(IWRKD+4))) then
-            IRNGT (IWRKD+2) = IRNG1
-            if (XDONT(IRNG2) <= XDONT(IRNGT(IWRKD+4))) then
-              !   3 1 2 4
-              IRNGT (IWRKD+3) = IRNG2
-            else
-              !   3 1 4 2
-              IRNGT (IWRKD+3) = IRNGT (IWRKD+4)
-              IRNGT (IWRKD+4) = IRNG2
-            endif
-          else
-            !   3 4 1 2
-            IRNGT (IWRKD+2) = IRNGT (IWRKD+4)
-            IRNGT (IWRKD+3) = IRNG1
-            IRNGT (IWRKD+4) = IRNG2
-          endif
-        endif
-      enddo
-
-    ! the Cs become As and Bs
-      LMTNA = 4
-      Exit
-    enddo
-
-    ! iteration loop. Each time, the length of the ordered subsets
-    ! is doubled.
-    do
-      if (2*LMTNA >= NVAL) Exit
-      IWRKF = 0
-      LMTNC = 2 * LMTNC
-
-      ! loop on merges of A and B into C
-      do
-        IWRK = IWRKF
-        IWRKD = IWRKF + 1
-        JINDA = IWRKF + LMTNA
-        IWRKF = IWRKF + LMTNC
-        if (IWRKF >= NVAL) then
-          if (JINDA >= NVAL) Exit
-          IWRKF = NVAL
-        endif
-        IINDA = 1
-        IINDB = JINDA + 1
-
-        ! one steps in the C subset, that we create in the final rank array
-        ! make a copy of the rank array for the iteration
-        JWRKT (1:LMTNA) = IRNGT (IWRKD:JINDA)
-        XDONA = XDONT (JWRKT(IINDA))
-        XDONB = XDONT (IRNGT(IINDB))
-        do
-          IWRK = IWRK + 1
-          ! we still have unprocessed values in both A and B
-          if (XDONA > XDONB) then
-            IRNGT (IWRK) = IRNGT (IINDB)
-            IINDB = IINDB + 1
-            if (IINDB > IWRKF) then
-              ! only A still with unprocessed values
-              IRNGT (IWRK+1:IWRKF) = JWRKT (IINDA:LMTNA)
-              Exit
-            endif
-            XDONB = XDONT (IRNGT(IINDB))
-          else
-            IRNGT (IWRK) = JWRKT (IINDA)
-            IINDA = IINDA + 1
-            if (IINDA > LMTNA) Exit! Only B still with unprocessed values
-            XDONA = XDONT (JWRKT(IINDA))
-          endif
-
-        enddo
-      enddo
-
-      ! the Cs become As and Bs
-      LMTNA = 2 * LMTNA
-    enddo
-
-    ! last merge of A and B into C, with removal of duplicates.
-    IINDA = 1
-    IINDB = LMTNA + 1
-    NUNI = 0
-
-    ! one steps in the C subset, that we create in the final rank array
-    JWRKT (1:LMTNA) = IRNGT (1:LMTNA)
-    if (IINDB <= NVAL) then
-      XTST = i_nearless(Min(XDONT(JWRKT(1)), XDONT(IRNGT(IINDB))))
-    else
-      XTST = i_nearless(XDONT(JWRKT(1)))
-    endif
-
-    do IWRK = 1, NVAL
-      ! we still have unprocessed values in both A and B
-      if (IINDA <= LMTNA) then
-        if (IINDB <= NVAL) then
-          if (XDONT(JWRKT(IINDA)) > XDONT(IRNGT(IINDB))) then
-            IRNG = IRNGT (IINDB)
-            IINDB = IINDB + 1
-          else
-            IRNG = JWRKT (IINDA)
-            IINDA = IINDA + 1
-          endif
-        else
-          ! only A still with unprocessed values
-          IRNG = JWRKT (IINDA)
-          IINDA = IINDA + 1
-        endif
-      else
-        ! only B still with unprocessed values
-        IRNG = IRNGT (IWRK)
-      endif
-      if (XDONT(IRNG) > XTST) then
-        XTST = XDONT (IRNG)
-        NUNI = NUNI + 1
-      endif
-      IGOEST (IRNG) = NUNI
-    enddo
-  end subroutine i_uniinv
-
-  !=======================================================
-
-  function i_nearless (XVAL) result (I_nl)
-    ! nearest value less than given value
-    implicit none
-    integer,intent(in) :: XVAL
-    integer :: I_nl
-    I_nl = XVAL - 1
-    return
-  end function i_nearless
+  end function distance_dble
 
   end subroutine SIEM_mesh_create_elements

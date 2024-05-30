@@ -76,6 +76,9 @@ ATTENUATION                     = .true.
 # full gravity calculation by solving Poisson's equation for gravity potential instead of using a Cowling approximation
 # (must have also GRAVITY flag set to .true. to become active)
 FULL_GRAVITY                    = .false.
+# for full gravity calculation, set to 0 == builtin or 1 == PETSc Poisson solver
+# (the PETSc solver option needs the PETSc library installed; code configuration --with-petsc)
+POISSON_SOLVER                  = 0
 
 # record length in minutes
 RECORD_LENGTH_IN_MINUTES        = 1.0d0

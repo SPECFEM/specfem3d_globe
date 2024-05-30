@@ -25,99 +25,222 @@
 !
 !=====================================================================
 
-! TODO: full gravity is not working yet, needs to fully implement solver...
-#ifdef USE_PETSC_NOT_WORKING_YET
-
 !AUTHORS:
 !Hom Nath Gharti
 !Stefano Zhampini
 !REFERENCE:
 !PETSC documentation
 
-!-------------------------------------------------------------------------------
-module solver_petsc
+! 1. note on PETSc macros:
+!
+! the PETSc base type file petscsys.h defines an error checking macro CHKERRA(ierr) as
+! long free-from version:
+!#define CHKERRA(ierr) if (ierr /= 0) then;call PetscErrorF(ierr,__LINE__,__FILE__);call MPIU_Abort(PETSC_COMM_SELF,ierr);endif
+! short version:
+!#define CHKERRA(ierr) if (ierr /= 0) then;call PetscErrorF(ierr);call MPIU_Abort(PETSC_COMM_SELF,ierr);endif
+!
+! with gfortran, it uses the long free-form version that leads to compilation errors like
+!   "Error: Line truncated at (1) [-Werror=line-truncation]"
+! whenever this macro is indented, for example in an if-statement like:
+! if (..) then
+!    ..
+!    CHKERRA(ierr)
+! endif
+! it only works if the macro gets indented by 2 spaces, but not more :(
+!
+! PETSc suggests to call its functions with the PetscCall macro, for example
+!   PetscCallA(PetscInitialize(PETSC_NULL_CHARACTER,ierr))
+! where the corresponding macro is defined as:
+!   #define PetscCallA(func) call func; CHKERRA(ierr)
+! unfortunately, this leads to the same compilation errors with exceeding line length limits.
+!
+! with the Fortran preprocessors, macro definitions unfortunately can't span over multiple lines
+! and thus are limited by length.
+! thus, we will define an error checking subroutine instead in this module,
+! and call it by our own marco to work-around this limit.
 
-  !#include "petsc/finclude/petscsys.h"
-  !#include "petsc/finclude/petscvec.h"
-  !#include "petsc/finclude/petscvec.h90"
-  !#include "petsc/finclude/petscmat.h"
-  #include "petsc/finclude/petscksp.h"
-  !#include "petsc/finclude/petscpc.h"
+#define CHECK_PETSC_ERROR(ierr) call check_petsc_err(ierr,__LINE__)
 
-  use constants_solver, only: kreal => CUSTOM_REAL,nproc => NPROCTOT_VAL, &
-    KSP_ATOL,KSP_DTOL,KSP_RTOL,KSP_MAXITER, &
-    KSP_ATOL1,KSP_DTOL1,KSP_RTOL1,KSP_MAXITER1
-  use specfem_par, only: myrank
-  use specfem_par, only: neq,ngdof,nsparse,kmat_sparse,krow_sparse,kcol_sparse, &
-    kgrow_sparse,kgcol_sparse
-  use specfem_par, only: neq1,ngdof1,nsparse1,kmat_sparse1,krow_sparse1, &
-    kcol_sparse1,kgrow_sparse1,kgcol_sparse1,l2gdof1
 
-  use math_library_mpi, only: maxvec,minvec
+! 2. note on PETSc types and function calls:
+!
+! the Petsc types might differ a bit on different systems and compilers.
+! for example, calling the function
+!   VecSetValues(Vec x, PetscInt ni, const PetscInt ix[], const PetscScalar y[], InsertMode iora)
+! with a real(kind=CUSTOM_REAL) gravload(:) array for the PetscScalar array y[] will cause a compilation error on macOS like:
+!   call VecSetValues(bvec,neq,l2gdof(1:),gravload(1:),ADD_VALUES,ierr)
+!   ..
+!   "Error: There is no specific subroutine for the generic 'vecsetvalues' at (1)"
+!
+! we thus use copy-arrays and explicit type conversions to work around this:
+!   PetsScalar :: y(size(gravload(1:))
+!   y(:) = gravload(1:)
+!   call VecSetValues(bvec,neq,l2gdof(1:),y,ADD_VALUES,ierr)
+! well, until a better solution is found.
 
-  use specfem_par, only: num_interfaces_inner_core1, &
-    max_nibool_interfaces_inner_core1, &
-    my_neighbors_inner_core1,nibool_interfaces_inner_core1, &
-    ibool_interfaces_inner_core1,num_interfaces_outer_core1, &
+
+module siem_solver_petsc
+
+#ifdef USE_PETSC
+! PETSc
+! all of PETSc
+!#include "petsc/finclude/petsc.h"
+! base types
+!#include "petsc/finclude/petscsys.h"
+! Vec package
+!#include "petsc/finclude/petscvec.h"
+! Mat package
+!#include "petsc/finclude/petscmat.h"
+! Krylov subspace method package
+#include "petsc/finclude/petscksp.h"
+! preconditioner package
+!#include "petsc/finclude/petscpc.h"
+
+
+! PETSc modules
+  !use petsc, only: PETSC_COMM_WORLD,PETSC_COMM_SELF,PETSC_VIEWER_STDOUT_WORLD,PETSC_COPY_VALUES, &
+  !                 PETSC_NULL_CHARACTER,PETSC_NULL_SCALAR,PETSC_NULL_OPTIONS,PETSC_NULL_INTEGER, &
+  !                 PETSC_DECIDE,PETSC_TRUE,PETSC_FALSE
+  !use petscmat, only: tMat,MAT_FINAL_ASSEMBLY,MAT_SYMMETRIC,MAT_SHIFT_POSITIVE_DEFINITE,MAT_SPD
+  !use petscvec, only: tVec,tVecScatter,ADD_VALUES,INSERT_VALUES,SCATTER_FORWARD
+  !use petscksp, only: tKSP
+  !use petscpc, only: tPC
+  !use petscis, only: tIS
+
+  use petscksp
+#endif
+
+  use constants, only: myrank,IMAIN,CUSTOM_REAL
+
+  use constants_solver, only: &
+    nproc => NPROCTOT_VAL
+
+  use specfem_par_full_gravity, only: &
+    neq,ngdof,nsparse,kmat_sparse,krow_sparse,kcol_sparse, &
+    kgrow_sparse,kgcol_sparse, &
+    neq1,ngdof1,nsparse1,kmat_sparse1,krow_sparse1,kcol_sparse1, &
+    kgrow_sparse1,kgcol_sparse1,l2gdof1
+
+  use specfem_par_full_gravity, only: &
+    num_interfaces_inner_core1, &
+    max_nibool_interfaces_inner_core1,my_neighbors_inner_core1, &
+    nibool_interfaces_inner_core1,ibool_interfaces_inner_core1, &
+    num_interfaces_outer_core1, &
     max_nibool_interfaces_outer_core1,my_neighbors_outer_core1, &
     nibool_interfaces_outer_core1,ibool_interfaces_outer_core1, &
-    num_interfaces_crust_mantle1,max_nibool_interfaces_crust_mantle1, &
-    my_neighbors_crust_mantle1,nibool_interfaces_crust_mantle1, &
-    ibool_interfaces_crust_mantle1,num_interfaces_trinfinite1, &
+    num_interfaces_crust_mantle1, &
+    max_nibool_interfaces_crust_mantle1,my_neighbors_crust_mantle1, &
+    nibool_interfaces_crust_mantle1,ibool_interfaces_crust_mantle1, &
+    num_interfaces_trinfinite1, &
     max_nibool_interfaces_trinfinite1,my_neighbors_trinfinite1, &
     nibool_interfaces_trinfinite1,ibool_interfaces_trinfinite1, &
     num_interfaces_infinite1, &
     max_nibool_interfaces_infinite1,my_neighbors_infinite1, &
     nibool_interfaces_infinite1,ibool_interfaces_infinite1
 
-  use petscksp
+  use siem_math_library_mpi, only: maxvec,minvec
 
   implicit none
 
-  PetscInt,parameter :: COMMAND = 0,CG = 1,SUPERLU = 2,MUMPS = 3 ! solver type
-  PetscBool      flg,flg_ch,flg_lu,flg_ilu
-  PetscInt       ival,icntl
-  PetscReal      val
+  private
+
+#ifdef USE_PETSC
+  ! to match PETSc types:
+  !PetscInt :: i
+  !PetscReal :: x
+  !PetscBool :: b
+  !PetscErrorCode :: ierr
+  !
+  !integer, parameter :: petsc_int = kind(i)        ! integer kind to be used in SIEM solver petsc
+  !integer, parameter :: petsc_real = kind(x)       ! real kind to be used in SIEM solver petsc
+  !integer, parameter :: petsc_bool = kind(b)       ! boolean kind to be used in SIEM solver petsc
+  !integer, parameter :: petsc_err = kind(ierr)     ! error kind to be used in SIEM solver petsc
+  !
+  !integer(petsc_int), parameter :: COMMAND = 0
+  !integer(petsc_bool) :: flg
+  !integer(petsc_int) :: ival
+  !real(petsc_real) :: val
+  !
+  ! or directly use PETSC type macros...
+
+  ! Parameters
+  ! Krylov subspace method (KSP) tolerances
+  !   types required by KSPSetTolerances:
+  !   KSPSetTolerances(KSP ksp, PetscReal rtol, PetscReal abstol, PetscReal dtol, PetscInt maxits)
+  !
+  ! Level-1 KSP solver
+  PetscInt, parameter :: KSP_MAXITER1 = 3000
+  PetscReal, parameter :: KSP_RTOL1 = 1.0e-7
+  PetscReal, parameter :: KSP_ATOL1 = 1.0e-30
+  PetscReal, parameter :: KSP_DTOL1 = 1.0e30
+
+  ! Level-2 KSP solver
+  PetscInt, parameter :: KSP_MAXITER = 3000
+  PetscReal, parameter :: KSP_RTOL = 1.0e-7
+  PetscReal, parameter :: KSP_ATOL = 1.0e-30
+  PetscReal, parameter :: KSP_DTOL = 1.0e30
+
+  ! solver type
+  PetscInt, parameter     :: COMMAND = 0, CG = 1, SUPERLU = 2, MUMPS = 3
+
+  ! module variables
+  !PetscBool               :: flg,flg_ch,flg_lu,flg_ilu
+  !PetscInt                :: ival,icntl
+  !PetscReal               :: val
+
   ! Level-1 solver
-  Vec              xvec1,bvec1,uvec1,local_vec1
-  Mat              Amat1,Fmat1
-  KSP              ksp1
-  PC               pc1
-  PetscInt         iter1
-  PetscInt         solver_type1 ! solver type
+  type(tVec)              :: xvec1,bvec1,uvec1,local_vec1
+  type(tMat)              :: Amat1 !,Fmat1
+  type(tKSP)              :: ksp1
+  type(tPC)               :: pc1
+  !PetscInt                :: solver_type1 ! solver type
+
   ! For communications from local to global
-  VecScatter             pscat1,vscat1
+  type(tVecScatter)       :: vscat1 !,pscat1
+
   ! Stores l2g map info
-  ISLocalToGlobalMapping l2gmap
-  !PetscBool        flg
+  !ISLocalToGlobalMapping  :: l2gmap
+
+  !PetscBool              ::flg
 
   ! ADJOINT SIMULATIONS
   ! FOR NOW WE ASSUME THAT THE FORWARD AND ADJOINT SIMULATIONS ARE SOLVED
   ! WITH A CG METHOD, AND THAT ONLY LEVEL 1 SOLVER IS USED
+  !
   ! Adjoint Level-1 solver
   ! notes: no b_uvec1 since it seems to just be created and destroyed
   !        no bAmat1 since we can use the same stiffness matrix
   !        I think we can probably use b_pc1 = pc1 but unsure
-  Vec              b_xvec1, b_bvec1, b_local_vec1
-  KSP              b_ksp1
-  Mat              b_Fmat1 ! not used unless MUMPS chosen (not implemented)
-  PC               b_pc1
-  PetscInt         b_iter1
-  PetscInt         b_solver_type1 ! solver type
-  ! For communications from local to global
-  VecScatter             b_pscat1, b_vscat1
+  type(tVec)              :: b_xvec1, b_bvec1, b_local_vec1
+  type(tKSP)              :: b_ksp1
+  type(tPC)               :: b_pc1
 
+  ! For communications from local to global
+  type(tVecScatter)       :: b_vscat1
 
   ! Level-2 solver
-  Vec              xvec,bvec,uvec
-  Mat              Amat
-  KSP              ksp
-  PC               pc
-  PetscErrorCode   ierr
-  PetscInt         iter
-  PetscInt :: nzeros_max,nzeros_min,nzerosoff_max
-  PetscInt :: ngdof_part1
-  PetscInt :: ig0,ig1
+  type(tVec)              :: xvec,bvec,uvec
+  type(tMat)              :: Amat
+  type(tKSP)              :: ksp
+  type(tPC)               :: pc
+  PetscErrorCode          :: ierr
+  PetscInt                :: nzeros_max,nzeros_min,nzerosoff_max
+  PetscInt                :: ig0,ig1
+#endif
+
+  ! public function
+  public :: petsc_initialize1
+  public :: petsc_initialize
+  public :: petsc_finalize1
+  public :: petsc_finalize
+  public :: petsc_set_vector1
+  public :: petsc_set_vector
+  public :: petsc_set_matrix1
+  public :: petsc_set_matrix
+  public :: petsc_solve1
+  public :: petsc_solve
+  public :: petsc_zero_initialguess1
+  public :: petsc_zero_backwards_initialguess1
 
 contains
 
@@ -125,86 +248,95 @@ contains
 ! Level-1 solver
 !===============================================================================
   subroutine petsc_initialize1()
-  use specfem_par, only: ADD_TRINF,NNDOF, SIMULATION_TYPE
-  use specfem_par_innercore, only: ggdof_ic1
-  use specfem_par_outercore, only: ggdof_oc1
-  use specfem_par_crustmantle, only: ggdof_cm1
-  use specfem_par_trinfinite, only: ggdof_trinf1
-  use specfem_par_infinite, only: ggdof_inf1
+
+#ifdef USE_PETSC
+  use constants, only: NNDOF
+
+  use specfem_par, only: ADD_TRINF,SIMULATION_TYPE
+
+  use specfem_par_full_gravity, only: ggdof_ic1,ggdof_oc1,ggdof_cm1,ggdof_trinf1,ggdof_inf1
+
   implicit none
-  Vec         nnzv,nzeror_gvec1,nzeror_dvec1,nzeror_ovec1,iproc_gvec1, &
-              interface_gvec1,ninterface_dvec1,ninterface_ovec1,nself_gvec1
-  PetscInt :: i,istart,iend,n,n1,ncol_part1,nrow_part1
-  PetscInt :: nnzmax,lsize,idxinsert(neq1),ldof1(neq1)
+  type(tVec) :: nzeror_gvec1,nzeror_dvec1,nzeror_ovec1,iproc_gvec1, &
+                interface_gvec1,ninterface_dvec1,ninterface_ovec1,nself_gvec1
+  PetscInt :: i,istart,iend,n
   PetscInt,allocatable :: nzeros(:),ig_array1(:)
   PetscScalar,allocatable :: rproc_array1(:)
-  PetscScalar rval,valinsert(neq1),nnzv_v(1)
-  PetscOffset nnzv_i
-  PetscInt, allocatable :: nnz(:)
-  IS global_is,local_is, b_global_is, b_local_is
+  PetscScalar :: rval
+  type(tIS) :: global_is, local_is, b_global_is, b_local_is
 
-  PetscInt :: icount,igdof,ind,maxrank0,ng,ng0,ng1,np0
+  PetscInt :: igdof,ind,maxrank0,ng,ng0,ng1,np0
   PetscInt,allocatable :: inzeror_array1(:),iproc_array1(:),nzeros_row(:)
   PetscInt,allocatable :: nnzero_diag1(:),nnzero_offdiag1(:)
-  PetscInt,allocatable :: nnzero_diag1r(:),nnzero_offdiag1r(:)
-  PetscScalar,pointer :: nzeror_array1(:),rproc_array(:)
+  PetscScalar,pointer :: nzeror_array1(:)
   PetscScalar,pointer :: nzeror_darray1(:),nzeror_oarray1(:),rnself_array1(:)
-  PetscReal :: fac_ni,max_ni,pmax,pmin,rnid,rnioffd,rnd,rnoffd,rproc,zero
+  PetscReal :: fac_ni,max_ni,pmax,pmin,rnid,rnioffd,rnd,rnoffd
 
   PetscInt :: ir,ic,igr,igc,ir0,ic0,igr0,igc0
-  PetscInt :: nd,noffd,nid,nioffd
+  PetscInt :: nd,noffd
   PetscInt :: i_bool,i_ndof
 
-  PetscInt :: nibool,ng_interface
-  PetscInt,allocatable :: ibool_interface(:),ig_interface(:),isg_interface(:), &
-                          nself_array1(:)
-  PetscInt, allocatable :: ninterface_darray1(:),ninterface_oarray1(:)
+  PetscInt :: nibool
+  PetscInt,allocatable :: ibool_interface(:),isg_interface(:),nself_array1(:)
+  PetscInt,allocatable :: ninterface_darray1(:),ninterface_oarray1(:)
   PetscScalar,allocatable :: rg_interface(:),rnself_lgarray1(:)
   PetscScalar,pointer :: rninterface_darray1(:),rninterface_oarray1(:)
 
-  character(len=10) :: char_myrank
-  character(len=60) :: outf_name
+  !character(len=10) :: char_myrank
 
+  ! timing
+  double precision :: tstart,tCPU
+  double precision, external :: wtime
 
-  if (myrank == 0) write(*,*)
-  if (myrank == 0) write(*,*) ' ---------- Initialise PETSC: ---------- '
-  if (myrank == 0) write(*,*)
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '    initializing PETSc Level-1 solver'
+    call flush_IMAIN()
+  endif
 
+  ! timing
+  tstart = wtime()
 
-  call PetscInitialize(PETSC_NULL_CHARACTER,ierr)
+  if (myrank == 0) print *
+  if (myrank == 0) print *,'PETSc solver: ---------- Initialise PETSC: ---------- '
+
+  call PetscInitialize(PETSC_NULL_CHARACTER,ierr); CHECK_PETSC_ERROR(ierr)
 
   ! count number of nonzeros per row
   allocate(nzeros(neq1))
-  nzeros = 0
+  nzeros(:) = 0
   do i = 1,nsparse1
-    nzeros(krow_sparse1(i))=nzeros(krow_sparse1(i))+1
+    nzeros(krow_sparse1(i)) = nzeros(krow_sparse1(i)) + 1
   enddo
-  nzeros_max=maxvec(nzeros)
-  nzeros_min=minvec(nzeros)
+
+  nzeros_max = maxvec(nzeros)
+  nzeros_min = minvec(nzeros)
+
   nzerosoff_max = nzeros_max
+
   !nzeros_max=4*nzeros_max
   !nzeros=nzeros
   !nzeros=5*nzeros
-  if (myrank == 0) write(*,*) 'nzeros in 1th index:',nzeros(1)
-  if (myrank == 0) write(*,*) 'ngdof1:',ngdof1,' nzeros_max:',nzeros_max,' nzeros_min:', &
-  nzeros_min,count(krow_sparse1 == 1)
+
+  if (myrank == 0) print *,'PETSc solver: nzeros in 1st index:',nzeros(1)
+  if (myrank == 0) print *,'PETSc solver: ngdof1:',ngdof1,' nzeros_max:',nzeros_max,' nzeros_min:',nzeros_min, &
+                                         ' count:',count(krow_sparse1 == 1)
 
   ! precompute ownership range OR partion layout
-  !
   ng1 = ngdof1/nproc
   ng0 = ceiling(real(ngdof1)/real(nproc))
 
-  np0 = ngdof1-nproc*ng1
+  np0 = ngdof1 - nproc*ng1
 
   if (np0 == 0) then
-  ! ng0=ng1
-  ! all processors have equal gdofs
+    ! ng0=ng1
+    ! all processors have equal gdofs
     ng = ng0
     ig0 = myrank*ng0 ! 0-based index
     ig1 = ig0+ng0-1
   else if (np0 > 0) then
-  ! first np0 processors have ng0 gdofs each and remainging processors have ng1
-  ! gdofs each
+    ! first np0 processors have ng0 gdofs each and remaining processors have ng1
+    ! gdofs each
     maxrank0 = np0-1 ! myrank is 0-based
     if (myrank <= maxrank0) then
       ng = ng0
@@ -212,72 +344,43 @@ contains
       ig1 = ig0+ng0-1
     else !myrank > maxrank0
       ng = ng1
-      ig0=np0*ng0+(myrank-np0)*ng1 ! 0-based index
+      ig0 = np0*ng0+(myrank-np0)*ng1 ! 0-based index
       ig1 = ig0+ng1-1
     endif
   else
-  ! Error
-    write(*,*) 'ERROR: illegal value of "np0"!'
-    stop
+    ! Error
+    stop 'ERROR: illegal value of "np0"!'
   endif
-  !if (myrank==0) write(*,*) 'OK0:',ng0,ng1,ng,ig0,ig1
-  !call sync_all
+
   allocate(nzeros_row(ng))
   nzeros_row = 0
-  !if (myrank==0) then
-  !  open(1,file='test_file_proc1',action='write',status='replace')
-  !  write(1,*)ng,ig0,ig1
-  !endif
   do i = 1,nsparse1
     if (kgrow_sparse1(i)-1 >= ig0 .and. kgrow_sparse1(i)-1 <= ig1) then
-      ind=kgrow_sparse1(i)-ig0 ! Fortran indexing
-      !if (myrank==0) write(1,*) ind,kgrow_sparse1(i)
-      nzeros_row(ind)=nzeros_row(ind)+1
+      ind = kgrow_sparse1(i)-ig0 ! Fortran indexing
+      nzeros_row(ind) = nzeros_row(ind)+1
     endif
   enddo
-  !if (myrank==0) close(1)
-  !nzeros_row=2*nzeros_row
-  !if (myrank==0) write(*,*) 'OK1:',nzeros_row(1),minval(nzeros_row),maxval(nzeros_row)
-  !call sync_all
-  write(char_myrank,'(i4)')myrank
-  !outf_name='precomp_nonzeros'//trim(adjustl(char_myrank))
-  !open(1,file=outf_name,action='write',status='replace')
-  !write(1,'(i4)')nzeros_row
-  !close(1)
+  !write(char_myrank,'(i4)') myrank
 
-  call VecCreateMPI(PETSC_COMM_WORLD,PETSC_DECIDE,ngdof1,xvec1,ierr)
-  CHKERRA(ierr)
-  call VecDuplicate(xvec1,bvec1,ierr)
-  CHKERRA(ierr)
-  call VecDuplicate(xvec1,uvec1,ierr)
-  CHKERRA(ierr)
-  call VecDuplicate(xvec1,nzeror_gvec1,ierr)
-  CHKERRA(ierr)
-  call VecDuplicate(xvec1,nzeror_dvec1,ierr)
-  CHKERRA(ierr)
-  call VecDuplicate(xvec1,nzeror_ovec1,ierr)
-  CHKERRA(ierr)
-  call VecDuplicate(xvec1,iproc_gvec1,ierr)
-  CHKERRA(ierr)
-  call VecDuplicate(xvec1,interface_gvec1,ierr)
-  CHKERRA(ierr)
-  call VecDuplicate(xvec1,nself_gvec1,ierr)
-  CHKERRA(ierr)
-  call VecDuplicate(xvec1,ninterface_dvec1,ierr)
-  CHKERRA(ierr)
-  call VecDuplicate(xvec1,ninterface_ovec1,ierr)
-  CHKERRA(ierr)
+  call VecCreateMPI(PETSC_COMM_WORLD,PETSC_DECIDE,ngdof1,xvec1,ierr); CHECK_PETSC_ERROR(ierr)
+  call VecDuplicate(xvec1,bvec1,ierr); CHECK_PETSC_ERROR(ierr)
+  call VecDuplicate(xvec1,uvec1,ierr); CHECK_PETSC_ERROR(ierr)
+  call VecDuplicate(xvec1,nzeror_gvec1,ierr); CHECK_PETSC_ERROR(ierr)
+  call VecDuplicate(xvec1,nzeror_dvec1,ierr); CHECK_PETSC_ERROR(ierr)
+  call VecDuplicate(xvec1,nzeror_ovec1,ierr); CHECK_PETSC_ERROR(ierr)
+  call VecDuplicate(xvec1,iproc_gvec1,ierr); CHECK_PETSC_ERROR(ierr)
+  call VecDuplicate(xvec1,interface_gvec1,ierr); CHECK_PETSC_ERROR(ierr)
+  call VecDuplicate(xvec1,nself_gvec1,ierr); CHECK_PETSC_ERROR(ierr)
+  call VecDuplicate(xvec1,ninterface_dvec1,ierr); CHECK_PETSC_ERROR(ierr)
+  call VecDuplicate(xvec1,ninterface_ovec1,ierr); CHECK_PETSC_ERROR(ierr)
 
   if (SIMULATION_TYPE == 3) then
     ! Create backward xvector and associated b vec:
-    call VecCreateMPI(PETSC_COMM_WORLD,PETSC_DECIDE,ngdof1,b_xvec1,ierr)
-    CHKERRA(ierr)
-    call VecDuplicate(b_xvec1,b_bvec1,ierr)
-    CHKERRA(ierr)
+    call VecCreateMPI(PETSC_COMM_WORLD,PETSC_DECIDE,ngdof1,b_xvec1,ierr); CHECK_PETSC_ERROR(ierr)
+    call VecDuplicate(b_xvec1,b_bvec1,ierr); CHECK_PETSC_ERROR(ierr)
   endif
 
-
-  ! loval vector
+  ! local vector
   call VecCreateSeq(PETSC_COMM_SELF,neq1,local_vec1,ierr)
   if (SIMULATION_TYPE == 3) then
     call VecCreateSeq(PETSC_COMM_SELF,neq1,b_local_vec1,ierr)
@@ -286,63 +389,55 @@ contains
   ! objects needed for global vector scattering to local vector
   ! create local and global IS (index set) objects from the array of local and
   ! global indices
-  call ISCreateGeneral(PETSC_COMM_WORLD,neq1,l2gdof1(1:),PETSC_COPY_VALUES, &
-  global_is,ierr)
-  CHKERRA(ierr)
-  call ISCreateStride(PETSC_COMM_SELF,neq1,0,1,local_is,ierr);
-  CHKERRA(ierr)
+  call ISCreateGeneral(PETSC_COMM_WORLD,neq1,l2gdof1(1:),PETSC_COPY_VALUES,global_is,ierr); CHECK_PETSC_ERROR(ierr)
+  call ISCreateStride(PETSC_COMM_SELF,neq1,0,1,local_is,ierr); CHECK_PETSC_ERROR(ierr)
 
   if (SIMULATION_TYPE == 3) then
-    call ISCreateGeneral(PETSC_COMM_WORLD,neq1,l2gdof1(1:),PETSC_COPY_VALUES, &
-    b_global_is,ierr)
-    CHKERRA(ierr)
-    call ISCreateStride(PETSC_COMM_SELF,neq1,0,1,b_local_is,ierr);
-    CHKERRA(ierr)
+    call ISCreateGeneral(PETSC_COMM_WORLD,neq1,l2gdof1(1:),PETSC_COPY_VALUES,b_global_is,ierr); CHECK_PETSC_ERROR(ierr)
+    call ISCreateStride(PETSC_COMM_SELF,neq1,0,1,b_local_is,ierr); CHECK_PETSC_ERROR(ierr)
   endif
-
-
 
   ! create VecScatter object which is needed to scatter PETSc parallel vectors
-  call VecScatterCreate(bvec1,global_is,local_vec1,local_is,vscat1,ierr)
-  CHKERRA(ierr)
+  call VecScatterCreate(bvec1,global_is,local_vec1,local_is,vscat1,ierr); CHECK_PETSC_ERROR(ierr)
 
   if (SIMULATION_TYPE == 3) then
-    call VecScatterCreate(b_bvec1, b_global_is, b_local_vec1, b_local_is, b_vscat1, ierr)
-    CHKERRA(ierr)
+    call VecScatterCreate(b_bvec1, b_global_is, b_local_vec1, b_local_is, b_vscat1, ierr); CHECK_PETSC_ERROR(ierr)
   endif
+
   call ISDestroy(global_is,ierr) ! no longer necessary
   call ISDestroy(local_is,ierr)  ! no longer necessary
   call ISDestroy(b_global_is,ierr) ! no longer necessary
   call ISDestroy(b_local_is,ierr)  ! no longer necessary
 
-
   ! assign owner processor ID to each gdof (or row)
   allocate(ig_array1(ng),rproc_array1(ng))
-  ig_array1=(/ (i,i = ig0,ig1) /)
+  ig_array1 = (/ (i,i = ig0,ig1) /)
+
   !rproc=real(myrank)
-  rproc_array1=real(myrank)
-  call VecSetValues(iproc_gvec1,ng,ig_array1,rproc_array1,INSERT_VALUES,ierr);
-  CHKERRA(ierr)
+  rproc_array1 = real(myrank)
+
+  call VecSetValues(iproc_gvec1,ng,ig_array1,rproc_array1,INSERT_VALUES,ierr); CHECK_PETSC_ERROR(ierr)
+
   deallocate(ig_array1,rproc_array1)
-  call VecAssemblyBegin(iproc_gvec1,ierr)
-  CHKERRA(ierr)
-  call VecAssemblyEnd(iproc_gvec1,ierr)
-  CHKERRA(ierr)
+
+  call VecAssemblyBegin(iproc_gvec1,ierr); CHECK_PETSC_ERROR(ierr)
+  call VecAssemblyEnd(iproc_gvec1,ierr); CHECK_PETSC_ERROR(ierr)
+
   call VecMin(iproc_gvec1,PETSC_NULL_INTEGER,pmin,ierr)
   call VecMax(iproc_gvec1,PETSC_NULL_INTEGER,pmax,ierr)
-  if (myrank == 0) write(*,*) 'iproc range',pmin,pmax; call sync_all
-  !call VecGetArrayF90(iproc_gvec1,rproc_array,ierr)
-  !CHKERRA(ierr)
-  !allocate(iproc_array(ng))
-  !iproc_array=int(rproc_array(1:n))
-  !call VecRestoreArrayF90(iproc_gvec1,rproc_array,ierr)
-  !CHKERRA(ierr)
+
+  if (myrank == 0) print *,'PETSc solver: iproc range',pmin,pmax
+  call synchronize_all()
+
   ! copy solution to local array
   allocate(iproc_array1(neq1),rproc_array1(neq1))
   call scatter_globalvec1(iproc_gvec1, rproc_array1)
-  iproc_array1=int(rproc_array1)
-  if (myrank == 0) write(*,*) 'vector3 iproc',minval(iproc_array1),maxval(iproc_array1)
-  call sync_all
+
+  iproc_array1 = int(rproc_array1)
+
+  if (myrank == 0) print *,'PETSc solver: vector3 iproc',minval(iproc_array1),maxval(iproc_array1)
+  call synchronize_all()
+
   !!TODO: use local scatter
   !call VecScatterCreateToAll(iproc_gvec1,pscat1,iproc_garray,ierr);
   !call VecScatterBegin(pscat1,iproc_gvec1,iproc_garray,INSERT_VALUES,SCATTER_FORWARD,ierr);
@@ -353,187 +448,123 @@ contains
   rval = 1.0
   ! inner core
   do i = 1,num_interfaces_inner_core1
-      nibool=nibool_interfaces_inner_core1(i)
-      allocate(ibool_interface(nibool))
-      ibool_interface=ibool_interfaces_inner_core1(1:nibool,i)
-      !ng_interface=nibool*NNDOF
-      !allocate(ig_interface(ng_interface),rg_interface(ng_interface))
-      !ig_interface=reshape(ggdof_ic1(1,ibool_interface), (/ ng_interface /) )
-      !ig_interface=ig_interface-1
-      !rg_interface=1.0
-      !call VecSetValues(interface_gvec1,ng_interface,ig_interface,rg_interface,INSERT_VALUES,ierr);
-      !deallocate(ibool_interface,ig_interface,rg_interface)
-      do i_bool = 1,nibool
-        do i_ndof = 1,NNDOF
-          igdof = ggdof_ic1(i_ndof,ibool_interface(i_bool))-1
-          if (igdof >= 0) call VecSetValues(interface_gvec1,1,igdof,rval, &
-          INSERT_VALUES,ierr);
-        enddo
+    nibool = nibool_interfaces_inner_core1(i)
+    allocate(ibool_interface(nibool))
+    ibool_interface = ibool_interfaces_inner_core1(1:nibool,i)
+    do i_bool = 1,nibool
+      do i_ndof = 1,NNDOF
+        igdof = ggdof_ic1(i_ndof,ibool_interface(i_bool))-1
+        if (igdof >= 0) call VecSetValues(interface_gvec1,1,igdof,rval,INSERT_VALUES,ierr)
       enddo
-      deallocate(ibool_interface)
+    enddo
+    deallocate(ibool_interface)
   enddo
-  !if (myrank==0) write(*,*) 'OK'
-  !call sync_all
-  !! stop all the MPI processes, and exit
-  !call MPI_FINALIZE(ierr)
 
   ! outer core
   do i = 1,num_interfaces_outer_core1
-      nibool=nibool_interfaces_outer_core1(i)
-      allocate(ibool_interface(nibool))
-      ibool_interface=ibool_interfaces_outer_core1(1:nibool,i)
-      !ng_interface=nibool*NNDOF
-      !allocate(ig_interface(ng_interface),rg_interface(ng_interface))
-      !ig_interface=reshape(ggdof_ic1(1,ibool_interface), (/ ng_interface /) )
-      !ig_interface=ig_interface-1
-      !rg_interface=1.0
-      !call VecSetValues(interface_gvec1,ng_interface,ig_interface,rg_interface,INSERT_VALUES,ierr);
-      !deallocate(ibool_interface,ig_interface,rg_interface)
-      do i_bool = 1,nibool
-        do i_ndof = 1,NNDOF
-          igdof = ggdof_oc1(i_ndof,ibool_interface(i_bool))-1
-          if (igdof >= 0) call VecSetValues(interface_gvec1,1,igdof,rval, &
-          INSERT_VALUES,ierr);
-        enddo
+    nibool = nibool_interfaces_outer_core1(i)
+    allocate(ibool_interface(nibool))
+    ibool_interface = ibool_interfaces_outer_core1(1:nibool,i)
+    do i_bool = 1,nibool
+      do i_ndof = 1,NNDOF
+        igdof = ggdof_oc1(i_ndof,ibool_interface(i_bool))-1
+        if (igdof >= 0) call VecSetValues(interface_gvec1,1,igdof,rval,INSERT_VALUES,ierr)
       enddo
-      deallocate(ibool_interface)
+    enddo
+    deallocate(ibool_interface)
   enddo
 
   ! crust mantle
   do i = 1,num_interfaces_crust_mantle1
-      nibool=nibool_interfaces_crust_mantle1(i)
-      allocate(ibool_interface(nibool))
-      ibool_interface=ibool_interfaces_crust_mantle1(1:nibool,i)
-      !ng_interface=nibool*NNDOF
-      !allocate(ig_interface(ng_interface),rg_interface(ng_interface))
-      !ig_interface=reshape(ggdof_ic1(1,ibool_interface), (/ ng_interface /) )
-      !ig_interface=ig_interface-1
-      !rg_interface=1.0
-      !call VecSetValues(interface_gvec1,ng_interface,ig_interface,rg_interface,INSERT_VALUES,ierr);
-      !deallocate(ibool_interface,ig_interface,rg_interface)
-      do i_bool = 1,nibool
-        do i_ndof = 1,NNDOF
-          igdof = ggdof_cm1(i_ndof,ibool_interface(i_bool))-1
-          if (igdof >= 0) call VecSetValues(interface_gvec1,1,igdof,rval, &
-          INSERT_VALUES,ierr);
-        enddo
+    nibool = nibool_interfaces_crust_mantle1(i)
+    allocate(ibool_interface(nibool))
+    ibool_interface = ibool_interfaces_crust_mantle1(1:nibool,i)
+    do i_bool = 1,nibool
+      do i_ndof = 1,NNDOF
+        igdof = ggdof_cm1(i_ndof,ibool_interface(i_bool))-1
+        if (igdof >= 0) call VecSetValues(interface_gvec1,1,igdof,rval,INSERT_VALUES,ierr)
       enddo
-      deallocate(ibool_interface)
+    enddo
+    deallocate(ibool_interface)
   enddo
 
   ! transition infinite
   if (ADD_TRINF) then
-  do i = 1,num_interfaces_trinfinite1
-      nibool=nibool_interfaces_trinfinite1(i)
+    do i = 1,num_interfaces_trinfinite1
+      nibool = nibool_interfaces_trinfinite1(i)
       allocate(ibool_interface(nibool))
-      ibool_interface=ibool_interfaces_trinfinite1(1:nibool,i)
-      !ng_interface=nibool*NNDOF
-      !allocate(ig_interface(ng_interface),rg_interface(ng_interface))
-      !ig_interface=reshape(ggdof_ic1(1,ibool_interface), (/ ng_interface /) )
-      !ig_interface=ig_interface-1
-      !rg_interface=1.0
-      !call VecSetValues(interface_gvec1,ng_interface,ig_interface,rg_interface,INSERT_VALUES,ierr);
-      !deallocate(ibool_interface,ig_interface,rg_interface)
+      ibool_interface = ibool_interfaces_trinfinite1(1:nibool,i)
       do i_bool = 1,nibool
         do i_ndof = 1,NNDOF
           igdof = ggdof_trinf1(i_ndof,ibool_interface(i_bool))-1
-          if (igdof >= 0) call VecSetValues(interface_gvec1,1,igdof,rval, &
-          INSERT_VALUES,ierr);
+          if (igdof >= 0) call VecSetValues(interface_gvec1,1,igdof,rval,INSERT_VALUES,ierr)
         enddo
       enddo
       deallocate(ibool_interface)
-  enddo
+    enddo
   endif
 
   ! infinite
   do i = 1,num_interfaces_infinite1
-      nibool=nibool_interfaces_infinite1(i)
-      allocate(ibool_interface(nibool))
-      ibool_interface=ibool_interfaces_infinite1(1:nibool,i)
-      !ng_interface=nibool*NNDOF
-      !allocate(ig_interface(ng_interface),rg_interface(ng_interface))
-      !ig_interface=reshape(ggdof_ic1(1,ibool_interface), (/ ng_interface /) )
-      !ig_interface=ig_interface-1
-      !rg_interface=1.0
-      !call VecSetValues(interface_gvec1,ng_interface,ig_interface,rg_interface,INSERT_VALUES,ierr);
-      !deallocate(ibool_interface,ig_interface,rg_interface)
-      do i_bool = 1,nibool
-        do i_ndof = 1,NNDOF
-          igdof = ggdof_inf1(i_ndof,ibool_interface(i_bool))-1
-          if (igdof >= 0) call VecSetValues(interface_gvec1,1,igdof,rval, &
-          INSERT_VALUES,ierr);
-        enddo
+    nibool = nibool_interfaces_infinite1(i)
+    allocate(ibool_interface(nibool))
+    ibool_interface = ibool_interfaces_infinite1(1:nibool,i)
+    do i_bool = 1,nibool
+      do i_ndof = 1,NNDOF
+        igdof = ggdof_inf1(i_ndof,ibool_interface(i_bool))-1
+        if (igdof >= 0) call VecSetValues(interface_gvec1,1,igdof,rval,INSERT_VALUES,ierr)
       enddo
-      deallocate(ibool_interface)
+    enddo
+    deallocate(ibool_interface)
   enddo
 
-  call VecAssemblyBegin(interface_gvec1,ierr)
-  CHKERRA(ierr)
-  call VecAssemblyEnd(interface_gvec1,ierr)
-  CHKERRA(ierr)
-
-  !call sync_all
-  !! stop all the MPI processes, and exit
-  !call MPI_FINALIZE(ierr)
+  call VecAssemblyBegin(interface_gvec1,ierr); CHECK_PETSC_ERROR(ierr)
+  call VecAssemblyEnd(interface_gvec1,ierr); CHECK_PETSC_ERROR(ierr)
 
   ! copy solution to local array
   allocate(isg_interface(neq1),rg_interface(neq1))
   call scatter_globalvec1(interface_gvec1,rg_interface)
-  isg_interface=int(rg_interface)
+  isg_interface = int(rg_interface)
 
-  ! estimate correction for the number of nonzero entries in the diagonal and
-  ! nondiagonal portion
+  ! estimate correction for the number of nonzero entries in the diagonal and nondiagonal portion
   ! self interface
   !rval=-1.0
   !call VecSet(nself_gvec1,rval,ierr) ! subtract self
+
   rval = 1.0
   do i = 1,neq1
     if (isg_interface(i) == 1) then
       call VecSetValues(nself_gvec1,1,l2gdof1(i),rval,ADD_VALUES,ierr);
     endif
   enddo
-  call VecAssemblyBegin(nself_gvec1,ierr)
-  CHKERRA(ierr)
-  call VecAssemblyEnd(nself_gvec1,ierr)
-  CHKERRA(ierr)
+  call VecAssemblyBegin(nself_gvec1,ierr); CHECK_PETSC_ERROR(ierr)
+  call VecAssemblyEnd(nself_gvec1,ierr); CHECK_PETSC_ERROR(ierr)
   call VecGetLocalSize(nself_gvec1,n,ierr)
 
   allocate(rnself_lgarray1(neq1))
   call scatter_globalvec1(nself_gvec1, rnself_lgarray1)
   call VecGetArrayF90(nself_gvec1,rnself_array1,ierr)
+
   allocate(nself_array1(n))
   nself_array1 = int(rnself_array1(1:n))
-  where(nself_array1 > 0)nself_array1=nself_array1-1 ! subtract self
+
+  where(nself_array1 > 0) nself_array1 = nself_array1-1 ! subtract self
+
   call VecRestoreArrayF90(nself_gvec1,rnself_array1,ierr)
   call VecDestroy(nself_gvec1,ierr)
 
-  if (myrank == 0) write(*,*) 'maximum value of nself:',maxval(nself_array1)
-  !call sync_all
-  !! stop all the MPI processes, and exit
-  !call MPI_FINALIZE(ierr)
-  !stop
-  !! count nonzero entries in the diagonal and nondiagonal portion
-  !zero=0.
-  !call VecSet(nzeror_dvec1,zero,ierr)
-  !call VecSet(nzeror_ovec1,zero,ierr)
+  if (myrank == 0) print *,'PETSc solver: maximum value of nself:',maxval(nself_array1)
 
-  !outf_name='isg_interface'//trim(adjustl(char_myrank))
-  !open(1,file=outf_name,action='write',status='replace')
-  !write(1,'(i4)')isg_interface
-  !close(1)
-
-  !if (myrank==0) open(11,file='test_interface',action='write',status='replace')
-  ! factor for maximum number of interfaces for each nondiagonal entry of the
-  ! stiffness matrix
-  ! the factor below is valid ONLY for rectagular partitioning of the global model
+  ! factor for maximum number of interfaces for each nondiagonal entry of the stiffness matrix
+  ! the factor below is valid ONLY for rectangular partitioning of the global model
   max_ni = 8.0
   fac_ni = 0.0
 
   ! first element
-  igr0=kgrow_sparse1(1)-1
-  igc0=kgcol_sparse1(1)-1
-  ir0=krow_sparse1(1)
-  ic0=kcol_sparse1(1)
+  igr0 = kgrow_sparse1(1)-1
+  igc0 = kgcol_sparse1(1)-1
+  ir0 = krow_sparse1(1)
+  ic0 = kcol_sparse1(1)
   nd = 0; noffd = 0
   rnid = 0.; rnioffd = 0.
   if (iproc_array1(ir0) == iproc_array1(ic0)) then
@@ -550,36 +581,32 @@ contains
     endif
   endif
   do i = 2,nsparse1
-    igr=kgrow_sparse1(i)-1
-    igc=kgcol_sparse1(i)-1
-    ir=krow_sparse1(i)
-    ic=kcol_sparse1(i)
+    igr = kgrow_sparse1(i)-1
+    igc = kgcol_sparse1(i)-1
+    ir = krow_sparse1(i)
+    ic = kcol_sparse1(i)
     if (l2gdof1(ir) /= igr.or.l2gdof1(ic) /= igc) then
-      write(*,*) 'strange:',l2gdof1(ir),igr,l2gdof1(ic),igc
+      print *,'Error: strange:',l2gdof1(ir),igr,l2gdof1(ic),igc
       stop
     endif
     if (igr /= igr0) then
       ! new row starts
       ! set values computed so far
-      rnd=real(nd)
-      rnoffd=real(noffd)
-      call VecSetValues(nzeror_dvec1,1,igr0,rnd,ADD_VALUES,ierr)
-      CHKERRA(ierr)
-      call VecSetValues(nzeror_ovec1,1,igr0,rnoffd,ADD_VALUES,ierr)
-      CHKERRA(ierr)
+      rnd = real(nd)
+      rnoffd = real(noffd)
+      call VecSetValues(nzeror_dvec1,1,igr0,rnd,ADD_VALUES,ierr); CHECK_PETSC_ERROR(ierr)
+      call VecSetValues(nzeror_ovec1,1,igr0,rnoffd,ADD_VALUES,ierr); CHECK_PETSC_ERROR(ierr)
 
-      call VecSetValues(ninterface_dvec1,1,igr0,rnid,ADD_VALUES,ierr)
-      CHKERRA(ierr)
-      call VecSetValues(ninterface_ovec1,1,igr0,rnioffd,ADD_VALUES,ierr)
-      CHKERRA(ierr)
+      call VecSetValues(ninterface_dvec1,1,igr0,rnid,ADD_VALUES,ierr); CHECK_PETSC_ERROR(ierr)
+      call VecSetValues(ninterface_ovec1,1,igr0,rnioffd,ADD_VALUES,ierr); CHECK_PETSC_ERROR(ierr)
 
       ! reset
       nd = 0; noffd = 0
       rnid = 0.; rnioffd = 0.
-      igr0=igr !kgrow_sparse1(i)-1
-      igc0=igc !kgcol_sparse1(i)-1
-      ir0=ir !krow_sparse1(i)
-      ic0=ic !kcol_sparse1(i)
+      igr0 = igr !kgrow_sparse1(i)-1
+      igc0 = igc !kgcol_sparse1(i)-1
+      ir0 = ir !krow_sparse1(i)
+      ic0 = ic !kcol_sparse1(i)
 
       if (iproc_array1(ir0) == iproc_array1(ic0)) then
         nd = 1;
@@ -601,32 +628,29 @@ contains
         nd = nd+1;
         if (igr /= igc .and. rnself_lgarray1(ir) > 0.0 .and. rnself_lgarray1(ic) > 0.0) then
           fac_ni = min(max_ni,min(rnself_lgarray1(ir),rnself_lgarray1(ic)))
-          rnid=rnid+(1.0/fac_ni)
+          rnid = rnid+(1.0/fac_ni)
         endif
       else
         noffd = noffd+1
         if (igr /= igc .and. rnself_lgarray1(ir) > 0.0 .and. rnself_lgarray1(ic) > 0.0) then
           fac_ni = min(max_ni,min(rnself_lgarray1(ir),rnself_lgarray1(ic)))
-          rnioffd=rnioffd+(1.0/fac_ni)
+          rnioffd = rnioffd+(1.0/fac_ni)
         endif
       endif
     endif
     if (i == nsparse1) then
       ! for last
-      rnd=real(nd)
-      rnoffd=real(noffd)
-      call VecSetValues(nzeror_dvec1,1,igr0,rnd,ADD_VALUES,ierr)
-      CHKERRA(ierr)
-      call VecSetValues(nzeror_ovec1,1,igr0,rnoffd,ADD_VALUES,ierr)
-      CHKERRA(ierr)
+      rnd = real(nd)
+      rnoffd = real(noffd)
+      call VecSetValues(nzeror_dvec1,1,igr0,rnd,ADD_VALUES,ierr); CHECK_PETSC_ERROR(ierr)
+      call VecSetValues(nzeror_ovec1,1,igr0,rnoffd,ADD_VALUES,ierr); CHECK_PETSC_ERROR(ierr)
 
-      call VecSetValues(ninterface_dvec1,1,igr0,rnid,ADD_VALUES,ierr)
-      CHKERRA(ierr)
-      call VecSetValues(ninterface_ovec1,1,igr0,rnioffd,ADD_VALUES,ierr)
-      CHKERRA(ierr)
+      call VecSetValues(ninterface_dvec1,1,igr0,rnid,ADD_VALUES,ierr); CHECK_PETSC_ERROR(ierr)
+      call VecSetValues(ninterface_ovec1,1,igr0,rnioffd,ADD_VALUES,ierr); CHECK_PETSC_ERROR(ierr)
     endif
   enddo
   deallocate(krow_sparse1,kcol_sparse1)
+
   ! Assemble vectors globally
   call VecAssemblyBegin(nzeror_dvec1,ierr)
   call VecAssemblyEnd(nzeror_dvec1,ierr)
@@ -641,18 +665,21 @@ contains
   ! apply correction for repeatition due to interfaces
   call VecGetLocalSize(nzeror_dvec1,n,ierr)
   call VecGetArrayF90(nzeror_dvec1,nzeror_darray1,ierr)
+
   allocate(nnzero_diag1(n))
   nnzero_diag1 = int(nzeror_darray1(1:n))
   nnzero_diag1 = nnzero_diag1-nself_array1
 
-  if (myrank == 0) write(*,*) n,minval(nzeror_darray1),maxval(nzeror_darray1), &
-  minval(nnzero_diag1),maxval(nnzero_diag1)
-  call sync_all
+  !debug
+  if (myrank == 0) print *,'PETSc solver: n: ',n,minval(nzeror_darray1),maxval(nzeror_darray1), &
+                                                 minval(nnzero_diag1),maxval(nnzero_diag1)
+  call synchronize_all()
 
   call VecRestoreArrayF90(nzeror_dvec1,nzeror_darray1,ierr)
   call VecDestroy(nzeror_dvec1,ierr)
 
   call VecGetArrayF90(nzeror_ovec1,nzeror_oarray1,ierr)
+
   allocate(nnzero_offdiag1(n))
   nnzero_offdiag1 = int(nzeror_oarray1(1:n))
 
@@ -663,81 +690,80 @@ contains
   ! I do not know why but there are some DOFs where the correction exceeds by 4 or
   ! 8 therefore to be safe we need to subtract this from all
   call VecGetArrayF90(ninterface_dvec1,rninterface_darray1,ierr)
+
   !where(rninterface_darray1>0.0 .and. rninterface_darray1 < 1.0)rninterface_darray1=1.0
+
   allocate(ninterface_darray1(n))
   ninterface_darray1 = int(rninterface_darray1(1:n))
+
   call VecRestoreArrayF90(ninterface_dvec1,rninterface_darray1,ierr)
   call VecDestroy(ninterface_dvec1,ierr)
-  where(ninterface_darray1 > 0)ninterface_darray1=ninterface_darray1-4
-  where(ninterface_darray1 < 0)ninterface_darray1=0
 
+  where(ninterface_darray1 > 0) ninterface_darray1 = ninterface_darray1-4
+  where(ninterface_darray1 < 0) ninterface_darray1 = 0
 
   call VecGetArrayF90(ninterface_ovec1,rninterface_oarray1,ierr)
+
   !where(rninterface_oarray1>0.0 .and. rninterface_oarray1 < 1.0)rninterface_oarray1=1.0
+
   allocate(ninterface_oarray1(n))
   ninterface_oarray1 = int(rninterface_oarray1(1:n))
+
   call VecRestoreArrayF90(ninterface_ovec1,rninterface_oarray1,ierr)
   call VecDestroy(ninterface_ovec1,ierr)
-  where(ninterface_oarray1 > 0)ninterface_oarray1=ninterface_oarray1-8
-  where(ninterface_oarray1 < 0)ninterface_oarray1=0
 
+  where(ninterface_oarray1 > 0) ninterface_oarray1 = ninterface_oarray1-8
+  where(ninterface_oarray1 < 0) ninterface_oarray1 = 0
 
   nnzero_diag1 = nnzero_diag1-ninterface_darray1
   nnzero_offdiag1 = nnzero_offdiag1-ninterface_oarray1
 
   do i = 1,nsparse1
-    rval = 1.
-    igdof=kgrow_sparse1(i)-1 ! Fortran index
-    call VecSetValues(nzeror_gvec1,1,igdof,rval,ADD_VALUES,ierr);
-    CHKERRA(ierr)
+    rval = 1.0
+    igdof = kgrow_sparse1(i)-1 ! Fortran index
+    call VecSetValues(nzeror_gvec1,1,igdof,rval,ADD_VALUES,ierr); CHECK_PETSC_ERROR(ierr)
   enddo
-  call VecAssemblyBegin(nzeror_gvec1,ierr)
-  CHKERRA(ierr)
-  call VecAssemblyEnd(nzeror_gvec1,ierr)
-  CHKERRA(ierr)
-  call VecGetLocalSize(nzeror_gvec1,n,ierr)
-  CHKERRA(ierr)
-  if (myrank == 0) write(*,*) 'size of vector:',ng,n,minval(kgrow_sparse1),ig0
-  call VecGetArrayF90(nzeror_gvec1,nzeror_array1,ierr)
-  CHKERRA(ierr)
-  allocate(inzeror_array1(n))
-  inzeror_array1 = int(nzeror_array1(1:n))
-  call VecRestoreArrayF90(nzeror_gvec1,nzeror_array1,ierr)
-  CHKERRA(ierr)
-  call VecDestroy(nzeror_gvec1,ierr)
-  CHKERRA(ierr)
+  call VecAssemblyBegin(nzeror_gvec1,ierr); CHECK_PETSC_ERROR(ierr)
+  call VecAssemblyEnd(nzeror_gvec1,ierr); CHECK_PETSC_ERROR(ierr)
+  call VecGetLocalSize(nzeror_gvec1,n,ierr); CHECK_PETSC_ERROR(ierr)
 
+  !debug
+  if (myrank == 0) print *,'PETSc solver: size of vector:',ng,n,minval(kgrow_sparse1),ig0
+
+  call VecGetArrayF90(nzeror_gvec1,nzeror_array1,ierr); CHECK_PETSC_ERROR(ierr)
+
+  allocate(inzeror_array1(n))
+  inzeror_array1(:) = int(nzeror_array1(1:n))
+
+  call VecRestoreArrayF90(nzeror_gvec1,nzeror_array1,ierr); CHECK_PETSC_ERROR(ierr)
+  call VecDestroy(nzeror_gvec1,ierr); CHECK_PETSC_ERROR(ierr)
 
   ! Create the stiffness matrix (same for forward/adjoint simulations)
-  call MatCreate(PETSC_COMM_WORLD,Amat1,ierr)
-  call MatSetType(Amat1,MATMPIAIJ,ierr)
-  CHKERRA(ierr)
-  call MatSetSizes(Amat1,PETSC_DECIDE,PETSC_DECIDE,ngdof1,ngdof1,ierr)
-  CHKERRA(ierr)
+  call MatCreate(PETSC_COMM_WORLD,Amat1,ierr); CHECK_PETSC_ERROR(ierr)
+  call MatSetType(Amat1,MATMPIAIJ,ierr); CHECK_PETSC_ERROR(ierr)
+  call MatSetSizes(Amat1,PETSC_DECIDE,PETSC_DECIDE,ngdof1,ngdof1,ierr); CHECK_PETSC_ERROR(ierr)
 
-  call MatMPIAIJSetPreallocation(Amat1,nzeros_max,inzeror_array1,nzeros_max, &
-  inzeror_array1,ierr)
-  CHKERRA(ierr)
+  call MatMPIAIJSetPreallocation(Amat1,nzeros_max,inzeror_array1,nzeros_max,inzeror_array1,ierr); CHECK_PETSC_ERROR(ierr)
 
-  call MatSetFromOptions(Amat1,ierr)
-  CHKERRA(ierr)
+  call MatSetFromOptions(Amat1,ierr); CHECK_PETSC_ERROR(ierr)
 
-  call MatGetOwnershipRange(Amat1,istart,iend,ierr)
-  CHKERRA(ierr)
-  call sync_all
+  call MatGetOwnershipRange(Amat1,istart,iend,ierr); CHECK_PETSC_ERROR(ierr)
+  call synchronize_all()
+
+  ! check
   if (istart /= ig0 .or. iend-1 /= ig1) then
-    write(*,*) 'ERROR: ownership range mismatch!'
-    write(*,*) 'ownership range:',myrank,istart,ig0,iend-1,ig1,nzeros_row(1)
+    print *,'ERROR: PETSc solver ownership range mismatch!'
+    print *,'       ownership range:',myrank,istart,ig0,iend-1,ig1,nzeros_row(1)
     stop
   endif
+
   deallocate(nzeros)
 
   ! Create forward solver
-  !solver_type1=CG
+  !solver_type1 = CG
   !call create_linear_solver(solver_type1, ksp1, Amat1, pc1, Fmat1)
 
-  !call KSPSetTolerances(ksp1,KSP_RTOL1,KSP_ATOL1,KSP_DTOL1,KSP_MAXITER1,ierr)
-  !CHKERRA(ierr)
+  !call KSPSetTolerances(ksp1,KSP_RTOL1,KSP_ATOL1,KSP_DTOL1,KSP_MAXITER1,ierr); CHECK_PETSC_ERROR(ierr)
 
   !  Set runtime options, e.g.,
   !    -ksp_type < type> -pc_type < type> -ksp_monitor -ksp_KSP_RTOL < KSP_RTOL>
@@ -746,20 +772,15 @@ contains
   !  routines.
   !call KSPSetFromOptions(ksp1,ierr)
 
-
   ! Create adjoint solver:
-  !if (SIMULATION_TYPE==3) then
+  !if (SIMULATION_TYPE == 3) then
   !  call create_linear_solver(solver_type1, b_ksp1, Amat1, pc1, Fmat1)
-  !  call KSPSetTolerances(b_ksp1,KSP_RTOL1,KSP_ATOL1,KSP_DTOL1,KSP_MAXITER1,ierr)
-  !  CHKERRA(ierr)
+  !  call KSPSetTolerances(b_ksp1,KSP_RTOL1,KSP_ATOL1,KSP_DTOL1,KSP_MAXITER1,ierr); CHECK_PETSC_ERROR(ierr)
   !  call KSPSetFromOptions(b_ksp1,ierr)
-  !  if (myrank==0) then
-  !    write(*,*) ' Created adjoint linear KSP solver...'
+  !  if (myrank == 0) then
+  !    print *,'PETSc solver: Created adjoint linear KSP solver...'
   !  endif
   !endif
-
-
-
 
   !-------------------------------------------------------------------------------
   ! Create the linear solver and set various options
@@ -768,53 +789,66 @@ contains
   ! COMMAND: define from the command
   ! SUPERLU: SuperLU solver
   ! MUMPS: MUMPS solver
-  !solver_type1=CG
+  !solver_type1 = CG
   ! Create linear solver context
 
-  call KSPCreate(PETSC_COMM_WORLD,ksp1,ierr)
-  call KSPSetOperators(ksp1,Amat1,Amat1,ierr) ! version >= 3.5
+  call KSPCreate(PETSC_COMM_WORLD,ksp1,ierr); CHECK_PETSC_ERROR(ierr)
+  call KSPSetOperators(ksp1,Amat1,Amat1,ierr); CHECK_PETSC_ERROR(ierr) ! version >= 3.5
 
   if (SIMULATION_TYPE == 3) then
-    call KSPSetInitialGuessNonzero(ksp1,PETSC_FALSE,ierr)
+    call KSPSetInitialGuessNonzero(ksp1,PETSC_FALSE,ierr); CHECK_PETSC_ERROR(ierr)
   else
-    call KSPSetInitialGuessNonzero(ksp1,PETSC_TRUE,ierr)
+    call KSPSetInitialGuessNonzero(ksp1,PETSC_TRUE,ierr); CHECK_PETSC_ERROR(ierr)
   endif
 
-  CHKERRA(ierr)
-  call KSPSetDiagonalScale(ksp1,PETSC_TRUE,ierr)
-  CHKERRA(ierr)
-  call KSPSetReusePreconditioner(ksp1,PETSC_TRUE,ierr)
-  call KSPSetType(ksp1,KSPCG,ierr);
-  CHKERRA(ierr)
-  call KSPGetPC(ksp1,pc1,ierr)
-  CHKERRA(ierr)
-  call PCFactorSetShiftType(pc1,MAT_SHIFT_POSITIVE_DEFINITE,ierr)
-  CHKERRA(ierr)
-  call KSPSetTolerances(ksp1,KSP_RTOL1,KSP_ATOL1,KSP_DTOL1,KSP_MAXITER1,ierr)
-  CHKERRA(ierr)
-  call KSPSetFromOptions(ksp1,ierr)
+  call KSPSetDiagonalScale(ksp1,PETSC_TRUE,ierr); CHECK_PETSC_ERROR(ierr)
+  call KSPSetReusePreconditioner(ksp1,PETSC_TRUE,ierr); CHECK_PETSC_ERROR(ierr)
+  call KSPSetType(ksp1,KSPCG,ierr); CHECK_PETSC_ERROR(ierr)
+  call KSPGetPC(ksp1,pc1,ierr); CHECK_PETSC_ERROR(ierr)
+  call PCFactorSetShiftType(pc1,MAT_SHIFT_POSITIVE_DEFINITE,ierr); CHECK_PETSC_ERROR(ierr)
+  call KSPSetTolerances(ksp1,KSP_RTOL1,KSP_ATOL1,KSP_DTOL1,KSP_MAXITER1,ierr); CHECK_PETSC_ERROR(ierr)
+  call KSPSetFromOptions(ksp1,ierr); CHECK_PETSC_ERROR(ierr)
 
   ! BACKWARD SOLVER
-  call KSPCreate(PETSC_COMM_WORLD,b_ksp1,ierr)
-  call KSPSetOperators(b_ksp1,Amat1,Amat1,ierr) ! version >= 3.5
-  call KSPSetInitialGuessNonzero(b_ksp1,PETSC_FALSE,ierr)
-  CHKERRA(ierr)
-  call KSPSetDiagonalScale(b_ksp1,PETSC_TRUE,ierr)
-  CHKERRA(ierr)
-  call KSPSetReusePreconditioner(b_ksp1,PETSC_TRUE,ierr)
-  call KSPSetType(b_ksp1,KSPCG,ierr);
-  CHKERRA(ierr)
-  call KSPGetPC(b_ksp1,b_pc1,ierr)
-  CHKERRA(ierr)
-  call PCFactorSetShiftType(b_pc1,MAT_SHIFT_POSITIVE_DEFINITE,ierr)
-  CHKERRA(ierr)
-  call KSPSetTolerances(b_ksp1,KSP_RTOL1,KSP_ATOL1,KSP_DTOL1,KSP_MAXITER1,ierr)
-  CHKERRA(ierr)
-  call KSPSetFromOptions(b_ksp1,ierr)
-
-  if (myrank == 0) then
-    write(*,*) ' ---------- Finished PETSC initialisation ---------- '
+  if (SIMULATION_TYPE == 3) then
+    call KSPCreate(PETSC_COMM_WORLD,b_ksp1,ierr); CHECK_PETSC_ERROR(ierr)
+    call KSPSetOperators(b_ksp1,Amat1,Amat1,ierr); CHECK_PETSC_ERROR(ierr) ! version >= 3.5
+    call KSPSetInitialGuessNonzero(b_ksp1,PETSC_FALSE,ierr); CHECK_PETSC_ERROR(ierr)
+    call KSPSetDiagonalScale(b_ksp1,PETSC_TRUE,ierr); CHECK_PETSC_ERROR(ierr)
+    call KSPSetReusePreconditioner(b_ksp1,PETSC_TRUE,ierr); CHECK_PETSC_ERROR(ierr)
+    call KSPSetType(b_ksp1,KSPCG,ierr); CHECK_PETSC_ERROR(ierr)
+    call KSPGetPC(b_ksp1,b_pc1,ierr); CHECK_PETSC_ERROR(ierr)
+    call PCFactorSetShiftType(b_pc1,MAT_SHIFT_POSITIVE_DEFINITE,ierr); CHECK_PETSC_ERROR(ierr)
+    call KSPSetTolerances(b_ksp1,KSP_RTOL1,KSP_ATOL1,KSP_DTOL1,KSP_MAXITER1,ierr); CHECK_PETSC_ERROR(ierr)
+    call KSPSetFromOptions(b_ksp1,ierr); CHECK_PETSC_ERROR(ierr)
   endif
+
+  !debug
+  if (myrank == 0) print *,'PETSc solver: ---------- Finished PETSC initialisation ---------- '
+  if (myrank == 0) print *
+
+  ! synchronize all processes
+  call synchronize_all()
+
+  ! user output
+  if (myrank == 0) then
+    tCPU = wtime() - tstart
+    write(IMAIN,*) '    elapsed time for PETSc solver initialization: ',sngl(tCPU),'(s)'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+#else
+  ! no PETSc compilation support
+  ! compilation without PETSc support
+  if (myrank == 0) then
+    print *, "Error: PETSc solver enabled without PETSc Support."
+    print *, "       To enable PETSc support, reconfigure with --with-petsc flag."
+  endif
+  ! safety stop
+  call exit_MPI(myrank,"Error PETSc solver: petsc_initialize1 called without compilation support")
+
+#endif
 
   end subroutine petsc_initialize1
 
@@ -822,131 +856,120 @@ contains
 !===============================================================================
 !
 
-  subroutine create_linear_solver(stype, l_ksp, l_Amat, l_pc, l_fmat)
+#ifdef USE_PETSC
 
-  ! Create the linear solver and set various options
-  ! stype: Solver type - options available are
-  !   COMMAND   define from the command
-  !   SUPERLU   SuperLU solver
-  !   MUMPS     MUMPS solver
-  ! l_ksp: the local KSP (ksp1 or b_ksp1 etc)
-  ! l_Amat: local A matrix - I think always Amat1
-  ! l_pc:   local preconditioner e.g pc1
-  use specfem_par, only: myrank, SIMULATION_TYPE
-  implicit none
+! not used so far...
 
+!  subroutine create_linear_solver(stype, l_ksp, l_Amat, l_pc, l_fmat)
+!
+!  ! Create the linear solver and set various options
+!  ! stype: Solver type - options available are
+!  !   COMMAND   define from the command
+!  !   SUPERLU   SuperLU solver
+!  !   MUMPS     MUMPS solver
+!  ! l_ksp: the local KSP (ksp1 or b_ksp1 etc)
+!  ! l_Amat: local A matrix - I think always Amat1
+!  ! l_pc:   local preconditioner e.g pc1
+!
+!  use specfem_par, only: myrank, SIMULATION_TYPE
+!
+!  implicit none
+!
+!  PetscInt :: stype
+!  type(tKSP) :: l_ksp
+!  type(tMat) :: l_Amat, l_fmat
+!  type(tPC) :: l_pc
+!
+!  ! Create linear solver context
+!  call KSPCreate(PETSC_COMM_WORLD,l_ksp,ierr)
+!  ! Set operators. Here the matrix that defines the linear system
+!  ! also serves as the preconditioning matrix.
+!  !call KSPSetOperators(ksp1,Amat1,Amat1,SAME_PRECONDITIONER,ierr) ! version < 3.5
+!  call KSPSetOperators(l_ksp,l_Amat,l_Amat,ierr) ! version >= 3.5
+!
+!  call KSPSetInitialGuessNonzero(l_ksp,PETSC_TRUE,ierr); CHECK_PETSC_ERROR(ierr)
+!  !since the euqutions are nondimensionalized, the scaling is unnecessary?
+!  call KSPSetDiagonalScale(l_ksp,PETSC_TRUE,ierr); CHECK_PETSC_ERROR(ierr)
+!  call KSPSetReusePreconditioner(l_ksp,PETSC_TRUE,ierr)
+!
+!  if (stype == COMMAND) then
+!    if (myrank == 0) print *,'Solver type: provided via command'
+!  else if (stype == CG) then
+!    ! CONJUGATE GRADIENT
+!    if (myrank == 0) print *,'Solver type: CG'
+!    call KSPSetType(l_ksp,KSPCG,ierr); CHECK_PETSC_ERROR(ierr)
+!    ! Fetch preconditioner
+!    call KSPGetPC(l_ksp,l_pc,ierr); CHECK_PETSC_ERROR(ierr)
+!    call PCFactorSetShiftType(l_pc,MAT_SHIFT_POSITIVE_DEFINITE,ierr); CHECK_PETSC_ERROR(ierr)
+!  else if (stype == SUPERLU) then
+!    ! SUPER LU
+!    if (myrank == 0) print *,'Solver type: SUPERLU'
+!    if (SIMULATION_TYPE == 3) then
+!      stop ' ERROR: SUPERLU not implemented for adjoint sims yet.'
+!    endif
+!    flg_ilu    = PETSC_FALSE;
+!    flg_lu     = PETSC_FALSE;
+!    ! version < 3.8.0
+!    !call PetscOptionsGetBool(PETSC_NULL_CHARACTER,"-use_superlu_lu",flg_lu,flg,ierr);
+!    call PetscOptionsGetBool(PETSC_NULL_OPTIONS,PETSC_NULL_CHARACTER, &
+!          "-use_superlu_lu",flg_lu,flg,ierr); CHECK_PETSC_ERROR(ierr)
+!    !call PetscOptionsGetBool(PETSC_NULL_CHARACTER,"-use_superlu_ilu",flg_ilu,flg,ierr);
+!    if (flg_lu .or. flg_ilu) then
+!      call KSPSetType(l_ksp,KSPPREONLY,ierr); CHECK_PETSC_ERROR(ierr)
+!      call KSPGetPC(l_ksp,l_pc,ierr); CHECK_PETSC_ERROR(ierr)
+!      if (flg_lu) then
+!        call PCSetType(l_pc,PCLU,ierr); CHECK_PETSC_ERROR(ierr)
+!      else if (flg_ilu) then
+!        call PCSetType(l_pc,PCILU,ierr); CHECK_PETSC_ERROR(ierr)
+!      endif
+!      call PCFactorSetShiftType(l_pc,MAT_SHIFT_POSITIVE_DEFINITE,ierr); CHECK_PETSC_ERROR(ierr)
+!      ! version < 3.9
+!      !call PCFactorSetMatSolverPackage(l_pc,MATSOLVERSUPERLU,ierr)
+!      call PCFactorSetMatSolverType(l_pc,MATSOLVERSUPERLU,ierr); CHECK_PETSC_ERROR(ierr)
+!      ! version < 3.9
+!      !call PCFactorSetUpMatSolverPackage(l_pc,ierr); ! call MatGetFactor() to create F
+!      call PCFactorSetUpMatSolverType(l_pc,ierr); CHECK_PETSC_ERROR(ierr)
+!      call PCFactorGetMatrix(l_pc,l_fmat,ierr); CHECK_PETSC_ERROR(ierr)
+!      !call MatSuperluSetILUDropTol(l_fmat,1.e-8,ierr); CHECK_PETSC_ERROR(ierr)
+!    endif
+!  else if (stype == MUMPS) then
+!    if (myrank == 0) print *,'Solver type: MUMPS'
+!
+!    stop 'ERROR - WE commented out MUMPS stuff due to syntax error'
+!
+!    flg_lu    = PETSC_FALSE;
+!    flg_ch    = PETSC_FALSE;
+!    ! version < 3.8.0
+!    ! call PetscOptionsGetBool(PETSC_NULL_CHARACTER,"-use_mumps_ch",flg_ch,flg,ierr);
+!     call PetscOptionsGetBool(PETSC_NULL_OPTIONS,PETSC_NULL_CHARACTER, &
+!          "-use_mumps_ch",flg_ch,flg,ierr);
+!    if (flg_lu .or. flg_ch) then
+!      call KSPSetType(l_ksp,KSPPREONLY,ierr); CHECK_PETSC_ERROR(ierr)
+!      call KSPGetPC(l_ksp,l_pc,ierr); CHECK_PETSC_ERROR(ierr)
+!      if (flg_lu) then
+!        call PCSetType(l_pc,PCLU,ierr); CHECK_PETSC_ERROR(ierr)
+!      else if (flg_ch) then
+!        ! set MUMPS id%SYM=1
+!        call MatSetOption(l_Amat,MAT_SPD,PETSC_TRUE,ierr); CHECK_PETSC_ERROR(ierr)
+!        call PCSetType(l_pc,PCCHOLESKY,ierr);
+!      endif
+!      call PCFactorSetShiftType(l_pc,MAT_SHIFT_POSITIVE_DEFINITE,ierr); CHECK_PETSC_ERROR(ierr)
+!      ! version < 3.9
+!      !call PCFactorSetMatSolverPackage(l_pc,MATSOLVERMUMPS,ierr);
+!      !call PCFactorSetUpMatSolverPackage(l_pc,ierr); ! call MatGetFactor() to create F
+!      !call PCFactorSetMatSolverType(l_pc,MATSOLVERMUMPS,ierr);
+!      !call PCFactorSetUpMatSolverType(l_pc,ierr); ! call MatGetFactor() to create F
+!      !call PCFactorGetMatrix(l_pc,l_fmat,ierr);
+!      icntl = 7; ival = 2;
+!      !call MatMumpsSetIcntl(l_fmat,icntl,ival,ierr);
+!      icntl = 1; val = 0.0;
+!      !call MatMumpsSetCntl(l_fmat,icntl,val,ierr);
+!    endif
+!  endif
+!
+!  end subroutine create_linear_solver
 
-
-  PetscInt     stype
-  KSP          l_ksp
-  Mat          l_Amat, l_fmat
-  PC           l_pc
-
-
-  ! Create linear solver context
-  call KSPCreate(PETSC_COMM_WORLD,l_ksp,ierr)
-  ! Set operators. Here the matrix that defines the linear system
-  ! also serves as the preconditioning matrix.
-  !call KSPSetOperators(ksp1,Amat1,Amat1,SAME_PRECONDITIONER,ierr) ! version < 3.5
-  call KSPSetOperators(l_ksp,l_Amat,l_Amat,ierr) ! version >= 3.5
-
-  call KSPSetInitialGuessNonzero(l_ksp,PETSC_TRUE,ierr)
-  CHKERRA(ierr)
-  !since the euqutions are nondimensionalized, the scaling is unnecessary?
-  call KSPSetDiagonalScale(l_ksp,PETSC_TRUE,ierr)
-  CHKERRA(ierr)
-  call KSPSetReusePreconditioner(l_ksp,PETSC_TRUE,ierr)
-
-  if (stype == COMMAND) then
-    if (myrank == 0) write(*,*) 'Solver type: provided via command'
-  else if (stype == CG) then
-    ! CONJUGATE GRADIENT
-    if (myrank == 0) write(*,*) 'Solver type: CG'
-    call KSPSetType(l_ksp,KSPCG,ierr);
-    CHKERRA(ierr)
-    ! Fetch preconditioner
-    call KSPGetPC(l_ksp,l_pc,ierr)
-    CHKERRA(ierr)
-    call PCFactorSetShiftType(l_pc,MAT_SHIFT_POSITIVE_DEFINITE,ierr)
-    CHKERRA(ierr)
-  else if (stype == SUPERLU) then
-    ! SUPER LU
-    if (myrank == 0) write(*,*) 'Solver type: SUPERLU'
-    if (SIMULATION_TYPE == 3) then
-      write(*,*) ' ERROR: SUPERLU not implemented for adjoint sims yet.'
-      stop
-    endif
-    flg_ilu    = PETSC_FALSE;
-    flg_lu     = PETSC_FALSE;
-    ! version < 3.8.0
-      ! call
-      ! PetscOptionsGetBool(PETSC_NULL_CHARACTER,"-use_superlu_lu",flg_lu,flg,ierr);
-        call PetscOptionsGetBool(PETSC_NULL_OPTIONS,PETSC_NULL_CHARACTER, &
-          "-use_superlu_lu",flg_lu,flg,ierr);
-    CHKERRA(ierr)
-    !PetscOptionsGetBool(PETSC_NULL_CHARACTER,"-use_superlu_ilu",flg_ilu,flg,ierr);
-    if (flg_lu .or. flg_ilu) then
-      call KSPSetType(l_ksp,KSPPREONLY,ierr);
-      CHKERRA(ierr)
-      call KSPGetPC(l_ksp,l_pc,ierr);
-      CHKERRA(ierr)
-      if (flg_lu) then
-        call PCSetType(l_pc,PCLU,ierr);
-        CHKERRA(ierr)
-      else if (flg_ilu) then
-        call PCSetType(l_pc,PCILU,ierr);
-        CHKERRA(ierr)
-      endif
-      call PCFactorSetShiftType(l_pc,MAT_SHIFT_POSITIVE_DEFINITE,ierr)
-      CHKERRA(ierr)
-      ! version < 3.9
-      !call PCFactorSetMatSolverPackage(l_pc,MATSOLVERSUPERLU,ierr);
-      call PCFactorSetMatSolverType(l_pc,MATSOLVERSUPERLU,ierr);
-      CHKERRA(ierr)
-      ! version < 3.9
-      !call PCFactorSetUpMatSolverPackage(l_pc,ierr); ! call MatGetFactor() to create F
-      call PCFactorSetUpMatSolverType(l_pc,ierr); ! call MatGetFactor() to create F
-      CHKERRA(ierr)
-      call PCFactorGetMatrix(l_pc,l_fmat,ierr);
-      CHKERRA(ierr)
-      !call MatSuperluSetILUDropTol(l_fmat,1.e-8,ierr);
-      !CHKERRA(ierr)
-    endif
-  else if (stype == MUMPS) then
-    if (myrank == 0) write(*,*) 'Solver type: MUMPS'
-    write(*,*) 'ERROR - WE commented out MUMPS stuff due to syntax error'
-    stop
-    flg_lu    = PETSC_FALSE;
-    flg_ch    = PETSC_FALSE;
-    ! version < 3.8.0
-    ! call PetscOptionsGetBool(PETSC_NULL_CHARACTER,"-use_mumps_ch",flg_ch,flg,ierr);
-     call PetscOptionsGetBool(PETSC_NULL_OPTIONS,PETSC_NULL_CHARACTER, &
-          "-use_mumps_ch",flg_ch,flg,ierr);
-    if (flg_lu .or. flg_ch) then
-      call KSPSetType(l_ksp,KSPPREONLY,ierr);
-      call KSPGetPC(l_ksp,l_pc,ierr);
-      if (flg_lu) then
-        call PCSetType(l_pc,PCLU,ierr);
-      else if (flg_ch) then
-        call MatSetOption(l_Amat,MAT_SPD,PETSC_TRUE,ierr); ! set MUMPS id%SYM=1
-        call PCSetType(l_pc,PCCHOLESKY,ierr);
-      endif
-      call PCFactorSetShiftType(l_pc,MAT_SHIFT_POSITIVE_DEFINITE,ierr)
-      CHKERRA(ierr)
-      ! version < 3.9
-      !call PCFactorSetMatSolverPackage(l_pc,MATSOLVERMUMPS,ierr);
-      !call PCFactorSetUpMatSolverPackage(l_pc,ierr); ! call MatGetFactor() to create F
-      !call PCFactorSetMatSolverType(l_pc,MATSOLVERMUMPS,ierr);
-      !call PCFactorSetUpMatSolverType(l_pc,ierr); ! call MatGetFactor() to create F
-      !call PCFactorGetMatrix(l_pc,l_fmat,ierr);
-      icntl = 7; ival = 2;
-      !call MatMumpsSetIcntl(l_fmat,icntl,ival,ierr);
-      icntl = 1; val = 0.0;
-      !call MatMumpsSetCntl(l_fmat,icntl,val,ierr);
-    endif
-  endif
-
-  end subroutine create_linear_solver
+#endif
 
 !
 !===============================================================================
@@ -954,291 +977,279 @@ contains
 
   subroutine petsc_set_matrix1()
 
-  use math_library_mpi, only: maxscal,minscal
-  use specfem_par, only: IFLAG_IN_FICTITIOUS_CUBE,NSPEC_INNER_CORE, &
+#ifdef USE_PETSC
+
+  use constants, only: CUSTOM_REAL,IFLAG_IN_FICTITIOUS_CUBE,NGLLCUBE_INF
+
+  use specfem_par, only: NSPEC_INNER_CORE, &
     NSPEC_OUTER_CORE,NSPEC_CRUST_MANTLE,NSPEC_TRINFINITE,NSPEC_INFINITE
-  use specfem_par, only: NEDOF
-  use specfem_par, only: NGLLCUBE_INF,NEDOF1
-  use specfem_par_innercore, only: ggdof_ic1,storekmat_inner_core1, &
-    idoubling_inner_core,inode_elmt_ic1
-  use specfem_par_outercore, only: ggdof_oc1,storekmat_outer_core1,inode_elmt_oc1
-  use specfem_par_crustmantle, only: ggdof_cm1,storekmat_crust_mantle1, &
-    inode_elmt_cm1
-  use specfem_par_trinfinite, only: ggdof_trinf1,storekmat_trinfinite1, &
-    inode_elmt_trinf1
-  use specfem_par_infinite, only: ggdof_inf1,storekmat_infinite1,inode_elmt_inf1
+
+  use specfem_par_innercore, only: idoubling_inner_core
+
+  use specfem_par_full_gravity, only: NEDOF,NEDOF1, &
+    ggdof_ic1,storekmat_inner_core1,inode_elmt_ic1, &
+    ggdof_oc1,storekmat_outer_core1,inode_elmt_oc1, &
+    ggdof_cm1,storekmat_crust_mantle1,inode_elmt_cm1, &
+    ggdof_trinf1,storekmat_trinfinite1,inode_elmt_trinf1, &
+    ggdof_inf1,storekmat_infinite1,inode_elmt_inf1
 
   implicit none
-  integer :: i,i_elmt,j,ncount
-  integer :: ggdof_elmt(NEDOF1),idof(NEDOF1),igdof(NEDOF1)
+  integer :: i,i_elmt,j !,ncount
+  integer :: ggdof_elmt(NEDOF1) !,idof(NEDOF1),igdof(NEDOF1)
 
-  PetscInt irow,istart,iend,ndiag,noffdiag
-  integer :: ncols,ncols_val
-  integer,allocatable :: cols(:)
-  real(kind=8),allocatable :: vals(:)
+  PetscInt:: istart,iend,ndiag,noffdiag
+
+  !debugging
+  integer :: ncols
+  integer,dimension(:),allocatable :: cols
 
   character(len=10) :: char_myrank
   character(len=60) :: outf_name
-  Vec Adiag1,lAdiag1
-  PetscScalar,pointer :: arrayAdiag1(:)
-  PetscReal :: maxdiag1,mindiag1
-  PetscInt n
 
-  call MatZeroEntries(Amat1,ierr)
-  CHKERRA(ierr)
+  ! types required by MatSetValues:
+  !   MatSetValues(Mat mat, PetscInt m, const PetscInt idxm[], PetscInt n, \
+  !                const PetscInt idxn[], const PetscScalar v[], InsertMode addv)
+  PetscScalar :: v
+
+  ! timing
+  double precision :: tstart,tCPU
+  double precision, external :: wtime
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '    setting up Level-1 solver matrix'
+    call flush_IMAIN()
+  endif
+
+  ! timing
+  tstart = wtime()
+
+  call MatZeroEntries(Amat1,ierr); CHECK_PETSC_ERROR(ierr)
+
+  ! to avoid errors:
+  !   note that the preallocation of Amat1 might be slightly off, in that the number of non-zero elements
+  !   for the diagonal and off-diagonal matrices could be estimated wrongly.
+  !
+  !   assigning the matrix entry values below with MatSetValues() will lead to errors like:
+  !       [4]PETSC ERROR: Argument out of range
+  !       [4]PETSC ERROR: New nonzero at (11346,11355) caused a malloc
+  !       Use MatSetOption(A, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE) to turn off this check
+  !       [4]PETSC ERROR: See https://petsc.org/release/faq/ for trouble shooting.
+  !       ..
+  !   and abort execution.
+  !
+  ! this is to turn off new malloc check error messages, when a new malloc is required by MatSetValues()
+  call MatSetOption(Amat1, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE, ierr); CHECK_PETSC_ERROR(ierr)
+
+  ! note: although the execution works by turning this check off, the matrix value assignment in particular
+  !       for the crust/mantle region below takes very long. this might be due to excessive malloc's required.
+  !
+  ! TODO: it would be great to fix the preallocation of Amat1 and specify more exact non-zero matrix entries
+  !       for anybody who knows how to do this :)
+
+  ! user info
+  if (myrank == 0) then
+    write(IMAIN,*) '    setup inner core values'
+    call flush_IMAIN()
+  endif
 
   ! inner core
   do i_elmt = 1,NSPEC_INNER_CORE
-    if (idoubling_inner_core(i_elmt) == IFLAG_IN_FICTITIOUS_CUBE)cycle
-    ggdof_elmt = reshape(ggdof_ic1(:,inode_elmt_ic1(:,i_elmt)),(/NEDOF1/))
-    ggdof_elmt = ggdof_elmt-1 ! petsc index starts from 0
-    ncount = 0; idof=-1; igdof=-1
-    do i = 1,NEDOF1
+    if (idoubling_inner_core(i_elmt) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+
+    ggdof_elmt(:) = reshape(ggdof_ic1(:,inode_elmt_ic1(:,i_elmt)),(/NEDOF1/))
+    ggdof_elmt(:) = ggdof_elmt(:)-1 ! petsc index starts from 0
+    !ncount = 0; idof(:) = -1; igdof(:) = -1
+    do i = 1,NEDOF1     ! NGLLCUBE_INF * NNDOF
       do j = 1,NEDOF1
-      if (ggdof_elmt(i) >= 0.and.ggdof_elmt(j) >= 0.and.                          &
-      storekmat_inner_core1(i,j,i_elmt) /= 0.0_kreal) then
-        !ncount=ncount+1
-        !idof(ncount)=i
-        !igdof(ncount)=ggdof_elmt(i)
-        call MatSetValues(Amat1,1,ggdof_elmt(i),1,ggdof_elmt(j), &
-        storekmat_inner_core1(i,j,i_elmt),ADD_VALUES,ierr)
-        CHKERRA(ierr)
-      endif
+        if (ggdof_elmt(i) >= 0 .and. ggdof_elmt(j) >= 0 .and. &
+            storekmat_inner_core1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
+          !call MatSetValues(Amat1,1,ggdof_elmt(i),1,ggdof_elmt(j), &
+          !                  storekmat_inner_core1(i,j,i_elmt),ADD_VALUES,ierr); CHECK_PETSC_ERROR(ierr)
+          ! petsc types
+          v = storekmat_inner_core1(i,j,i_elmt)
+          call MatSetValues(Amat1,1,ggdof_elmt(i),1,ggdof_elmt(j),v,ADD_VALUES,ierr); CHECK_PETSC_ERROR(ierr)
+        endif
       enddo
     enddo
-    !call MatSetValues(Amat,ncount,igdof(1:ncount),ncount,igdof(1:ncount), &
-    !storekmat_inner_core(idof(1:ncount),idof(1:ncount),i_elmt),ADD_VALUES,ierr)
-    !CHKERRA(ierr)
   enddo
-  !! inner core
-  !do i_elmt=1,NSPEC_INNER_CORE
-  !  if (idoubling_inner_core(i_elmt)==IFLAG_IN_FICTITIOUS_CUBE)cycle
-  !  ggdof_elmt=reshape(ggdof_ic(:,inode_elmt_ic(:,i_elmt)),(/NEDOF/))
-  !  ggdof_elmt=ggdof_elmt-1 ! petsc index starts from 0
-  !  ncount=0; idof=-1; igdof=-1
-  !  do i=1,NEDOF
-  !    if (ggdof_elmt(i) >= 0) then
-  !      ncount=ncount+1
-  !      idof(ncount)=i
-  !      igdof(ncount)=ggdof_elmt(i)
-  !    endif
-  !  enddo
-  !  call MatSetValues(Amat,ncount,igdof(1:ncount),ncount,igdof(1:ncount), &
-  !  storekmat_inner_core(idof(1:ncount),idof(1:ncount),i_elmt),ADD_VALUES,ierr)
-  !  CHKERRA(ierr)
-  !enddo
   deallocate(storekmat_inner_core1)
-  !if (myrank==0) write(*,*) 'IC kmat done1!'; call sync_all
-  !if (myrank==0) then
-  !  open(1111,file='debug.log',action='write')
-  !  write(1111,*)ggdof_oc1
-  !  !do i_elmt=1,NSPEC_OUTER_CORE
-  !  !  ggdof_elmt=reshape(ggdof_oc1(:,inode_elmt_oc1(:,i_elmt)),(/NEDOF1/))
-  !  !  ggdof_elmt=ggdof_elmt-1 ! petsc index starts from 0
-  !  !  ncount=0; idof=-1; igdof=-1
-  !  !  do i=1,NEDOF1
-  !  !    do j=1,NEDOF1
-  !  !    if (ggdof_elmt(i) >= 0.and.ggdof_elmt(j) >= 0.and.                          &
-  !  !    storekmat_outer_core1(i,j,i_elmt) /= 0.0_kreal) then
-  !  !      write(1111,*)ggdof_elmt(i),ggdof_elmt(j)
-  !  !    endif
-  !  !    enddo
-  !  !  enddo
-  !  !enddo
-  !  close(1111)
-  !endif
-  !call sync_all
+
+  ! user output
+  if (myrank == 0) then
+    tCPU = wtime() - tstart
+    write(IMAIN,*) '    elapsed time: ',sngl(tCPU),'(s)'
+    write(IMAIN,*) '    setup outer core values'
+    call flush_IMAIN()
+  endif
 
   ! outer core
   do i_elmt = 1,NSPEC_OUTER_CORE
-    ggdof_elmt = reshape(ggdof_oc1(:,inode_elmt_oc1(:,i_elmt)),(/NEDOF1/))
-    ggdof_elmt = ggdof_elmt-1 ! petsc index starts from 0
-    ncount = 0; idof=-1; igdof=-1
+    ggdof_elmt(:) = reshape(ggdof_oc1(:,inode_elmt_oc1(:,i_elmt)),(/NEDOF1/))
+    ggdof_elmt(:) = ggdof_elmt(:)-1 ! petsc index starts from 0
+    !ncount = 0; idof(:) = -1; igdof(:) = -1
     do i = 1,NEDOF1
       do j = 1,NEDOF1
-      if (ggdof_elmt(i) >= 0.and.ggdof_elmt(j) >= 0.and.                          &
-      storekmat_outer_core1(i,j,i_elmt) /= 0.0_kreal) then
-        call MatSetValues(Amat1,1,ggdof_elmt(i),1,ggdof_elmt(j), &
-        storekmat_outer_core1(i,j,i_elmt),ADD_VALUES,ierr)
-        CHKERRA(ierr)
-      endif
+        if (ggdof_elmt(i) >= 0 .and. ggdof_elmt(j) >= 0 .and. &
+            storekmat_outer_core1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
+          !call MatSetValues(Amat1,1,ggdof_elmt(i),1,ggdof_elmt(j), &
+          !                  storekmat_outer_core1(i,j,i_elmt),ADD_VALUES,ierr); CHECK_PETSC_ERROR(ierr)
+          ! petsc types
+          v = storekmat_outer_core1(i,j,i_elmt)
+          call MatSetValues(Amat1,1,ggdof_elmt(i),1,ggdof_elmt(j),v,ADD_VALUES,ierr); CHECK_PETSC_ERROR(ierr)
+        endif
       enddo
     enddo
   enddo
-  !! outer core
-  !do i_elmt=1,NSPEC_OUTER_CORE
-  !  ggdof_elmt=reshape(ggdof_oc(:,inode_elmt_oc(:,i_elmt)),(/NEDOF/))
-  !  ggdof_elmt=ggdof_elmt-1 ! petsc index starts from 0
-  !  ncount=0; idof=-1; igdof=-1
-  !  do i=1,NEDOF
-  !    if (ggdof_elmt(i) >= 0) then
-  !      ncount=ncount+1
-  !      idof(ncount)=i
-  !      igdof(ncount)=ggdof_elmt(i)
-  !    endif
-  !  enddo
-  !  call MatSetValues(Amat,ncount,igdof(1:ncount),ncount,igdof(1:ncount), &
-  !  storekmat_outer_core(idof(1:ncount),idof(1:ncount),i_elmt),ADD_VALUES,ierr)
-  !  CHKERRA(ierr)
-  !enddo
   deallocate(storekmat_outer_core1)
-  !if (myrank==0) write(*,*) 'OC kmat done1!'; call sync_all
+
+  ! user output
+  if (myrank == 0) then
+    tCPU = wtime() - tstart
+    write(IMAIN,*) '    elapsed time: ',sngl(tCPU),'(s)'
+    write(IMAIN,*) '    setup crust/mantle values'
+    call flush_IMAIN()
+  endif
+
   ! crust mantle
   do i_elmt = 1,NSPEC_CRUST_MANTLE
-    ggdof_elmt = reshape(ggdof_cm1(:,inode_elmt_cm1(:,i_elmt)),(/NEDOF1/))
-    ggdof_elmt = ggdof_elmt-1 ! petsc index starts from 0
-    ncount = 0; idof=-1; igdof=-1
+    ggdof_elmt(:) = reshape(ggdof_cm1(:,inode_elmt_cm1(:,i_elmt)),(/NEDOF1/))
+    ggdof_elmt(:) = ggdof_elmt(:)-1 ! petsc index starts from 0
+    !ncount = 0; idof(:) = -1; igdof(:) = -1
     do i = 1,NEDOF1
       do j = 1,NEDOF1
-      if (ggdof_elmt(i) >= 0.and.ggdof_elmt(j) >= 0.and.                          &
-      storekmat_crust_mantle1(i,j,i_elmt) /= 0.0_kreal) then
-        call MatSetValues(Amat1,1,ggdof_elmt(i),1,ggdof_elmt(j), &
-        storekmat_crust_mantle1(i,j,i_elmt),ADD_VALUES,ierr)
-        CHKERRA(ierr)
-      endif
+        if (ggdof_elmt(i) >= 0 .and. ggdof_elmt(j) >= 0 .and. &
+            storekmat_crust_mantle1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
+          !call MatSetValues(Amat1,1,ggdof_elmt(i),1,ggdof_elmt(j), &
+          !                  storekmat_crust_mantle1(i,j,i_elmt),ADD_VALUES,ierr); CHECK_PETSC_ERROR(ierr)
+          ! petsc types
+          v = storekmat_crust_mantle1(i,j,i_elmt)
+          call MatSetValues(Amat1,1,ggdof_elmt(i),1,ggdof_elmt(j),v,ADD_VALUES,ierr); CHECK_PETSC_ERROR(ierr)
+        endif
       enddo
     enddo
   enddo
-  !do i_elmt=1,NSPEC_CRUST_MANTLE
-  !  ggdof_elmt=reshape(ggdof_cm1(:,inode_elmt_cm1(:,i_elmt)),(/NEDOF1/))
-  !  ggdof_elmt=ggdof_elmt-1 ! petsc index starts from 0
-  !  ncount=0; idof=-1; igdof=-1
-  !  do i=1,NEDOF1
-  !    if (ggdof_elmt(i) >= 0) then
-  !      ncount=ncount+1
-  !      idof(ncount)=i
-  !      igdof(ncount)=ggdof_elmt(i)
-  !    endif
-  !  enddo
-  !  !if (myrank==0) write(*,*) 'hi homnath3in!',i_elmt,minval(igdof(1:ncount)), &
-  !  !maxval(igdof(1:ncount)) !,storekmat_crust_mantle(idof(1:ncount),idof(1:ncount),i_elmt)
-  !  call MatSetValues(Amat1,ncount,igdof(1:ncount),ncount,igdof(1:ncount), &
-  !  storekmat_crust_mantle1(idof(1:ncount),idof(1:ncount),i_elmt),ADD_VALUES,ierr)
-  !  CHKERRA(ierr)
-  !enddo
   deallocate(storekmat_crust_mantle1)
-  !if (myrank==0) write(*,*) 'CM kmat done1!'; call sync_all
+
+  ! user output
+  if (myrank == 0) then
+    tCPU = wtime() - tstart
+    write(IMAIN,*) '    elapsed time: ',sngl(tCPU),'(s)'
+    call flush_IMAIN()
+  endif
+
   ! trinfinite
-  do i_elmt = 1,NSPEC_TRINFINITE
-    ggdof_elmt = reshape(ggdof_trinf1(:,inode_elmt_trinf1(:,i_elmt)),(/NEDOF1/))
-    ggdof_elmt = ggdof_elmt-1 ! petsc index starts from 0
-    ncount = 0; idof=-1; igdof=-1
-    do i = 1,NEDOF1
-      do j = 1,NEDOF1
-      if (ggdof_elmt(i) >= 0.and.ggdof_elmt(j) >= 0.and.                          &
-      storekmat_trinfinite1(i,j,i_elmt) /= 0.0_kreal) then
-        call MatSetValues(Amat1,1,ggdof_elmt(i),1,ggdof_elmt(j), &
-        storekmat_trinfinite1(i,j,i_elmt),ADD_VALUES,ierr)
-        CHKERRA(ierr)
-      endif
+  if (NSPEC_INFINITE > 0) then
+    ! user info
+    if (myrank == 0) then
+      write(IMAIN,*) '    setup trinfinite values'
+      call flush_IMAIN()
+    endif
+
+    do i_elmt = 1,NSPEC_TRINFINITE
+      ggdof_elmt(:) = reshape(ggdof_trinf1(:,inode_elmt_trinf1(:,i_elmt)),(/NEDOF1/))
+      ggdof_elmt(:) = ggdof_elmt(:)-1 ! petsc index starts from 0
+      !ncount = 0; idof(:) = -1; igdof(:) = -1
+      do i = 1,NEDOF1
+        do j = 1,NEDOF1
+          if (ggdof_elmt(i) >= 0 .and. ggdof_elmt(j) >= 0 .and. &
+              storekmat_trinfinite1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
+            !call MatSetValues(Amat1,1,ggdof_elmt(i),1,ggdof_elmt(j), &
+            !                  storekmat_trinfinite1(i,j,i_elmt),ADD_VALUES,ierr); CHECK_PETSC_ERROR(ierr)
+            ! petsc types
+            v = storekmat_trinfinite1(i,j,i_elmt)
+            call MatSetValues(Amat1,1,ggdof_elmt(i),1,ggdof_elmt(j),v,ADD_VALUES,ierr); CHECK_PETSC_ERROR(ierr)
+          endif
+        enddo
       enddo
     enddo
-  enddo
-  !do i_elmt=1,NSPEC_TRINFINITE
-  !  ggdof_elmt=reshape(ggdof_trinf1(:,inode_elmt_trinf1(:,i_elmt)),(/NEDOF1/))
-  !  ggdof_elmt=ggdof_elmt-1 ! petsc index starts from 0
-  !  ncount=0; idof=-1; igdof=-1
-  !  do i=1,NEDOF1
-  !    if (ggdof_elmt(i) >= 0) then
-  !      ncount=ncount+1
-  !      idof(ncount)=i
-  !      igdof(ncount)=ggdof_elmt(i)
-  !    endif
-  !  enddo
-  !  call MatSetValues(Amat1,ncount,igdof(1:ncount),ncount,igdof(1:ncount), &
-  !  storekmat_trinfinite1(idof(1:ncount),idof(1:ncount),i_elmt),ADD_VALUES,ierr)
-  !  CHKERRA(ierr)
-  !enddo
+    ! user output
+    if (myrank == 0) then
+      tCPU = wtime() - tstart
+      write(IMAIN,*) '    elapsed time: ',sngl(tCPU),'(s)'
+    endif
+  endif
   deallocate(storekmat_trinfinite1)
-  !if (myrank==0) write(*,*) 'TRINF kmat done1!'; call sync_all
+
+  ! user info
+  if (myrank == 0) then
+    write(IMAIN,*) '    setup infinite values'
+    call flush_IMAIN()
+  endif
+
   ! infinite
   do i_elmt = 1,NSPEC_INFINITE
-    ggdof_elmt = reshape(ggdof_inf1(:,inode_elmt_inf1(:,i_elmt)),(/NEDOF1/))
-    ggdof_elmt = ggdof_elmt-1 ! petsc index starts from 0
-    ncount = 0; idof=-1; igdof=-1
+    ggdof_elmt(:) = reshape(ggdof_inf1(:,inode_elmt_inf1(:,i_elmt)),(/NEDOF1/))
+    ggdof_elmt(:) = ggdof_elmt(:)-1 ! petsc index starts from 0
+    !ncount = 0; idof(:) = -1; igdof(:) = -1
     do i = 1,NEDOF1
       do j = 1,NEDOF1
-      if (ggdof_elmt(i) >= 0.and.ggdof_elmt(j) >= 0.and.                          &
-      storekmat_infinite1(i,j,i_elmt) /= 0.0_kreal) then
-        call MatSetValues(Amat1,1,ggdof_elmt(i),1,ggdof_elmt(j), &
-        storekmat_infinite1(i,j,i_elmt),ADD_VALUES,ierr)
-        CHKERRA(ierr)
-        !if (myrank==0) write(*,*) 'hello in INF1:',i_elmt,'/',NSPEC_INFINITE,i,j,NGLLCUBE_INF,NEDOF1!ggdof_elmt(i),ggdof_elmt(j)
-      endif
+        if (ggdof_elmt(i) >= 0 .and. ggdof_elmt(j) >= 0 .and. &
+            storekmat_infinite1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
+          !call MatSetValues(Amat1,1,ggdof_elmt(i),1,ggdof_elmt(j), &
+          !                  storekmat_infinite1(i,j,i_elmt),ADD_VALUES,ierr); CHECK_PETSC_ERROR(ierr)
+          ! petsc types
+          v = storekmat_infinite1(i,j,i_elmt)
+          call MatSetValues(Amat1,1,ggdof_elmt(i),1,ggdof_elmt(j),v,ADD_VALUES,ierr); CHECK_PETSC_ERROR(ierr)
+        endif
       enddo
     enddo
-  !  do i=1,NEDOF1
-  !    if (ggdof_elmt(i) >= 0) then
-  !      ncount=ncount+1
-  !      idof(ncount)=i
-  !      igdof(ncount)=ggdof_elmt(i)
-  !    endif
-  !  enddo
-  !  call MatSetValues(Amat1,ncount,igdof(1:ncount),ncount,igdof(1:ncount), &
-  !  storekmat_infinite1(idof(1:ncount),idof(1:ncount),i_elmt),ADD_VALUES,ierr)
-  !  CHKERRA(ierr)
   enddo
-  call sync_all
-  !if (myrank==0) write(*,*) 'INF kmat done1:0!'; call sync_all
   deallocate(storekmat_infinite1)
-  !if (myrank==0) write(*,*) 'INF kmat done1!'; call sync_all
 
-  call MatAssemblyBegin(Amat1,MAT_FINAL_ASSEMBLY,ierr)
-  CHKERRA(ierr)
-  call MatAssemblyEnd(Amat1,MAT_FINAL_ASSEMBLY,ierr)
-  CHKERRA(ierr)
-  call MatSetOption(Amat1,MAT_SYMMETRIC,PETSC_TRUE,ierr);
-  CHKERRA(ierr)
-  !if (myrank==0) write(*,*) 'matrix setting & assembly complete11!'
-  call sync_all
-  call MatGetOwnershipRange(Amat1,istart,iend,ierr)
-  CHKERRA(ierr)
+  ! user output
+  if (myrank == 0) then
+    tCPU = wtime() - tstart
+    write(IMAIN,*) '    elapsed time: ',sngl(tCPU),'(s)'
+    write(IMAIN,*) '    assembling matrix'
+    call flush_IMAIN()
+  endif
 
-  !! check diagonal of the matrix
-  !call MatCreateVecs(Amat1,Adiag1,PETSC_NULL_OBJECT,ierr)
-  !call MatGetDiagonal(Amat1,Adiag1,ierr)
-  !
-  !call VecCreateSeq(PETSC_COMM_SELF,neq1,lAdiag1,ierr)
-  !
-  !call VecScatterBegin(vscat1,Adiag1,lAdiag1,INSERT_VALUES,SCATTER_FORWARD,ierr)
-  !CHKERRA(ierr)
-  !call VecScatterEnd(vscat1,Adiag1,lAdiag1,INSERT_VALUES,SCATTER_FORWARD,ierr)
-  !CHKERRA(ierr)
-  !call VecGetSize(lAdiag1,n,ierr)
-  !call VecGetArrayF90(lAdiag1,arrayAdiag1,ierr)
-  !CHKERRA(ierr)
-  !maxdiag1=maxscal(maxval(arrayAdiag1))
-  !mindiag1=minscal(minval(arrayAdiag1))
-  !write(*,*) 'maxdiag1 in petsc:',mindiag1,maxdiag1
-  !call VecRestoreArrayF90(lAdiag1,arrayAdiag1,ierr)
-  !CHKERRA(ierr)
+  call MatAssemblyBegin(Amat1,MAT_FINAL_ASSEMBLY,ierr); CHECK_PETSC_ERROR(ierr)
+  call MatAssemblyEnd(Amat1,MAT_FINAL_ASSEMBLY,ierr); CHECK_PETSC_ERROR(ierr)
+  call MatSetOption(Amat1,MAT_SYMMETRIC,PETSC_TRUE,ierr); CHECK_PETSC_ERROR(ierr)
+  call MatGetOwnershipRange(Amat1,istart,iend,ierr); CHECK_PETSC_ERROR(ierr)
 
+  ! debugging output
+  if (.false.) then
+    allocate(cols(nzeros_max))
+    write(char_myrank,'(i4)') myrank
+    outf_name='tmp_nonzeros'//trim(adjustl(char_myrank))
+    open(1,file=outf_name,action='write',status='replace')
+    do i = istart,iend-1
+      cols(:) = -1
+      call MatGetRow(Amat1,i,ncols,cols,PETSC_NULL_SCALAR,ierr); CHECK_PETSC_ERROR(ierr)
+      ndiag = count(cols >= ig0 .and. cols <= ig1)
+      noffdiag = ncols-ndiag
+      write(1,*) ndiag,noffdiag,ncols
+      call MatRestoreRow(Amat1,i,ncols,PETSC_NULL_INTEGER,PETSC_NULL_SCALAR,ierr); CHECK_PETSC_ERROR(ierr)
+    enddo
+    close(1)
+    deallocate(cols)
+  endif
 
-  !allocate(cols(nzeros_max),vals(nzeros_max))
-  allocate(cols(nzeros_max))
-  !call MatGetRow(Amat1,istart,ncols,cols,vals,ierr);
-  write(char_myrank,'(i4)')myrank
-  outf_name='tmp/nonzeros'//trim(adjustl(char_myrank))
-  open(1,file=outf_name,action='write',status='replace')
-  do i = istart,iend-1
-    cols=-1
-    !call MatGetRow(Amat1,i,ncols,PETSC_NULL_INTEGER,PETSC_NULL_SCALAR,ierr);
-    call MatGetRow(Amat1,i,ncols,cols,PETSC_NULL_SCALAR,ierr);
-    CHKERRA(ierr)
-    !ncols_val=ncols
-    !if (myrank==0) then
-    !write(*,*) 'nzeros in 0th row:',myrank,istart,ncols
-    ndiag=count(cols >= ig0.and.cols <= ig1)
-    noffdiag = ncols-ndiag
-    write(1,*)ndiag,noffdiag,ncols
-    !endif
-    !call MatRestoreRow(Amat1,istart,ncols,cols,vals,ierr);
-    !call sync_all
-    call MatRestoreRow(Amat1,i,ncols,PETSC_NULL_INTEGER,PETSC_NULL_SCALAR,ierr);
-    CHKERRA(ierr)
-  enddo
-  close(1)
-  call sync_all()
+  ! synchronize all processes
+  call synchronize_all()
+
+  ! user output
+  if (myrank == 0) then
+    tCPU = wtime() - tstart
+    write(IMAIN,*) '    Elapsed time for PETSc solver matrix setup: ',sngl(tCPU),'(s)'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+#else
+  ! no PETSc compilation support
+  ! compilation without PETSc support
+  if (myrank == 0) then
+    print *, "Error: PETSc solver enabled without PETSc Support."
+    print *, "       To enable PETSc support, reconfigure with --with-petsc flag."
+  endif
+  ! safety stop
+  call exit_MPI(myrank,"Error PETSc solver: petsc_set_matrix1 called without compilation support")
+
+#endif
 
   end subroutine petsc_set_matrix1
 
@@ -1246,35 +1257,54 @@ contains
 !===============================================================================
 !
 
+
   subroutine petsc_set_vector1(rload1)
 
-  use specfem_par, only: l2gdof1
-  use specfem_par, only: IFLAG_IN_FICTITIOUS_CUBE,NSPEC_INNER_CORE, &
-    NSPEC_OUTER_CORE,NSPEC_CRUST_MANTLE,NSPEC_TRINFINITE,NSPEC_INFINITE
-  use specfem_par, only: NEDOF
-  use specfem_par, only: NGLLCUBE_INF,NEDOF1
-  use specfem_par_innercore, only: ggdof_ic1,storekmat_inner_core1, &
-    idoubling_inner_core,inode_elmt_ic1
-  use specfem_par_outercore, only: ggdof_oc1,storekmat_outer_core1, &
-    inode_elmt_oc1
-  use specfem_par_crustmantle, only: ggdof_cm1,storekmat_crust_mantle1, &
-    inode_elmt_cm1
-  use specfem_par_trinfinite, only: ggdof_trinf1,storekmat_trinfinite1, &
-    inode_elmt_trinf1
-  use specfem_par_infinite, only: ggdof_inf1,storekmat_infinite1,inode_elmt_inf1
+#ifdef USE_PETSC
+  use constants, only: IFLAG_IN_FICTITIOUS_CUBE,NGLLCUBE_INF
+
+  use specfem_par_full_gravity, only: l2gdof1
+#endif
+
   implicit none
 
-  PetscScalar,intent(in) :: rload1(0:)
-  PetscScalar      zero
+  !PetscScalar,intent(in) :: rload1(0:)
+  real(kind=CUSTOM_REAL), intent(in) :: rload1(0:)
+
+#ifdef USE_PETSC
+  PetscScalar :: zero
+
+  ! types required by VecSetValues:
+  !   VecSetValues(Vec x, PetscInt ni, const PetscInt ix[], const PetscScalar y[], InsertMode iora)
+  ! the scalar array must be a PetscScalar type, this might differ from a real(kind=CUSTOM_REAL) type
+  PetscScalar :: y(0:size(rload1)-1)
+
+  y(0:) = rload1(0:)
 
   zero = 0.0
   call VecSet(bvec1,zero,ierr)
-  call VecSetValues(bvec1,neq1,l2gdof1(1:),rload1(1:),ADD_VALUES,ierr);
+  !call VecSetValues(bvec1,neq1,l2gdof1(1:),rload1(1:),ADD_VALUES,ierr)
+  call VecSetValues(bvec1,neq1,l2gdof1(1:),y(1:),ADD_VALUES,ierr);
 
   ! assemble vector
   call VecAssemblyBegin(bvec1,ierr)
   call VecAssemblyEnd(bvec1,ierr)
-  !if (myrank==0) write(*,*) 'vector setting & assembly complete!'
+
+#else
+  ! no PETSc compilation support
+  integer :: idummy
+
+  ! compilation without PETSc support
+  if (myrank == 0) then
+    print *, "Error: PETSc solver enabled without PETSc Support."
+    print *, "       To enable PETSc support, reconfigure with --with-petsc flag."
+  endif
+  ! safety stop
+  call exit_MPI(myrank,"Error PETSc solver: petsc_set_vector1 called without compilation support")
+
+  ! to avoid compiler warning
+  idummy = size(rload1)
+#endif
 
   end subroutine petsc_set_vector1
 
@@ -1282,41 +1312,103 @@ contains
 !===============================================================================
 !
 
-  subroutine petsc_set_backward_vector1(b_rload1)
+! not used so far...
 
-  use specfem_par, only: l2gdof1, neq1
-  implicit none
-  PetscScalar,intent(in) :: b_rload1(0:)
-  PetscScalar      zero
-
-  zero = 0.0
-  call VecSet(b_bvec1,zero,ierr)
-  call VecSetValues(b_bvec1,neq1,l2gdof1(1:),b_rload1(1:),ADD_VALUES,ierr);
-
-  ! assemble vector
-  call VecAssemblyBegin(b_bvec1,ierr)
-  call VecAssemblyEnd(b_bvec1,ierr)
-
-  end subroutine petsc_set_backward_vector1
+!  subroutine petsc_set_backward_vector1(b_rload1)
+!
+!#ifdef USE_PETSC
+!  use specfem_par_full_gravity, only: l2gdof1, neq1
+!#endif
+!
+!  implicit none
+!  !PetscScalar,intent(in) :: b_rload1(0:)
+!  real(kind=CUSTOM_REAL), intent(in) :: b_rload1(0:)
+!
+!#ifdef USE_PETSC
+!  PetscScalar :: zero
+!  ! types required by VecSetValues:
+!  !   VecSetValues(Vec x, PetscInt ni, const PetscInt ix[], const PetscScalar y[], InsertMode iora)
+!  ! the scalar array must be a PetscScalar type, this might differ from a real(kind=CUSTOM_REAL) type
+!  PetscScalar :: y(0:size(b_rload1)-1)
+!
+!  y(0:) = b_rload1(0:)
+!
+!  zero = 0.0
+!  call VecSet(b_bvec1,zero,ierr)
+!  !call VecSetValues(b_bvec1,neq1,l2gdof1(1:),b_rload1(1:),ADD_VALUES,ierr)
+!  call VecSetValues(b_bvec1,neq1,l2gdof1(1:),y(1:),ADD_VALUES,ierr);
+!
+!  ! assemble vector
+!  call VecAssemblyBegin(b_bvec1,ierr)
+!  call VecAssemblyEnd(b_bvec1,ierr)
+!
+!#else
+!  ! no PETSc compilation support
+!  ! compilation without PETSc support
+!  if (myrank == 0) then
+!    print *, "Error: PETSc solver enabled without PETSc Support."
+!    print *, "       To enable PETSc support, reconfigure with --with-petsc flag."
+!  endif
+!  ! safety stop
+!  call exit_MPI(myrank,"Error PETSc solver: petsc_set_backward_vector1 called without compilation support")
+!
+!#endif
+!
+!  end subroutine petsc_set_backward_vector1
 
 !
 !===============================================================================
 !
 
-  subroutine petsc_solve1(sdata1,iter,ireason)
+  subroutine petsc_solve1(sdata1,niter)
 
   implicit none
-  PetscInt iter
-  PetscScalar sdata1(:)
+  !PetscScalar :: sdata1(:)
+  real(kind=CUSTOM_REAL) :: sdata1(:)
+  integer, optional :: niter
 
-  PetscInt ireason
+#ifdef USE_PETSC
+  ! local parameters
+  PetscInt :: iter,ireason
+  ! petsc type array
+  PetscScalar :: y(size(sdata1))
 
+  call KSPSolve(ksp1,bvec1,xvec1,ierr); CHECK_PETSC_ERROR(ierr)
+  call KSPGetConvergedReason(ksp1,ireason,ierr); CHECK_PETSC_ERROR(ierr)
+  call KSPGetIterationNumber(ksp1,iter,ierr); CHECK_PETSC_ERROR(ierr)
 
-  call KSPSolve(ksp1,bvec1,xvec1,ierr)
-  call KSPGetConvergedReason(ksp1,ireason,ierr)
-  call KSPGetIterationNumber(ksp1,iter,ierr)
+  !debug
+  !if (myrank == 0) print *,'debug: petsc_solve1: converged reason: ',ireason
 
-  call scatter_globalvec1(xvec1, sdata1)
+  !call scatter_globalvec1_backward(xvec1, sdata1)
+
+  ! explict conversion to PetscScalar array
+  y(:) = sdata1(:)
+
+  call scatter_globalvec1(xvec1, y)
+
+  ! return values
+  sdata1(:) = real(y(:),kind=CUSTOM_REAL)
+
+  ! returns number of iterations
+  if (present(niter)) niter = iter
+
+#else
+  ! no PETSc compilation support
+  integer :: idummy
+
+  ! compilation without PETSc support
+  if (myrank == 0) then
+    print *, "Error: PETSc solver enabled without PETSc Support."
+    print *, "       To enable PETSc support, reconfigure with --with-petsc flag."
+  endif
+  ! safety stop
+  call exit_MPI(myrank,"Error PETSc solver: petsc_solve1 called without compilation support")
+
+  ! to avoid compiler warning
+  idummy = size(sdata1)
+  if (present(niter)) niter = 0
+#endif
 
   end subroutine petsc_solve1
 
@@ -1324,20 +1416,50 @@ contains
 !===============================================================================
 !
 
-  subroutine petsc_backward_solve1(b_sdata1,b_iter,b_ireason)
+! not used so far...
 
-  implicit none
-  PetscInt b_iter
-  PetscScalar b_sdata1(:)
-  PetscInt b_ireason
-
-  call KSPSolve(b_ksp1,b_bvec1,b_xvec1,ierr)
-  call KSPGetConvergedReason(b_ksp1,b_ireason,ierr)
-  call KSPGetIterationNumber(b_ksp1,b_iter,ierr)
-
-  call scatter_globalvec1_backward(b_xvec1, b_sdata1)
-
-  end subroutine petsc_backward_solve1
+!  subroutine petsc_backward_solve1(b_sdata1)
+!
+!  implicit none
+!  !PetscScalar :: b_sdata1(:)
+!  real(kind=CUSTOM_REAL) :: b_sdata1(:)
+!
+!#ifdef USE_PETSC
+!  ! local parameters
+!  PetscInt :: b_iter,b_ireason
+!  ! petsc type array
+!  PetscScalar :: y(size(b_sdata1))
+!
+!  call KSPSolve(b_ksp1,b_bvec1,b_xvec1,ierr); CHECK_PETSC_ERROR(ierr)
+!  call KSPGetConvergedReason(b_ksp1,b_ireason,ierr); CHECK_PETSC_ERROR(ierr)
+!  call KSPGetIterationNumber(b_ksp1,b_iter,ierr); CHECK_PETSC_ERROR(ierr)
+!
+!  !debug
+!  !if (myrank == 0) print *,'debug: petsc_backward_solve1: converged reason: ',b_ireason
+!
+!  !call scatter_globalvec1_backward(b_xvec1, b_sdata1)
+!
+!  ! explict conversion to PetscScalar array
+!  y(:) = b_sdata1(:)
+!
+!  call scatter_globalvec1_backward(b_xvec1, y)
+!
+!  ! return values
+!  b_sdata1(:) = y(:)
+!
+!#else
+!  ! no PETSc compilation support
+!  ! compilation without PETSc support
+!  if (myrank == 0) then
+!    print *, "Error: PETSc solver enabled without PETSc Support."
+!    print *, "       To enable PETSc support, reconfigure with --with-petsc flag."
+!  endif
+!  ! safety stop
+!  call exit_MPI(myrank,"Error PETSc solver: petsc_backward_solve1 called without compilation support")
+!
+!#endif
+!
+!  end subroutine petsc_backward_solve1
 
 !
 !===============================================================================
@@ -1356,16 +1478,12 @@ contains
 !  PetscInt n
 !  PetscScalar,pointer :: array_data(:)
 !
-!  call VecScatterBegin(l_vscat1,global_vec,l_vec1,INSERT_VALUES,SCATTER_FORWARD,ierr)
-!  CHKERRA(ierr)
-!  call VecScatterEnd(l_vscat1,global_vec,l_vec1,INSERT_VALUES,SCATTER_FORWARD,ierr)
-!  CHKERRA(ierr)
+!  call VecScatterBegin(l_vscat1,global_vec,l_vec1,INSERT_VALUES,SCATTER_FORWARD,ierr); CHECK_PETSC_ERROR(ierr)
+!  call VecScatterEnd(l_vscat1,global_vec,l_vec1,INSERT_VALUES,SCATTER_FORWARD,ierr); CHECK_PETSC_ERROR(ierr)
 !  call VecGetSize(l_vec1,n,ierr)
-!  call VecGetArrayF90(l_vec1,array_data,ierr)
-!  CHKERRA(ierr)
+!  call VecGetArrayF90(l_vec1,array_data,ierr); CHECK_PETSC_ERROR(ierr)
 !  larray(1:n)=array_data(1:n)
-!  call VecRestoreArrayF90(l_vec1,array_data,ierr)
-!  CHKERRA(ierr)
+!  call VecRestoreArrayF90(l_vec1,array_data,ierr); CHECK_PETSC_ERROR(ierr)
 !  return
 !  end subroutine scatter_globalvec1
 
@@ -1373,57 +1491,61 @@ contains
 !===============================================================================
 !
 
+#ifdef USE_PETSC
+
   subroutine scatter_globalvec1(global_vec,larray)
 
   implicit none
 
-  Vec global_vec
-  PetscScalar larray(:)
-  PetscInt n
+  type(tVec) :: global_vec
+  PetscScalar :: larray(:)
 
+  PetscInt :: n
   PetscScalar,pointer :: array_data(:)
 
-  call VecScatterBegin(vscat1,global_vec,local_vec1,INSERT_VALUES,SCATTER_FORWARD,ierr)
-  CHKERRA(ierr)
-  call VecScatterEnd(vscat1,global_vec,local_vec1,INSERT_VALUES,SCATTER_FORWARD,ierr)
-  CHKERRA(ierr)
+  call VecScatterBegin(vscat1,global_vec,local_vec1,INSERT_VALUES,SCATTER_FORWARD,ierr); CHECK_PETSC_ERROR(ierr)
+  call VecScatterEnd(vscat1,global_vec,local_vec1,INSERT_VALUES,SCATTER_FORWARD,ierr); CHECK_PETSC_ERROR(ierr)
   call VecGetSize(local_vec1,n,ierr)
-  call VecGetArrayF90(local_vec1,array_data,ierr)
-  CHKERRA(ierr)
-  larray(1:n)=array_data(1:n)
-  call VecRestoreArrayF90(local_vec1,array_data,ierr)
-  CHKERRA(ierr)
-  return
+
+  call VecGetArrayF90(local_vec1,array_data,ierr); CHECK_PETSC_ERROR(ierr)
+
+  larray(1:n) = array_data(1:n)
+  call VecRestoreArrayF90(local_vec1,array_data,ierr); CHECK_PETSC_ERROR(ierr)
 
   end subroutine scatter_globalvec1
+
+#endif
 
 !
 !===============================================================================
 !
 
-  subroutine scatter_globalvec1_backward(b_global_vec,b_larray)
+#ifdef USE_PETSC
 
-  implicit none
+! not used so far...
 
-  Vec b_global_vec
-  PetscScalar b_larray(:)
-  PetscInt b_n
+!  subroutine scatter_globalvec1_backward(b_global_vec,b_larray)
+!
+!  implicit none
+!
+!  type(tVec) :: b_global_vec
+!  PetscScalar :: b_larray(:)
+!
+!  PetscInt :: b_n
+!  PetscScalar,pointer :: b_array_data(:)
+!
+!  call VecScatterBegin(b_vscat1, b_global_vec, b_local_vec1,INSERT_VALUES,SCATTER_FORWARD,ierr); CHECK_PETSC_ERROR(ierr)
+!  call VecScatterEnd(b_vscat1, b_global_vec, b_local_vec1,INSERT_VALUES,SCATTER_FORWARD,ierr); CHECK_PETSC_ERROR(ierr)
+!  call VecGetSize(b_local_vec1, b_n,ierr)
+!
+!  call VecGetArrayF90(b_local_vec1, b_array_data,ierr); CHECK_PETSC_ERROR(ierr)
+!
+!  b_larray(1:b_n) = b_array_data(1:b_n)
+!  call VecRestoreArrayF90(b_local_vec1, b_array_data,ierr); CHECK_PETSC_ERROR(ierr)
+!
+!  end subroutine scatter_globalvec1_backward
 
-  PetscScalar,pointer :: b_array_data(:)
-
-  call VecScatterBegin(b_vscat1, b_global_vec, b_local_vec1,INSERT_VALUES,SCATTER_FORWARD,ierr)
-  CHKERRA(ierr)
-  call VecScatterEnd(b_vscat1, b_global_vec, b_local_vec1,INSERT_VALUES,SCATTER_FORWARD,ierr)
-  CHKERRA(ierr)
-  call VecGetSize(b_local_vec1, b_n,ierr)
-  call VecGetArrayF90(b_local_vec1, b_array_data,ierr)
-  CHKERRA(ierr)
-  b_larray(1:b_n)=b_array_data(1:b_n)
-  call VecRestoreArrayF90(b_local_vec1, b_array_data,ierr)
-  CHKERRA(ierr)
-  return
-
-  end subroutine scatter_globalvec1_backward
+#endif
 
 !
 !===============================================================================
@@ -1431,8 +1553,9 @@ contains
 
   subroutine petsc_zero_initialguess1()
 
+#ifdef USE_PETSC
   implicit none
-  PetscScalar      zero
+  PetscScalar :: zero
 
   zero = 0.0
   call VecSet(xvec1,zero,ierr)
@@ -1440,6 +1563,18 @@ contains
   ! assemble vector
   call VecAssemblyBegin(xvec1,ierr)
   call VecAssemblyEnd(xvec1,ierr)
+
+#else
+  ! no PETSc compilation support
+  ! compilation without PETSc support
+  if (myrank == 0) then
+    print *, "Error: PETSc solver enabled without PETSc Support."
+    print *, "       To enable PETSc support, reconfigure with --with-petsc flag."
+  endif
+  ! safety stop
+  call exit_MPI(myrank,"Error PETSc solver: petsc_zero_initialguess1 called without compilation support")
+
+#endif
 
   end subroutine petsc_zero_initialguess1
 
@@ -1449,8 +1584,9 @@ contains
 
   subroutine petsc_zero_backwards_initialguess1()
 
+#ifdef USE_PETSC
   implicit none
-  PetscScalar      zero
+  PetscScalar :: zero
 
   zero = 0.0
   call VecSet(b_xvec1,zero,ierr)
@@ -1458,6 +1594,18 @@ contains
   ! assemble vector
   call VecAssemblyBegin(b_xvec1,ierr)
   call VecAssemblyEnd(b_xvec1,ierr)
+
+#else
+  ! no PETSc compilation support
+  ! compilation without PETSc support
+  if (myrank == 0) then
+    print *, "Error: PETSc solver enabled without PETSc Support."
+    print *, "       To enable PETSc support, reconfigure with --with-petsc flag."
+  endif
+  ! safety stop
+  call exit_MPI(myrank,"Error PETSc solver: petsc_zero_backwards_initialguess1 called without compilation support")
+
+#endif
 
   end subroutine petsc_zero_backwards_initialguess1
 
@@ -1468,11 +1616,11 @@ contains
 !  subroutine petsc_set_initialguess1(loc_pgrav1)
 !  implicit none
 !  PetscScalar,intent(in) :: loc_pgrav1(0:)
-!  PetscScalar      zero
+!  PetscScalar :: zero
 !
-!  zero=0.0
+!  zero = 0.0
 !  call VecSet(bvec1,zero,ierr)
-!  call VecSetValues(bvec1,neq1,l2gdof1(1:),loc_pgrav1(1:),INSERT_VALUES,ierr);
+!  call VecSetValues(bvec1,neq1,l2gdof1(1:),loc_pgrav1(1:),INSERT_VALUES,ierr)
 !
 !  ! assemble vector
 !  call VecAssemblyBegin(bvec1,ierr)
@@ -1485,17 +1633,17 @@ contains
 !
 
 !  subroutine petsc_set_backward_initialguess1(loc_pgrav1)
-!    implicit none
-!    PetscScalar,intent(in) :: loc_pgrav1(0:)
-!    PetscScalar      zero
+!  implicit none
+!  PetscScalar,intent(in) :: loc_pgrav1(0:)
+!  PetscScalar :: zero
 !
-!    zero=0.0
-!    call VecSet(b_bvec1,zero,ierr)
-!    call VecSetValues(b_bvec1, neq1, l2gdof1(1:), loc_pgrav1(1:), INSERT_VALUES, ierr);
+!  zero = 0.0
+!  call VecSet(b_bvec1,zero,ierr)
+!  call VecSetValues(b_bvec1, neq1, l2gdof1(1:), loc_pgrav1(1:), INSERT_VALUES, ierr)
 !
-!    ! assemble vector
-!    call VecAssemblyBegin(b_bvec1,ierr)
-!    call VecAssemblyEnd(b_bvec1,ierr)
+!  ! assemble vector
+!  call VecAssemblyBegin(b_bvec1,ierr)
+!  call VecAssemblyEnd(b_bvec1,ierr)
 !
 !  end subroutine petsc_set_backward_initialguess1
 
@@ -1505,27 +1653,44 @@ contains
 
   subroutine petsc_finalize1()
 
-  use specfem_par, only: SIMULATION_TYPE
+#ifdef USE_PETSC
+  use specfem_par, only: SIMULATION_TYPE,USE_POISSON_SOLVER_5GLL
 
   implicit none
 
   ! Free work space.  All PETSc objects should be destroyed when they
   ! are no longer needed.
 
-  call VecDestroy(xvec1,ierr)
-  call VecDestroy(uvec1,ierr)
-  call VecDestroy(bvec1,ierr)
-  call MatDestroy(Amat1,ierr)
-  call KSPDestroy(ksp1,ierr)
-  call VecScatterDestroy(vscat1,ierr)
-  call PetscFinalize(ierr)
+  call VecDestroy(xvec1,ierr); CHECK_PETSC_ERROR(ierr)
+  call VecDestroy(uvec1,ierr); CHECK_PETSC_ERROR(ierr)
+  call VecDestroy(bvec1,ierr); CHECK_PETSC_ERROR(ierr)
+  call MatDestroy(Amat1,ierr); CHECK_PETSC_ERROR(ierr)
+  call KSPDestroy(ksp1,ierr); CHECK_PETSC_ERROR(ierr)
+  call VecScatterDestroy(vscat1,ierr); CHECK_PETSC_ERROR(ierr)
 
   if (SIMULATION_TYPE == 3) then
-    call VecDestroy(b_xvec1,ierr)
-    call VecDestroy(b_bvec1,ierr)
-    call KSPDestroy(b_ksp1,ierr)
-  call VecScatterDestroy(b_vscat1,ierr)
+    call VecDestroy(b_xvec1,ierr); CHECK_PETSC_ERROR(ierr)
+    call VecDestroy(b_bvec1,ierr); CHECK_PETSC_ERROR(ierr)
+    call KSPDestroy(b_ksp1,ierr); CHECK_PETSC_ERROR(ierr)
+    call VecScatterDestroy(b_vscat1,ierr); CHECK_PETSC_ERROR(ierr)
   endif
+
+  ! final petsc - otherwise called in petsc_finalize() routine
+  if (.not. USE_POISSON_SOLVER_5GLL) then
+    call PetscFinalize(ierr); CHECK_PETSC_ERROR(ierr)
+  endif
+
+#else
+  ! no PETSc compilation support
+  ! compilation without PETSc support
+  if (myrank == 0) then
+    print *, "Error: PETSc solver enabled without PETSc Support."
+    print *, "       To enable PETSc support, reconfigure with --with-petsc flag."
+  endif
+  ! safety stop
+  call exit_MPI(myrank,"Error PETSc solver: petsc_finalize1 called without compilation support")
+
+#endif
 
   end subroutine petsc_finalize1
 
@@ -1536,18 +1701,27 @@ contains
 
   subroutine petsc_initialize()
 
+#ifdef USE_PETSC
   implicit none
   PetscInt :: istart,iend
   PetscInt :: nzeros_max,nzeros_min
   PetscInt, allocatable :: nzeros(:)
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '    initializing PETSc Level-2 solver'
+    call flush_IMAIN()
+  endif
+
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   ! Beginning of program
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  call PetscInitialize(PETSC_NULL_CHARACTER,ierr)
+  call PetscInitialize(PETSC_NULL_CHARACTER,ierr); CHECK_PETSC_ERROR(ierr)
+
   !call PetscOptionsGetInt(PETSC_NULL_CHARACTER,'-n',ngdof,flg,ierr)
-  !if (myrank==0) write(*,*) 'hi0!'
-  !call sync_all
+  !call synchronize_all()
+
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   ! Compute the matrix and right-hand-side vector that define
   ! the linear system, Ax = b.
@@ -1558,62 +1732,49 @@ contains
 
   ! count number of nonzeros per row
   allocate(nzeros(neq))
-  nzeros = 0
-  nzeros(krow_sparse)=nzeros(krow_sparse)+1
-  nzeros_max=maxvec(nzeros)
-  nzeros_min=minvec(nzeros)
-  !nzeros_max=2*nzeros_max
-  !nzeros=nzeros
-  if (myrank == 0) write(*,*) 'ngdof:',ngdof,' nzeros_max:',nzeros_max,' nzeros_min:',nzeros_min
-  call MatCreate(PETSC_COMM_WORLD,Amat,ierr)
-  call MatSetType(Amat,MATMPIAIJ,ierr)
-  CHKERRA(ierr)
-  call MatSetSizes(Amat,PETSC_DECIDE,PETSC_DECIDE,ngdof,ngdof,ierr)
-  CHKERRA(ierr)
+  nzeros(:) = 0
+  nzeros(krow_sparse(:)) = nzeros(krow_sparse(:)) + 1
+
+  nzeros_max = maxvec(nzeros)
+  nzeros_min = minvec(nzeros)
+
+  !debug
+  if (myrank == 0) print *,'PETSc Level-2 solver: ngdof:',ngdof,' nzeros_max:',nzeros_max,' nzeros_min:',nzeros_min
+
+  call MatCreate(PETSC_COMM_WORLD,Amat,ierr); CHECK_PETSC_ERROR(ierr)
+  call MatSetType(Amat,MATMPIAIJ,ierr); CHECK_PETSC_ERROR(ierr)
+  call MatSetSizes(Amat,PETSC_DECIDE,PETSC_DECIDE,ngdof,ngdof,ierr); CHECK_PETSC_ERROR(ierr)
+
   ! preallocation
-  !call MatMPIAIJSetPreallocation(Amat,nzeros_max,PETSC_NULL_INTEGER,nzeros_max, &
-  !PETSC_NULL_INTEGER,ierr)
-  call MatMPIAIJSetPreallocation(Amat,nzeros_max,nzeros,nzeros_max, &
-  20*nzeros,ierr)
-  CHKERRA(ierr)
-  !call MatSeqAIJSetPreallocation(Amat,nzeros_max,nzeros,ierr)
-  !CHKERRA(ierr)
+  call MatMPIAIJSetPreallocation(Amat,nzeros_max,nzeros,nzeros_max,20*nzeros,ierr); CHECK_PETSC_ERROR(ierr)
+  call MatSetFromOptions(Amat,ierr); CHECK_PETSC_ERROR(ierr)
+  call MatGetOwnershipRange(Amat,istart,iend,ierr); CHECK_PETSC_ERROR(ierr)
 
-  !call MatCreateMPIAIJ(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,ngdof,ngdof, &
-  !nzeros_max,PETSC_NULL_INTEGER,nzeros_max,PETSC_NULL_INTEGER,Amat,ierr)
+  !debug
+  if (myrank == 0) print *,'PETSc Level-2 solver: actual global index range:',minval(kgrow_sparse),maxval(kgrow_sparse)
 
-  !if (myrank==0) write(*,*) 'Matrix size:',size(Amat,1),size(Amat,2)
-  call MatSetFromOptions(Amat,ierr)
-  CHKERRA(ierr)
-  !call MatSetUp(Amat,ierr)
-  !if (myrank==0) write(*,*) 'ierr1:',ierr
+  !debug
+  print *,'PETSc Level-2 solver: global index:',myrank,istart,iend,iend-istart
+  call synchronize_all()
 
-  call MatGetOwnershipRange(Amat,istart,iend,ierr)
-  CHKERRA(ierr)
-
-  !if (myrank==0) write(*,*) 'ierr2:',ierr,istart,iend,iend-istart,minval(nzeros),maxval(nzeros)
-  if (myrank == 0) write(*,*) 'actual global index range:',minval(kgrow_sparse),maxval(kgrow_sparse)
-  write(*,*) 'global index:',myrank,istart,iend,iend-istart
-  call sync_all
-  !if (myrank==0) write(*,*) 'ierr3:',(iend-istart)*nzeros
-  !if (myrank==0) write(*,*) 'ierr4:',iend,sum(nzeros),sum((iend-istart)*nzeros)
   deallocate(nzeros)
-  !call sync_all
-  call sync_all
-  if (myrank == 0) write(*,*) 'matrix'
-  !call sync_all
 
+  !debug
+  if (myrank == 0) print *,'PETSc Level-2 solver: matrix'
+  call synchronize_all()
 
   ! Create vectors.  Note that we form 1 vector from scratch and
   ! then duplicate as needed.
 
   !call VecCreateMPI(PETSC_COMM_WORLD,PETSC_DECIDE,ngdof,xvec,ierr)
-  call VecCreate(PETSC_COMM_WORLD,xvec,ierr)
-  call VecSetSizes(xvec,PETSC_DECIDE,ngdof,ierr)
-  call VecSetFromOptions(xvec,ierr)
-  call VecDuplicate(xvec,bvec,ierr)
-  call VecDuplicate(xvec,uvec,ierr)
-  if (myrank == 0) write(*,*) 'vector'
+  call VecCreate(PETSC_COMM_WORLD,xvec,ierr); CHECK_PETSC_ERROR(ierr)
+  call VecSetSizes(xvec,PETSC_DECIDE,ngdof,ierr); CHECK_PETSC_ERROR(ierr)
+  call VecSetFromOptions(xvec,ierr); CHECK_PETSC_ERROR(ierr)
+  call VecDuplicate(xvec,bvec,ierr); CHECK_PETSC_ERROR(ierr)
+  call VecDuplicate(xvec,uvec,ierr); CHECK_PETSC_ERROR(ierr)
+
+  !debug
+  if (myrank == 0) print *,'PETSc Level-2 solver: vector'
 
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   ! Create the linear solver and set various options
@@ -1621,27 +1782,53 @@ contains
 
   ! Create linear solver context
 
-  call KSPCreate(PETSC_COMM_WORLD,ksp,ierr)
+  call KSPCreate(PETSC_COMM_WORLD,ksp,ierr); CHECK_PETSC_ERROR(ierr)
+
   ! Set operators. Here the matrix that defines the linear system
   ! also serves as the preconditioning matrix.
-  !call KSPSetOperators(ksp,Amat,Amat,SAME_PRECONDITIONER,ierr) ! version < 3.5
-  call KSPSetOperators(ksp,Amat,Amat,ierr) ! version >= 3.5
+  !call KSPSetOperators(ksp,Amat,Amat,SAME_PRECONDITIONER,ierr); CHECK_PETSC_ERROR(ierr) ! version < 3.5
+  call KSPSetOperators(ksp,Amat,Amat,ierr); CHECK_PETSC_ERROR(ierr) ! version >= 3.5
 
-  call KSPSetType(ksp,KSPCG,ierr);
-  if (myrank == 0) write(*,*) 'ksp0'
-  call KSPGetPC(ksp,pc,ierr)
-  call PCSetType(pc,PCHYPRE,ierr)
-  if (myrank == 0) write(*,*) 'ksp1'
-  call KSPSetTolerances(ksp,KSP_RTOL,KSP_ATOL,KSP_DTOL,KSP_MAXITER,ierr)
-  CHKERRA(ierr)
-  if (myrank == 0) write(*,*) 'ksp2'
+  call KSPSetType(ksp,KSPCG,ierr); CHECK_PETSC_ERROR(ierr)
+
+  !debug
+  if (myrank == 0) print *,'PETSc Level-2 solver: ksp0'
+
+  call KSPGetPC(ksp,pc,ierr); CHECK_PETSC_ERROR(ierr)
+  call PCSetType(pc,PCHYPRE,ierr); CHECK_PETSC_ERROR(ierr)
+
+  !debug
+  if (myrank == 0) print *,'PETSc Level-2 solver: ksp1'
+
+  call KSPSetTolerances(ksp,KSP_RTOL,KSP_ATOL,KSP_DTOL,KSP_MAXITER,ierr); CHECK_PETSC_ERROR(ierr)
+
+  !debug
+  if (myrank == 0) print *,'PETSc Level-2 solver: ksp2'
 
   !  Set runtime options, e.g.,
   !    -ksp_type < type> -pc_type < type> -ksp_monitor -ksp_KSP_RTOL < KSP_RTOL>
   !  These options will override those specified above as long as
   !  KSPSetFromOptions() is called _after_ any other customization
   !  routines.
-  call KSPSetFromOptions(ksp,ierr)
+  call KSPSetFromOptions(ksp,ierr); CHECK_PETSC_ERROR(ierr)
+
+  !debug
+  if (myrank == 0) print *,'PETSc Level-2 solver: initialization done.'
+
+  ! synchronize all processes
+  call synchronize_all()
+
+#else
+  ! no PETSc compilation support
+  ! compilation without PETSc support
+  if (myrank == 0) then
+    print *, "Error: PETSc solver enabled without PETSc Support."
+    print *, "       To enable PETSc support, reconfigure with --with-petsc flag."
+  endif
+  ! safety stop
+  call exit_MPI(myrank,"Error PETSc solver: petsc_initialize called without compilation support")
+
+#endif
 
   end subroutine petsc_initialize
 
@@ -1651,164 +1838,202 @@ contains
 
   subroutine petsc_set_matrix()
 
-  use specfem_par, only: NEDOF,IFLAG_IN_FICTITIOUS_CUBE,NSPEC_INNER_CORE, &
+#ifdef USE_PETSC
+  use constants, only: CUSTOM_REAL,IFLAG_IN_FICTITIOUS_CUBE,NEDOF
+
+  use specfem_par, only: NSPEC_INNER_CORE, &
     NSPEC_OUTER_CORE,NSPEC_CRUST_MANTLE,NSPEC_TRINFINITE,NSPEC_INFINITE
-  use specfem_par_innercore, only: ggdof_ic,storekmat_inner_core, &
-    idoubling_inner_core,inode_elmt_ic
-  use specfem_par_outercore, only: ggdof_oc,storekmat_outer_core,inode_elmt_oc
-  use specfem_par_crustmantle, only: ggdof_cm,storekmat_crust_mantle,inode_elmt_cm
-  use specfem_par_trinfinite, only: ggdof_trinf,storekmat_trinfinite,inode_elmt_trinf
-  use specfem_par_infinite, only: ggdof_inf,storekmat_infinite,inode_elmt_inf
+
+  use specfem_par_innercore, only: idoubling_inner_core
+
+  use specfem_par_full_gravity, only: &
+    ggdof_oc,storekmat_outer_core,inode_elmt_oc, &
+    ggdof_ic,storekmat_inner_core,inode_elmt_ic, &
+    ggdof_cm,storekmat_crust_mantle,inode_elmt_cm, &
+    ggdof_trinf,storekmat_trinfinite,inode_elmt_trinf, &
+    ggdof_inf,storekmat_infinite,inode_elmt_inf
 
   implicit none
   integer :: i,i_elmt,j,ncount
   integer :: ggdof_elmt(NEDOF),idof(NEDOF),igdof(NEDOF)
+
+  ! types required by MatSetValues:
+  !   MatSetValues(Mat mat, PetscInt m, const PetscInt idxm[], PetscInt n, \
+  !                const PetscInt idxn[], const PetscScalar v[], InsertMode addv)
+  PetscScalar :: v
+  PetscScalar,dimension(:,:),allocatable :: varr
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '    setting up Level-2 solver matrix'
+    call flush_IMAIN()
+  endif
+
   ! Set and assemble matrix.
   !  - Note that MatSetValues() uses 0-based row and column numbers
   !  in Fortran as well as in C (as set here in the array "col").
     ! stage 0: store all elements
 
-  call MatZeroEntries(Amat,ierr)
-  CHKERRA(ierr)
+  call MatZeroEntries(Amat,ierr); CHECK_PETSC_ERROR(ierr)
+
+  ! user info
+  if (myrank == 0) then
+    write(IMAIN,*) '    setup inner core values'
+    call flush_IMAIN()
+  endif
 
   ! inner core
   do i_elmt = 1,NSPEC_INNER_CORE
     if (idoubling_inner_core(i_elmt) == IFLAG_IN_FICTITIOUS_CUBE)cycle
-    ggdof_elmt = reshape(ggdof_ic(:,inode_elmt_ic(:,i_elmt)),(/NEDOF/))
-    ggdof_elmt = ggdof_elmt-1 ! petsc index starts from 0
-    ncount = 0; idof=-1; igdof=-1
+    ggdof_elmt(:) = reshape(ggdof_ic(:,inode_elmt_ic(:,i_elmt)),(/NEDOF/))
+    ggdof_elmt(:) = ggdof_elmt(:)-1 ! petsc index starts from 0
+    !ncount = 0; idof = -1; igdof = -1
     do i = 1,NEDOF
       do j = 1,NEDOF
-      if (ggdof_elmt(i) >= 0.and.ggdof_elmt(j) >= 0.and.                          &
-      storekmat_inner_core(i,j,i_elmt) /= 0.0_kreal) then
-        !ncount=ncount+1
-        !idof(ncount)=i
-        !igdof(ncount)=ggdof_elmt(i)
-        call MatSetValues(Amat,1,ggdof_elmt(i),1,ggdof_elmt(j), &
-        storekmat_inner_core(i,j,i_elmt),ADD_VALUES,ierr)
-        CHKERRA(ierr)
-      endif
+        if (ggdof_elmt(i) >= 0 .and. ggdof_elmt(j) >= 0 .and. &
+            storekmat_inner_core(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
+          ! this leads to an error of no specific subroutine found
+          !call MatSetValues(Amat,1,ggdof_elmt(i),1,ggdof_elmt(j), &
+          !                  storekmat_inner_core(i,j,i_elmt),ADD_VALUES,ierr); CHECK_PETSC_ERROR(ierr)
+          ! petsc types
+          v = storekmat_inner_core(i,j,i_elmt)
+          call MatSetValues(Amat,1,ggdof_elmt(i),1,ggdof_elmt(j),v,ADD_VALUES,ierr); CHECK_PETSC_ERROR(ierr)
+        endif
       enddo
     enddo
-    !call MatSetValues(Amat,ncount,igdof(1:ncount),ncount,igdof(1:ncount), &
-    !storekmat_inner_core(idof(1:ncount),idof(1:ncount),i_elmt),ADD_VALUES,ierr)
-    !CHKERRA(ierr)
   enddo
-  !! inner core
-  !do i_elmt=1,NSPEC_INNER_CORE
-  !  if (idoubling_inner_core(i_elmt)==IFLAG_IN_FICTITIOUS_CUBE)cycle
-  !  ggdof_elmt=reshape(ggdof_ic(:,inode_elmt_ic(:,i_elmt)),(/NEDOF/))
-  !  ggdof_elmt=ggdof_elmt-1 ! petsc index starts from 0
-  !  ncount=0; idof=-1; igdof=-1
-  !  do i=1,NEDOF
-  !    if (ggdof_elmt(i) >= 0) then
-  !      ncount=ncount+1
-  !      idof(ncount)=i
-  !      igdof(ncount)=ggdof_elmt(i)
-  !    endif
-  !  enddo
-  !  call MatSetValues(Amat,ncount,igdof(1:ncount),ncount,igdof(1:ncount), &
-  !  storekmat_inner_core(idof(1:ncount),idof(1:ncount),i_elmt),ADD_VALUES,ierr)
-  !  CHKERRA(ierr)
-  !enddo
   deallocate(storekmat_inner_core)
-  !if (myrank==0) write(*,*) 'IC kmat done!'; call sync_all
+
+  ! user info
+  if (myrank == 0) then
+    write(IMAIN,*) '    setup outer core values'
+    call flush_IMAIN()
+  endif
+
   ! outer core
   do i_elmt = 1,NSPEC_OUTER_CORE
-    ggdof_elmt = reshape(ggdof_oc(:,inode_elmt_oc(:,i_elmt)),(/NEDOF/))
-    ggdof_elmt = ggdof_elmt-1 ! petsc index starts from 0
-    ncount = 0; idof=-1; igdof=-1
+    ggdof_elmt(:) = reshape(ggdof_oc(:,inode_elmt_oc(:,i_elmt)),(/NEDOF/))
+    ggdof_elmt(:) = ggdof_elmt(:)-1 ! petsc index starts from 0
+    !ncount = 0; idof = -1; igdof = -1
     do i = 1,NEDOF
       do j = 1,NEDOF
-      if (ggdof_elmt(i) >= 0.and.ggdof_elmt(j) >= 0.and.                          &
-      storekmat_outer_core(i,j,i_elmt) /= 0.0_kreal) then
-        if (myrank == 0) write(*,*) 'hello in OC:',i_elmt,ggdof_elmt(i),ggdof_elmt(j)
-        call sync_all
-        call MatSetValues(Amat,1,ggdof_elmt(i),1,ggdof_elmt(j), &
-        storekmat_outer_core(i,j,i_elmt),ADD_VALUES,ierr)
-        CHKERRA(ierr)
-      endif
+        if (ggdof_elmt(i) >= 0 .and. ggdof_elmt(j) >= 0 .and. &
+            storekmat_outer_core(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
+          ! petsc types
+          v = storekmat_outer_core(i,j,i_elmt)
+          call MatSetValues(Amat,1,ggdof_elmt(i),1,ggdof_elmt(j),v,ADD_VALUES,ierr); CHECK_PETSC_ERROR(ierr)
+        endif
       enddo
     enddo
   enddo
-  !! outer core
-  !do i_elmt=1,NSPEC_OUTER_CORE
-  !  ggdof_elmt=reshape(ggdof_oc(:,inode_elmt_oc(:,i_elmt)),(/NEDOF/))
-  !  ggdof_elmt=ggdof_elmt-1 ! petsc index starts from 0
-  !  ncount=0; idof=-1; igdof=-1
-  !  do i=1,NEDOF
-  !    if (ggdof_elmt(i) >= 0) then
-  !      ncount=ncount+1
-  !      idof(ncount)=i
-  !      igdof(ncount)=ggdof_elmt(i)
-  !    endif
-  !  enddo
-  !  call MatSetValues(Amat,ncount,igdof(1:ncount),ncount,igdof(1:ncount), &
-  !  storekmat_outer_core(idof(1:ncount),idof(1:ncount),i_elmt),ADD_VALUES,ierr)
-  !  CHKERRA(ierr)
-  !enddo
   deallocate(storekmat_outer_core)
-  !if (myrank==0) write(*,*) 'OC kmat done!'; call sync_all
+
+  ! user info
+  if (myrank == 0) then
+    write(IMAIN,*) '    setup crust/mantle values'
+    call flush_IMAIN()
+  endif
+
   ! crust mantle
   do i_elmt = 1,NSPEC_CRUST_MANTLE
-    ggdof_elmt = reshape(ggdof_cm(:,inode_elmt_cm(:,i_elmt)),(/NEDOF/))
-    ggdof_elmt = ggdof_elmt-1 ! petsc index starts from 0
-    ncount = 0; idof=-1; igdof=-1
+    ggdof_elmt(:) = reshape(ggdof_cm(:,inode_elmt_cm(:,i_elmt)),(/NEDOF/))
+    ggdof_elmt(:) = ggdof_elmt(:)-1 ! petsc index starts from 0
+    ncount = 0; idof(:) = -1; igdof(:) = -1
     do i = 1,NEDOF
       if (ggdof_elmt(i) >= 0) then
         ncount = ncount+1
-        idof(ncount)=i
-        igdof(ncount)=ggdof_elmt(i)
+        idof(ncount) = i
+        igdof(ncount) = ggdof_elmt(i)
       endif
     enddo
-    !if (myrank==0) write(*,*) 'hi homnath3in!',i_elmt,minval(igdof(1:ncount)), &
-    !maxval(igdof(1:ncount)) !,storekmat_crust_mantle(idof(1:ncount),idof(1:ncount),i_elmt)
-    call MatSetValues(Amat,ncount,igdof(1:ncount),ncount,igdof(1:ncount), &
-    storekmat_crust_mantle(idof(1:ncount),idof(1:ncount),i_elmt),ADD_VALUES,ierr)
-    CHKERRA(ierr)
+    !call MatSetValues(Amat,ncount,igdof(1:ncount),ncount,igdof(1:ncount), &
+    !                  storekmat_crust_mantle(idof(1:ncount),idof(1:ncount),i_elmt),ADD_VALUES,ierr); CHECK_PETSC_ERROR(ierr)
+    ! petsc types
+    allocate(varr(ncount,ncount))
+    varr(:,:) = storekmat_crust_mantle(idof(1:ncount),idof(1:ncount),i_elmt)
+    call MatSetValues(Amat,ncount,igdof(1:ncount),ncount,igdof(1:ncount),varr,ADD_VALUES,ierr); CHECK_PETSC_ERROR(ierr)
+    deallocate(varr)
   enddo
   deallocate(storekmat_crust_mantle)
-  !if (myrank==0) write(*,*) 'CM kmat done!'; call sync_all
+
   ! trinfinite
-  do i_elmt = 1,NSPEC_TRINFINITE
-    ggdof_elmt = reshape(ggdof_trinf(:,inode_elmt_trinf(:,i_elmt)),(/NEDOF/))
-    ggdof_elmt = ggdof_elmt-1 ! petsc index starts from 0
-    ncount = 0; idof=-1; igdof=-1
-    do i = 1,NEDOF
-      if (ggdof_elmt(i) >= 0) then
-        ncount = ncount+1
-        idof(ncount)=i
-        igdof(ncount)=ggdof_elmt(i)
-      endif
+  if (NSPEC_TRINFINITE > 0) then
+    ! user info
+    if (myrank == 0) then
+      write(IMAIN,*) '    setup trinfinite values'
+      call flush_IMAIN()
+    endif
+
+    do i_elmt = 1,NSPEC_TRINFINITE
+      ggdof_elmt(:) = reshape(ggdof_trinf(:,inode_elmt_trinf(:,i_elmt)),(/NEDOF/))
+      ggdof_elmt(:) = ggdof_elmt-1 ! petsc index starts from 0
+      ncount = 0; idof(:) = -1; igdof(:) = -1
+      do i = 1,NEDOF
+        if (ggdof_elmt(i) >= 0) then
+          ncount = ncount+1
+          idof(ncount) = i
+          igdof(ncount) = ggdof_elmt(i)
+        endif
+      enddo
+      !call MatSetValues(Amat,ncount,igdof(1:ncount),ncount,igdof(1:ncount), &
+      !                  storekmat_trinfinite(idof(1:ncount),idof(1:ncount),i_elmt),ADD_VALUES,ierr); CHECK_PETSC_ERROR(ierr)
+      ! petsc types
+      allocate(varr(ncount,ncount))
+      varr(:,:) = storekmat_trinfinite(idof(1:ncount),idof(1:ncount),i_elmt)
+      call MatSetValues(Amat,ncount,igdof(1:ncount),ncount,igdof(1:ncount),varr,ADD_VALUES,ierr); CHECK_PETSC_ERROR(ierr)
+      deallocate(varr)
     enddo
-    call MatSetValues(Amat,ncount,igdof(1:ncount),ncount,igdof(1:ncount), &
-    storekmat_trinfinite(idof(1:ncount),idof(1:ncount),i_elmt),ADD_VALUES,ierr)
-    CHKERRA(ierr)
-  enddo
+  endif
   deallocate(storekmat_trinfinite)
-  !if (myrank==0) write(*,*) 'TRINF kmat done!'; call sync_all
+
+  ! user info
+  if (myrank == 0) then
+    write(IMAIN,*) '    setup infinite values'
+    call flush_IMAIN()
+  endif
+
   ! infinite
   do i_elmt = 1,NSPEC_INFINITE
-    ggdof_elmt = reshape(ggdof_inf(:,inode_elmt_inf(:,i_elmt)),(/NEDOF/))
-    ggdof_elmt = ggdof_elmt-1 ! petsc index starts from 0
-    ncount = 0; idof=-1; igdof=-1
+    ggdof_elmt(:) = reshape(ggdof_inf(:,inode_elmt_inf(:,i_elmt)),(/NEDOF/))
+    ggdof_elmt(:) = ggdof_elmt(:)-1 ! petsc index starts from 0
+    ncount = 0; idof(:) = -1; igdof(:) = -1
     do i = 1,NEDOF
       if (ggdof_elmt(i) >= 0) then
         ncount = ncount+1
-        idof(ncount)=i
-        igdof(ncount)=ggdof_elmt(i)
+        idof(ncount) = i
+        igdof(ncount) = ggdof_elmt(i)
       endif
     enddo
-    call MatSetValues(Amat,ncount,igdof(1:ncount),ncount,igdof(1:ncount), &
-    storekmat_infinite(idof(1:ncount),idof(1:ncount),i_elmt),ADD_VALUES,ierr)
-    CHKERRA(ierr)
+    !call MatSetValues(Amat,ncount,igdof(1:ncount),ncount,igdof(1:ncount), &
+    !                  storekmat_infinite(idof(1:ncount),idof(1:ncount),i_elmt),ADD_VALUES,ierr); CHECK_PETSC_ERROR(ierr)
+    ! petsc types
+    allocate(varr(ncount,ncount))
+    varr(:,:) = storekmat_infinite(idof(1:ncount),idof(1:ncount),i_elmt)
+    call MatSetValues(Amat,ncount,igdof(1:ncount),ncount,igdof(1:ncount),varr,ADD_VALUES,ierr); CHECK_PETSC_ERROR(ierr)
+    deallocate(varr)
   enddo
   deallocate(storekmat_infinite)
-  !if (myrank==0) write(*,*) 'INF kmat done!'; call sync_all
 
-  call MatAssemblyBegin(Amat,MAT_FINAL_ASSEMBLY,ierr)
-  call MatAssemblyEnd(Amat,MAT_FINAL_ASSEMBLY,ierr)
-  !if (myrank==0) write(*,*) 'matrix setting & assembly complete!'; call sync_all
+  ! user info
+  if (myrank == 0) then
+    write(IMAIN,*) '    assembling matrix'
+    call flush_IMAIN()
+  endif
+
+  call MatAssemblyBegin(Amat,MAT_FINAL_ASSEMBLY,ierr); CHECK_PETSC_ERROR(ierr)
+  call MatAssemblyEnd(Amat,MAT_FINAL_ASSEMBLY,ierr); CHECK_PETSC_ERROR(ierr)
+
+#else
+  ! no PETSc compilation support
+  ! compilation without PETSc support
+  if (myrank == 0) then
+    print *, "Error: PETSc solver enabled without PETSc Support."
+    print *, "       To enable PETSc support, reconfigure with --with-petsc flag."
+  endif
+  ! safety stop
+  call exit_MPI(myrank,"Error PETSc solver: petsc_set_matrix called without compilation support")
+
+#endif
 
   end subroutine petsc_set_matrix
 
@@ -1818,20 +2043,50 @@ contains
 
   subroutine petsc_set_vector()
 
-  use specfem_par, only: l2gdof,load
+#ifdef USE_PETSC
+  use specfem_par_full_gravity, only: l2gdof,gravload
+
   implicit none
-  PetscScalar      zero !,none,one
+  PetscScalar :: zero
+
+  ! petsc explicit types
+  PetscInt :: ni
+  PetscInt :: ix(size(l2gdof(1:)))
+  PetscScalar :: y(size(gravload(1:)))
+
   ! Set exact solution; then compute right-hand-side vector.
   !none=-1.0
   !one=1.0
   zero = 0.0
-  call VecSet(bvec,zero,ierr)
-  call VecSetValues(bvec,neq,l2gdof(1:),load(1:),ADD_VALUES,ierr);
+  call VecSet(bvec,zero,ierr); CHECK_PETSC_ERROR(ierr)
+
+  ! types required by VecSetValues:
+  !   VecSetValues(Vec x, PetscInt ni, const PetscInt ix[], const PetscScalar y[], InsertMode iora)
+  ! this leads to an error of no specific subroutine found
+  !call VecSetValues(bvec,neq,l2gdof(1:),gravload(1:),ADD_VALUES,ierr); CHECK_PETSC_ERROR(ierr)
+
+  ! sets up petsc types
+  ni = neq
+  ix(:) = l2gdof(1:)
+  y(:) = gravload(1:)
+
+  call VecSetValues(bvec,neq,ix,y,ADD_VALUES,ierr); CHECK_PETSC_ERROR(ierr)
 
   ! assemble vector
-  call VecAssemblyBegin(bvec,ierr)
-  call VecAssemblyEnd(bvec,ierr)
-  !if (myrank==0) write(*,*) 'vector setting & assembly complete!'
+  call VecAssemblyBegin(bvec,ierr); CHECK_PETSC_ERROR(ierr)
+  call VecAssemblyEnd(bvec,ierr); CHECK_PETSC_ERROR(ierr)
+
+#else
+  ! no PETSc compilation support
+  ! compilation without PETSc support
+  if (myrank == 0) then
+    print *, "Error: PETSc solver enabled without PETSc Support."
+    print *, "       To enable PETSc support, reconfigure with --with-petsc flag."
+  endif
+  ! safety stop
+  call exit_MPI(myrank,"Error PETSc solver: petsc_set_vector called without compilation support")
+
+#endif
 
   end subroutine petsc_set_vector
 
@@ -1839,35 +2094,77 @@ contains
 !===============================================================================
 !
 
-  subroutine petsc_solve(sdata,cg_iter)
+  subroutine petsc_solve(sdata,niter)
+
+#ifdef USE_PETSC
+  use petscksp, only: KSPSolve, KSPView, KSPGetConvergedReason, KSPGetIterationNumber
+#endif
 
   implicit none
-  PetscScalar sdata(:)
-  PetscInt    cg_iter
-  PetscInt    ireason
+  !PetscScalar :: sdata(:)
+  real(kind=CUSTOM_REAL) :: sdata(:)
+  integer, optional :: niter
 
-  call KSPSolve(ksp,bvec,xvec,ierr)
+#ifdef USE_PETSC
+  ! local parameters
+  PetscInt :: iter,ireason
+  ! petsc type array
+  PetscScalar :: y(size(sdata))
+
+  call KSPSolve(ksp,bvec,xvec,ierr); CHECK_PETSC_ERROR(ierr)
 
   ! View solver info; we could instead use the option -ksp_view
-  call KSPView(ksp,PETSC_VIEWER_STDOUT_WORLD,ierr)
+  call KSPView(ksp,PETSC_VIEWER_STDOUT_WORLD,ierr); CHECK_PETSC_ERROR(ierr)
 
   !-------------------------------------------------------------------------------
   ! Check solution and clean up
   !-------------------------------------------------------------------------------
-  ! Check the error
-  !call VecAXPY(xvec,none,uvec,ierr)
-  !call VecNorm(xvec,NORM_2,norm,ierr)
-  call KSPGetConvergedReason(ksp,ireason,ierr)
-  call KSPGetIterationNumber(ksp,cg_iter,ierr)
-  if (myrank < 1) then
-    write(*,*) 'converged reason',ireason
-    write(*,*) 'Iterations:',cg_iter
+
+  call KSPGetConvergedReason(ksp,ireason,ierr); CHECK_PETSC_ERROR(ierr)
+  call KSPGetIterationNumber(ksp,iter,ierr); CHECK_PETSC_ERROR(ierr)
+
+  !debug
+  if (myrank == 0) then
+    print *,'PETSc solve: Converged reason: ',ireason
+    print *,'PETSc solve: Iterations      : ',iter
   endif
+
+  ! Check the error
+  !call VecAXPY(xvec,none,uvec,ierr); CHECK_PETSC_ERROR(ierr)
+  !call VecNorm(xvec,NORM_2,norm,ierr); CHECK_PETSC_ERROR(ierr)
+  !
   !if (norm > 1.e-12) then
   !  write(*,'(a,e11.4,a,i5)')'Norm of error:',norm,', Iterations:',its
   !else
   !  write(*,'(a,i5,a)')'Norm of error < 1.e-12, Iterations:',its
   !endif
+
+  ! explict conversion to PetscScalar array
+  y(:) = sdata(:)
+  ! no scatter done
+  !call scatter_globalvec1(xvec1, y)
+  ! return values
+  !sdata(:) = real(y(:),kind=CUSTOM_REAL)
+
+  ! returns number of iterations
+  if (present(niter)) niter = iter
+
+#else
+  ! no PETSc compilation support
+  integer :: idummy
+
+  ! compilation without PETSc support
+  if (myrank == 0) then
+    print *, "Error: PETSc solver enabled without PETSc Support."
+    print *, "       To enable PETSc support, reconfigure with --with-petsc flag."
+  endif
+  ! safety stop
+  call exit_MPI(myrank,"Error PETSc solver: petsc_solve called without compilation support")
+
+  ! to avoid compiler warning
+  idummy = size(sdata)
+  if (present(niter)) niter = 0
+#endif
 
   end subroutine petsc_solve
 
@@ -1877,21 +2174,77 @@ contains
 
   subroutine petsc_finalize()
 
+#ifdef USE_PETSC
+  use petscvec, only: VecDestroy
+  use petscmat, only: MatDestroy
+  use petscksp, only: KSPDestroy
+
   implicit none
 
   ! Free work space.  All PETSc objects should be destroyed when they
   ! are no longer needed.
 
-  call VecDestroy(xvec,ierr)
-  call VecDestroy(uvec,ierr)
-  call VecDestroy(bvec,ierr)
-  call MatDestroy(Amat,ierr)
-  call KSPDestroy(ksp,ierr)
-  call PetscFinalize(ierr)
+  call VecDestroy(xvec,ierr); CHECK_PETSC_ERROR(ierr)
+  call VecDestroy(uvec,ierr); CHECK_PETSC_ERROR(ierr)
+  call VecDestroy(bvec,ierr); CHECK_PETSC_ERROR(ierr)
+  call MatDestroy(Amat,ierr); CHECK_PETSC_ERROR(ierr)
+  call KSPDestroy(ksp,ierr); CHECK_PETSC_ERROR(ierr)
+
+  call PetscFinalize(ierr); CHECK_PETSC_ERROR(ierr)
+
+#else
+  ! no PETSc compilation support
+  ! compilation without PETSc support
+  if (myrank == 0) then
+    print *, "Error: PETSc solver enabled without PETSc Support."
+    print *, "       To enable PETSc support, reconfigure with --with-petsc flag."
+  endif
+  ! safety stop
+  call exit_MPI(myrank,"Error PETSc solver: petsc_finalize called without compilation support")
+
+#endif
 
   end subroutine petsc_finalize
 
-end module solver_petsc
+!
+!===============================================================================
+!
+
+#ifdef USE_PETSC
+
+  subroutine check_petsc_err(ierr,line)
+
+  use specfem_par, only: myrank
+
+  implicit none
+  PetscErrorCode, intent(in) :: ierr
+  integer, intent(in) :: line
+
+  ! the PETSc base type file petscsys.h defines an error checking macro CHKERRA(ierr) as
+  ! long free-from version:
+  !#define CHKERRA(ierr) if (ierr /= 0) then;call PetscErrorF(ierr,__LINE__,__FILE__);call MPIU_Abort(PETSC_COMM_SELF,ierr);endif
+  ! short version:
+  !#define CHKERRA(ierr) if (ierr /= 0) then;call PetscErrorF(ierr);call MPIU_Abort(PETSC_COMM_SELF,ierr);endif
+  !
+  ! given the __LINE__ and __FILE__ info is not very useful when called in this subroutine, we use the short version here.
+
+  if (ierr /= 0) then
+    ! petsc error function
+    call PetscErrorF(ierr,line,"SIEM_solver_petsc.F90")
+
+    ! user info
+    print *
+    print *,'Error: PETSc error occurred for rank ',myrank,' in module SIEM_solver_petsc on line ',line
+    print *,'       Please check, aborting now...'
+    print *
+
+    ! abort
+    call MPIU_Abort(PETSC_COMM_SELF,ierr)
+  endif
+
+  end subroutine check_petsc_err
 
 #endif
+
+end module siem_solver_petsc
 

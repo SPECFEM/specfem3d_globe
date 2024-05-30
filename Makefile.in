@@ -551,9 +551,8 @@ SUBDIRS = \
 	tomography/postprocess_sensitivity_kernels \
 	$(EMPTY_MACRO)
 
-ifeq ($(PETSC), yes)
-	SUBDIRS += gindex3D
-endif
+# full gravity tool
+SUBDIRS += gindex3D
 
 #ifeq ($(HAS_GPU),yes)
 #  SUBDIRS := gpu $(SUBDIRS)
@@ -592,11 +591,8 @@ endif
 #	$(EMPTY_MACRO)
 #endif
 
-ifeq ($(PETSC), yes)
-DEFAULT += 	\
-	xgindex3D \
-	$(EMPTY_MACRO)
-endif
+# full gravity tool
+DEFAULT += 	xgindex3D
 
 
 all: default aux movies postprocess tomography
@@ -713,11 +709,9 @@ endif
 	@echo "for unit testing:"
 	@echo "    tests"
 	@echo ""
-ifeq ($(PETSC), yes)
 	@echo "for full-gravity simulations:"
 	@echo "    xgindex3D"
 	@echo ""
-endif
 
 .PHONY: all default clean realclean help tests
 

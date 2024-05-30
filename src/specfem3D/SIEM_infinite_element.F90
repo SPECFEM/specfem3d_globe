@@ -25,200 +25,14 @@
 !
 !=====================================================================
 
-! TODO: full gravity is not working yet, needs to fully implement solver...
-#ifdef USE_PETSC_NOT_WORKING_YET
 
 ! this module contains infinite-element routines
-! REVISION
-!   HNG, Apr 11,2012; HNG, Jul 12,2011; HNG, Apr 09,2010
 
-module infinite_element
+module siem_infinite_element
 
-  integer,parameter :: kdble=selected_real_kind(15) ! double precision
+  use siem_gll_library, only: kdble
 
 contains
-
-  !! this subroutine add a layer of infinite mesh outside the model given the
-  !! reference surface and infinite element information.
-  !! REVISION
-  !!   HNG, Jul 12,2011; ; HNG, Apr 09,2010
-  !subroutine add_infmesh(ismpi,myid,nproc,errcode,errtag)
-  !use global
-  !use math_constants, only: zero
-  !use math_library, only: distance,i_uniinv
-  !implicit none
-  !logical,intent(in) :: ismpi
-  !integer,intent(in) :: myid,nproc
-  !integer,intent(out) :: errcode
-  !character(len=250),intent(out) :: errtag
-  !integer :: bctype,i,ios
-  !integer :: ielmt,iface,nelpart,i_elpart
-  !integer,dimension(6,4) :: node_face ! local node numbers in each face
-  !
-  !real(kind=kdble) :: gaminf,x0(ndim),val
-  !real(kind=kdble),parameter :: one=1.0_kdble
-  !integer :: g_numOLD(8,nelmt),mat_idOLD(nelmt),nelmtOLD,nnodeOLD
-  !real(kind=kdble) :: r1,g_coordOLD(ndim,nnode)
-  !real(kind=kdble),allocatable :: xs(:,:),mirxs(:,:)
-  !
-  !integer :: n1,n2,nelmtINF,nnode_inf,nsnode,nsnode_all
-  !integer,allocatable :: nodelist(:),inode_order(:),g_numinf(:),iface_elmt(:)
-  !logical,allocatable :: isnode(:)
-  !
-  !character(len=20) :: format_str,ptail
-  !character(len=250) :: fname
-  !character(len=150) :: data_path,strline
-  !
-  !integer :: ipart ! partition ID
-  !
-  !errtag="ERROR: unknown!"
-  !errcode=-1
-  !! set data path
-  !if (ismpi) then
-  !  data_path=trim(part_path)
-  !else
-  !  data_path=trim(inp_path)
-  !endif
-  !
-  !ipart=myid-1 ! partition ID starts from 0
-  !if (ismpi) then
-  !  write(format_str,*)ceiling(log10(real(nproc)+1))
-  !  format_str='(a,i'//trim(adjustl(format_str))//'.'//trim(adjustl(format_str))//')'
-  !  write(ptail, fmt=format_str)'_proc',ipart
-  !else
-  !  ptail=""
-  !endif
-  !
-  !! local node numbering in each face CUBIT/EXODUS convention
-  !node_face(1,:)=(/1,2,6,5/) ! counterclockwise w.r.t. outer normal
-  !node_face(2,:)=(/2,3,7,6/) ! counterclockwise w.r.t. outer normal
-  !node_face(3,:)=(/4,3,7,8/) ! clockwise w.r.t. outer normal
-  !node_face(4,:)=(/1,4,8,5/) ! clockwise w.r.t. outer normal
-  !node_face(5,:)=(/1,2,3,4/) ! clockwise w.r.t. outer normal
-  !node_face(6,:)=(/5,6,7,8/) ! counterclockwise w.r.t. outer normal
-  !
-  !fname=trim(data_path)//trim(infrfile)//trim(ptail)
-  !!print *,fname
-  !open(unit=11,file=trim(fname),status='old',action='read',iostat = ios)
-  !if (ios /= 0) then
-  !  write(errtag,*)'ERROR: file "'//trim(fname)//'" cannot be opened!'
-  !  return
-  !endif
-  !
-  !read(11,*,iostat=ios)nelpart
-  !if (ios /= 0) then
-  !  write(errtag,*)'ERROR: bad infrfile!'
-  !  return
-  !endif
-  !nelmtINF=nelpart
-  !allocate(iface_elmt(nelmtINF))
-  !nsnode_all=4*nelmtINF
-  !allocate(nodelist(nsnode_all),inode_order(nsnode_all))
-  !n1=1; n2=4
-  !do i_elpart=1,nelpart
-  !  !print *,n1,n2
-  !  read(11,*)ielmt,iface ! This will read a line and proceed to next line
-  !  iface_elmt(i_elpart)=iface
-  !  nodelist(n1:n2)=g_num(node_face(iface,:),ielmt)
-  !  n1=n2+1; n2=n1+3
-  !enddo
-  !close(11)
-  !!stop
-  !!print *,n2,nsnode_all;! stop
-  !call i_uniinv(nodelist,inode_order)
-  !
-  !!print *,inode_order;
-  !!print *,minval(nodelist),maxval(nodelist);
-  !!print *,minval(abs(inode_order)),maxval(abs(inode_order)); stop
-  !
-  !nsnode=maxval(inode_order)
-  !allocate(isnode(nsnode),xs(ndim,nsnode),mirxs(ndim,nsnode),g_numinf(nsnode))
-  !
-  !isnode=.false.
-  !! assign xs
-  !xs(:,inode_order(1))=g_coord(:,nodelist(1))
-  !isnode(inode_order(1))=.true.
-  !do i=2,nsnode_all
-  !  if (.not.isnode(inode_order(i))) then
-  !     xs(:,inode_order(i))=g_coord(:,nodelist(i))
-  !     isnode(inode_order(i))=.true.
-  !  endif
-  !enddo
-  !deallocate(isnode)
-  !!print *,'Hi:',inod,nsnode_all
-  !!stop
-  !! pole specific to the spherical body which has the center at (0,0,0)
-  !x0=zero
-  !
-  !! compute mirror nodes
-  !do i=1,nsnode
-  !  r1=distance(x0,xs(:,i),ndim)
-  !  if (rinf <= r1) then
-  !    write(errtag,*)'ERROR: reference infinite radius is smaller than the model!'
-  !    return
-  !  endif
-  !  gaminf=r1/(rinf-r1)
-  !  !print *,one+one/gaminf
-  !  ! division formula
-  !  mirxs(:,i)=((gaminf+one)*xs(:,i)-x0)/gaminf
-  !  g_numinf(i)=nnode+i
-  !enddo
-  !!stop
-  !deallocate(xs)
-  !g_numOLD=g_num;
-  !g_coordOLD=g_coord;
-  !mat_idOLD=mat_id
-  !deallocate(g_num,g_coord,mat_id)
-  !
-  !nelmtOLD=nelmt; nnodeOLD=nnode
-  !
-  !nelmt=nelmtOLD+nelmtINF
-  !nnode=nnodeOLD+nsnode
-  !
-  !! reallocate global node - and element-arrays
-  !allocate(g_num(8,nelmt),g_coord(ndim,nnode),mat_id(nelmt))
-  !
-  !! update connectivity, coordinates, and material IDs
-  !g_num(:,1:nelmtOLD)=g_numOLD
-  !g_coord(:,1:nnodeOLD)=g_coordOLD
-  !mat_id(1:nelmtOLD)=mat_idOLD
-  !! add to material list
-  !mat_id(nelmtOLD+1:nelmt)=mat_idINF
-  !!print *,mat_id,'infmat:',mat_idINF; stop
-  !! add to global node list
-  !g_coord(:,nnodeOLD+1:nnode)=mirxs
-  !deallocate(mirxs)
-  !
-  !! add to global element list
-  !! to have face 5 of new element always clockwise w.r.t. outer normal
-  !! face 3 or 4 or 5 of reference element has to be reordered
-  !n1=1; n2=4
-  !do i=1,nelmtINF
-  !  if (iface_elmt(i)==3.or.iface_elmt(i)==4.or.iface_elmt(i)==5) then
-  !    g_num(1:4,nelmtOLD+i)=nodelist(n2:n1:-1)
-  !    g_num(5:8,nelmtOLD+i)=g_numinf(inode_order(n2:n1:-1))
-  !  else
-  !    g_num(1:4,nelmtOLD+i)=nodelist(n1:n2)
-  !    g_num(5:8,nelmtOLD+i)=g_numinf(inode_order(n1:n2))
-  !  endif
-  !  n1=n2+1; n2=n1+3
-  !enddo
-  !deallocate(nodelist,inode_order,g_numinf,iface_elmt)
-  !
-  !ielmtINF1=nelmtOLD+1; ielmtINF2=nelmt
-  !ifaceINF=6
-  !!sync all
-  !!call stop_all()
-  !
-  !! compute nodal to global
-  !errcode=0
-  !return
-  !
-  !end subroutine add_infmesh
-
-!
-!===========================================
-!
 
 ! TODO: compute 1D lagrange shape function iusing GEN rotuine since we take
 ! equidistant interpolation points along infinite direction. But now I have
@@ -227,21 +41,22 @@ contains
 ! infinite direction) quadrature points and weights for 3D
 
   subroutine shape_function_infiniteGLHEX8ZW_GLLR(ndim,ngllx,nglly,ngllz,ngll,nip, &
-                                                  iface,gam,a,shape_infinite,dshape_infinite,lagrange_gl,dlagrange_gl,GLw)
+                                                  iface,shape_infinite,dshape_infinite,lagrange_gl,dlagrange_gl,GLw)
 
-  use gll_library1, only: lagrange1dGLLAS,lagrange1dGENAS,zwgljd
+  use siem_gll_library, only: lagrange1dGLLAS,lagrange1dGENAS,zwgljd
+
   implicit none
+
   integer,intent(in) :: ndim,ngllx,nglly,ngllz,ngll,nip,iface
   !of decay
   !integer,parameter :: ngllinf=ngll-nglly*ngllz
-  real(kind=kdble),intent(in) :: gam,a!,nd !nd: order
   real(kind=kdble),dimension(nip,8),intent(out) :: shape_infinite
   real(kind=kdble),dimension(ndim,nip,8),intent(out) :: dshape_infinite
   real(kind=kdble),dimension(nip,ngll),intent(out) :: lagrange_gl
   real(kind=kdble),dimension(ndim,nip,ngll),intent(out) :: dlagrange_gl
   real(kind=kdble),intent(out) :: GLw(nip)
   real(kind=kdble),parameter :: jacobi_alpha=0.0_kdble,jacobi_beta=0.0_kdble, &
-  one = 1.0_kdble!,five = 5.0_kdble
+                                one = 1.0_kdble!,five = 5.0_kdble
   integer :: i,ii,j,k,n,i1,j1,k1,nipx(ndim)
   real(kind=kdble) :: ddir,xi(ndim) !,eta,zeta
   real(kind=kdble),dimension(ngllx) :: gllpx,gllwx,igllpx,igllwx ! GLL points and weights
@@ -249,36 +64,29 @@ contains
   real(kind=kdble),dimension(ngllz) :: gllpz,gllwz,igllpz,igllwz ! GLL points and weights
   real(kind=kdble),dimension(ndim,ngllx) :: lagrange_x,lagrange_dx
   real(kind=kdble),dimension(ndim,2) :: lagrangeINF_x,lagrangeINF_dx
-  !real(kind=kdble),dimension(nglly) :: lagrange_y,lagrange_dy
-  !real(kind=kdble),dimension(ngllz) :: lagrange_z,lagrange_dz
-  integer :: iINF !,ngllxINF(ndim)
-  !print *,iface; stop
-  !ngllxINF(1)=ngllx
-  !ngllxINF(2)=nglly
-  !ngllxINF(3)=ngllz
-  !print *,nip; stop
-  !print *,size(shape_infinite),size(dshape_infinite)
-  !stop
+  integer :: iINF
+
+  iINF = 0
   ddir = one
+
   if (iface == 1) then
-    iINF = 2; ddir=-one
+    iINF = 2; ddir = -one
   else if (iface == 2) then
     iINF = 1; ddir = one
   else if (iface == 3) then
     iINF = 2; ddir = one
   else if (iface == 4) then
-    iINF = 1; ddir=-one
+    iINF = 1; ddir = -one
   else if (iface == 5) then
-    iINF = 3; ddir=-one
+    iINF = 3; ddir = -one
   else if (iface == 6) then
     iINF = 3; ddir = one
   endif
-  !print *,ddir; stop
-  !ngllxINF(iINF)=ngllxINF(iINF)-1
 
-  nipx(1)=ngllx
-  nipx(2)=nglly
-  nipx(3)=ngllz
+  nipx(1) = ngllx
+  nipx(2) = nglly
+  nipx(3) = ngllz
+
   ! compute everything in indexed order
   ! get GLL points
   ! for alpha=beta=0, jacobi polynomial is legendre polynomial
@@ -297,51 +105,19 @@ contains
   if (iINF == 2) call radau_quadrature(nglly,igllpy,igllwy)
   if (iINF == 3) call radau_quadrature(ngllz,igllpz,igllwz)
 
-  !print *,gllpz
-  !print *,gllwz
-  !stop
-  ! gauss-jacobi or gauss-legendre points and weights
-  !call zwgjd(gllpx,gllwx,nipx,jacobi_alpha,jacobi_beta)
-  !print *,nipx
-  !print *,gllpx
-  !print *,gllwx
-  ! for an infinite element we use Gauss-Legendre quadrature
-  !if (nip==8) then
-  !  gllpx(1)=-one/sqrt(3.0_kdble); gllpx(2)=-gllpx(1)
-  !  gllwx(1)=one; gllwx(2)=one;
-  !else if (nip==27) then
-  !  gllpx(1)=-sqrt(3.0_kdble/five); gllpx(2)=0.0_kdble; gllpx(3)=-gllpx(1)
-  !  gllwx(1)=five/9.0_kdble; gllwx(2)=8.0_kdble/9.0_kdble; gllwx(3)=gllwx(1);
-  !else
-  !if (nip /= 8.and.nip /= 27) then
-  !  print *,'ERROR: illegal number of Gauss points:',nip,'!'
-  !  stop
-  !endif
-  !print *,gllpx
-  !print *,gllwx
-  !stop
-  !gllpy=gllpx; gllpz=gllpx;
-  !gllwy=gllwx; gllwz=gllwx;
-
-  !print *,gllpz
-  !print *,gllwz
-  !stop
   ii = 0
   do k1 = 1,nipx(3)
     do j1 = 1,nipx(2)
       do i1 = 1,nipx(1)
         ii = ii+1
-        !do ii=1,ngll ! ngllx*nglly*ngllz
 
         ! integration points
-        xi(1)=igllpx(i1) !xi,   gll_points(1,ii)
-        xi(2)=igllpy(j1) !eta,  gll_points(2,ii)
-        xi(3)=igllpz(k1) !zeta, gll_points(3,ii)
-
-        !xi(iINF)=ddir*xi(iINF)
+        xi(1) = igllpx(i1) !xi,   gll_points(1,ii)
+        xi(2) = igllpy(j1) !eta,  gll_points(2,ii)
+        xi(3) = igllpz(k1) !zeta, gll_points(3,ii)
 
         ! integration weights
-        GLw(ii)=igllwx(i1)*igllwy(j1)*igllwz(k1)
+        GLw(ii) = igllwx(i1)*igllwy(j1)*igllwz(k1)
 
         call lagrange1dGLLAS(ngllx,gllpx,xi(1),lagrange_x(1,:),lagrange_dx(1,:))
         call lagrange1dGLLAS(nglly,gllpy,xi(2),lagrange_x(2,:),lagrange_dx(2,:))
@@ -353,10 +129,10 @@ contains
           do j = 1,nglly
             do i = 1,ngllx
               n = n+1
-              lagrange_gl(ii,n)=lagrange_x(1,i)*lagrange_x(2,j)*lagrange_x(3,k)
-              dlagrange_gl(1,ii,n)=lagrange_dx(1,i)*lagrange_x(2,j)*lagrange_x(3,k)
-              dlagrange_gl(2,ii,n)=lagrange_x(1,i)*lagrange_dx(2,j)*lagrange_x(3,k)
-              dlagrange_gl(3,ii,n)=lagrange_x(1,i)*lagrange_x(2,j)*lagrange_dx(3,k)
+              lagrange_gl(ii,n) = lagrange_x(1,i)*lagrange_x(2,j)*lagrange_x(3,k)
+              dlagrange_gl(1,ii,n) = lagrange_dx(1,i)*lagrange_x(2,j)*lagrange_x(3,k)
+              dlagrange_gl(2,ii,n) = lagrange_x(1,i)*lagrange_dx(2,j)*lagrange_x(3,k)
+              dlagrange_gl(3,ii,n) = lagrange_x(1,i)*lagrange_x(2,j)*lagrange_dx(3,k)
             enddo
           enddo
         enddo
@@ -366,32 +142,27 @@ contains
         call lagrange1dGENAS(2,xi(1),lagrangeINF_x(1,:),lagrangeINF_dx(1,:))
         call lagrange1dGENAS(2,xi(2),lagrangeINF_x(2,:),lagrangeINF_dx(2,:))
         call lagrange1dGENAS(2,xi(3),lagrangeINF_x(3,:),lagrangeINF_dx(3,:))
+
         ! consider 3 nodes but compute only at 2 nodes
-        !call lagrange_infinite(3,nd,xi(iINF),ddir,gam,a,lagrangeINF_x(iINF,:),lagrangeINF_dx(iINF,:))
         call lagrange1d_infiniteZWAS(3,xi(iINF),lagrangeINF_x(iINF,:),lagrangeINF_dx(iINF,:))
-        !call lagrange_infinite(ngllx,nd,1.0_kdble,gam,a,lagrangeINF_x,lagrangeINF_dx)
-        !print *,lagrangeINF_x,lagrangeINF_dx; stop
-        !call lagrange1d_infinite(ngllx,xi,lagrangeINF_x,lagrangeINF_dx)
-        !call lagrange1d_infiniteZW(ngllx,xi,lagrangeINF_x,lagrangeINF_dx)
+
         n = 0
         do k = 1,2
           do j = 1,2
             do i = 1,2
               n = n+1
-              shape_infinite(ii,n)=lagrangeINF_x(1,i)*lagrangeINF_x(2,j)*lagrangeINF_x(3,k)
-              dshape_infinite(1,ii,n)=lagrangeINF_dx(1,i)*lagrangeINF_x(2,j)*lagrangeINF_x(3,k)
-              dshape_infinite(2,ii,n)=lagrangeINF_x(1,i)*lagrangeINF_dx(2,j)*lagrangeINF_x(3,k)
-              dshape_infinite(3,ii,n)=lagrangeINF_x(1,i)*lagrangeINF_x(2,j)*lagrangeINF_dx(3,k)
+              shape_infinite(ii,n) = lagrangeINF_x(1,i)*lagrangeINF_x(2,j)*lagrangeINF_x(3,k)
+              dshape_infinite(1,ii,n) = lagrangeINF_dx(1,i)*lagrangeINF_x(2,j)*lagrangeINF_x(3,k)
+              dshape_infinite(2,ii,n) = lagrangeINF_x(1,i)*lagrangeINF_dx(2,j)*lagrangeINF_x(3,k)
+              dshape_infinite(3,ii,n) = lagrangeINF_x(1,i)*lagrangeINF_x(2,j)*lagrangeINF_dx(3,k)
             enddo
           enddo
         enddo
 
-        !enddo
       enddo
     enddo
   enddo
-  !stop 'Hi!'
-  return
+
   end subroutine shape_function_infiniteGLHEX8ZW_GLLR
 
 !
@@ -402,162 +173,128 @@ contains
 ! equidistant interpolation points along infinite direction.  But now I have
 ! changed to GLL points so not necessary!
 
-  subroutine shape_function_infiniteGLHEX8ZW_GQ(ndim,ngllx,nglly,ngllz,ngll,nipx, &
-                                                nip,iface,nd,gam,a,shape_infinite,dshape_infinite,lagrange_gl,dlagrange_gl,GLw)
-
-  use gll_library1, only: lagrange1dGLL,lagrange1dGEN,zwgjd,zwgljd
-  implicit none
-  integer,intent(in) :: ndim,ngllx,nglly,ngllz,ngll,nipx,nip,iface
-  real(kind=kdble),intent(in) :: gam,a,nd !nd: order
-  real(kind=kdble),dimension(nip,8),intent(out) :: shape_infinite
-  real(kind=kdble),dimension(ndim,nip,8),intent(out) :: dshape_infinite
-  real(kind=kdble),dimension(nip,ngll),intent(out) :: lagrange_gl
-  real(kind=kdble),dimension(ndim,nip,ngll),intent(out) :: dlagrange_gl
-  real(kind=kdble),intent(out) :: GLw(nip)
-  real(kind=kdble),parameter :: jacobi_alpha=0.0_kdble,jacobi_beta=0.0_kdble,one=1.0_kdble
-  integer :: i,ii,j,k,n,i1,j1,k1
-  real(kind=kdble) :: ddir,xi(ndim),tmp !,eta,zeta
-  real(kind=kdble),dimension(ngllx) :: gllpx,gllwx ! GLL points and weights
-  real(kind=kdble),dimension(nglly) :: gllpy,gllwy ! GLL points and weights
-  real(kind=kdble),dimension(ngllz) :: gllpz,gllwz ! GLL points and weights
-  real(kind=kdble),dimension(nipx) :: igllpx,igllwx ! GLL points and weights
-  real(kind=kdble),dimension(nipx) :: igllpy,igllwy ! GLL points and weights
-  real(kind=kdble),dimension(nipx) :: igllpz,igllwz ! GLL points and weights
-  real(kind=kdble),dimension(ndim,ngllx) :: lagrange_x,lagrange_dx
-  real(kind=kdble),dimension(ndim,2) :: lagrangeINF_x,lagrangeINF_dx
-  !real(kind=kdble),dimension(nglly) :: lagrange_y,lagrange_dy
-  !real(kind=kdble),dimension(ngllz) :: lagrange_z,lagrange_dz
-  integer :: iINF !,ngllxINF(ndim)
-  !print *,iface; stop
-  !ngllxINF(1)=ngllx
-  !ngllxINF(2)=nglly
-  !ngllxINF(3)=ngllz
-
-  ddir = one
-  if (iface == 1) then
-    iINF = 2; ddir=-one
-  else if (iface == 2) then
-    iINF = 1; ddir = one
-  else if (iface == 3) then
-    iINF = 2; ddir = one
-  else if (iface == 4) then
-    iINF = 1; ddir=-one
-  else if (iface == 5) then
-    iINF = 3; ddir=-one
-  else if (iface == 6) then
-    iINF = 3; ddir = one
-  endif
-  !print *,iface,iINF,ddir
-  !ngllxINF(iINF)=ngllxINF(iINF)-1
-
-  ! interpolation points
-  ! compute everything in indexed order
-  ! get GLL points
-  ! for alpha=beta=0, jacobi polynomial is legendre polynomial
-  ! for ngllx=nglly=ngllz, need to call only once
-  call zwgljd(gllpx,gllwx,ngllx,jacobi_alpha,jacobi_beta)
-  call zwgljd(gllpy,gllwy,nglly,jacobi_alpha,jacobi_beta)
-  call zwgljd(gllpz,gllwz,ngllz,jacobi_alpha,jacobi_beta)
-
-
-  ! integration points
-  ! gauss-jacobi or gauss-legendre points and weights
-  call zwgjd(igllpx,igllwx,nipx,jacobi_alpha,jacobi_beta)
-  !print *,nipx
-  !print *,gllpx
-  !print *,gllwx; stop
-  ! for an infinite element we use Gauss-Legendre quadrature
-  !if (nip==8) then
-  !  gllpx(1)=-one/sqrt(3.0_kdble); gllpx(2)=-gllpx(1)
-  !  gllwx(1)=one; gllwx(2)=one;
-  !else if (nip==27) then
-  !  gllpx(1)=-sqrt(3.0_kdble/five); gllpx(2)=0.0_kdble; gllpx(3)=-gllpx(1)
-  !  gllwx(1)=five/9.0_kdble; gllwx(2)=8.0_kdble/9.0_kdble; gllwx(3)=gllwx(1);
-  !else
-  if (nip /= 8.and.nip /= 27) then
-    print *,'ERROR: illegal number of Gauss points:',nip,'!'
-    stop
-  endif
-  !print *,igllpx
-  !print *,igllwx
-  !stop
-  igllpy = igllpx; igllpz = igllpx;
-  igllwy = igllwx; igllwz = igllwx;
-
-  !print *,iface,iINF,ddir; stop
-  !print *,gllpz
-  !print *,gllwz
-  !stop
-  ii = 0
-  do k1 = 1,nipx
-    do j1 = 1,nipx
-      do i1 = 1,nipx
-        ii = ii+1
-        !do ii=1,ngll ! ngllx*nglly*ngllz
-
-        ! integration points
-        xi(1)=igllpx(i1) !xi,   gll_points(1,ii)
-        xi(2)=igllpy(j1) !eta,  gll_points(2,ii)
-        xi(3)=igllpz(k1) !zeta, gll_points(3,ii)
-
-        !xi(iINF)=ddir*xi(iINF)
-
-        ! integration weights
-        GLw(ii)=igllwx(i1)*igllwy(j1)*igllwz(k1)
-
-        call lagrange1dGLL(ngllx,gllpx,xi(1),lagrange_x(1,:),lagrange_dx(1,:))
-        call lagrange1dGLL(nglly,gllpy,xi(2),lagrange_x(2,:),lagrange_dx(2,:))
-        call lagrange1dGLL(ngllz,gllpz,xi(3),lagrange_x(3,:),lagrange_dx(3,:))
-
-        !call lagrange1dGEN(ngllx,xi(1),lagrange_x(1,:),lagrange_dx(1,:))
-        !call lagrange1dGEN(nglly,xi(2),lagrange_x(2,:),lagrange_dx(2,:))
-        !call lagrange1dGEN(ngllz,xi(3),lagrange_x(3,:),lagrange_dx(3,:))
-
-        ! interpolation functions
-        n = 0
-        do k = 1,ngllz
-          do j = 1,nglly
-            do i = 1,ngllx
-              n = n+1
-              lagrange_gl(ii,n)=lagrange_x(1,i)*lagrange_x(2,j)*lagrange_x(3,k)
-              dlagrange_gl(1,ii,n)=lagrange_dx(1,i)*lagrange_x(2,j)*lagrange_x(3,k)
-              dlagrange_gl(2,ii,n)=lagrange_x(1,i)*lagrange_dx(2,j)*lagrange_x(3,k)
-              dlagrange_gl(3,ii,n)=lagrange_x(1,i)*lagrange_x(2,j)*lagrange_dx(3,k)
-            enddo
-          enddo
-        enddo
-
-        ! shape functions for HEX8
-        ! compute 1d lagrange polynomials
-        call lagrange1dGEN(2,xi(1),lagrangeINF_x(1,:),lagrangeINF_dx(1,:))
-        call lagrange1dGEN(2,xi(2),lagrangeINF_x(2,:),lagrangeINF_dx(2,:))
-        call lagrange1dGEN(2,xi(3),lagrangeINF_x(3,:),lagrangeINF_dx(3,:))
-        ! consider 3 nodes but compute only at 2 nodes
-        call lagrange1d_infiniteZW(3,xi(iINF),lagrangeINF_x(iINF,:),lagrangeINF_dx(iINF,:))
-        !call lagrange_infinite(ngllx,nd,1.0_kdble,gam,a,lagrangeINF_x,lagrangeINF_dx)
-        !print *,lagrangeINF_x,lagrangeINF_dx; stop
-        !call lagrange1d_infinite(ngllx,xi,lagrangeINF_x,lagrangeINF_dx)
-        !call lagrange1d_infiniteZW(ngllx,xi,lagrangeINF_x,lagrangeINF_dx)
-        n = 0
-        do k = 1,2
-          do j = 1,2
-            do i = 1,2
-              n = n+1
-              shape_infinite(ii,n)=lagrangeINF_x(1,i)*lagrangeINF_x(2,j)*lagrangeINF_x(3,k)
-              dshape_infinite(1,ii,n)=lagrangeINF_dx(1,i)*lagrangeINF_x(2,j)*lagrangeINF_x(3,k)
-              dshape_infinite(2,ii,n)=lagrangeINF_x(1,i)*lagrangeINF_dx(2,j)*lagrangeINF_x(3,k)
-              dshape_infinite(3,ii,n)=lagrangeINF_x(1,i)*lagrangeINF_x(2,j)*lagrangeINF_dx(3,k)
-            enddo
-          enddo
-        enddo
-
-        !enddo
-      enddo
-    enddo
-  enddo
-
-  return
-  end subroutine shape_function_infiniteGLHEX8ZW_GQ
+! not used so far...
+!
+!  subroutine shape_function_infiniteGLHEX8ZW_GQ(ndim,ngllx,nglly,ngllz,ngll,nipx, &
+!                                                nip,iface,shape_infinite,dshape_infinite,lagrange_gl,dlagrange_gl,GLw)
+!
+!  use siem_gll_library, only: lagrange1dGLL,lagrange1dGEN,zwgjd,zwgljd
+!  implicit none
+!  integer,intent(in) :: ndim,ngllx,nglly,ngllz,ngll,nipx,nip,iface
+!  real(kind=kdble),dimension(nip,8),intent(out) :: shape_infinite
+!  real(kind=kdble),dimension(ndim,nip,8),intent(out) :: dshape_infinite
+!  real(kind=kdble),dimension(nip,ngll),intent(out) :: lagrange_gl
+!  real(kind=kdble),dimension(ndim,nip,ngll),intent(out) :: dlagrange_gl
+!  real(kind=kdble),intent(out) :: GLw(nip)
+!  real(kind=kdble),parameter :: jacobi_alpha=0.0_kdble,jacobi_beta=0.0_kdble,one=1.0_kdble
+!  integer :: i,ii,j,k,n,i1,j1,k1
+!  real(kind=kdble) :: ddir,xi(ndim)
+!  real(kind=kdble),dimension(ngllx) :: gllpx,gllwx ! GLL points and weights
+!  real(kind=kdble),dimension(nglly) :: gllpy,gllwy ! GLL points and weights
+!  real(kind=kdble),dimension(ngllz) :: gllpz,gllwz ! GLL points and weights
+!  real(kind=kdble),dimension(nipx) :: igllpx,igllwx ! GLL points and weights
+!  real(kind=kdble),dimension(nipx) :: igllpy,igllwy ! GLL points and weights
+!  real(kind=kdble),dimension(nipx) :: igllpz,igllwz ! GLL points and weights
+!  real(kind=kdble),dimension(ndim,ngllx) :: lagrange_x,lagrange_dx
+!  real(kind=kdble),dimension(ndim,2) :: lagrangeINF_x,lagrangeINF_dx
+!  integer :: iINF
+!
+!  iINF = 0
+!  ddir = one
+!  if (iface == 1) then
+!    iINF = 2; ddir = -one
+!  else if (iface == 2) then
+!    iINF = 1; ddir = one
+!  else if (iface == 3) then
+!    iINF = 2; ddir = one
+!  else if (iface == 4) then
+!    iINF = 1; ddir = -one
+!  else if (iface == 5) then
+!    iINF = 3; ddir = -one
+!  else if (iface == 6) then
+!    iINF = 3; ddir = one
+!  endif
+!
+!  ! interpolation points
+!  ! compute everything in indexed order
+!  ! get GLL points
+!  ! for alpha=beta=0, jacobi polynomial is legendre polynomial
+!  ! for ngllx=nglly=ngllz, need to call only once
+!  call zwgljd(gllpx,gllwx,ngllx,jacobi_alpha,jacobi_beta)
+!  call zwgljd(gllpy,gllwy,nglly,jacobi_alpha,jacobi_beta)
+!  call zwgljd(gllpz,gllwz,ngllz,jacobi_alpha,jacobi_beta)
+!
+!  ! integration points
+!  ! gauss-jacobi or gauss-legendre points and weights
+!  call zwgjd(igllpx,igllwx,nipx,jacobi_alpha,jacobi_beta)
+!
+!  if (nip /= 8.and.nip /= 27) then
+!    print *,'ERROR: illegal number of Gauss points:',nip,'!'
+!    stop
+!  endif
+!
+!  igllpy = igllpx; igllpz = igllpx;
+!  igllwy = igllwx; igllwz = igllwx;
+!
+!  ii = 0
+!  do k1 = 1,nipx
+!    do j1 = 1,nipx
+!      do i1 = 1,nipx
+!        ii = ii+1
+!
+!        ! integration points
+!        xi(1) = igllpx(i1) !xi,   gll_points(1,ii)
+!        xi(2) = igllpy(j1) !eta,  gll_points(2,ii)
+!        xi(3) = igllpz(k1) !zeta, gll_points(3,ii)
+!
+!        ! integration weights
+!        GLw(ii) = igllwx(i1)*igllwy(j1)*igllwz(k1)
+!
+!        call lagrange1dGLL(ngllx,gllpx,xi(1),lagrange_x(1,:),lagrange_dx(1,:))
+!        call lagrange1dGLL(nglly,gllpy,xi(2),lagrange_x(2,:),lagrange_dx(2,:))
+!        call lagrange1dGLL(ngllz,gllpz,xi(3),lagrange_x(3,:),lagrange_dx(3,:))
+!
+!        ! interpolation functions
+!        n = 0
+!        do k = 1,ngllz
+!          do j = 1,nglly
+!            do i = 1,ngllx
+!              n = n+1
+!              lagrange_gl(ii,n) = lagrange_x(1,i)*lagrange_x(2,j)*lagrange_x(3,k)
+!              dlagrange_gl(1,ii,n) = lagrange_dx(1,i)*lagrange_x(2,j)*lagrange_x(3,k)
+!              dlagrange_gl(2,ii,n) = lagrange_x(1,i)*lagrange_dx(2,j)*lagrange_x(3,k)
+!              dlagrange_gl(3,ii,n) = lagrange_x(1,i)*lagrange_x(2,j)*lagrange_dx(3,k)
+!            enddo
+!          enddo
+!        enddo
+!
+!        ! shape functions for HEX8
+!        ! compute 1d lagrange polynomials
+!        call lagrange1dGEN(2,xi(1),lagrangeINF_x(1,:),lagrangeINF_dx(1,:))
+!        call lagrange1dGEN(2,xi(2),lagrangeINF_x(2,:),lagrangeINF_dx(2,:))
+!        call lagrange1dGEN(2,xi(3),lagrangeINF_x(3,:),lagrangeINF_dx(3,:))
+!
+!        ! consider 3 nodes but compute only at 2 nodes
+!        call lagrange1d_infiniteZW(3,xi(iINF),lagrangeINF_x(iINF,:),lagrangeINF_dx(iINF,:))
+!
+!        n = 0
+!        do k = 1,2
+!          do j = 1,2
+!            do i = 1,2
+!              n = n+1
+!              shape_infinite(ii,n) = lagrangeINF_x(1,i)*lagrangeINF_x(2,j)*lagrangeINF_x(3,k)
+!              dshape_infinite(1,ii,n) = lagrangeINF_dx(1,i)*lagrangeINF_x(2,j)*lagrangeINF_x(3,k)
+!              dshape_infinite(2,ii,n) = lagrangeINF_x(1,i)*lagrangeINF_dx(2,j)*lagrangeINF_x(3,k)
+!              dshape_infinite(3,ii,n) = lagrangeINF_x(1,i)*lagrangeINF_x(2,j)*lagrangeINF_dx(3,k)
+!            enddo
+!          enddo
+!        enddo
+!
+!      enddo
+!    enddo
+!  enddo
+!
+!  end subroutine shape_function_infiniteGLHEX8ZW_GQ
 
 !
 !===========================================
@@ -575,48 +312,51 @@ contains
   real(kind=kdble),parameter :: one=1.0_kdble
 
   if (iface < 1.or.iface > 6) then
-    write(*,*) 'ERROR: illegal outer face ID:',iface
+    print *,'ERROR: illegal outer face ID:',iface
     stop
   endif
 
   ! initialize ngllINF indices
   ngllxINF0 = 1
-  ngllxINF(1)=ngllx
-  ngllxINF(2)=nglly
-  ngllxINF(3)=ngllz
+  ngllxINF(1) = ngllx
+  ngllxINF(2) = nglly
+  ngllxINF(3) = ngllz
+
+  iINF = 0
+  ddir = one
 
   if (iface == 1) then
-    iINF = 2; ddir=-one
+    iINF = 2; ddir = -one
   else if (iface == 2) then
     iINF = 1; ddir = one
   else if (iface == 3) then
     iINF = 2; ddir = one
   else if (iface == 4) then
-    iINF = 1; ddir=-one
+    iINF = 1; ddir = -one
   else if (iface == 5) then
-    iINF = 3; ddir=-one
+    iINF = 3; ddir = -one
   else if (iface == 6) then
     iINF = 3; ddir = one
   endif
 
   if (ddir < 0) then
-    ngllxINF0(iINF)=2
+    ngllxINF0(iINF) = 2
   else
-    ngllxINF(iINF)=ngllxINF(iINF)-1
+    ngllxINF(iINF) = ngllxINF(iINF)-1
   endif
 
   ! extract only the corner nodes
-  inc = ngllxINF-ngllxINF0
+  inc = ngllxINF - ngllxINF0
   inum = 0
   do k = ngllxINF0(3),ngllxINF(3),inc(3)
     do j = ngllxINF0(2),ngllxINF(2),inc(2)
       do i = ngllxINF0(1),ngllxINF(1),inc(1)
         inum = inum+1
-        gnodinf(inum)=nglly*ngllx*(k-1)+ngllx*(j-1)+i
+        gnodinf(inum) = nglly*ngllx*(k-1) + ngllx*(j-1)+i
       enddo
     enddo
   enddo
-  !print *,inum
+
   end subroutine get_gnodinfHEX8
 
 !
@@ -626,43 +366,33 @@ contains
 ! this subroutine computes the 1d lagrange interpolation functions and their
 ! derivatives at a given point xi.
 
-  subroutine lagrange1d_infiniteMO(nenod,nd,xi,ddir,phi,dphi_dxi)
-
-  implicit none
-  integer,intent(in) :: nenod ! number of nodes in an 1d element
-  !integer :: i,j,k
-  real(kind=kdble),intent(in) :: nd,xi,ddir ! xi: point where to calculate lagrange function and
-  !its derivative
-  !real(kind=kdble),intent(in) :: gam,a
-  real(kind=kdble),dimension(nenod-1),intent(out) :: phi,dphi_dxi
-  real(kind=kdble),dimension(nenod) :: xii
-  real(kind=kdble) :: fac !dx
-  real(kind=kdble),parameter :: one=1.0_kdble,two=2.0_kdble
-
-  if (nenod /= 3) then
-    write(*,*) 'ERROR: infinite element is currently implemented only for 3 nodes!'
-    stop
-  endif
-  !! compute natural coordnates
-  !dx=2.0_kdble/real((nenod-1),kdble)! length = 2.0 as xi is taken -1 to +1
-  !do i=1,nenod
-  !  ! coordinates when origin is in the left
-  !  xii(i)=real((i-1),kdble)*dx
-  !enddo
-
-  !! origin is tranformed to mid point
-  !xii=xii-1.0_kdble
-
-  fac=one/(one-xi)
-
-  phi(1)=-two*xi*fac
-  phi(2)=one-phi(1)
-
-  dphi_dxi(1)=-two*fac*fac
-  dphi_dxi(2)=two*fac*fac
-
-  return
-  end subroutine lagrange1d_infiniteMO
+! not used so far...
+!
+!  subroutine lagrange1d_infiniteMO(nenod,nd,xi,ddir,phi,dphi_dxi)
+!
+!  implicit none
+!  integer,intent(in) :: nenod ! number of nodes in an 1d element
+!  real(kind=kdble),intent(in) :: nd,xi,ddir ! xi: point where to calculate lagrange function and
+!  !its derivative
+!  real(kind=kdble),dimension(nenod-1),intent(out) :: phi,dphi_dxi
+!  real(kind=kdble),dimension(nenod) :: xii
+!  real(kind=kdble) :: fac !dx
+!  real(kind=kdble),parameter :: one=1.0_kdble,two=2.0_kdble
+!
+!  if (nenod /= 3) then
+!    print *,'ERROR: infinite element is currently implemented only for 3 nodes!'
+!    stop
+!  endif
+!
+!  fac = one/(one-xi)
+!
+!  phi(1) = -two*xi*fac
+!  phi(2) = one - phi(1)
+!
+!  dphi_dxi(1) = -two*fac*fac
+!  dphi_dxi(2) = two*fac*fac
+!
+!  end subroutine lagrange1d_infiniteMO
 
 !
 !===========================================
@@ -676,7 +406,6 @@ contains
 
   implicit none
   integer,intent(in) :: nenod ! number of nodes in an 1d element
-  !integer :: i,j,k
   real(kind=kdble),intent(in) :: xi ! xi: point where to calculate lagrange
   !function and its derivative
   real(kind=kdble),dimension(:),intent(out) :: phi,dphi_dxi !,dimension(nenod-1)
@@ -684,19 +413,17 @@ contains
   real(kind=kdble),parameter :: one=1.0_kdble
 
   if (nenod /= 3) then
-    write(*,*) 'ERROR: infinite element is currently implemented only for 3 nodes!'
-    stop
+    stop 'ERROR: infinite element is currently implemented only for 3 nodes!'
   endif
 
-  fac=one/(one-xi)
+  fac = one/(one-xi)
 
-  phi(1)=-xi*fac
-  phi(2)=fac !one-phi(1) !+xi*fac
+  phi(1) = -xi*fac
+  phi(2) = fac !one-phi(1) !+xi*fac
 
-  dphi_dxi(1)=-fac*fac
-  dphi_dxi(2)=fac*fac
+  dphi_dxi(1) = -fac*fac
+  dphi_dxi(2) = fac*fac
 
-  return
   end subroutine lagrange1d_infiniteZWAS
 
 !
@@ -710,7 +437,6 @@ contains
 
   implicit none
   integer,intent(in) :: nenod ! number of nodes in an 1d element
-  !integer :: i,j,k
   real(kind=kdble),intent(in) :: xi ! xi: point where to calculate lagrange
   !function and its derivative
 
@@ -719,28 +445,17 @@ contains
   real(kind=kdble),parameter :: one=1.0_kdble
 
   if (nenod /= 3) then
-    write(*,*) 'ERROR: infinite element is currently implemented only for 3 nodes!'
-    stop
+    stop 'ERROR: infinite element is currently implemented only for 3 nodes!'
   endif
-  !! compute natural coordnates
-  !dx=2.0_kdble/real((nenod-1),kdble)! length = 2.0 as xi is taken -1 to +1
-  !do i=1,nenod
-  !  ! coordinates when origin is in the left
-  !  xii(i)=real((i-1),kdble)*dx
-  !enddo
 
-  !! origin is tranformed to mid point
-  !xii=xii-1.0_kdble
+  fac = one/(one-xi)
 
-  fac=one/(one-xi)
+  phi(1) = -xi*fac
+  phi(2) = fac !one-phi(1) !+xi*fac
 
-  phi(1)=-xi*fac
-  phi(2)=fac !one-phi(1) !+xi*fac
+  dphi_dxi(1) = -fac*fac
+  dphi_dxi(2) = fac*fac
 
-  dphi_dxi(1)=-fac*fac
-  dphi_dxi(2)=fac*fac
-
-  return
   end subroutine lagrange1d_infiniteZW
 
 !
@@ -816,44 +531,43 @@ contains
   integer,intent(in) :: n
   integer :: i,j
   real(kind=kdble),intent(out) :: x(n),w(n)
-  real(kind=kdble) :: rj,rn,twopi,fac,p(n,n+1),xold(n)
+  real(kind=kdble) :: rj,rn,fac,p(n,n+1),xold(n)
   real(kind=kdble),parameter :: one=1.0_kdble,pi=3.141592653589793_kdble, &
-  two = 2.0_kdble,tol = 1.0e-12_kdble,zero = 0.0_kdble,zerotol = 1.0e-12_kdble
+                                two = 2.0_kdble,tol = 1.0e-12_kdble,zero = 0.0_kdble,zerotol = 1.0e-12_kdble
 
   if (n < 1) then
-    write(*,*) 'ERROR: number of quadrature points must be > 1!'
-    stop
+    stop 'ERROR: number of quadrature points must be > 1!'
   endif
 
   x = zero; w = zero
-  rn=real(n,kdble)
+  rn = real(n,kdble)
 
   ! initial estimate for the abscissas is the Chebyshev-Gauss-Radau nodes.
-  fac=two*pi/(two*rn-one)
+  fac = two*pi/(two*rn-one)
 
   ! initialize the Legendre Vandermonde matrix.
   p = zero
   p(2:n,1) = one;
   do i = 1,n
-    x(i)=-cos(fac*real(i-1,kdble))
+    x(i) = -cos(fac*real(i-1,kdble))
     p(1,i) = (-one)**(i-1)
   enddo
-  p(1,n+1)=(-one)**(n)
+  p(1,n+1) = (-one)**(n)
 
   ! compute P using the recursion relation.
   ! compute its first and second derivatives and
   ! update X using the Newton-Raphson method.
   xold = two
   do i = 1,100
-    if (maxval(abs(x-xold)) <= zerotol)exit
+    if (maxval(abs(x-xold)) <= zerotol) exit
     if (i >= 100) then
-      write(*,*) 'ERROR: Legendre Vandermonde matrix does not converge!'
-      stop
+      stop 'ERROR: Legendre Vandermonde matrix does not converge!'
     endif
+
     xold = x;
     p(2:n,2) = x(2:n);
     do j = 2,n
-      rj=real(j,kdble)
+      rj = real(j,kdble)
       p(2:n,j+1) = ((two*rj-one)*x(2:n)*p(2:n,j)+(-rj+one)*p(2:n,j-1))/rj
     enddo
     x(2:n) = xold(2:n)-((one-xold(2:n))/rn)*(p(2:n,n)+p(2:n,n+1))/(p(2:n,n)-p(2:n,n+1))
@@ -862,11 +576,9 @@ contains
   ! compute the weights.
   w = zero
   w(1) = two/(rn*rn)
-  w(2:n)=(one-x(2:n))/(rn*p(2:n,n)*rn*p(2:n,n))
-  return
+  w(2:n) = (one-x(2:n))/(rn*p(2:n,n)*rn*p(2:n,n))
+
   end subroutine radau_quadrature
 
-end module infinite_element
-
-#endif
+end module siem_infinite_element
 

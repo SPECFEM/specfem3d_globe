@@ -114,6 +114,14 @@
       write(IOUT) R_xz_inner_core
       write(IOUT) R_yz_inner_core
 
+      ! full gravity
+      if (FULL_GRAVITY_VAL) then
+        !TODO: implement full gravity adios save forward
+        stop 'FULL_GRAVITY save_forward_arrays() not fully implemented yet'
+        !write(IOUT) neq1
+        !write(IOUT pgrav1
+      endif
+
       close(IOUT)
     endif
   endif
@@ -176,6 +184,15 @@
          write(IOUT) R_xy_inner_core
          write(IOUT) R_xz_inner_core
          write(IOUT) R_yz_inner_core
+      endif
+
+      ! full gravity
+      if (FULL_GRAVITY_VAL) then
+        !TODO: implement full gravity adios save forward
+        stop 'FULL_GRAVITY save_forward_arrays() not fully implemented yet'
+        !write(IOUT) neq
+        !write(IOUT) neq1
+        !write(IOUT pgrav1
       endif
 
       close(IOUT)
@@ -268,6 +285,15 @@
       write(IOUT) R_xy_inner_core
       write(IOUT) R_xz_inner_core
       write(IOUT) R_yz_inner_core
+    endif
+
+    ! full gravity
+    if (FULL_GRAVITY_VAL) then
+      !TODO: implement full gravity adios save forward
+      stop 'FULL_GRAVITY save_forward_arrays_undoatt() not fully implemented yet'
+      !write(IOUT) neq
+      !write(IOUT) neq1
+      !write(IOUT pgrav1
     endif
 
     close(IOUT)

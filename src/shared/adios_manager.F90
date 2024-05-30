@@ -288,7 +288,7 @@ contains
     print *, "To enable ADIOS support, reconfigure with --with-adios or --with-adios2 flag."
   endif
   ! safety stop
-  call exit_MPI(myrank_adios,"Error ADIOS manager: intitialize called without compilation support")
+  call exit_MPI(myrank_adios,"Error ADIOS manager: initialize_adios called without compilation support")
 
 #endif
 

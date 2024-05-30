@@ -336,7 +336,7 @@
 
   ! local parameters
   ! broadcast parameter arrays
-  integer, parameter :: nparam_i = 65
+  integer, parameter :: nparam_i = 81
   integer, dimension(nparam_i) :: bcast_integer
 
   integer, parameter :: nparam_l = 15
@@ -379,7 +379,13 @@
         NSPEC2DMAX_XMIN_XMAX_OC,NSPEC2DMAX_YMIN_YMAX_OC,NSPEC2D_BOTTOM_OC,NSPEC2D_TOP_OC, &
         NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,NSPEC2D_CMB,NSPEC2D_ICB, &
         NSPEC_CRUST_MANTLE_3DMOVIE,NGLOB_CRUST_MANTLE_3DMOVIE,NSPEC_OUTER_CORE_3DMOVIE, &
-        NGLOB_XY_CM,NGLOB_XY_IC,NT_DUMP_ATTENUATION_VAL &
+        NGLOB_XY_CM,NGLOB_XY_IC,NT_DUMP_ATTENUATION_VAL, &
+        NSPEC_TRINFINITE,NSPEC_INFINITE, &
+        NGLOB_TRINFINITE,NGLOB_INFINITE, &
+        NSPEC_TRINFINITE_ADJOINT,NSPEC_INFINITE_ADJOINT, &
+        NGLOB_TRINFINITE_ADJOINT,NGLOB_INFINITE_ADJOINT, &
+        NSPEC2DMAX_XMIN_XMAX_TRINF,NSPEC2DMAX_YMIN_YMAX_TRINF,NSPEC2D_BOTTOM_TRINF,NSPEC2D_TOP_TRINF, &
+        NSPEC2DMAX_XMIN_XMAX_INF,NSPEC2DMAX_YMIN_YMAX_INF,NSPEC2D_BOTTOM_INF,NSPEC2D_TOP_INF &
         /)
 
       bcast_logical = (/ &
@@ -480,6 +486,23 @@
     NGLOB_XY_CM = bcast_integer(63)
     NGLOB_XY_IC = bcast_integer(64)
     NT_DUMP_ATTENUATION_VAL = bcast_integer(65)
+    ! infinite element mesh
+    NSPEC_TRINFINITE  = bcast_integer(66)
+    NSPEC_INFINITE = bcast_integer(67)
+    NGLOB_TRINFINITE = bcast_integer(68)
+    NGLOB_INFINITE = bcast_integer(69)
+    NSPEC_TRINFINITE_ADJOINT = bcast_integer(70)
+    NSPEC_INFINITE_ADJOINT = bcast_integer(71)
+    NGLOB_TRINFINITE_ADJOINT = bcast_integer(72)
+    NGLOB_INFINITE_ADJOINT = bcast_integer(73)
+    NSPEC2DMAX_XMIN_XMAX_TRINF = bcast_integer(74)
+    NSPEC2DMAX_YMIN_YMAX_TRINF = bcast_integer(75)
+    NSPEC2D_BOTTOM_TRINF = bcast_integer(76)
+    NSPEC2D_TOP_TRINF = bcast_integer(77)
+    NSPEC2DMAX_XMIN_XMAX_INF = bcast_integer(78)
+    NSPEC2DMAX_YMIN_YMAX_INF = bcast_integer(79)
+    NSPEC2D_BOTTOM_INF = bcast_integer(80)
+    NSPEC2D_TOP_INF = bcast_integer(81)
 
     ! logicals
     TRANSVERSE_ISOTROPY_VAL = bcast_logical(1)
