@@ -34,6 +34,7 @@
   use specfem_par_crustmantle
   use specfem_par_outercore
   use specfem_par_innercore
+  use specfem_par_full_gravity
 
   implicit none
 
@@ -86,6 +87,13 @@
   allocate(gravity_pre_store_outer_core(NDIM,NGLOB_OUTER_CORE),stat=ier)
   if (ier /= 0) stop 'Error allocating gravity_grad_ln_density_dr array'
   gravity_pre_store_outer_core(:,:) = 0._CUSTOM_REAL
+
+  ! for full gravity
+  if (FULL_GRAVITY_VAL) then
+    allocate(gravity_rho_g_over_kappa_outer_core(NGLOB_OUTER_CORE),stat=ier)
+    if (ier /= 0) stop 'Error allocating gravity_rho_g_over_kappa_outer_core array'
+    gravity_rho_g_over_kappa_outer_core(:) = 0._CUSTOM_REAL
+  endif
 
   ! helper arrays
   allocate(r(NRAD_GRAVITY), &
@@ -243,6 +251,11 @@
       gravity_pre_store_outer_core(1,iglob) = real(gxl,kind=CUSTOM_REAL)
       gravity_pre_store_outer_core(2,iglob) = real(gyl,kind=CUSTOM_REAL)
       gravity_pre_store_outer_core(3,iglob) = real(gzl,kind=CUSTOM_REAL)
+
+      ! for full gravity contribution in compute forces
+      if (FULL_GRAVITY_VAL) then
+        gravity_rho_g_over_kappa_outer_core(iglob) = real(fac,kind=CUSTOM_REAL)
+      endif
     enddo
 
     ! debug
@@ -352,6 +365,13 @@
     gravity_pre_store_crust_mantle(:,:) = 0._CUSTOM_REAL
     gravity_H_crust_mantle(:,:) = 0._CUSTOM_REAL
 
+    ! for full gravity
+    if (FULL_GRAVITY_VAL) then
+      allocate(gravity_rho_crust_mantle(NGLOB_CRUST_MANTLE),stat=ier)
+      if (ier /= 0) stop 'Error allocating gravity rho array for crust/mantle'
+      gravity_rho_crust_mantle(:) = 0._CUSTOM_REAL
+    endif
+
     do iglob = 1,NGLOB_CRUST_MANTLE
       ! use mesh coordinates to get theta and phi
       ! x y and z contain r theta and phi
@@ -420,6 +440,11 @@
       gravity_H_crust_mantle(4,iglob) = real(Hxyl,kind=CUSTOM_REAL)
       gravity_H_crust_mantle(5,iglob) = real(Hxzl,kind=CUSTOM_REAL)
       gravity_H_crust_mantle(6,iglob) = real(Hyzl,kind=CUSTOM_REAL)
+
+      ! for full gravity contribution in compute forces
+      if (FULL_GRAVITY_VAL) then
+        gravity_rho_crust_mantle(iglob) = real(rho,kind=CUSTOM_REAL)
+      endif
     enddo
   else
     ! dummy allocation
@@ -437,6 +462,13 @@
     if (ier /= 0) stop 'Error allocating gravity arrays for inner core'
     gravity_pre_store_inner_core(:,:) = 0._CUSTOM_REAL
     gravity_H_inner_core(:,:) = 0._CUSTOM_REAL
+
+    ! for full gravity
+    if (FULL_GRAVITY_VAL) then
+      allocate(gravity_rho_inner_core(NGLOB_INNER_CORE),stat=ier)
+      if (ier /= 0) stop 'Error allocating gravity rho array for inner core'
+      gravity_rho_inner_core(:) = 0._CUSTOM_REAL
+    endif
 
     do iglob = 1,NGLOB_INNER_CORE
       ! use mesh coordinates to get theta and phi
@@ -512,6 +544,11 @@
       gravity_H_inner_core(4,iglob) = real(Hxyl,kind=CUSTOM_REAL)
       gravity_H_inner_core(5,iglob) = real(Hxzl,kind=CUSTOM_REAL)
       gravity_H_inner_core(6,iglob) = real(Hyzl,kind=CUSTOM_REAL)
+
+      ! for full gravity contribution in compute forces
+      if (FULL_GRAVITY_VAL) then
+        gravity_rho_inner_core(iglob) = real(rho,kind=CUSTOM_REAL)
+      endif
     enddo
   else
     ! dummy allocation

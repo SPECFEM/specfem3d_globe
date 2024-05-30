@@ -32,6 +32,8 @@
   use specfem_par
   use specfem_par_outercore
   use specfem_par_movie, only: div_displ_outer_core
+  use specfem_par_full_gravity, only: pgrav_oc
+
   implicit none
 
   ! local parameters
@@ -80,7 +82,8 @@
                                      A_array_rotation,B_array_rotation, &
                                      A_array_rotation_lddrk,B_array_rotation_lddrk, &
                                      displ_outer_core,accel_outer_core, &
-                                     div_displ_outer_core,iphase)
+                                     div_displ_outer_core,iphase, &
+                                     pgrav_oc)
     else
       ! on GPU
       ! includes FORWARD_OR_ADJOINT == 1
@@ -222,6 +225,8 @@
   use specfem_par
   use specfem_par_outercore
   use specfem_par_movie, only: div_displ_outer_core
+  use specfem_par_full_gravity, only: b_pgrav_oc
+
   implicit none
 
   ! local parameters
@@ -303,7 +308,8 @@
                                      b_A_array_rotation,b_B_array_rotation, &
                                      b_A_array_rotation_lddrk,b_B_array_rotation_lddrk, &
                                      b_displ_outer_core,b_accel_outer_core, &
-                                     div_displ_outer_core,iphase)
+                                     div_displ_outer_core,iphase, &
+                                     b_pgrav_oc)
     else
       ! on GPU
       ! includes FORWARD_OR_ADJOINT == 3
@@ -448,7 +454,8 @@
                                        A_array_rotation,B_array_rotation, &
                                        A_array_rotation_lddrk,B_array_rotation_lddrk, &
                                        displfluid,accelfluid, &
-                                       div_displfluid,iphase)
+                                       div_displfluid,iphase, &
+                                       pgrav_outer_core)
 
 ! wrapper function, decides about Deville optimization
 !
@@ -480,6 +487,8 @@
   ! inner/outer element run flag
   integer,intent(in) :: iphase
 
+  ! full gravity
+  real(kind=CUSTOM_REAL), dimension(NGLOB),intent(in) :: pgrav_outer_core
 
   if (USE_DEVILLE_PRODUCTS_VAL) then
     ! uses Deville et al. (2002) routine
@@ -488,7 +497,8 @@
                                        A_array_rotation,B_array_rotation, &
                                        A_array_rotation_lddrk,B_array_rotation_lddrk, &
                                        displfluid,accelfluid, &
-                                       div_displfluid,iphase,sum_terms_outer_core)
+                                       div_displfluid,iphase,sum_terms_outer_core, &
+                                       pgrav_outer_core)
   else
     ! div_displ_outer_core is initialized to zero in the following subroutine.
     call compute_forces_outer_core_noDev(timeval,deltat,two_omega_earth, &
@@ -496,7 +506,8 @@
                                          A_array_rotation,B_array_rotation, &
                                          A_array_rotation_lddrk,B_array_rotation_lddrk, &
                                          displfluid,accelfluid, &
-                                         div_displfluid,iphase)
+                                         div_displfluid,iphase, &
+                                         pgrav_outer_core)
   endif
 
   end subroutine compute_forces_outer_core

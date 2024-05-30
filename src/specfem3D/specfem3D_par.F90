@@ -1133,6 +1133,8 @@ module specfem_par_full_gravity
   implicit none
 
   ! full gravity solver
+  real(kind=CUSTOM_REAL), dimension(:),allocatable :: gravity_rho_crust_mantle,gravity_rho_inner_core
+  real(kind=CUSTOM_REAL), dimension(:),allocatable :: gravity_rho_g_over_kappa_outer_core
 
   ! MPI infinite mesh
   ! transition infinite
