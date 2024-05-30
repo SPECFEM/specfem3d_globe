@@ -1210,8 +1210,10 @@ module specfem_par_full_gravity
   !----------------Level-1 solver
 
   ! parameters for Poisson's equation
-  integer :: neq, neq1, b_neq, b_neq1, nnode, nnode1
+  integer :: neq, b_neq, nnode
+  integer :: neq1, b_neq1, nnode1
   double precision,dimension(:,:),allocatable :: lagrange_gll
+  double precision,dimension(:,:),allocatable :: lagrange_gll1
 
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_ic       ! pgrav_ic(NGLOB_INNER_CORE)
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_oc       ! pgrav_oc(NGLOB_OUTER_CORE)
@@ -1240,17 +1242,17 @@ module specfem_par_full_gravity
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav1
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_dprecon1, b_gravload1
 
+  ! Level-2 solver
   ! number of global degrees of freedom
   integer :: ngdof,nsparse
-  integer,dimension(:),allocatable :: l2gdof, krow_sparse, kcol_sparse, kgrow_sparse, kgcol_sparse
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: kmat_sparse
+  integer,dimension(:),allocatable :: l2gdof
+  integer,dimension(:),allocatable :: krow_sparse, kcol_sparse, kgrow_sparse, kgcol_sparse
 
-  ! level-1 solver
+  ! Level-1 solver
   ! number of global degrees of freedom
   integer :: ngdof1,nsparse1
-  integer,dimension(:),allocatable :: l2gdof1, krow_sparse1, kcol_sparse1, kgrow_sparse1, kgcol_sparse1
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: kmat_sparse1
-  double precision,dimension(:,:),allocatable :: lagrange_gll1
+  integer,dimension(:),allocatable :: l2gdof1
+  integer,dimension(:),allocatable :: krow_sparse1, kcol_sparse1, kgrow_sparse1, kgcol_sparse1
 
   integer :: nnode_ic1,nnode_oc1,nnode_cm1,nnode_trinf1,nnode_inf1
 
@@ -1273,7 +1275,7 @@ module specfem_par_full_gravity
   !integer,allocatable :: inode4_ic(:),inode4_oc(:),inode4_cm(:)
 
   ! CG solver scaling
-  logical, parameter :: cg_isscale = .true.
+  logical, parameter :: CG_SCALING = .true.
   ! CG solver non-dim scaling
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: ndscale1, ndscale
 

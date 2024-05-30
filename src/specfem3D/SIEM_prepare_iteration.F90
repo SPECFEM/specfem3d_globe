@@ -61,7 +61,7 @@
   endif
 
   ! INITIALISE SOLVER
-  if (POISSON_SOLVER == ISOLVER_BUILTIN .and. cg_isscale) then
+  if (POISSON_SOLVER == ISOLVER_BUILTIN .and. CG_SCALING) then
     ! builtin solver
     call initialise_inbuilt_solver()
   endif
@@ -313,7 +313,7 @@
   use specfem_par_full_gravity, only: ndscale1,ndscale,dprecon1,dprecon, &
     gravload1,pgrav1,pgrav_ic1,pgrav_oc1,pgrav_cm1,pgrav_trinf1,pgrav_inf1, &
     gravload,pgrav,pgrav_ic,pgrav_oc,pgrav_cm,pgrav_trinf,pgrav_inf, &
-    neq1,neq,cg_isscale, &
+    neq1,neq,CG_SCALING, &
     is_active_gll,igll_active_on
 
   use siem_solver_petsc, only: petsc_zero_initialguess1,petsc_set_vector1,petsc_solve1, &
@@ -386,7 +386,7 @@
 
   if (POISSON_SOLVER == ISOLVER_BUILTIN) then
     ! built-in solver
-    if (cg_isscale) then
+    if (CG_SCALING) then
       gravload1(:) = ndscale1(:) * gravload1(:)
 
       call cg_solver3(myrank,neq1,pgrav1,gravload1,cg_iter)
@@ -573,7 +573,7 @@
 
     if (POISSON_SOLVER == ISOLVER_BUILTIN) then
       ! built-in solver
-      if (cg_isscale) then
+      if (CG_SCALING) then
         gravload(:) = ndscale(:) * gravload(:)
         pgrav(1:) = pgrav(1:) / ndscale(1:) ! use scaling
 
@@ -908,8 +908,10 @@
 
   ! sparse petsc solver arrays
   if (allocated(l2gdof1)) deallocate(l2gdof1)
-  if (allocated(krow_sparse1)) deallocate(krow_sparse1,kcol_sparse1,kgrow_sparse1,kgcol_sparse1)
+  if (allocated(krow_sparse1)) deallocate(krow_sparse1,kcol_sparse1)
+  if (allocated(kgrow_sparse1)) deallocate(kgrow_sparse1,kgcol_sparse1)
   if (allocated(l2gdof)) deallocate(l2gdof)
-  if (allocated(krow_sparse)) deallocate(krow_sparse,kcol_sparse,kgrow_sparse,kgcol_sparse)
+  if (allocated(krow_sparse)) deallocate(krow_sparse,kcol_sparse)
+  if (allocated(kgrow_sparse)) deallocate(kgrow_sparse,kgcol_sparse)
 
   end subroutine SIEM_finalize

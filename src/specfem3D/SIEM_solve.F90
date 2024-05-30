@@ -72,7 +72,7 @@
     nnode_cm1,nnode_ic1,nnode_oc1,nnode_trinf1,nnode_inf1, &
     neq1,neq, &
     is_active_gll,igll_active_on, &
-    cg_isscale
+    CG_SCALING
 
   use specfem_par_full_gravity, only: gravload1,gravload, &
     pgrav1,pgrav_ic1,pgrav_oc1,pgrav_cm1,pgrav_trinf1,pgrav_inf1, &
@@ -108,14 +108,14 @@
     upscale = rone
     if (maxf > zero) upscale = rone / maxf
 
-    if (cg_isscale) then
+    if (CG_SCALING) then
       gravload1(:) = gravload1(:) * ndscale1(:) * upscale
       pgrav1(1:) = upscale * pgrav1(1:) / ndscale1(1:)
     endif
 
     call cg_solver3(myrank,neq1,pgrav1,gravload1)
 
-    if (cg_isscale) then
+    if (CG_SCALING) then
       pgrav1(:) = ndscale1(:) * pgrav1(:) / upscale
     endif
   else
@@ -165,14 +165,14 @@
 
     if (POISSON_SOLVER == ISOLVER_BUILTIN) then
       ! builtin solver
-      if (cg_isscale) then
+      if (CG_SCALING) then
         gravload(:) = ndscale(:) * gravload(:)
         pgrav(1:) = pgrav(1:) / ndscale(1:)
       endif
 
       call cg_solver(myrank,neq,pgrav,gravload)
 
-      if (cg_isscale) then
+      if (CG_SCALING) then
         pgrav(:) = ndscale(:) * pgrav(:)
       endif
     else
@@ -222,7 +222,7 @@
     gdof_inf, gdof_inf1, inode_elmt_inf, inode_map_inf, nmir_inf, &
     nnode_cm1,nnode_ic1,nnode_oc1,nnode_trinf1,nnode_inf1, &
     is_active_gll,igll_active_on, &
-    cg_isscale
+    CG_SCALING
 
   use specfem_par_full_gravity, only: b_gravload1, &
     b_pgrav1,b_pgrav_ic1,b_pgrav_oc1,b_pgrav_cm1,b_pgrav_trinf1,b_pgrav_inf1, &

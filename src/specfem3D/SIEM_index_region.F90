@@ -83,22 +83,16 @@
   use specfem_par_trinfinite, only: ibool_trinfinite,ibelm_bottom_trinfinite,ibelm_top_trinfinite
   use specfem_par_infinite, only: ibool_infinite,ibelm_bottom_infinite
 
-  use specfem_par_full_gravity, only: &
-    inode_map_ic,inode_map_oc,inode_map_cm,inode_map_trinf,inode_map_inf, &
-    is_active_gll,igll_active_on, &
-    gdof_cm,gdof_cm1, &
-    inode_elmt_cm,inode_elmt_cm1, &
-    gdof_oc,gdof_oc1, &
-    inode_elmt_oc,inode_elmt_oc1, &
-    gdof_ic,gdof_ic1, &
-    inode_elmt_ic,inode_elmt_ic1, &
-    gdof_trinf,gdof_trinf1, &
-    inode_elmt_trinf,inode_elmt_trinf1, &
-    gdof_inf,gdof_inf1, &
-    inode_elmt_inf,inode_elmt_inf1
+  use specfem_par_full_gravity, only: is_active_gll,igll_active_on, &
+    gdof_cm,gdof_cm1,inode_elmt_cm,inode_elmt_cm1,inode_map_cm, &
+    gdof_oc,gdof_oc1,inode_elmt_oc,inode_elmt_oc1,inode_map_oc, &
+    gdof_ic,gdof_ic1,inode_elmt_ic,inode_elmt_ic1,inode_map_ic, &
+    gdof_trinf,gdof_trinf1,inode_elmt_trinf,inode_elmt_trinf1,inode_map_trinf, &
+    gdof_inf,gdof_inf1,inode_elmt_inf,inode_elmt_inf1,inode_map_inf
 
-  use specfem_par_full_gravity, only: neq,neq1,nnode,nnode1,nnode_ic1,nnode_oc1,nnode_cm1, &
-    nnode_trinf1,nnode_inf1,nmir_ic,nmir_oc,nmir_cm,nmir_trinf,nmir_inf
+  use specfem_par_full_gravity, only: neq,neq1,nnode,nnode1, &
+    nnode_ic1,nnode_oc1,nnode_cm1,nnode_trinf1,nnode_inf1, &
+    nmir_ic,nmir_oc,nmir_cm,nmir_trinf,nmir_inf
 
   implicit none
 
@@ -128,7 +122,7 @@
   nnode_trinf = NGLOB_TRINFINITE
   nnode_inf = NGLOB_INFINITE
 
-  ! allocate arrays
+  ! allocate temporary arrays
   allocate(inode_ic(NGLOB_INNER_CORE), &
            inode_oc(NGLOB_OUTER_CORE), &
            inode_cm(NGLOB_CRUST_MANTLE), &
