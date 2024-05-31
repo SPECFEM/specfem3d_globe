@@ -304,6 +304,10 @@
     print *
   endif
 
+  ! initializes
+  mute_factor = 0.0_CUSTOM_REAL
+  t0 = 0.0_CUSTOM_REAL
+
   if (MUTE_SOURCE) then
     ! initializes
     LAT_SOURCE = -1000.0

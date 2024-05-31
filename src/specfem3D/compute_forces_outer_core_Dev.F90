@@ -166,8 +166,7 @@
 !$OMP SHARED( deriv, &
 !$OMP num_elements, phase_ispec_inner, iphase, ibool, &
 !$OMP displfluid, accelfluid, &
-!$OMP gravity_pre_store, &
-!$OMP gravity_rho_g_over_kappa, pgrav_outer_core, &
+!$OMP gravity_pre_store, gravity_rho_g_over_kappa, pgrav_outer_core, &
 !$OMP deltat, two_omega_earth, timeval, &
 !$OMP A_array_rotation, B_array_rotation, &
 !$OMP A_array_rotation_lddrk, B_array_rotation_lddrk, &
@@ -191,8 +190,7 @@
 !$OMP FIRSTPRIVATE( hprime_xx, hprime_xxT, hprimewgll_xxT, hprimewgll_xx, &
 !$OMP wgllwgll_yz_3D, wgllwgll_xz_3D, wgllwgll_xy_3D, wgll_cube, &
 !$OMP MYALPHA_LDDRK,MYBETA_LDDRK, &
-!$OMP USE_LDDRK,ROTATION_VAL,GRAVITY_VAL,MOVIE_VOLUME, &
-!$OMP FULL_GRAVITY_VAL,DISCARD_GCONTRIB, &
+!$OMP USE_LDDRK,ROTATION_VAL,GRAVITY_VAL,FULL_GRAVITY_VAL,MOVIE_VOLUME, &
 !$OMP NSPEC_OUTER_CORE_3DMOVIE )
 
 !$OMP DO SCHEDULE(GUIDED)

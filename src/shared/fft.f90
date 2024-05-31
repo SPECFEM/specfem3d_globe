@@ -61,6 +61,7 @@
   ! in any case the line below imposes a maximum of 31, otherwise the integer 2**n will overflow
 
   lx = 2**npow
+  flx = lx
 
   do l = 1,npow
 
@@ -69,6 +70,7 @@
     lbhalf = lblock/2
 
     k = 0
+    ii = 0
 
     do iblock = 1,nblock
 
@@ -102,6 +104,7 @@
   enddo
 
   k = 0
+  ii = 0
 
   do j = 1,lx
     if (k < j) goto 5

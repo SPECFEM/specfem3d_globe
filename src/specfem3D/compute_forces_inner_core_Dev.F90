@@ -195,8 +195,8 @@
 !$OMP rho_s_H,epsilondev_loc ) &
 !$OMP FIRSTPRIVATE( hprime_xx, hprime_xxT, hprimewgll_xxT, hprimewgll_xx, &
 !$OMP wgllwgll_yz_3D, wgllwgll_xz_3D, wgllwgll_xy_3D, wgll_cube, &
-!$OMP USE_LDDRK,ANISOTROPIC_INNER_CORE_VAL,GRAVITY_VAL, &
-!$OMP FULL_GRAVITY_VAL,DISCARD_GCONTRIB, &
+!$OMP NSPEC_INNER_CORE,NGLOB, &
+!$OMP USE_LDDRK,ANISOTROPIC_INNER_CORE_VAL,GRAVITY_VAL,FULL_GRAVITY_VAL, &
 !$OMP ATTENUATION_VAL,PARTIAL_PHYS_DISPERSION_ONLY_VAL, &
 !$OMP att1_val,att2_val,att3_val,vnspec, &
 !$OMP COMPUTE_AND_STORE_STRAIN )

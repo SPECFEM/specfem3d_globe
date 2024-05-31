@@ -66,6 +66,21 @@
   logical, parameter :: DEBUG = .false.
   double precision :: gval,radius
 
+  ! initializes
+  RSURFACE = 0.d0
+  ROCEAN = 0.d0
+  RMIDDLE_CRUST = 0.d0
+  RMOHO = 0.d0
+  R80  = 0.d0
+  R220 = 0.d0
+  R400 = 0.d0
+  R600 = 0.d0
+  R670 = 0.d0
+  R771 = 0.d0
+  RTOPDDOUBLEPRIME = 0.d0
+  RCMB = 0.d0
+  RICB = 0.d0
+
   ! selects radii
   select case (PLANET_TYPE)
   case (IPLANET_EARTH)

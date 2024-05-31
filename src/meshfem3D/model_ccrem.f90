@@ -305,7 +305,7 @@
 
   subroutine define_model_ccrem(CRUSTAL)
 
-  use constants, only: myrank,IIN,SUPPRESS_CRUSTAL_MESH
+  use constants, only: myrank,IIN,SUPPRESS_CRUSTAL_MESH,ATTENUATION_COMP_MAXIMUM
   use shared_parameters, only: RICB,RCMB,ROCEAN,ONE_CRUST
 
   use model_ccrem_par
@@ -474,6 +474,9 @@
     r = r_prem
 
     ! determines attenuation Q factors from corresponding PREM shell values
+    Qmu = ATTENUATION_COMP_MAXIMUM
+    Qkappa = ATTENUATION_COMP_MAXIMUM
+
     ! inner core
     if (r >= 0.d0 .and. r <= CCREM_RICB) then
       Qmu = 84.6d0
