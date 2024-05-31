@@ -63,6 +63,24 @@
     call flush_IMAIN()
   endif
 
+  ! check PETSc compilation support
+  if (POISSON_SOLVER == ISOLVER_PETSC) then
+#ifdef USE_PETSC
+    ! has compilation support
+    continue
+#else
+    ! compilation without PETSc support
+    if (myrank == 0) then
+      print *, "Error: PETSc solver enabled without PETSc Support."
+      print *, "       To enable PETSc support, reconfigure with --with-petsc flag."
+      print *
+    endif
+    call synchronize_all()
+    ! safety stop
+    call exit_MPI(myrank,"Error PETSc solver: PETSc solver setup called without compilation support")
+#endif
+  endif
+
   ! get MPI starting time
   tstart = wtime()
   tstart0 = tstart
