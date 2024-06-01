@@ -81,6 +81,11 @@
     if (myrank == 0 ) call finish_vtkwindow()
   endif
 
+  ! finalize full gravity
+  if (FULL_GRAVITY) then
+    call SIEM_finalize()
+  endif
+
   ! adios finalizes
   if (ADIOS_ENABLED) then
     call finalize_adios()

@@ -33,6 +33,7 @@
   use specfem_par_crustmantle
   use specfem_par_innercore
   use specfem_par_movie
+  use specfem_par_full_gravity
 
   implicit none
 
@@ -81,7 +82,8 @@
                                        epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
                                        epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
                                        eps_trace_over_3_crust_mantle, &
-                                       alphaval,betaval,gammaval)
+                                       alphaval,betaval,gammaval, &
+                                       pgrav_cm)
 
       ! inner core region
       call compute_forces_inner_core(NSPEC_INNER_CORE_STR_OR_ATT,NGLOB_INNER_CORE, &
@@ -97,7 +99,8 @@
                                      epsilondev_xx_inner_core,epsilondev_yy_inner_core,epsilondev_xy_inner_core, &
                                      epsilondev_xz_inner_core,epsilondev_yz_inner_core, &
                                      eps_trace_over_3_inner_core, &
-                                     alphaval,betaval,gammaval)
+                                     alphaval,betaval,gammaval, &
+                                     pgrav_ic)
     else
       ! on GPU
       ! contains forward FORWARD_OR_ADJOINT == 1
@@ -370,6 +373,7 @@
   use specfem_par_crustmantle
   use specfem_par_innercore
   use specfem_par_movie
+  use specfem_par_full_gravity
 
   implicit none
 
@@ -453,7 +457,8 @@
                                        b_epsilondev_xy_crust_mantle, &
                                        b_epsilondev_xz_crust_mantle,b_epsilondev_yz_crust_mantle, &
                                        b_eps_trace_over_3_crust_mantle, &
-                                       b_alphaval,b_betaval,b_gammaval)
+                                       b_alphaval,b_betaval,b_gammaval, &
+                                       b_pgrav_cm)
       ! inner core region
       call compute_forces_inner_core(NSPEC_INNER_CORE_ADJOINT,NGLOB_INNER_CORE_ADJOINT, &
                                      NSPEC_INNER_CORE_STR_AND_ATT, &
@@ -468,7 +473,8 @@
                                      b_epsilondev_xx_inner_core,b_epsilondev_yy_inner_core,b_epsilondev_xy_inner_core, &
                                      b_epsilondev_xz_inner_core,b_epsilondev_yz_inner_core, &
                                      b_eps_trace_over_3_inner_core, &
-                                     b_alphaval,b_betaval,b_gammaval)
+                                     b_alphaval,b_betaval,b_gammaval, &
+                                     b_pgrav_ic)
     else
       ! on GPU
       ! contains forward FORWARD_OR_ADJOINT == 3
@@ -744,7 +750,8 @@
                                           epsilondev_xx,epsilondev_yy,epsilondev_xy, &
                                           epsilondev_xz,epsilondev_yz, &
                                           epsilon_trace_over_3, &
-                                          alphaval,betaval,gammaval)
+                                          alphaval,betaval,gammaval, &
+                                          pgrav_crust_mantle)
 
 ! wrapper function, decides about Deville optimization
 !
@@ -785,6 +792,9 @@
   ! inner/outer element run flag
   integer,intent(in) :: iphase
 
+  ! full gravity
+  real(kind=CUSTOM_REAL), dimension(NGLOB),intent(in) :: pgrav_crust_mantle
+
   if (USE_DEVILLE_PRODUCTS_VAL) then
     ! uses Deville (2002) optimizations
     call compute_forces_crust_mantle_Dev(NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT, &
@@ -797,7 +807,8 @@
                                          epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
                                          epsilon_trace_over_3, &
                                          alphaval,betaval,gammaval, &
-                                         factor_common_crust_mantle,ATT4_VAL,sum_terms_crust_mantle)
+                                         factor_common_crust_mantle,ATT4_VAL,sum_terms_crust_mantle, &
+                                         pgrav_crust_mantle)
   else
     ! no Deville optimization
     call compute_forces_crust_mantle_noDev(NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT, &
@@ -810,7 +821,8 @@
                                            epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
                                            epsilon_trace_over_3, &
                                            alphaval,betaval,gammaval, &
-                                           factor_common_crust_mantle,ATT4_VAL)
+                                           factor_common_crust_mantle,ATT4_VAL, &
+                                           pgrav_crust_mantle)
   endif
 
   end subroutine compute_forces_crust_mantle
@@ -830,7 +842,8 @@
                                         epsilondev_xx,epsilondev_yy,epsilondev_xy, &
                                         epsilondev_xz,epsilondev_yz, &
                                         epsilon_trace_over_3, &
-                                        alphaval,betaval,gammaval)
+                                        alphaval,betaval,gammaval, &
+                                        pgrav_inner_core)
 
 ! wrapper function, decides about Deville optimization
 !
@@ -874,6 +887,9 @@
   ! inner/outer element run flag
   integer,intent(in) :: iphase
 
+  ! full gravity
+  real(kind=CUSTOM_REAL), dimension(NGLOB),intent(in) :: pgrav_inner_core
+
   ! checks if anything to
   ! no need for inner core, absorbing boundaries placed at outer core bottom surface
   if (NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) return
@@ -892,7 +908,8 @@
                                        epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
                                        epsilon_trace_over_3, &
                                        alphaval,betaval,gammaval, &
-                                       factor_common_inner_core,ATT5_VAL,sum_terms_inner_core)
+                                       factor_common_inner_core,ATT5_VAL,sum_terms_inner_core, &
+                                       pgrav_inner_core)
   else
     ! no Deville optimization
     call compute_forces_inner_core_noDev(NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT, &
@@ -905,7 +922,8 @@
                                          epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
                                          epsilon_trace_over_3, &
                                          alphaval,betaval,gammaval, &
-                                         factor_common_inner_core,ATT5_VAL)
+                                         factor_common_inner_core,ATT5_VAL, &
+                                         pgrav_inner_core)
   endif
 
   end subroutine compute_forces_inner_core

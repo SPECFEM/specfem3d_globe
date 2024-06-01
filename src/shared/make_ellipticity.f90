@@ -25,7 +25,59 @@
 !
 !=====================================================================
 
+
   subroutine make_ellipticity(nspl,rspl,ellipicity_spline,ellipicity_spline2)
+
+! creates a spline for the ellipticity profile in PREM
+! radius and density are non-dimensional
+! or
+! for mars, creates a spline for the ellipticity profile in Mars (Sohl $ Spohn)
+
+  use constants, only: NR_DENSITY
+
+  implicit none
+
+  integer,intent(inout) :: nspl
+  double precision,dimension(NR_DENSITY),intent(inout) :: rspl,ellipicity_spline,ellipicity_spline2
+
+  ! dummy parameter
+  double precision,dimension(NR_DENSITY) :: dummy_eta,dummy_eta2
+
+  ! get ellipticity splines
+  call make_ellipticity_epsilon_eta(nspl,rspl,ellipicity_spline,ellipicity_spline2,dummy_eta,dummy_eta2)
+
+  end subroutine make_ellipticity
+
+!
+!-----------------------------------------------------------------
+!
+
+  subroutine make_ellipticity2(nspl,rspl,ellipicity_spline,ellipicity_spline2,eta_spline,eta_spline2)
+
+! creates a spline for the ellipticity profile in PREM
+! radius and density are non-dimensional
+! or
+! for mars, creates a spline for the ellipticity profile in Mars (Sohl $ Spohn)
+
+
+  use constants, only: NR_DENSITY
+
+  implicit none
+
+  integer,intent(inout) :: nspl
+  double precision,dimension(NR_DENSITY),intent(inout) :: rspl,ellipicity_spline,ellipicity_spline2
+  double precision,dimension(NR_DENSITY),intent(inout) :: eta_spline,eta_spline2
+
+  ! get both ellipticity and eta splines
+  call make_ellipticity_epsilon_eta(nspl,rspl,ellipicity_spline,ellipicity_spline2,eta_spline,eta_spline2)
+
+  end subroutine make_ellipticity2
+
+!
+!-----------------------------------------------------------------
+!
+
+  subroutine make_ellipticity_epsilon_eta(nspl,rspl,ellipicity_spline,ellipicity_spline2,eta_spline,eta_spline2)
 
 ! creates a spline for the ellipticity profile in PREM
 ! radius and density are non-dimensional
@@ -48,6 +100,7 @@
 
   integer,intent(inout) :: nspl
   double precision,dimension(NR_DENSITY),intent(inout) :: rspl,ellipicity_spline,ellipicity_spline2
+  double precision,dimension(NR_DENSITY),intent(inout) :: eta_spline,eta_spline2
 
   ! local parameters
   integer :: i
@@ -65,6 +118,9 @@
 
   double precision :: z,g_a,bom,exponentval,integral_rho,integral_radau
   double precision :: yp1,ypn
+
+  ! for eta splines
+  double precision :: doteps,ddoteps,epsinv
 
   ! debugging
   logical, parameter :: DEBUG = .false.
@@ -86,6 +142,22 @@
   ! PREM radius of the ocean floor for gravity calculation
   double precision, parameter :: ROCEAN_ELLIPTICITY = PREM_ROCEAN
 
+  ! initializes
+  RSURFACE = 0.d0
+  ROCEAN = 0.d0
+  RMIDDLE_CRUST = 0.d0
+  RMOHO = 0.d0
+  R80  = 0.d0
+  R220 = 0.d0
+  R400 = 0.d0
+  R600 = 0.d0
+  R670 = 0.d0
+  R771 = 0.d0
+  RTOPDDOUBLEPRIME = 0.d0
+  RCMB = 0.d0
+  RICB = 0.d0
+
+  ! selects radii
   select case (PLANET_TYPE)
   case (IPLANET_EARTH)
     ! Earth
@@ -329,7 +401,34 @@
     endif
   endif
 
-  end subroutine make_ellipticity
+  ! spline evaluation for eta values
+  rspl(:) = 0.d0
+  eta_spline(:) = 0.d0
+  eta_spline2(:) = 0.d0
+
+  ! get ready to spline eta
+  nspl = 1
+  rspl(1) = r(1)
+  eta_spline(1) = eta(1)
+  do i = 2,NR_DENSITY
+    if (r(i) /= r(i-1)) then
+      nspl = nspl+1
+      rspl(nspl) = r(i)
+      eta_spline(nspl) = eta(i)
+    endif
+  enddo
+
+  ! spline eta values
+  epsinv = 1.0d0/epsilonval(NR_DENSITY)
+  doteps = eta(NR_DENSITY)*epsilonval(NR_DENSITY)
+  ddoteps = 6.0d0*epsilonval(NR_DENSITY) - 2.0d0*4.0d0*rho(NR_DENSITY)*(doteps+epsilonval(NR_DENSITY))/g_a
+
+  yp1 = 0.0d0
+  ypn = doteps*epsinv-0.5d0*doteps*doteps*epsinv*epsinv+ddoteps*epsinv
+
+  call spline_construction(rspl,eta_spline,nspl,yp1,ypn,eta_spline2)
+
+  end subroutine make_ellipticity_epsilon_eta
 
 !
 !-----------------------------------------------------------------

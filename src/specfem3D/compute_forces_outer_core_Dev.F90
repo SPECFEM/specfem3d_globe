@@ -36,7 +36,8 @@
                                            A_array_rotation,B_array_rotation, &
                                            A_array_rotation_lddrk,B_array_rotation_lddrk, &
                                            displfluid,accelfluid, &
-                                           div_displfluid,iphase,sum_terms)
+                                           div_displfluid,iphase,sum_terms, &
+                                           pgrav_outer_core)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -45,6 +46,7 @@
     NSPEC_OUTER_CORE_3DMOVIE,NSPEC_OUTER_CORE, &
     ROTATION_VAL,GRAVITY_VAL, &
     NSTAGE,ALPHA_LDDRK,BETA_LDDRK, &
+    FULL_GRAVITY_VAL,DISCARD_GCONTRIB, &
     m1,m2
 
   use specfem_par, only: &
@@ -70,6 +72,10 @@
     phase_iglob => phase_iglob_outer_core
 #endif
 
+  ! full gravity
+  use specfem_par_full_gravity, only: &
+    gravity_rho_g_over_kappa => gravity_rho_g_over_kappa_outer_core
+
   implicit none
 
   integer,intent(in) :: NSPEC_ROT,NGLOB
@@ -93,6 +99,9 @@
 
   ! inner/outer element run flag
   integer,intent(in) :: iphase
+
+  ! full gravity
+  real(kind=CUSTOM_REAL), dimension(NGLOB),intent(in) :: pgrav_outer_core
 
   ! local parameters
   ! for gravity
@@ -157,7 +166,7 @@
 !$OMP SHARED( deriv, &
 !$OMP num_elements, phase_ispec_inner, iphase, ibool, &
 !$OMP displfluid, accelfluid, &
-!$OMP gravity_pre_store, &
+!$OMP gravity_pre_store, gravity_rho_g_over_kappa, pgrav_outer_core, &
 !$OMP deltat, two_omega_earth, timeval, &
 !$OMP A_array_rotation, B_array_rotation, &
 !$OMP A_array_rotation_lddrk, B_array_rotation_lddrk, &
@@ -181,7 +190,7 @@
 !$OMP FIRSTPRIVATE( hprime_xx, hprime_xxT, hprimewgll_xxT, hprimewgll_xx, &
 !$OMP wgllwgll_yz_3D, wgllwgll_xz_3D, wgllwgll_xy_3D, wgll_cube, &
 !$OMP MYALPHA_LDDRK,MYBETA_LDDRK, &
-!$OMP USE_LDDRK,ROTATION_VAL,GRAVITY_VAL,MOVIE_VOLUME, &
+!$OMP USE_LDDRK,ROTATION_VAL,GRAVITY_VAL,FULL_GRAVITY_VAL,MOVIE_VOLUME, &
 !$OMP NSPEC_OUTER_CORE_3DMOVIE )
 
 !$OMP DO SCHEDULE(GUIDED)
@@ -449,6 +458,12 @@
                             * (dpotentialdxl(INDEX_IJK) * vec_x &
                              + dpotentialdyl(INDEX_IJK) * vec_y &
                              + dpotentialdzl(INDEX_IJK) * vec_z)
+
+        ! full gravity contribution
+        if (FULL_GRAVITY_VAL .and. .not. DISCARD_GCONTRIB) then
+          gravity_term = gravity_term &
+              - gravity_rho_g_over_kappa(iglob) * jacobianl(INDEX_IJK) * wgll_cube(INDEX_IJK) * pgrav_outer_core(iglob)
+        endif
 
         ! divergence of displacement field with gravity on
         ! note: these calculations are only considered for SIMULATION_TYPE == 1 .and. SAVE_FORWARD

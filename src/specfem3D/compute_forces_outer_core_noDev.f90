@@ -30,7 +30,8 @@
                                              A_array_rotation,B_array_rotation, &
                                              A_array_rotation_lddrk,B_array_rotation_lddrk, &
                                              displfluid,accelfluid, &
-                                             div_displfluid,iphase)
+                                             div_displfluid,iphase, &
+                                             pgrav_outer_core)
 
   use constants_solver
 
@@ -49,6 +50,10 @@
     phase_ispec_inner => phase_ispec_inner_outer_core, &
     nspec_outer => nspec_outer_outer_core, &
     nspec_inner => nspec_inner_outer_core
+
+  ! full gravity
+  use specfem_par_full_gravity, only: &
+    gravity_rho_g_over_kappa => gravity_rho_g_over_kappa_outer_core
 
   implicit none
 
@@ -71,6 +76,9 @@
 
   ! inner/outer element run flag
   integer,intent(in) :: iphase
+
+  ! full gravity
+  real(kind=CUSTOM_REAL), dimension(NGLOB),intent(in) :: pgrav_outer_core
 
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: tempx1,tempx2,tempx3
@@ -249,6 +257,12 @@
                                   * (dpotentialdx_with_rot * vec_x &
                                    + dpotentialdy_with_rot * vec_y &
                                    + dpotentialdzl         * vec_z)
+
+            ! full gravity contribution
+            if (FULL_GRAVITY_VAL .and. .not. DISCARD_GCONTRIB) then
+              gravity_term(i,j,k) = gravity_term(i,j,k) &
+                    - gravity_rho_g_over_kappa(iglob) * jacobianl * wgll_cube(i,j,k) * pgrav_outer_core(iglob)
+            endif
 
             ! divergence of displacement field with gravity on
             ! note: these calculations are only considered for SIMULATION_TYPE == 1 .and. SAVE_FORWARD

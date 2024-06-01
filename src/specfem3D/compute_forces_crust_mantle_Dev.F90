@@ -40,7 +40,8 @@
                                               epsilondev_xz,epsilondev_yz, &
                                               epsilon_trace_over_3, &
                                               alphaval,betaval,gammaval, &
-                                              factor_common,vnspec,sum_terms )
+                                              factor_common,vnspec,sum_terms, &
+                                              pgrav_crust_mantle )
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -49,6 +50,7 @@
     N_SLS,NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_CRUST_MANTLE, &
     ATT1_VAL,ATT2_VAL,ATT3_VAL, &
     ANISOTROPIC_3D_MANTLE_VAL,ATTENUATION_VAL,PARTIAL_PHYS_DISPERSION_ONLY_VAL,GRAVITY_VAL, &
+    FULL_GRAVITY_VAL,DISCARD_GCONTRIB, &
     m1,m2
 
   use specfem_par, only: &
@@ -88,6 +90,10 @@
 !daniel: att - debug
 !  use specfem_par, only: it,NSTEP
 
+  ! full gravity
+  use specfem_par_full_gravity, only: &
+    gravity_rho => gravity_rho_crust_mantle
+
   implicit none
 
   integer,intent(in) :: NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT
@@ -123,6 +129,9 @@
 
   ! inner/outer element run flag
   integer,intent(in) :: iphase
+
+  ! full gravity
+  real(kind=CUSTOM_REAL), dimension(NGLOB),intent(in) :: pgrav_crust_mantle
 
   ! local parameters
 
@@ -180,6 +189,7 @@
 !$OMP R_xx,R_yy,R_xy,R_xz,R_yz, &
 !$OMP epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz,epsilon_trace_over_3, &
 !$OMP gravity_pre_store,gravity_H, &
+!$OMP gravity_rho,pgrav_crust_mantle, &
 !$OMP R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
 !$OMP sum_terms, &
 #ifdef FORCE_VECTORIZATION
@@ -199,7 +209,8 @@
 !$OMP FIRSTPRIVATE( hprime_xx, hprime_xxT, hprimewgll_xxT, hprimewgll_xx, &
 !$OMP wgllwgll_yz_3D, wgllwgll_xz_3D, wgllwgll_xy_3D, wgll_cube, &
 !$OMP att1_val, att2_val, att3_val, vnspec, &
-!$OMP ANISOTROPIC_3D_MANTLE_VAL,GRAVITY_VAL, &
+!$OMP NSPEC_CRUST_MANTLE,NGLOB, &
+!$OMP ANISOTROPIC_3D_MANTLE_VAL,GRAVITY_VAL,FULL_GRAVITY_VAL, &
 !$OMP ATTENUATION_VAL,PARTIAL_PHYS_DISPERSION_ONLY_VAL,COMPUTE_AND_STORE_STRAIN, &
 !$OMP USE_LDDRK )
 
@@ -361,6 +372,12 @@
 
     ! adds gravity terms
     if (GRAVITY_VAL) then
+      ! full gravity
+      if (FULL_GRAVITY_VAL .and. .not. DISCARD_GCONTRIB) then
+        call SIEM_solve_element_add_full_gravity(ispec,NSPEC_CRUST_MANTLE,NGLOB,gravity_rho,deriv(:,:,:,:,ispec),ibool, &
+                                                 pgrav_crust_mantle,rho_s_H)
+      endif
+
 #ifdef FORCE_VECTORIZATION
       do ijk = 1,NDIM*NGLLCUBE
         sum_terms(ijk,1,1,1,ispec) = sum_terms(ijk,1,1,1,ispec) + rho_s_H(ijk,1,1,1)

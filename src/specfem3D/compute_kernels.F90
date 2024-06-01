@@ -101,6 +101,11 @@
     deltat_kl = deltat
   endif
 
+  ! note: if EXACT_UNDOING_TO_DISK is set, currently the rho and beta kernels below will be computed but will be equal
+  !       to zero everywhere because the backward field is then not computed, and only the alpha kernel
+  !       will be computed correctly based on the values of the forward run saved to disk in the first run
+  !       and read back at the beginning of this routine
+
   if (.not. GPU_MODE) then
 
     ! on CPU
@@ -117,6 +122,34 @@
 !$OMP b_eps_trace_over_3_loc_matrix,b_epsilondev_loc_matrix, &
 !$OMP prod,epsilondev_loc,b_epsilondev_loc, &
 !$OMP iglob)
+
+    ! density kernel (rho)
+
+!$OMP DO SCHEDULE(GUIDED)
+    do ispec = 1, NSPEC_CRUST_MANTLE
+      DO_LOOP_IJK
+        iglob = ibool_crust_mantle(INDEX_IJK,ispec)
+        ! density kernel: see e.g. Tromp et al.(2005), equation (14)
+        !                         b_displ_crust_mantle is the backward/reconstructed wavefield, that is s(x,t) in eq. (14),
+        !                         accel_crust_mantle is the adjoint wavefield, that corresponds to s_dagger(x,T-t)
+        !
+        !                         note with respect to eq. (14) the second time derivative is applied to the
+        !                         adjoint wavefield here rather than the backward/reconstructed wavefield.
+        !                         this is a valid operation and the resultant kernel identical to the eq. (14).
+        !
+        !                         reason for this is that the adjoint wavefield is in general smoother
+        !                         since the adjoint sources normally are obtained for filtered traces.
+        !                         numerically, the time derivative by a finite-difference scheme should
+        !                         behave better for smoother wavefields, thus containing less numerical artifacts.
+        rho_kl_crust_mantle(INDEX_IJK,ispec) =  rho_kl_crust_mantle(INDEX_IJK,ispec) &
+           + deltat_kl * (accel_crust_mantle(1,iglob) * b_displ_crust_mantle(1,iglob) &
+                        + accel_crust_mantle(2,iglob) * b_displ_crust_mantle(2,iglob) &
+                        + accel_crust_mantle(3,iglob) * b_displ_crust_mantle(3,iglob) )
+      ENDDO_LOOP_IJK
+    enddo
+!$OMP ENDDO
+
+    ! elastic kernels (alpha,beta)
 
     ! For anisotropic kernels
     if (ANISOTROPIC_KL) then
@@ -157,23 +190,6 @@
         DO_LOOP_IJK
 
           iglob = ibool_crust_mantle(INDEX_IJK,ispec)
-
-          ! density kernel: see e.g. Tromp et al.(2005), equation (14)
-          !                         b_displ_crust_mantle is the backward/reconstructed wavefield, that is s(x,t) in eq. (14),
-          !                         accel_crust_mantle is the adjoint wavefield, that corresponds to s_dagger(x,T-t)
-          !
-          !                         note with respect to eq. (14) the second time derivative is applied to the
-          !                         adjoint wavefield here rather than the backward/reconstructed wavefield.
-          !                         this is a valid operation and the resultant kernel identical to the eq. (14).
-          !
-          !                         reason for this is that the adjoint wavefield is in general smoother
-          !                         since the adjoint sources normally are obtained for filtered traces.
-          !                         numerically, the time derivative by a finite-difference scheme should
-          !                         behave better for smoother wavefields, thus containing less numerical artifacts.
-          rho_kl_crust_mantle(INDEX_IJK,ispec) =  rho_kl_crust_mantle(INDEX_IJK,ispec) &
-             + deltat_kl * (accel_crust_mantle(1,iglob) * b_displ_crust_mantle(1,iglob) &
-                       + accel_crust_mantle(2,iglob) * b_displ_crust_mantle(2,iglob) &
-                       + accel_crust_mantle(3,iglob) * b_displ_crust_mantle(3,iglob) )
 
           ! fully anisotropic kernel
           ! temporary arrays
@@ -230,30 +246,9 @@
           b_epsilondev_loc_matrix(5,:,:,:) = b_epsilondev_yz_crust_mantle(:,:,:,ispec)
         endif
 
-        ! if EXACT_UNDOING_TO_DISK is set, currently the rho and beta kernels below will be computed but will be equal
-        ! to zero everywhere because the backward field is then not computed, and only the alpha kernel
-        ! will be computed correctly based on the values of the forward run saved to disk in the first run
-        ! and read back at the beginning of this routine
         DO_LOOP_IJK
 
           iglob = ibool_crust_mantle(INDEX_IJK,ispec)
-
-          ! density kernel: see e.g. Tromp et al.(2005), equation (14)
-          !                         b_displ_crust_mantle is the backward/reconstructed wavefield, that is s(x,t) in eq. (14),
-          !                         accel_crust_mantle is the adjoint wavefield, that corresponds to s_dagger(x,T-t)
-          !
-          !                         note with respect to eq. (14) the second time derivative is applied to the
-          !                         adjoint wavefield here rather than the backward/reconstructed wavefield.
-          !                         this is a valid operation and the resultant kernel identical to the eq. (14).
-          !
-          !                         reason for this is that the adjoint wavefield is in general smoother
-          !                         since the adjoint sources normally are obtained for filtered traces.
-          !                         numerically, the time derivative by a finite-difference scheme should
-          !                         behave better for smoother wavefields, thus containing less numerical artifacts.
-          rho_kl_crust_mantle(INDEX_IJK,ispec) =  rho_kl_crust_mantle(INDEX_IJK,ispec) &
-             + deltat_kl * (accel_crust_mantle(1,iglob) * b_displ_crust_mantle(1,iglob) &
-                       + accel_crust_mantle(2,iglob) * b_displ_crust_mantle(2,iglob) &
-                       + accel_crust_mantle(3,iglob) * b_displ_crust_mantle(3,iglob) )
 
           ! isotropic kernels
           ! temporary arrays
@@ -295,6 +290,12 @@
     ! computes contribution to density and isotropic/anisotropic kernels
     call compute_kernels_cm_gpu(Mesh_pointer,deltat_kl)
 
+  endif
+
+  ! full gravity
+  if (FULL_GRAVITY_VAL) then
+    ! adds full gravity contributions to density kernel
+    call SIEM_compute_crust_mantle_kernels()
   endif
 
   end subroutine compute_kernels_crust_mantle
@@ -344,6 +345,9 @@
   logical,dimension(:),allocatable :: mask_ibool
   integer :: ier
 
+  ! full gravity warning
+  logical, save :: do_warn = .true.
+
   if (UNDO_ATTENUATION .and. NTSTEP_BETWEEN_COMPUTE_KERNELS > 1) then
     deltat_kl = deltat * NTSTEP_BETWEEN_COMPUTE_KERNELS
   else
@@ -354,6 +358,16 @@
 
   ! safety check
   if (.not. SAVE_KERNELS_OC) return
+
+  ! full gravity
+  if (FULL_GRAVITY_VAL) then
+    ! kernel contribution not implemented yet - issue a warning
+    if (myrank == 0 .and. do_warn) then
+      print *,'Warning - Full gravity density kernels not implemented for Outer Core yet.'
+      ! only print warning once, turn off flag for subsequent calls
+      do_warn = .false.
+    endif
+  endif
 
   if (.not. GPU_MODE) then
     ! on CPU
@@ -708,6 +722,9 @@
   integer :: i,j,k
 #endif
 
+  ! full gravity warning
+  logical, save :: do_warn = .true.
+
   if (UNDO_ATTENUATION .and. NTSTEP_BETWEEN_COMPUTE_KERNELS > 1) then
     deltat_kl = deltat * NTSTEP_BETWEEN_COMPUTE_KERNELS
   else
@@ -716,6 +733,16 @@
 
   ! safety check
   if (.not. SAVE_KERNELS_IC) return
+
+  ! full gravity
+  if (FULL_GRAVITY_VAL) then
+    ! kernel contribution not implemented yet - issue a warning
+    if (myrank == 0 .and. do_warn) then
+      print *,'Warning - Full gravity density kernels not implemented for Inner Core yet.'
+      ! only print warning once, turn off flag for subsequent calls
+      do_warn = .false.
+    endif
+  endif
 
   if (.not. GPU_MODE) then
     ! on CPU

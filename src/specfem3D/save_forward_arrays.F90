@@ -40,6 +40,7 @@
   use specfem_par_crustmantle
   use specfem_par_innercore
   use specfem_par_outercore
+  use specfem_par_full_gravity
 
   implicit none
 
@@ -48,7 +49,7 @@
   character(len=MAX_STRING_LEN) outputname
 
   ! checks if anything to do
-  if (UNDO_ATTENUATION ) return
+  if (UNDO_ATTENUATION) return
 
   ! save files to local disk or tape system if restart file
   if (NUMBER_OF_RUNS > 1 .and. NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS) then
@@ -98,28 +99,32 @@
       write(IOUT) epsilondev_yz_inner_core
 
       ! rotation
-      write(IOUT) A_array_rotation
-      write(IOUT) B_array_rotation
+      if (ROTATION_VAL) then
+        write(IOUT) A_array_rotation
+        write(IOUT) B_array_rotation
+      endif
 
       ! attenuation memory variables
-      write(IOUT) R_xx_crust_mantle
-      write(IOUT) R_yy_crust_mantle
-      write(IOUT) R_xy_crust_mantle
-      write(IOUT) R_xz_crust_mantle
-      write(IOUT) R_yz_crust_mantle
+      if (ATTENUATION_VAL) then
+        write(IOUT) R_xx_crust_mantle
+        write(IOUT) R_yy_crust_mantle
+        write(IOUT) R_xy_crust_mantle
+        write(IOUT) R_xz_crust_mantle
+        write(IOUT) R_yz_crust_mantle
 
-      write(IOUT) R_xx_inner_core
-      write(IOUT) R_yy_inner_core
-      write(IOUT) R_xy_inner_core
-      write(IOUT) R_xz_inner_core
-      write(IOUT) R_yz_inner_core
+        write(IOUT) R_xx_inner_core
+        write(IOUT) R_yy_inner_core
+        write(IOUT) R_xy_inner_core
+        write(IOUT) R_xz_inner_core
+        write(IOUT) R_yz_inner_core
+      endif
 
       ! full gravity
       if (FULL_GRAVITY_VAL) then
-        !TODO: implement full gravity adios save forward
-        stop 'FULL_GRAVITY save_forward_arrays() not fully implemented yet'
-        !write(IOUT) neq1
-        !write(IOUT pgrav1
+        write(IOUT) neq
+        write(IOUT) neq1
+        ! Level-1 solver array
+        write(IOUT) pgrav1
       endif
 
       close(IOUT)
@@ -188,11 +193,10 @@
 
       ! full gravity
       if (FULL_GRAVITY_VAL) then
-        !TODO: implement full gravity adios save forward
-        stop 'FULL_GRAVITY save_forward_arrays() not fully implemented yet'
-        !write(IOUT) neq
-        !write(IOUT) neq1
-        !write(IOUT pgrav1
+        write(IOUT) neq
+        write(IOUT) neq1
+        ! Level-1 solver array
+        write(IOUT) pgrav1
       endif
 
       close(IOUT)
@@ -211,6 +215,7 @@
   use specfem_par_crustmantle
   use specfem_par_innercore
   use specfem_par_outercore
+  use specfem_par_full_gravity
 
   implicit none
 
@@ -289,11 +294,10 @@
 
     ! full gravity
     if (FULL_GRAVITY_VAL) then
-      !TODO: implement full gravity adios save forward
-      stop 'FULL_GRAVITY save_forward_arrays_undoatt() not fully implemented yet'
-      !write(IOUT) neq
-      !write(IOUT) neq1
-      !write(IOUT pgrav1
+      write(IOUT) neq
+      write(IOUT) neq1
+      ! Level-1 solver array
+      write(IOUT) pgrav1
     endif
 
     close(IOUT)

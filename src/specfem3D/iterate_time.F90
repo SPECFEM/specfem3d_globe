@@ -252,13 +252,9 @@
   endif
 
   ! full gravity
-  if (FULL_GRAVITY) then
+  if (SIMULATION_TYPE == 3 .and. FULL_GRAVITY) then
     ! calculate the gravity kernels (convolution) using SIEM
-    if (SIMULATION_TYPE == 3) then
-      call SIEM_compute_gravity_kernels()
-    endif
-    ! finalize
-    call SIEM_finalize()
+    call SIEM_compute_gravity_kernels()
   endif
 
   ! close the huge file that contains a dump of all the time steps to disk

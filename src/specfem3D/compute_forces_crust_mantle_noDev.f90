@@ -36,7 +36,8 @@
                                                epsilondev_xz,epsilondev_yz, &
                                                epsilon_trace_over_3, &
                                                alphaval,betaval,gammaval, &
-                                               factor_common,vnspec)
+                                               factor_common,vnspec, &
+                                               pgrav_crust_mantle)
 
   use constants_solver
 
@@ -64,6 +65,10 @@
     phase_ispec_inner => phase_ispec_inner_crust_mantle, &
     nspec_outer => nspec_outer_crust_mantle, &
     nspec_inner => nspec_inner_crust_mantle
+
+  ! full gravity
+  use specfem_par_full_gravity, only: &
+    gravity_rho => gravity_rho_crust_mantle
 
   implicit none
 
@@ -97,6 +102,9 @@
 
   ! inner/outer element run flag
   integer,intent(in) :: iphase
+
+  ! full gravity
+  real(kind=CUSTOM_REAL), dimension(NGLOB),intent(in) :: pgrav_crust_mantle
 
   ! local parameters
 
@@ -138,6 +146,9 @@
   real(kind=CUSTOM_REAL) factor,sx_l,sy_l,sz_l,gxl,gyl,gzl
   real(kind=CUSTOM_REAL) Hxxl,Hyyl,Hzzl,Hxyl,Hxzl,Hyzl
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
+
+  ! full gravity
+  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ) :: deriv_loc
 
 !  integer :: computed_elements
   integer :: num_elements,ispec_p
@@ -212,6 +223,21 @@
           gammaxl = gammax(i,j,k,ispec)
           gammayl = gammay(i,j,k,ispec)
           gammazl = gammaz(i,j,k,ispec)
+
+          ! full gravity
+          if (FULL_GRAVITY_VAL .and. .not. DISCARD_GCONTRIB) then
+            ! note: deriv_mapping_crust_mantle is only available when chosen to use Deville routines
+            !       thus, we need to fill a local deriv array here for the function call to pass on later
+            deriv_loc(1,i,j,k) = xixl
+            deriv_loc(2,i,j,k) = xiyl
+            deriv_loc(3,i,j,k) = xizl
+            deriv_loc(4,i,j,k) = etaxl
+            deriv_loc(5,i,j,k) = etayl
+            deriv_loc(6,i,j,k) = etazl
+            deriv_loc(7,i,j,k) = gammaxl
+            deriv_loc(8,i,j,k) = gammayl
+            deriv_loc(9,i,j,k) = gammazl
+          endif
 
 ! compute the Jacobian
           jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
@@ -479,6 +505,12 @@
         enddo ! NGLLX
       enddo ! NGLLY
     enddo ! NGLLZ
+
+    ! full gravity
+    if (FULL_GRAVITY_VAL .and. .not. DISCARD_GCONTRIB) then
+      call SIEM_solve_element_add_full_gravity(ispec,NSPEC_CRUST_MANTLE,NGLOB,gravity_rho,deriv_loc,ibool, &
+                                               pgrav_crust_mantle,rho_s_H)
+    endif
 
     do k = 1,NGLLZ
       do j = 1,NGLLY

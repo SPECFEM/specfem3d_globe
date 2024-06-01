@@ -72,7 +72,7 @@
     nnode_cm1,nnode_ic1,nnode_oc1,nnode_trinf1,nnode_inf1, &
     neq1,neq, &
     is_active_gll,igll_active_on, &
-    cg_isscale
+    CG_SCALING
 
   use specfem_par_full_gravity, only: gravload1,gravload, &
     pgrav1,pgrav_ic1,pgrav_oc1,pgrav_cm1,pgrav_trinf1,pgrav_inf1, &
@@ -80,18 +80,17 @@
 
   use siem_math_library_mpi, only: maxvec
 
-  use siem_solver_petsc, only: petsc_set_vector1,petsc_solve1, &
-                               petsc_set_vector,petsc_solve
+  use siem_solver_petsc, only: petsc_set_vector1, petsc_solve1, &
+                               petsc_set_vector, petsc_solve
 
-  use siem_poisson, only: compute_poisson_load,compute_poisson_load3 !,poisson_gravity
+  use siem_poisson, only: compute_poisson_load, compute_poisson_load3 !,poisson_gravity
 
-  use siem_solver_mpi, only: cg_solver,cg_solver3,diagpcg_solver,diagpcg_solver3, interpolate3to5
+  use siem_solver_mpi, only: cg_solver, cg_solver3, diagpcg_solver, diagpcg_solver3, interpolate3to5
 
   implicit none
 
   ! Local variables
   real(kind=CUSTOM_REAL) :: maxf,upscale
-  real(kind=CUSTOM_REAL),parameter :: rone = 1.0_CUSTOM_REAL
 
   ! load for Level-1 solver
   ! Compute the RHS (gravload1)
@@ -105,17 +104,17 @@
   if (POISSON_SOLVER == ISOLVER_BUILTIN) then
     ! builtin solver
     maxf = maxvec(abs(gravload1))
-    upscale = rone
-    if (maxf > zero) upscale = rone / maxf
+    upscale = 1.0_CUSTOM_REAL
+    if (maxf > 0.0_CUSTOM_REAL) upscale = 1.0_CUSTOM_REAL / maxf
 
-    if (cg_isscale) then
+    if (CG_SCALING) then
       gravload1(:) = gravload1(:) * ndscale1(:) * upscale
       pgrav1(1:) = upscale * pgrav1(1:) / ndscale1(1:)
     endif
 
     call cg_solver3(myrank,neq1,pgrav1,gravload1)
 
-    if (cg_isscale) then
+    if (CG_SCALING) then
       pgrav1(:) = ndscale1(:) * pgrav1(:) / upscale
     endif
   else
@@ -165,14 +164,14 @@
 
     if (POISSON_SOLVER == ISOLVER_BUILTIN) then
       ! builtin solver
-      if (cg_isscale) then
+      if (CG_SCALING) then
         gravload(:) = ndscale(:) * gravload(:)
         pgrav(1:) = pgrav(1:) / ndscale(1:)
       endif
 
       call cg_solver(myrank,neq,pgrav,gravload)
 
-      if (cg_isscale) then
+      if (CG_SCALING) then
         pgrav(:) = ndscale(:) * pgrav(:)
       endif
     else
@@ -221,31 +220,43 @@
     gdof_trinf, gdof_trinf1, inode_elmt_trinf, inode_map_trinf, nmir_trinf, &
     gdof_inf, gdof_inf1, inode_elmt_inf, inode_map_inf, nmir_inf, &
     nnode_cm1,nnode_ic1,nnode_oc1,nnode_trinf1,nnode_inf1, &
+    ndscale1,neq1, &
     is_active_gll,igll_active_on, &
-    cg_isscale
+    CG_SCALING
 
   use specfem_par_full_gravity, only: b_gravload1, &
     b_pgrav1,b_pgrav_ic1,b_pgrav_oc1,b_pgrav_cm1,b_pgrav_trinf1,b_pgrav_inf1, &
     b_pgrav,b_pgrav_ic,b_pgrav_oc,b_pgrav_cm,b_pgrav_trinf,b_pgrav_inf
 
-  use siem_solver_petsc, only: petsc_set_vector1,petsc_solve1
+  use siem_math_library_mpi, only: maxvec
+
+  use siem_solver_petsc, only: petsc_set_vector1, petsc_solve1
   use siem_poisson, only: compute_backward_poisson_load3 !,poisson_gravity
-  use siem_solver_mpi, only: cg_solver,cg_solver3,diagpcg_solver,diagpcg_solver3, interpolate3to5
+  use siem_solver_mpi, only: cg_solver, cg_solver3, diagpcg_solver, diagpcg_solver3, interpolate3to5
 
   implicit none
-
-  ! safety check
-  if (POISSON_SOLVER == ISOLVER_BUILTIN) then
-    print *,'Error. Adjoint FG only implemented for petsc solver'
-    stop 'FULL_GRAVITY adjoint FG not fully implemented yet of builtin solver'
-  endif
+  ! local parameters
+  real(kind=CUSTOM_REAL) :: maxf,upscale
 
   ! load for Level-1 solver
 
   ! Compute the RHS (b_gravload1)
   call compute_backward_poisson_load3()
 
-  if (POISSON_SOLVER == ISOLVER_PETSC) then
+  if (POISSON_SOLVER == ISOLVER_BUILTIN) then
+    ! builtin solver
+    maxf = maxvec(abs(b_gravload1))
+    upscale = 1.0_CUSTOM_REAL
+    if (maxf > 0.0_CUSTOM_REAL) upscale = 1.0_CUSTOM_REAL / maxf
+    if (CG_SCALING) then
+      b_gravload1(:) = b_gravload1(:) * ndscale1(:) * upscale
+      b_pgrav1(1:) = upscale * b_pgrav1(1:) / ndscale1(1:)
+    endif
+    call cg_solver3(myrank,neq1,b_pgrav1,b_gravload1)
+    if (CG_SCALING) then
+      b_pgrav1(:) = ndscale1(:) * b_pgrav1(:) / upscale
+    endif
+  else
     ! PETSc solver
     call petsc_set_vector1(b_gravload1)
     call petsc_solve1(b_pgrav1(1:))
@@ -302,3 +313,99 @@
 
   end subroutine solve_poisson_equation_backward
 
+!
+!-------------------------------------------------------------------------------
+!
+
+  subroutine SIEM_solve_element_add_full_gravity(ispec,nspec,nglob,gravity_rho,deriv_loc,ibool,pgrav,rho_s_H)
+
+! routine for crust/mantle and inner core elements to add full gravity contribution to rho_s_H array
+
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM
+
+  use specfem_par, only: &
+    hprime_xx,hprime_yy,hprime_zz,wgll_cube
+
+  implicit none
+
+  ! element id
+  integer,intent(in) :: ispec,nspec,nglob
+
+  real(kind=CUSTOM_REAL),dimension(nglob),intent(in) :: gravity_rho
+
+  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ),intent(in) :: deriv_loc
+  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
+
+  ! pertubation gravity
+  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: pgrav
+
+  ! gravity contribution
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ),intent(inout) :: rho_s_H
+
+  ! local parameters
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: pgrav_loc
+  real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
+  real(kind=CUSTOM_REAL) :: tempx1l_phi,tempx2l_phi,tempx3l_phi
+  real(kind=CUSTOM_REAL) :: gradphi(NDIM)
+  real(kind=CUSTOM_REAL) :: rhol,factor
+  integer :: i,j,k,l,iglob
+
+  ! pre-loads potential for this element
+  do k = 1,NGLLZ
+    do j = 1,NGLLY
+      do i = 1,NGLLX
+        iglob = ibool(i,j,k,ispec)
+        pgrav_loc(i,j,k) = pgrav(iglob)
+      enddo
+    enddo
+  enddo
+
+  ! adds full gravity perturbation contribution to rho_s_H array
+  do k = 1,NGLLZ
+    do j = 1,NGLLY
+      do i = 1,NGLLX
+        xixl = deriv_loc(1,i,j,k)
+        xiyl = deriv_loc(2,i,j,k)
+        xizl = deriv_loc(3,i,j,k)
+        etaxl = deriv_loc(4,i,j,k)
+        etayl = deriv_loc(5,i,j,k)
+        etazl = deriv_loc(6,i,j,k)
+        gammaxl = deriv_loc(7,i,j,k)
+        gammayl = deriv_loc(8,i,j,k)
+        gammazl = deriv_loc(9,i,j,k)
+
+        ! compute the Jacobian
+        jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
+                      - xiyl*(etaxl*gammazl-etazl*gammaxl) &
+                      + xizl*(etaxl*gammayl-etayl*gammaxl))
+
+        ! for \grad\phi
+        tempx1l_phi = 0._CUSTOM_REAL
+        tempx2l_phi = 0._CUSTOM_REAL
+        tempx3l_phi = 0._CUSTOM_REAL
+        do l = 1,NGLLX
+          tempx1l_phi = tempx1l_phi + pgrav_loc(l,j,k)*hprime_xx(i,l)
+          tempx2l_phi = tempx2l_phi + pgrav_loc(i,l,k)*hprime_yy(j,l)
+          tempx3l_phi = tempx3l_phi + pgrav_loc(i,j,l)*hprime_zz(k,l)
+        enddo
+
+        ! \grad\phi
+        gradphi(1) = xixl*tempx1l_phi + etaxl*tempx2l_phi + gammaxl*tempx3l_phi
+        gradphi(2) = xiyl*tempx1l_phi + etayl*tempx2l_phi + gammayl*tempx3l_phi
+        gradphi(3) = xizl*tempx1l_phi + etazl*tempx2l_phi + gammazl*tempx3l_phi
+
+        ! get rho
+        iglob = ibool(i,j,k,ispec)
+        rhol = gravity_rho(iglob)
+
+        factor = jacobianl * wgll_cube(i,j,k)
+
+        ! adds full gravity contribution
+        rho_s_H(1,i,j,k) = rho_s_H(1,i,j,k) - factor * rhol * gradphi(1)
+        rho_s_H(2,i,j,k) = rho_s_H(2,i,j,k) - factor * rhol * gradphi(2)
+        rho_s_H(3,i,j,k) = rho_s_H(3,i,j,k) - factor * rhol * gradphi(3)
+      enddo
+    enddo
+  enddo
+
+  end subroutine SIEM_solve_element_add_full_gravity

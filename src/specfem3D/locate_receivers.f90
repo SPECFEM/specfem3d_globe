@@ -49,7 +49,7 @@
     RECEIVERS_CAN_BE_BURIED, &
     ibathy_topo,TOPOGRAPHY
 
-  use specfem_par, only: rspl,ellipicity_spline,ellipicity_spline2,nspl
+  use specfem_par, only: rspl_ellip,ellipicity_spline,ellipicity_spline2,nspl_ellip
 
   use specfem_par, only: source_theta_ref,source_phi_ref
 
@@ -233,7 +233,7 @@
     ! ellipticity
     if (ELLIPTICITY_VAL) then
       ! adds ellipticity factor to radius
-      call add_ellipticity_rtheta(r0,theta,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+      call add_ellipticity_rtheta(r0,theta,nspl_ellip,rspl_ellip,ellipicity_spline,ellipicity_spline2)
     endif
 
     ! subtract station burial depth (in meters)

@@ -385,6 +385,197 @@ contains
 
   end function i_nearless
 
+  !=======================================================
+
+  subroutine dspherical_unitvect(theta,phi,unitr,unittheta,unitphi)
+
+  ! this function computes unit vectors in spherical coordinates at a point
+  ! defined by (r,theta,phi)
+
+  implicit none
+  double precision,intent(in) :: theta,phi
+  double precision,intent(out) :: unitr(3),unittheta(3),unitphi(3)
+  double precision :: ctheta,cphi,stheta,sphi
+  double precision,parameter :: zero = 0.d0
+
+  ctheta = cos(theta); stheta = sin(theta)
+  cphi = cos(phi);     sphi = sin(phi)
+
+  unitr(1) = stheta*cphi;   unitr(2) = stheta*sphi;   unitr(3) = ctheta
+  unittheta(1) = ctheta*cphi; unittheta(2) = ctheta*sphi; unittheta(3) = -stheta
+  unitphi(1) = -sphi;   unitphi(2) = cphi;    unitphi(3) = zero
+
+  end subroutine dspherical_unitvect
+  !=======================================================
+
+  subroutine spherical_unitvect(theta,phi,unitr,unittheta,unitphi)
+
+  ! this function computes unit vectors in spherical coordinates at a point
+  ! defined by (r,theta,phi)
+
+  implicit none
+  real(kind=CUSTOM_REAL),intent(in) :: theta,phi
+  real(kind=CUSTOM_REAL),intent(out) :: unitr(3),unittheta(3),unitphi(3)
+  real(kind=CUSTOM_REAL) :: ctheta,cphi,stheta,sphi
+  real(kind=CUSTOM_REAL),parameter :: zero=0.0_CUSTOM_REAL
+
+  ctheta = cos(theta); stheta = sin(theta)
+  cphi = cos(phi);     sphi = sin(phi)
+
+  unitr(1) = stheta*cphi;   unitr(2) = stheta*sphi;   unitr(3) = ctheta
+  unittheta(1) = ctheta*cphi; unittheta(2) = ctheta*sphi; unittheta(3) = -stheta
+  unitphi(1) = -sphi;   unitphi(2) = cphi;    unitphi(3) = zero
+
+  end subroutine spherical_unitvect
+
+  !=======================================================
+
+  subroutine dlegendreP2_costheta(theta,P2,dP2,d2P2)
+
+  implicit none
+  double precision,intent(in) :: theta ! radian
+  double precision,intent(out) :: P2,dP2,d2P2
+  double precision :: ctheta
+  double precision,parameter :: half = 0.5d0,one = 1.d0,two = 2.d0,three = 3.d0
+
+  ctheta = cos(theta)
+
+  P2 = half*(three*ctheta*ctheta-one)
+  dP2 = -three*sin(theta)*ctheta
+  d2P2 = -3*cos(two*theta)
+
+  end subroutine dlegendreP2_costheta
+
+  !=======================================================
+
+  subroutine legendreP2_costheta(theta,P2,dP2,d2P2)
+
+  implicit none
+  real(kind=CUSTOM_REAL),intent(in) :: theta ! radian
+  real(kind=CUSTOM_REAL),intent(out) :: P2,dP2,d2P2
+  real(kind=CUSTOM_REAL) :: ctheta
+  real(kind=CUSTOM_REAL),parameter :: half=0.5_CUSTOM_REAL,one=1.0_CUSTOM_REAL,two=2.0_CUSTOM_REAL,three=3.0_CUSTOM_REAL
+
+  ctheta = cos(theta)
+
+  P2 = half*(three*ctheta*ctheta-one)
+  dP2 = -three*sin(theta)*ctheta
+  d2P2 = -3*cos(two*theta)
+
+  end subroutine legendreP2_costheta
+
+  !=======================================================
+
+  subroutine compute_g_gradg_elliptical(ndim,r,theta,phi,rho,dotrho,g0,eps,eta,twothirdOmega2,g,gradg)
+
+  implicit none
+  integer,intent(in) :: ndim
+  double precision,intent(in) :: r,theta,phi,rho,dotrho,g0,eps,eta,twothirdOmega2
+  double precision,intent(out) :: g(ndim)
+  double precision,optional,intent(out) :: gradg(6)
+
+  double precision,parameter :: two = 2.d0,four = 4.d0,two_third = two/3.d0
+
+  double precision :: hmat(ndim,ndim)
+  double precision :: lfac,rinv
+  double precision :: cotthetaXdP2,doteps,ddoteps,doteta,dotg
+  double precision :: facP2,P2,dP2,d2P2
+  double precision :: unitr(ndim,1),unittheta(ndim,1),unitphi(ndim,1)
+  double precision :: unitrT(1,ndim),unitthetaT(1,ndim),unitphiT(1,ndim)
+
+  ! compute unit vectors
+  call dspherical_unitvect(theta,phi,unitr,unittheta,unitphi)
+
+  unitrT(1,:) = unitr(:,1);
+  unitthetaT(1,:) = unittheta(:,1)
+  unitphiT(1,:) = unitphi(:,1)
+
+  call dlegendreP2_costheta(theta,P2,dP2,d2P2)
+
+  rinv = 1.d0/r
+
+  dotg = four*rho-two*rinv*g0 !dotg = four_pi_G*rho-two*rinv*g_ss
+  doteps = eta*eps*rinv !eta*eps/r
+  ddoteps = 6.d0*rinv*rinv*eps-8.0d0*rho*(doteps+rinv*eps)/g0 !two*four
+
+  !doteta=doteps/eps-0.5_CUSTOM_REAL*r0*rinv*rinv*doteps*doteps+r0*ddoteps/eps
+  !doteta=doteps/eps-r*doteps*doteps/(eps*eps)+r*ddoteps/eps
+  doteta = doteps/eps+r*(eps*ddoteps-doteps*doteps)/(eps*eps)
+
+  !cottheta=cos(theta)/sin(theta)
+  cotthetaXdp2 = -3.d0*cos(theta)*cos(theta)
+
+  ! lfac=g_ss+two_third*(eta*eps*g_ss+four_pi_G*r0*rho*eps-eps*g_ss)*P2-two_third*Omega2*r0
+  lfac = g0+two_third*(eta*eps*g0+four*r*rho*eps-eps*g0)*P2-twothirdOmega2*r
+
+  ! compute g
+  g = -lfac*unitr(:,1)-two_third*eps*g0*dP2*unittheta(:,1)
+
+  if (.not.present(gradg)) return
+
+  ! compute grad g
+  facP2 = (doteta*eps*g0+eta*doteps*g0+eta*eps*dotg+four*(rho*eps+r*dotrho*eps+r*rho*doteps)-doteps*g0-eps*dotg)
+
+  !hmat=-(dotg+two_third*facP2*P2-two_third*Omega2)*matmul(unitr,unitrT)     &
+  !     -two_third*(doteps*g0+eps+dotg)*dP2*(matmul(unitr,unitthetaT)+matmul(unittheta,unitrT))     &
+  !     -rinv*(lfac-two_third*Omega2*r+two_third*rinv*eps*g0*d2p2)*matmul(unittheta,unitthetaT)  &
+  !     -rinv*(lfac-two_third*Omega2*r+two_third*rinv*eps*g0*cotthetaXdp2)*matmul(unitphi,unitphiT)
+  hmat = -(dotg+two_third*facP2*P2-twothirdOmega2)*matmul(unitr,unitrT)     &
+        -two_third*(doteps*g0+eps+dotg)*dP2*(matmul(unitr,unitthetaT)+matmul(unittheta,unitrT))     &
+        -rinv*(lfac+two_third*rinv*eps*g0*d2p2)*matmul(unittheta,unitthetaT)  &
+        -rinv*(lfac+two_third*rinv*eps*g0*cotthetaXdp2)*matmul(unitphi,unitphiT)
+
+  gradg = (/ hmat(1,1),hmat(2,2),hmat(3,3),hmat(1,2),hmat(1,3),hmat(2,3) /)
+
+  end subroutine compute_g_gradg_elliptical
+
+  !=======================================================
+
+  subroutine compute_g_gradg(ndim,r,theta,phi,rho,g0,g,gradg)
+
+  implicit none
+  integer,intent(in) :: ndim
+  double precision,intent(in) :: r,theta,phi,rho,g0
+  double precision,intent(out) :: g(ndim)
+  double precision,optional,intent(out) :: gradg(6)
+
+  double precision,parameter :: two = 2.d0,four = 4.d0
+  double precision :: hmat(ndim,ndim)
+  double precision :: lfac,rinv
+  double precision :: dotg
+  double precision :: ctheta,P2 !,dP2,d2P2
+  double precision :: unitr(ndim,1),unittheta(ndim,1),unitphi(ndim,1)
+  double precision :: unitrT(1,ndim),unitthetaT(1,ndim),unitphiT(1,ndim)
+
+  ! compute unit vectors
+  call dspherical_unitvect(theta,phi,unitr,unittheta,unitphi)
+
+  unitrT(1,:) = unitr(:,1);
+  unitthetaT(1,:) = unittheta(:,1)
+  unitphiT(1,:) = unitphi(:,1)
+
+  !call dlegendreP2_costheta(theta,P2,dP2,d2P2)
+
+  ctheta = cos(theta)
+  P2 = 0.5d0*(3.0d0*ctheta*ctheta-1.0d0)
+
+  rinv = 1.d0/r
+  dotg = four*rho-two*rinv*g0 !dotg = four_pi_G*rho-two*rinv*g_ss
+
+  lfac = g0
+
+  ! compute g
+  g = -lfac*unitr(:,1)
+
+  if (.not.present(gradg)) return
+
+  ! compute grad g
+  hmat = -dotg*matmul(unitr,unitrT)-rinv*lfac*matmul(unittheta,unitthetaT) &
+        -rinv*lfac*matmul(unitphi,unitphiT)
+
+  gradg = (/ hmat(1,1),hmat(2,2),hmat(3,3),hmat(1,2),hmat(1,3),hmat(2,3) /)
+
+  end subroutine compute_g_gradg
 
 end module siem_math_library
 

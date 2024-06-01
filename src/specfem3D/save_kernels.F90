@@ -760,7 +760,7 @@
 
   subroutine save_kernels_crust_mantle()
 
-  use specfem_par, only: SAVE_REGULAR_KL,ANISOTROPIC_KL
+  use specfem_par, only: SAVE_REGULAR_KL,ANISOTROPIC_KL,FULL_GRAVITY_VAL
 
   implicit none
 
@@ -775,6 +775,9 @@
 
   ! stores additional kernels on a regular grid
   if (SAVE_REGULAR_KL) call save_regular_kernels_cm()
+
+  ! additional full gravity kernels
+  if (FULL_GRAVITY_VAL) call SIEM_save_crust_mantle_kernels()
 
   end subroutine save_kernels_crust_mantle
 

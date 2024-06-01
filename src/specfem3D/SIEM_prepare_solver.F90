@@ -45,7 +45,7 @@
     write(IMAIN,*) "preparing full gravity solver"
     if (POISSON_SOLVER == ISOLVER_BUILTIN) then
       write(IMAIN,*) "  Poisson solver: BUILTIN"
-      if (cg_isscale) then
+      if (CG_SCALING) then
         write(IMAIN,*) "  using CG w/ scaling"
       endif
     else if (POISSON_SOLVER == ISOLVER_PETSC) then
@@ -61,6 +61,24 @@
     endif
     write(IMAIN,*)
     call flush_IMAIN()
+  endif
+
+  ! check PETSc compilation support
+  if (POISSON_SOLVER == ISOLVER_PETSC) then
+#ifdef USE_PETSC
+    ! has compilation support
+    continue
+#else
+    ! compilation without PETSc support
+    if (myrank == 0) then
+      print *, "Error: PETSc solver enabled without PETSc Support."
+      print *, "       To enable PETSc support, reconfigure with --with-petsc flag."
+      print *
+    endif
+    call synchronize_all()
+    ! safety stop
+    call exit_MPI(myrank,"Error PETSc solver: PETSc solver setup called without compilation support")
+#endif
   endif
 
   ! get MPI starting time
@@ -81,6 +99,9 @@
 
   ! get MPI starting time
   tstart = wtime()
+
+  ! indexify regions (determine inode_elmt_*,inode_map_*,nmir_* arrays)
+  call SIEM_get_index_region()
 
   ! sets the stiffness matrices for Poisson's solver
   ! calculate dprecon
@@ -167,12 +188,34 @@
 
   real(kind=CUSTOM_REAL) :: coord(ngnod,NDIM),jac(NDIM,NDIM)
 
+  double precision :: sizeval
+
   ! checks if anything to do
   if (.not. USE_POISSON_SOLVER_5GLL) return
 
   ! user output
   if (myrank == 0) then
     write(IMAIN,*) "  preintegrating Level-2 solver arrays"
+    call flush_IMAIN()
+  endif
+
+  ! estimated memory size required in MB
+  ! storederiv_cm,storerhojw_cm
+  sizeval = dble(NDIM)*dble(NGLLCUBE)*dble(NGLLCUBE)*dble(NSPEC_CRUST_MANTLE)*dble(CUSTOM_REAL)
+  sizeval = sizeval + dble(NGLLCUBE)*dble(NSPEC_CRUST_MANTLE)*dble(CUSTOM_REAL)
+  ! storederiv_ic,storerhojw_ic
+  sizeval = sizeval + dble(NDIM)*dble(NGLLCUBE)*dble(NGLLCUBE)*dble(NSPEC_INNER_CORE)*dble(CUSTOM_REAL)
+  sizeval = sizeval + dble(NGLLCUBE)*dble(NSPEC_INNER_CORE)*dble(CUSTOM_REAL)
+  ! storederiv_oc,storerhojw_oc
+  sizeval = sizeval + dble(NDIM)*dble(NGLLCUBE)*dble(NGLLCUBE)*dble(NSPEC_OUTER_CORE)*dble(CUSTOM_REAL)
+  sizeval = sizeval + dble(NGLLCUBE)*dble(NSPEC_OUTER_CORE)*dble(CUSTOM_REAL)
+  ! in MB
+  sizeval = sizeval / 1024.d0 / 1024.d0
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '    size of Level-2 store arrays  = ',sngl(sizeval),'MB'
+    write(IMAIN,*) '                                  = ',sngl(sizeval / 1024.d0),'GB'
     call flush_IMAIN()
   endif
 
@@ -373,9 +416,31 @@
 
   real(kind=CUSTOM_REAL) :: coord(ngnod,NDIM),jac(NDIM,NDIM)
 
+  double precision :: sizeval
+
   ! user output
   if (myrank == 0) then
     write(IMAIN,*) "  preintegrating Level-1 solver arrays"
+    call flush_IMAIN()
+  endif
+
+  ! estimated memory size required in MB
+  ! storederiv_cm1,storerhojw_cm1,storejw_cm1
+  sizeval = dble(NDIM)*dble(NGLLCUBE_INF)*dble(NGLLCUBE_INF)*dble(NSPEC_CRUST_MANTLE)*dble(CUSTOM_REAL)
+  sizeval = sizeval + 2.d0 * dble(NGLLCUBE_INF)*dble(NSPEC_CRUST_MANTLE)*dble(CUSTOM_REAL)
+  ! storederiv_ic1,storerhojw_ic1
+  sizeval = sizeval + dble(NDIM)*dble(NGLLCUBE_INF)*dble(NGLLCUBE_INF)*dble(NSPEC_INNER_CORE)*dble(CUSTOM_REAL)
+  sizeval = sizeval + dble(NGLLCUBE_INF)*dble(NSPEC_INNER_CORE)*dble(CUSTOM_REAL)
+  ! storederiv_oc1,storerhojw_oc1
+  sizeval = sizeval + dble(NDIM)*dble(NGLLCUBE_INF)*dble(NGLLCUBE_INF)*dble(NSPEC_OUTER_CORE)*dble(CUSTOM_REAL)
+  sizeval = sizeval + dble(NGLLCUBE_INF)*dble(NSPEC_OUTER_CORE)*dble(CUSTOM_REAL)
+  ! in MB
+  sizeval = sizeval / 1024.d0 / 1024.d0
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '    size of Level-1 store arrays  = ',sngl(sizeval),'MB'
+    write(IMAIN,*) '                                  = ',sngl(sizeval / 1024.d0),'GB'
     call flush_IMAIN()
   endif
 
@@ -532,6 +597,7 @@
 
   implicit none
   integer :: ier
+  double precision :: sizeval,factor_b
 
   ! user output
   if (myrank == 0) then
@@ -539,36 +605,57 @@
     call flush_IMAIN()
   endif
 
-  ! allocate inode arrays
-  allocate(inode_elmt_cm(NGLLCUBE,NSPEC_CRUST_MANTLE), &
-           inode_elmt_ic(NGLLCUBE,NSPEC_INNER_CORE), &
-           inode_elmt_oc(NGLLCUBE,NSPEC_OUTER_CORE), &
-           inode_elmt_trinf(NGLLCUBE,NSPEC_TRINFINITE), &
-           inode_elmt_inf(NGLLCUBE,NSPEC_INFINITE),stat=ier)
-  if (ier /= 0) stop 'Error allocating inode_elmt_cm,.. arrays'
-  inode_elmt_cm(:,:) = 0; inode_elmt_ic(:,:) = 0; inode_elmt_oc(:,:) = 0
-  inode_elmt_trinf(:,:) = 0; inode_elmt_inf(:,:) = 0
+  ! estimated memory size required in MB
+  ! storekmat_crust_mantle1,dprecon_crust_mantle1
+  sizeval = dble(NGLLCUBE_INF)*dble(NGLLCUBE_INF)*dble(NSPEC_CRUST_MANTLE)*dble(CUSTOM_REAL)
+  sizeval = sizeval + dble(nnode_cm1)*dble(CUSTOM_REAL)
+  ! storekmat_inner_core1,dprecon_inner_core1
+  sizeval = sizeval + dble(NGLLCUBE_INF)*dble(NGLLCUBE_INF)*dble(NSPEC_INNER_CORE)*dble(CUSTOM_REAL)
+  sizeval = sizeval + dble(nnode_ic1)*dble(CUSTOM_REAL)
+  ! storekmat_outer_core1,dprecon_outer_core1
+  sizeval = sizeval + dble(NGLLCUBE_INF)*dble(NGLLCUBE_INF)*dble(NSPEC_OUTER_CORE)*dble(CUSTOM_REAL)
+  sizeval = sizeval + dble(nnode_oc1)*dble(CUSTOM_REAL)
+  ! storekmat_trinfinite1,dprecon_trinfinite1
+  sizeval = sizeval + dble(NGLLCUBE_INF)*dble(NGLLCUBE_INF)*dble(NSPEC_TRINFINITE)*dble(CUSTOM_REAL)
+  sizeval = sizeval + dble(nnode_trinf1)*dble(CUSTOM_REAL)
+  ! storekmat_infinite1,dprecon_infinite1
+  sizeval = sizeval + dble(NGLLCUBE_INF)*dble(NGLLCUBE_INF)*dble(NSPEC_INFINITE)*dble(CUSTOM_REAL)
+  sizeval = sizeval + dble(nnode_inf1)*dble(CUSTOM_REAL)
+  ! to account for array allocations like b_pgrav_cm,.., b_pgrav_cm1,..
+  if (SIMULATION_TYPE == 3) then
+    factor_b = 2.d0
+  else
+    factor_b = 1.d0
+  endif
+  ! pgrav_cm,..
+  sizeval = sizeval + factor_b*dble(NGLOB_CRUST_MANTLE)*dble(CUSTOM_REAL)
+  sizeval = sizeval + factor_b*dble(NGLOB_INNER_CORE)*dble(CUSTOM_REAL)
+  sizeval = sizeval + factor_b*dble(NGLOB_OUTER_CORE)*dble(CUSTOM_REAL)
+  sizeval = sizeval + factor_b*dble(NGLOB_TRINFINITE)*dble(CUSTOM_REAL)
+  sizeval = sizeval + factor_b*dble(NGLOB_INFINITE)*dble(CUSTOM_REAL)
+  ! pgrav_cm1,..
+  sizeval = sizeval + factor_b*dble(nnode_cm1)*dble(CUSTOM_REAL)
+  sizeval = sizeval + factor_b*dble(nnode_ic1)*dble(CUSTOM_REAL)
+  sizeval = sizeval + factor_b*dble(nnode_oc1)*dble(CUSTOM_REAL)
+  sizeval = sizeval + factor_b*dble(nnode_trinf1)*dble(CUSTOM_REAL)
+  sizeval = sizeval + factor_b*dble(nnode_inf1)*dble(CUSTOM_REAL)
+  ! dprecon1(0:neq1),gravload1(0:neq1))
+  sizeval = sizeval + 2.d0*dble(neq1+1)*dble(CUSTOM_REAL)
+  if (SIMULATION_TYPE == 3) then
+    ! rho1siem_kl_crust_mantle
+    sizeval = sizeval + 3.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*dble(NSPEC_CRUST_MANTLE)*dble(CUSTOM_REAL)
+    ! rho2siem_kl_crust_mantle
+    sizeval = sizeval + 3.d0*3.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*dble(NSPEC_CRUST_MANTLE)*dble(CUSTOM_REAL)
+  endif
+  ! in MB
+  sizeval = sizeval / 1024.d0 / 1024.d0
 
-  allocate(inode_elmt_cm1(NGLLCUBE_INF,NSPEC_CRUST_MANTLE), &
-           inode_elmt_ic1(NGLLCUBE_INF,NSPEC_INNER_CORE), &
-           inode_elmt_oc1(NGLLCUBE_INF,NSPEC_OUTER_CORE), &
-           inode_elmt_trinf1(NGLLCUBE_INF,NSPEC_TRINFINITE), &
-           inode_elmt_inf1(NGLLCUBE_INF,NSPEC_INFINITE),stat=ier)
-  if (ier /= 0) stop 'Error allocating inode_elmt_cm1,.. arrays'
-  inode_elmt_cm1(:,:) = 0; inode_elmt_ic1(:,:) = 0; inode_elmt_oc1(:,:) = 0
-  inode_elmt_trinf1(:,:) = 0; inode_elmt_inf1(:,:) = 0
-
-  allocate(inode_map_ic(2,NGLOB_INNER_CORE), &
-           inode_map_oc(2,NGLOB_OUTER_CORE), &
-           inode_map_cm(2,NGLOB_CRUST_MANTLE), &
-           inode_map_trinf(2,NGLOB_TRINFINITE), &
-           inode_map_inf(2,NGLOB_INFINITE),stat=ier)
-  if (ier /= 0) stop 'Error allocating inode_map_ic,.. arrays'
-  inode_map_ic(:,:) = 0; inode_map_oc(:,:) = 0; inode_map_cm(:,:) = 0
-  inode_map_trinf(:,:) = 0; inode_map_inf(:,:) = 0
-
-  ! indexify regions
-  call SIEM_get_index_region()
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '    size of Level-1 solver arrays = ',sngl(sizeval),'MB'
+    write(IMAIN,*) '                                  = ',sngl(sizeval / 1024.d0),'GB'
+    call flush_IMAIN()
+  endif
 
   ! Level-1 solver-------------------
   allocate(storekmat_crust_mantle1(NGLLCUBE_INF,NGLLCUBE_INF,NSPEC_CRUST_MANTLE), &
@@ -602,13 +689,21 @@
   pgrav_ic(:) = 0.0_CUSTOM_REAL; pgrav_oc(:) = 0.0_CUSTOM_REAL; pgrav_cm(:) = 0.0_CUSTOM_REAL;
   pgrav_trinf(:) = 0.0_CUSTOM_REAL; pgrav_inf(:) = 0.0_CUSTOM_REAL
 
-  allocate(pgrav_ic1(nnode_ic1),pgrav_oc1(nnode_oc1),pgrav_cm1(nnode_cm1),pgrav_trinf1(nnode_trinf1), &
+  allocate(pgrav_ic1(nnode_ic1), &
+           pgrav_oc1(nnode_oc1), &
+           pgrav_cm1(nnode_cm1), &
+           pgrav_trinf1(nnode_trinf1), &
            pgrav_inf1(nnode_inf1))
   pgrav_ic1(:) = 0.0_CUSTOM_REAL; pgrav_oc1(:) = 0.0_CUSTOM_REAL; pgrav_cm1(:) = 0.0_CUSTOM_REAL;
   pgrav_trinf1(:) = 0.0_CUSTOM_REAL; pgrav_inf1(:) = 0.0_CUSTOM_REAL
 
-  allocate(dprecon1(0:neq1),gravload1(0:neq1))
-  dprecon1(:) = 0.0_CUSTOM_REAL; gravload1(:) = 0.0_CUSTOM_REAL
+  ! Level-1 solver RHS
+  allocate(gravload1(0:neq1))
+  gravload1(:) = 0.0_CUSTOM_REAL
+
+  ! preconditioner for PCG solver
+  allocate(dprecon1(0:neq1))
+  dprecon1(:) = 0.0_CUSTOM_REAL
 
   if (SIMULATION_TYPE == 3) then
     allocate(b_pgrav_ic(NGLOB_INNER_CORE_ADJOINT), &
@@ -620,7 +715,10 @@
     b_pgrav_ic(:) = 0.0_CUSTOM_REAL; b_pgrav_oc(:) = 0.0_CUSTOM_REAL; b_pgrav_cm(:) = 0.0_CUSTOM_REAL;
     b_pgrav_trinf(:) = 0.0_CUSTOM_REAL; b_pgrav_inf(:) = 0.0_CUSTOM_REAL
 
-    allocate(b_pgrav_ic1(nnode_ic1), b_pgrav_oc1(nnode_oc1),b_pgrav_cm1(nnode_cm1), b_pgrav_trinf1(nnode_trinf1), &
+    allocate(b_pgrav_ic1(nnode_ic1), &
+             b_pgrav_oc1(nnode_oc1), &
+             b_pgrav_cm1(nnode_cm1), &
+             b_pgrav_trinf1(nnode_trinf1), &
              b_pgrav_inf1(nnode_inf1),stat=ier)
     if (ier /= 0) stop 'Error allocating b_pgrav_ic,.. arrays'
     b_pgrav_ic1(:) = 0.0_CUSTOM_REAL; b_pgrav_oc1(:) = 0.0_CUSTOM_REAL; b_pgrav_cm1(:) = 0.0_CUSTOM_REAL;
@@ -659,6 +757,7 @@
     debug_rho_kl_cm(:,:,:,:,:) = 0.0_CUSTOM_REAL
   endif
 
+  ! setup stiffness matrix (storekmat_*) and preconditioner (dprecon_*) arrays for Level-1 solver
   ! crust mantle
   call poisson_stiffness3(IREGION_CRUST_MANTLE,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
                           ibool_crust_mantle,xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
@@ -688,7 +787,7 @@
 
   call synchronize_all()
 
-  ! assemble stiffness matrices
+  ! assemble preconditioner matrices
   ! assemble across the MPI processes in a region
   ! crust_mantle
   call assemble_MPI_scalar(NPROCTOT_VAL,nnode_cm1,dprecon_crust_mantle1, &
@@ -761,6 +860,35 @@
       call flush_IMAIN()
     endif
 
+    ! estimated memory size required in MB
+    ! storekmat_crust_mantle,dprecon_crust_mantle
+    sizeval = dble(NGLLCUBE)*dble(NGLLCUBE)*dble(NSPEC_CRUST_MANTLE)*dble(CUSTOM_REAL)
+    sizeval = sizeval + dble(NGLOB_CRUST_MANTLE)*dble(CUSTOM_REAL)
+    ! storekmat_inner_core,dprecon_inner_core
+    sizeval = sizeval + dble(NGLLCUBE)*dble(NGLLCUBE)*dble(NSPEC_INNER_CORE)*dble(CUSTOM_REAL)
+    sizeval = sizeval + dble(NGLOB_INNER_CORE)*dble(CUSTOM_REAL)
+    ! storekmat_outer_core,dprecon_outer_core
+    sizeval = sizeval + dble(NGLLCUBE)*dble(NGLLCUBE)*dble(NSPEC_OUTER_CORE)*dble(CUSTOM_REAL)
+    sizeval = sizeval + dble(NGLOB_OUTER_CORE)*dble(CUSTOM_REAL)
+    ! storekmat_trinfinite,dprecon_trinfinite
+    sizeval = sizeval + dble(NGLLCUBE)*dble(NGLLCUBE)*dble(NSPEC_TRINFINITE)*dble(CUSTOM_REAL)
+    sizeval = sizeval + dble(NGLOB_TRINFINITE)*dble(CUSTOM_REAL)
+    ! storekmat_infinite,dprecon_infinite
+    sizeval = sizeval + dble(NGLLCUBE)*dble(NGLLCUBE)*dble(NSPEC_INFINITE)*dble(CUSTOM_REAL)
+    sizeval = sizeval + dble(NGLOB_INFINITE)*dble(CUSTOM_REAL)
+    ! dprecon(0:neq),gravload(0:neq))
+    sizeval = sizeval + 2.d0*dble(neq+1)*dble(CUSTOM_REAL)
+    ! in MB
+    sizeval = sizeval / 1024.d0 / 1024.d0
+
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '    size of Level-2 solver arrays = ',sngl(sizeval),'MB'
+      write(IMAIN,*) '                                  = ',sngl(sizeval / 1024.d0),'GB'
+      call flush_IMAIN()
+    endif
+
+    ! Level-2 solver arrays
     allocate(storekmat_crust_mantle(NGLLCUBE,NGLLCUBE,NSPEC_CRUST_MANTLE), &
              dprecon_crust_mantle(NGLOB_CRUST_MANTLE))
     storekmat_crust_mantle(:,:,:) = 0.0_CUSTOM_REAL; dprecon_crust_mantle(:) = 0.0_CUSTOM_REAL
@@ -908,15 +1036,14 @@
   ! sparse stage 0
   integer :: i,j,i_elmt,i_count,ncount
   integer :: igdof,jgdof
-  integer :: nmax !,nsparse
+  integer :: nmax
   integer :: nedof_ic,nedof_oc,nedof_cm,nedof_trinf,nedof_inf
   integer :: gdof_elmt(NEDOF),ggdof_elmt(NEDOF)
-  integer :: nmax1 !,nsparse1
+  integer :: nmax1
   integer :: nedof_ic1,nedof_oc1,nedof_cm1,nedof_trinf1,nedof_inf1
   integer :: gdof_elmt1(NEDOF1),ggdof_elmt1(NEDOF1)
   integer,allocatable :: imap_ic(:),imap_oc(:),imap_cm(:),imap_trinf(:),imap_inf(:)
   integer,allocatable :: ind0(:),iorder(:),row0(:),col0(:),grow0(:),gcol0(:)
-  !real(kind=CUSTOM_REAL),allocatable :: kmat0(:)
 
   integer :: nglob_ic,nglob_oc,nglob_cm,nglob_trinf,nglob_inf
   integer :: nglob_ic1,nglob_oc1,nglob_cm1,nglob_trinf1,nglob_inf1
@@ -975,9 +1102,6 @@
   allocate(col0(nmax1),row0(nmax1),gcol0(nmax1),grow0(nmax1))
   col0(:) = 0; row0(:) = 0; gcol0(:) = 0; grow0(:) = 0
 
-  !allocate(kmat0(nmax1))
-  !kmat0(:) = 0.0_CUSTOM_REAL
-
   !debug
   if (myrank == 0) then
     print *,'PETSc solver: -- Elemental DOFs for IC : ', nedof_ic1
@@ -995,7 +1119,7 @@
   imap_trinf = (/ (i,i = 1,NGLLCUBE_INF) /) !(/ imapphi1 /)
   imap_inf = (/ (i,i = 1,NGLLCUBE_INF) /) !(/ imapphi1 /)
 
-  !TODO: check if these imap_* arrays are still valid if multiple degree of freedom are chosen
+  !TODO: check if these imap_* arrays are still valid if multiple degrees of freedom are chosen
   !      current setting in constants.h:
   !        NNDOFU   = 0 ! displacement components
   !        NNDOFCHI = 0 ! displacement potential
@@ -1008,7 +1132,7 @@
   !      for multiple degrees of freedom, NEDOF1 could be different to nedof_ic1 etc.
   !      and these imap_* arrays might not work anymore.
   !
-  !      they might need to wrap-around NGLLCUBE_INF, for example: 1,2,..,27,1,2,..,27,1,2,..,27
+  !      they might need to wrap-around NGLLCUBE_INF, for example: 1,2,..,27,1,2,..,27,1,2,..,27 (?)
   !      this could be done by:
   !        imap_ic = (/ (mod(i-1,NGLLCUBE_INF)+1, i = 1,nedof_ic1) /)
   !      however, this depends on how the gdof_ic1(:),.. arrays are ordered by the SIEM_get_index_region() routine.
@@ -1025,7 +1149,7 @@
     call exit_MPI(myrank,'Error invalid degrees of freedom for Level-1 solver setup')
   endif
 
-  ! read global degrees of freedoms from DATABASE files
+  ! read global degrees of freedoms from DATABASE files (created by running xgindex3D)
   write(spm,*) myrank
   fname='DATABASES_MPI/gdof1_proc'//trim(adjustl(spm))
   open(10,file=fname,action='read',status='old')
@@ -1178,13 +1302,13 @@
   call synchronize_all()
 
   allocate(krow_sparse1(nsparse1),kcol_sparse1(nsparse1))
-  allocate(kgrow_sparse1(nsparse1),kgcol_sparse1(nsparse1))
-
-  !kmat_sparse1=0.0_CUSTOM_REAL
   krow_sparse1(:) = -1
   kcol_sparse1(:) = -1
+
+  allocate(kgrow_sparse1(nsparse1),kgcol_sparse1(nsparse1))
   kgrow_sparse1(:) = -1
   kgcol_sparse1(:) = -1
+
   do i_count = 1,ncount!nmax
     krow_sparse1(iorder(i_count)) = row0(i_count)
     kcol_sparse1(iorder(i_count)) = col0(i_count)
@@ -1200,7 +1324,6 @@
   endif
 
   deallocate(row0,col0,grow0,gcol0)
-  !deallocate(kmat0)
   deallocate(ind0,iorder)
   deallocate(imap_ic,imap_oc,imap_cm,imap_trinf,imap_inf)
 
@@ -1222,7 +1345,7 @@
     endif
   enddo
 
-  l2gdof1(:) = l2gdof1(:) - 1 ! PETSC uses 0 indexing
+  l2gdof1(:) = l2gdof1(:) - 1 ! PETSc uses 0 indexing
 
   gmin = minvec(l2gdof1(1:))
   gmax = maxvec(l2gdof1(1:))
@@ -1232,8 +1355,8 @@
   call synchronize_all()
 
   if (minval(l2gdof1(1:)) < 0) then
-    print *,'ERROR: PETSc sparse matrix solver: local-to-global indices are less than 1!'
-    stop 'Error local-to-global indices are less than 1'
+    print *,'ERROR: PETSc Level-1 solver sparse matrix: local-to-global indices are less than 1!'
+    stop 'Error Level-1 solver local-to-global indices are less than 1'
   endif
 
   !===============================================================================
@@ -1254,9 +1377,6 @@
 
     allocate(col0(nmax),row0(nmax),gcol0(nmax),grow0(nmax))
     col0(:) = 0; row0(:) = 0; gcol0(:) = 0; grow0(:) = 0
-
-    !allocate(kmat0(nmax))
-    !kmat0(:) = 0.0_CUSTOM_REAL
 
     !debug
     if (myrank == 0) print *,'PETSc solver: -- nedof_ic = ',nedof_ic,nmax
@@ -1410,12 +1530,13 @@
     if (myrank == 0) print *,'PETSc solver: -- neq:',neq,' Nsparse:',nsparse
 
     allocate(krow_sparse(nsparse),kcol_sparse(nsparse))
-    allocate(kgrow_sparse(nsparse),kgcol_sparse(nsparse))
-
     krow_sparse(:) = -1
     kcol_sparse(:) = -1
+
+    allocate(kgrow_sparse(nsparse),kgcol_sparse(nsparse))
     kgrow_sparse(:) = -1
     kgcol_sparse(:) = -1
+
     do i_count = 1,ncount
       krow_sparse(iorder(i_count)) = row0(i_count)
       kcol_sparse(iorder(i_count)) = col0(i_count)
@@ -1431,7 +1552,6 @@
     endif
 
     deallocate(row0,col0,grow0,gcol0)
-    !deallocate(kmat0)
     deallocate(ind0,iorder)
     deallocate(imap_ic,imap_oc,imap_cm,imap_trinf,imap_inf)
 
@@ -1446,15 +1566,15 @@
     l2gdof(gdof_trinf(:)) = ggdof_trinf(1,:)
     l2gdof(gdof_inf(:)) = ggdof_inf(1,:)
 
-    l2gdof(:) = l2gdof(:) - 1 ! PETSC uses 0 indexing
+    l2gdof(:) = l2gdof(:) - 1 ! PETSc uses 0 indexing
 
     !debug
     if (myrank == 0) print *,'PETSc solver: -- l2gdof range:',minval(l2gdof(1:)),maxval(l2gdof(1:))
     call synchronize_all()
 
-    if (minval(l2gdof(1:)) < 1) then
-      print *,'ERROR: PETSc sparse matrix solver: local-to-global indices are less than 1!'
-      stop 'Error local-to-global indices are less than 1'
+    if (minval(l2gdof(1:)) < 0) then
+      print *,'ERROR: PETSc Level-2 solver sparse matrix: local-to-global indices are less than 1!'
+      stop 'Error Level-2 solver local-to-global indices are less than 1'
     endif
   endif
 

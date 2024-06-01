@@ -81,6 +81,10 @@
 
   ! note: at this point, the mesh is still perfectly spherical.
 
+  ! initializes
+  MOHO_MINIMUM_DEFAULT = 0.d0
+  MOHO_MAXIMUM_DEFAULT = 0.d0
+
   ! min/max defaults
   select case(PLANET_TYPE)
   case (IPLANET_MARS)

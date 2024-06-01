@@ -116,10 +116,9 @@ module siem_solver_petsc
     nproc => NPROCTOT_VAL
 
   use specfem_par_full_gravity, only: &
-    neq,ngdof,nsparse,kmat_sparse,krow_sparse,kcol_sparse, &
-    kgrow_sparse,kgcol_sparse, &
-    neq1,ngdof1,nsparse1,kmat_sparse1,krow_sparse1,kcol_sparse1, &
-    kgrow_sparse1,kgcol_sparse1,l2gdof1
+    neq,ngdof,nsparse,krow_sparse,kcol_sparse,kgrow_sparse,kgcol_sparse, &
+    neq1,ngdof1,nsparse1,krow_sparse1,kcol_sparse1,kgrow_sparse1,kgcol_sparse1, &
+    l2gdof1
 
   use specfem_par_full_gravity, only: &
     num_interfaces_inner_core1, &
@@ -224,7 +223,7 @@ module siem_solver_petsc
   type(tKSP)              :: ksp
   type(tPC)               :: pc
   PetscErrorCode          :: ierr
-  PetscInt                :: nzeros_max,nzeros_min,nzerosoff_max
+  PetscInt                :: nzeros_max,nzeros_min
   PetscInt                :: ig0,ig1
 #endif
 
@@ -260,6 +259,8 @@ contains
   type(tVec) :: nzeror_gvec1,nzeror_dvec1,nzeror_ovec1,iproc_gvec1, &
                 interface_gvec1,ninterface_dvec1,ninterface_ovec1,nself_gvec1
   PetscInt :: i,istart,iend,n
+  PetscInt :: nzerosoff_max
+  PetscInt :: inzeros_max,inzeros_min
   PetscInt,allocatable :: nzeros(:),ig_array1(:)
   PetscScalar,allocatable :: rproc_array1(:)
   PetscScalar :: rval
@@ -281,6 +282,9 @@ contains
   PetscInt,allocatable :: ninterface_darray1(:),ninterface_oarray1(:)
   PetscScalar,allocatable :: rg_interface(:),rnself_lgarray1(:)
   PetscScalar,pointer :: rninterface_darray1(:),rninterface_oarray1(:)
+
+  ! memory info
+  PetscLogDouble :: bytes
 
   !character(len=10) :: char_myrank
 
@@ -321,6 +325,8 @@ contains
   if (myrank == 0) print *,'PETSc solver: nzeros in 1st index:',nzeros(1)
   if (myrank == 0) print *,'PETSc solver: ngdof1:',ngdof1,' nzeros_max:',nzeros_max,' nzeros_min:',nzeros_min, &
                                          ' count:',count(krow_sparse1 == 1)
+  ! free temporary array
+  deallocate(nzeros)
 
   ! precompute ownership range OR partion layout
   ng1 = ngdof1/nproc
@@ -725,11 +731,17 @@ contains
   enddo
   call VecAssemblyBegin(nzeror_gvec1,ierr); CHECK_PETSC_ERROR(ierr)
   call VecAssemblyEnd(nzeror_gvec1,ierr); CHECK_PETSC_ERROR(ierr)
+
   call VecGetLocalSize(nzeror_gvec1,n,ierr); CHECK_PETSC_ERROR(ierr)
 
   !debug
   if (myrank == 0) print *,'PETSc solver: size of vector:',ng,n,minval(kgrow_sparse1),ig0
+  call synchronize_all()
 
+  ! free temporary array
+  deallocate(kgrow_sparse1,kgcol_sparse1)
+
+  ! non-zero array for diagonal/off-diagonal matrix?
   call VecGetArrayF90(nzeror_gvec1,nzeror_array1,ierr); CHECK_PETSC_ERROR(ierr)
 
   allocate(inzeror_array1(n))
@@ -738,17 +750,27 @@ contains
   call VecRestoreArrayF90(nzeror_gvec1,nzeror_array1,ierr); CHECK_PETSC_ERROR(ierr)
   call VecDestroy(nzeror_gvec1,ierr); CHECK_PETSC_ERROR(ierr)
 
+  inzeros_max = maxvec(inzeror_array1)
+  inzeros_min = minvec(inzeror_array1)
+
   ! Create the stiffness matrix (same for forward/adjoint simulations)
   call MatCreate(PETSC_COMM_WORLD,Amat1,ierr); CHECK_PETSC_ERROR(ierr)
   call MatSetType(Amat1,MATMPIAIJ,ierr); CHECK_PETSC_ERROR(ierr)
   call MatSetSizes(Amat1,PETSC_DECIDE,PETSC_DECIDE,ngdof1,ngdof1,ierr); CHECK_PETSC_ERROR(ierr)
 
-  call MatMPIAIJSetPreallocation(Amat1,nzeros_max,inzeror_array1,nzeros_max,inzeror_array1,ierr); CHECK_PETSC_ERROR(ierr)
-
-  call MatSetFromOptions(Amat1,ierr); CHECK_PETSC_ERROR(ierr)
-
-  call MatGetOwnershipRange(Amat1,istart,iend,ierr); CHECK_PETSC_ERROR(ierr)
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '    number of global degrees of freedom   : ',ngdof1
+    write(IMAIN,*) '    number of non-zero row entries min/max: ',nzeros_min,'/',nzeros_max
+    write(IMAIN,*) '    number of inzeror entries min/max     : ',inzeros_min,'/',inzeros_max
+    call flush_IMAIN()
+  endif
   call synchronize_all()
+
+  ! preallocation
+  call MatMPIAIJSetPreallocation(Amat1,nzeros_max,inzeror_array1,nzeros_max,inzeror_array1,ierr); CHECK_PETSC_ERROR(ierr)
+  call MatSetFromOptions(Amat1,ierr); CHECK_PETSC_ERROR(ierr)
+  call MatGetOwnershipRange(Amat1,istart,iend,ierr); CHECK_PETSC_ERROR(ierr)
 
   ! check
   if (istart /= ig0 .or. iend-1 /= ig1) then
@@ -756,8 +778,20 @@ contains
     print *,'       ownership range:',myrank,istart,ig0,iend-1,ig1,nzeros_row(1)
     stop
   endif
+  call synchronize_all()
 
-  deallocate(nzeros)
+  ! free temporary array
+  deallocate(nzeros_row)
+
+  ! memory usage (returns bytes)
+  call PetscMemoryGetCurrentUsage(bytes, ierr); CHECK_PETSC_ERROR(ierr)
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '    current PETSc memory usage  = ',sngl(bytes / 1024.d0 / 1024.d0),'MB'
+    write(IMAIN,*) '                                = ',sngl(bytes / 1024.d0 / 1024.d0 / 1024.d0),'GB'
+    call flush_IMAIN()
+  endif
 
   ! Create forward solver
   !solver_type1 = CG
@@ -1000,6 +1034,7 @@ contains
   PetscInt:: istart,iend,ndiag,noffdiag
 
   !debugging
+  logical, parameter :: DEBUG_FILE_OUTPUT = .true.
   integer :: ncols
   integer,dimension(:),allocatable :: cols
 
@@ -1010,6 +1045,11 @@ contains
   !   MatSetValues(Mat mat, PetscInt m, const PetscInt idxm[], PetscInt n, \
   !                const PetscInt idxn[], const PetscScalar v[], InsertMode addv)
   PetscScalar :: v
+
+  ! matrix info
+  double precision :: info(MAT_INFO_SIZE)
+  double precision :: mallocsval
+  PetscLogDouble :: bytes
 
   ! timing
   double precision :: tstart,tCPU
@@ -1140,7 +1180,7 @@ contains
 
   ! trinfinite
   if (NSPEC_INFINITE > 0) then
-    ! user info
+    ! user output
     if (myrank == 0) then
       write(IMAIN,*) '    setup trinfinite values'
       call flush_IMAIN()
@@ -1171,7 +1211,7 @@ contains
   endif
   deallocate(storekmat_trinfinite1)
 
-  ! user info
+  ! user output
   if (myrank == 0) then
     write(IMAIN,*) '    setup infinite values'
     call flush_IMAIN()
@@ -1207,21 +1247,25 @@ contains
 
   call MatAssemblyBegin(Amat1,MAT_FINAL_ASSEMBLY,ierr); CHECK_PETSC_ERROR(ierr)
   call MatAssemblyEnd(Amat1,MAT_FINAL_ASSEMBLY,ierr); CHECK_PETSC_ERROR(ierr)
+  ! symmetric
   call MatSetOption(Amat1,MAT_SYMMETRIC,PETSC_TRUE,ierr); CHECK_PETSC_ERROR(ierr)
-  call MatGetOwnershipRange(Amat1,istart,iend,ierr); CHECK_PETSC_ERROR(ierr)
 
   ! debugging output
-  if (.false.) then
+  if (DEBUG_FILE_OUTPUT) then
     allocate(cols(nzeros_max))
+    cols(:) = 0
     write(char_myrank,'(i4)') myrank
     outf_name='tmp_nonzeros'//trim(adjustl(char_myrank))
     open(1,file=outf_name,action='write',status='replace')
+    call MatGetOwnershipRange(Amat1,istart,iend,ierr); CHECK_PETSC_ERROR(ierr)
     do i = istart,iend-1
       cols(:) = -1
+      ! gets row i
       call MatGetRow(Amat1,i,ncols,cols,PETSC_NULL_SCALAR,ierr); CHECK_PETSC_ERROR(ierr)
       ndiag = count(cols >= ig0 .and. cols <= ig1)
       noffdiag = ncols-ndiag
       write(1,*) ndiag,noffdiag,ncols
+      ! free temporary space of MatGetRow()
       call MatRestoreRow(Amat1,i,ncols,PETSC_NULL_INTEGER,PETSC_NULL_SCALAR,ierr); CHECK_PETSC_ERROR(ierr)
     enddo
     close(1)
@@ -1231,8 +1275,22 @@ contains
   ! synchronize all processes
   call synchronize_all()
 
+  ! matrix info
+  call MatGetInfo(Amat1, MAT_GLOBAL_MAX, info, ierr); CHECK_PETSC_ERROR(ierr)
+
+  mallocsval = info(MAT_INFO_MALLOCS)               ! number of mallocs during MatSetValues()
+  !memval = info(MAT_INFO_MEMORY)                   ! memory allocated - not provided
+  !nonzeros_allocated = info(MAT_INFO_NZ_ALLOCATED) ! nonzero entries allocated
+
+  ! memory usage (returns bytes)
+  call PetscMemoryGetCurrentUsage(bytes, ierr); CHECK_PETSC_ERROR(ierr)
+
   ! user output
   if (myrank == 0) then
+    write(IMAIN,*) '    number of mallocs during setting values: ',int(mallocsval)
+    write(IMAIN,*) '    current PETSc memory usage  = ',sngl(bytes / 1024.d0 / 1024.d0),'MB'
+    write(IMAIN,*) '                                = ',sngl(bytes / 1024.d0 / 1024.d0 / 1024.d0),'GB'
+    write(IMAIN,*)
     tCPU = wtime() - tstart
     write(IMAIN,*) '    Elapsed time for PETSc solver matrix setup: ',sngl(tCPU),'(s)'
     write(IMAIN,*)
@@ -1704,8 +1762,9 @@ contains
 #ifdef USE_PETSC
   implicit none
   PetscInt :: istart,iend
-  PetscInt :: nzeros_max,nzeros_min
   PetscInt, allocatable :: nzeros(:)
+  ! memory info
+  PetscLogDouble :: bytes
 
   ! user output
   if (myrank == 0) then
@@ -1745,6 +1804,14 @@ contains
   call MatSetType(Amat,MATMPIAIJ,ierr); CHECK_PETSC_ERROR(ierr)
   call MatSetSizes(Amat,PETSC_DECIDE,PETSC_DECIDE,ngdof,ngdof,ierr); CHECK_PETSC_ERROR(ierr)
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '    number of global degrees of freedom   : ',ngdof
+    write(IMAIN,*) '    number of non-zero row entries min/max: ',nzeros_min,'/',nzeros_max
+    call flush_IMAIN()
+  endif
+  call synchronize_all()
+
   ! preallocation
   call MatMPIAIJSetPreallocation(Amat,nzeros_max,nzeros,nzeros_max,20*nzeros,ierr); CHECK_PETSC_ERROR(ierr)
   call MatSetFromOptions(Amat,ierr); CHECK_PETSC_ERROR(ierr)
@@ -1757,7 +1824,10 @@ contains
   print *,'PETSc Level-2 solver: global index:',myrank,istart,iend,iend-istart
   call synchronize_all()
 
+  ! free temporary array
   deallocate(nzeros)
+  deallocate(krow_sparse,kcol_sparse)
+  deallocate(kgrow_sparse,kgcol_sparse)
 
   !debug
   if (myrank == 0) print *,'PETSc Level-2 solver: matrix'
@@ -1775,6 +1845,16 @@ contains
 
   !debug
   if (myrank == 0) print *,'PETSc Level-2 solver: vector'
+
+  ! memory usage (returns bytes)
+  call PetscMemoryGetCurrentUsage(bytes, ierr); CHECK_PETSC_ERROR(ierr)
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '    current PETSc memory usage  = ',sngl(bytes / 1024.d0 / 1024.d0),'MB'
+    write(IMAIN,*) '                                = ',sngl(bytes / 1024.d0 / 1024.d0 / 1024.d0),'GB'
+    call flush_IMAIN()
+  endif
 
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   ! Create the linear solver and set various options
@@ -1863,11 +1943,23 @@ contains
   PetscScalar :: v
   PetscScalar,dimension(:,:),allocatable :: varr
 
+  ! matrix info
+  double precision :: info(MAT_INFO_SIZE)
+  double precision :: mallocsval
+  PetscLogDouble :: bytes
+
+  ! timing
+  double precision :: tstart,tCPU
+  double precision, external :: wtime
+
   ! user output
   if (myrank == 0) then
     write(IMAIN,*) '    setting up Level-2 solver matrix'
     call flush_IMAIN()
   endif
+
+  ! timing
+  tstart = wtime()
 
   ! Set and assemble matrix.
   !  - Note that MatSetValues() uses 0-based row and column numbers
@@ -1876,7 +1968,7 @@ contains
 
   call MatZeroEntries(Amat,ierr); CHECK_PETSC_ERROR(ierr)
 
-  ! user info
+  ! user output
   if (myrank == 0) then
     write(IMAIN,*) '    setup inner core values'
     call flush_IMAIN()
@@ -1904,8 +1996,10 @@ contains
   enddo
   deallocate(storekmat_inner_core)
 
-  ! user info
+  ! user output
   if (myrank == 0) then
+    tCPU = wtime() - tstart
+    write(IMAIN,*) '    elapsed time: ',sngl(tCPU),'(s)'
     write(IMAIN,*) '    setup outer core values'
     call flush_IMAIN()
   endif
@@ -1928,8 +2022,10 @@ contains
   enddo
   deallocate(storekmat_outer_core)
 
-  ! user info
+  ! user output
   if (myrank == 0) then
+    tCPU = wtime() - tstart
+    write(IMAIN,*) '    elapsed time: ',sngl(tCPU),'(s)'
     write(IMAIN,*) '    setup crust/mantle values'
     call flush_IMAIN()
   endif
@@ -1956,9 +2052,16 @@ contains
   enddo
   deallocate(storekmat_crust_mantle)
 
+  ! user output
+  if (myrank == 0) then
+    tCPU = wtime() - tstart
+    write(IMAIN,*) '    elapsed time: ',sngl(tCPU),'(s)'
+    call flush_IMAIN()
+  endif
+
   ! trinfinite
   if (NSPEC_TRINFINITE > 0) then
-    ! user info
+    ! user output
     if (myrank == 0) then
       write(IMAIN,*) '    setup trinfinite values'
       call flush_IMAIN()
@@ -1983,10 +2086,16 @@ contains
       call MatSetValues(Amat,ncount,igdof(1:ncount),ncount,igdof(1:ncount),varr,ADD_VALUES,ierr); CHECK_PETSC_ERROR(ierr)
       deallocate(varr)
     enddo
+    ! user output
+    if (myrank == 0) then
+      tCPU = wtime() - tstart
+      write(IMAIN,*) '    elapsed time: ',sngl(tCPU),'(s)'
+      call flush_IMAIN()
+    endif
   endif
   deallocate(storekmat_trinfinite)
 
-  ! user info
+  ! user output
   if (myrank == 0) then
     write(IMAIN,*) '    setup infinite values'
     call flush_IMAIN()
@@ -2014,14 +2123,37 @@ contains
   enddo
   deallocate(storekmat_infinite)
 
-  ! user info
+  ! user output
   if (myrank == 0) then
+    tCPU = wtime() - tstart
+    write(IMAIN,*) '    elapsed time: ',sngl(tCPU),'(s)'
     write(IMAIN,*) '    assembling matrix'
     call flush_IMAIN()
   endif
 
   call MatAssemblyBegin(Amat,MAT_FINAL_ASSEMBLY,ierr); CHECK_PETSC_ERROR(ierr)
   call MatAssemblyEnd(Amat,MAT_FINAL_ASSEMBLY,ierr); CHECK_PETSC_ERROR(ierr)
+
+  ! matrix info
+  call MatGetInfo(Amat, MAT_GLOBAL_MAX, info, ierr); CHECK_PETSC_ERROR(ierr)
+  mallocsval = info(MAT_INFO_MALLOCS) ! number of mallocs during MatSetValues()
+
+  ! memory usage
+  call PetscMemoryGetCurrentUsage(bytes, ierr); CHECK_PETSC_ERROR(ierr)
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '    number of mallocs during setting values: ',int(mallocsval)
+    write(IMAIN,*) '    current PETSc memory usage  = ',sngl(bytes / 1024.d0 / 1024.d0),'MB'
+    write(IMAIN,*) '                                = ',sngl(bytes / 1024.d0 / 1024.d0 / 1024.d0),'GB'
+    write(IMAIN,*)
+    tCPU = wtime() - tstart
+    write(IMAIN,*) '    Elapsed time for PETSc solver matrix setup: ',sngl(tCPU),'(s)'
+    write(IMAIN,*)
+    call flush_IMAIN()
+
+    call flush_IMAIN()
+  endif
 
 #else
   ! no PETSc compilation support

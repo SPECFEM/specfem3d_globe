@@ -274,8 +274,8 @@ module specfem_par
   !-----------------------------------------------------------------
 
   ! for ellipticity
-  integer :: nspl
-  double precision,dimension(NR_DENSITY) :: rspl,ellipicity_spline,ellipicity_spline2
+  integer :: nspl_ellip
+  double precision,dimension(NR_DENSITY) :: rspl_ellip,ellipicity_spline,ellipicity_spline2
 
   !-----------------------------------------------------------------
   ! rotation
@@ -1133,6 +1133,8 @@ module specfem_par_full_gravity
   implicit none
 
   ! full gravity solver
+  real(kind=CUSTOM_REAL), dimension(:),allocatable :: gravity_rho_crust_mantle,gravity_rho_inner_core
+  real(kind=CUSTOM_REAL), dimension(:),allocatable :: gravity_rho_g_over_kappa_outer_core
 
   ! MPI infinite mesh
   ! transition infinite
@@ -1210,57 +1212,52 @@ module specfem_par_full_gravity
   !----------------Level-1 solver
 
   ! parameters for Poisson's equation
-  integer :: neq, neq1, b_neq, b_neq1, nnode, nnode1
+  integer :: neq, nnode
+  integer :: neq1, nnode1
   double precision,dimension(:,:),allocatable :: lagrange_gll
+  double precision,dimension(:,:),allocatable :: lagrange_gll1
 
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_ic       ! pgrav_ic(NGLOB_INNER_CORE)
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_oc       ! pgrav_oc(NGLOB_OUTER_CORE)
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_cm       ! pgrav_cm(NGLOB_CRUST_MANTLE)
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_trinf    ! pgrav_trinf(NGLOB_TRINFINITE)
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_inf      ! pgrav_inf(NGLOB_INFINITE)
+  ! Level-1 solver arrays
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_ic1, pgrav_oc1, pgrav_cm1, pgrav_trinf1, pgrav_inf1
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav1
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon1, gravload1
+  ! Level-2 solver arrays
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_ic, pgrav_oc, pgrav_cm, pgrav_trinf, pgrav_inf
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon, gravload
 
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav_ic1, pgrav_oc1, pgrav_cm1, pgrav_trinf1, pgrav_inf1
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: pgrav1, pgrav1_oldrun
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon1, gravload1
-
-  !real(kind=CUSTOM_REAL),dimension(:),allocatable :: WEvector
-
-  ! Adjoint arrays for Poisson Equation:
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_ic     ! b_pgrav_ic(NGLOB_INNER_CORE_ADJOINT)
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_oc     ! b_pgrav_oc(NGLOB_OUTER_CORE_ADJOINT)
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_cm     ! b_pgrav_cm(NGLOB_CRUST_MANTLE_ADJOINT)
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_trinf  ! b_pgrav_trinf(NGLOB_TRINFINITE_ADJOINT)
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_inf    ! b_pgrav_inf(NGLOB_INFINITE_ADJOINT)
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_dprecon, b_gravload
-
+  ! Adjoint arrays for Poisson Equation
+  ! Level-1 solver arrays
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_ic1, b_pgrav_oc1, b_pgrav_cm1, b_pgrav_trinf1, b_pgrav_inf1
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav1
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_dprecon1, b_gravload1
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_gravload1
+  ! Level-2 solver arrays
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_ic, b_pgrav_oc, b_pgrav_cm, b_pgrav_trinf, b_pgrav_inf
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_gravload
 
+  ! Level-2 solver
   ! number of global degrees of freedom
   integer :: ngdof,nsparse
-  integer,dimension(:),allocatable :: l2gdof, krow_sparse, kcol_sparse, kgrow_sparse, kgcol_sparse
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: kmat_sparse
+  integer,dimension(:),allocatable :: l2gdof
+  integer,dimension(:),allocatable :: krow_sparse, kcol_sparse, kgrow_sparse, kgcol_sparse
 
-  ! level-1 solver
+  ! Level-1 solver
   ! number of global degrees of freedom
   integer :: ngdof1,nsparse1
-  integer,dimension(:),allocatable :: l2gdof1, krow_sparse1, kcol_sparse1, kgrow_sparse1, kgcol_sparse1
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: kmat_sparse1
-  double precision,dimension(:,:),allocatable :: lagrange_gll1
+  integer,dimension(:),allocatable :: l2gdof1
+  integer,dimension(:),allocatable :: krow_sparse1, kcol_sparse1, kgrow_sparse1, kgcol_sparse1
 
   integer :: nnode_ic1,nnode_oc1,nnode_cm1,nnode_trinf1,nnode_inf1
 
+  ! mirror nodes
   integer,dimension(:),allocatable :: nmir_ic, nmir_oc, nmir_cm, nmir_trinf, nmir_inf
 
-  integer,dimension(:,:),allocatable :: inode_map_ic      ! (2,NGLOB_INNER_CORE)
-  integer,dimension(:,:),allocatable :: inode_map_oc      ! (2,NGLOB_OUTER_CORE)
-  integer,dimension(:,:),allocatable :: inode_map_cm      ! (2,NGLOB_CRUST_MANTLE)
-  integer,dimension(:,:),allocatable :: inode_map_trinf   ! (2,NGLOB_TRINFINITE)
-  integer,dimension(:,:),allocatable :: inode_map_inf     ! (2,NGLOB_INFINITE)
+  ! mapping
+  integer,dimension(:,:),allocatable :: inode_map_ic,inode_map_oc,inode_map_cm,inode_map_trinf,inode_map_inf
+
+  integer,dimension(:,:),allocatable :: inode_elmt_ic,inode_elmt_oc,inode_elmt_cm,inode_elmt_trinf,inode_elmt_inf
+  integer,dimension(:,:),allocatable :: inode_elmt_ic1,inode_elmt_oc1,inode_elmt_cm1,inode_elmt_trinf1,inode_elmt_inf1
 
   ! active GLL points
   integer,dimension(NGLLCUBE_INF) :: igll_active_on
@@ -1273,25 +1270,22 @@ module specfem_par_full_gravity
   !integer,allocatable :: inode4_ic(:),inode4_oc(:),inode4_cm(:)
 
   ! CG solver scaling
-  logical, parameter :: cg_isscale = .true.
+  logical, parameter :: CG_SCALING = .true.
   ! CG solver non-dim scaling
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: ndscale1, ndscale
 
-  ! full gravity arrays
+  ! full gravity arrays for kernels
   ! crust/mantle
   real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: g_cm     ! (NDIM,NGLOB_CRUST_MANTLE)
   real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: gradg_cm ! (6,NGLOB_CRUST_MANTLE)
-  ! inner core
-  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: g_ic       ! (NDIM,NGLOB_INNER_CORE)
-  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: gradg_ic   ! (6,NGLOB_INNER_CORE)
-  ! outer core
-  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: g_oc ! (NDIM,NGLOB_OUTER_CORE)
+  ! inner core - kernels not implemented yet
+  !real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: g_ic       ! (NDIM,NGLOB_INNER_CORE)
+  !real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: gradg_ic   ! (6,NGLOB_INNER_CORE)
+  ! outer core - kernels not implemented yet
+  !real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: g_oc ! (NDIM,NGLOB_OUTER_CORE)
 
   ! parameters for Poisson's solver
   ! crust/mantle
-  integer,dimension(:,:),allocatable :: inode_elmt_cm   ! (NGLLCUBE,NSPEC_CRUST_MANTLE)
-  integer,dimension(:,:),allocatable :: inode_elmt_cm1  ! (NGLLCUBE_INF,NSPEC_CRUST_MANTLE)
-
   integer,dimension(:),allocatable :: gdof_cm, gdof_cm1
   integer,dimension(:,:),allocatable :: ggdof_cm, ggdof_cm1
 
@@ -1306,9 +1300,6 @@ module specfem_par_full_gravity
   real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: storerhojw_cm1,storejw_cm1  ! (NGLLCUBE_INF,NSPEC_CRUST_MANTLE)
 
   ! outer core
-  integer,dimension(:,:),allocatable :: inode_elmt_oc   ! (NGLLCUBE,NSPEC_OUTER_CORE)
-  integer,dimension(:,:),allocatable :: inode_elmt_oc1  ! (NGLLCUBE_INF,NSPEC_OUTER_CORE)
-
   integer,dimension(:),allocatable :: gdof_oc, gdof_oc1
   integer,dimension(:,:),allocatable :: ggdof_oc, ggdof_oc1
 
@@ -1323,9 +1314,6 @@ module specfem_par_full_gravity
   real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: storerhojw_oc1     ! (NGLLCUBE_INF,NSPEC_OUTER_CORE)
 
   ! inner core
-  integer,dimension(:,:),allocatable :: inode_elmt_ic     ! inode_elmt_ic(NGLLCUBE,NSPEC_INNER_CORE)
-  integer,dimension(:,:),allocatable :: inode_elmt_ic1    ! inode_elmt_ic1(NGLLCUBE_INF,NSPEC_INNER_CORE)
-
   integer,dimension(:),allocatable :: gdof_ic, gdof_ic1
   integer,dimension(:,:),allocatable :: ggdof_ic, ggdof_ic1
 
@@ -1340,9 +1328,6 @@ module specfem_par_full_gravity
   real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: storerhojw_ic1           ! (NGLLCUBE_INF,NSPEC_INNER_CORE)
 
   ! transition-to-infinite
-  integer,dimension(:,:),allocatable :: inode_elmt_trinf  ! inode_elmt_trinf(NGLLCUBE,NSPEC_TRINFINITE)
-  integer,dimension(:,:),allocatable :: inode_elmt_trinf1 ! inode_elmt_trinf1(NGLLCUBE_INF,NSPEC_TRINFINITE)
-
   integer,dimension(:),allocatable :: gdof_trinf, gdof_trinf1
   integer,dimension(:,:),allocatable :: ggdof_trinf, ggdof_trinf1
 
@@ -1352,9 +1337,6 @@ module specfem_par_full_gravity
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon_trinfinite1
 
   ! infinite
-  integer,dimension(:,:),allocatable :: inode_elmt_inf    ! inode_elmt_inf(NGLLCUBE,NSPEC_INFINITE)
-  integer,dimension(:,:),allocatable :: inode_elmt_inf1   ! inode_elmt_inf1(NGLLCUBE_INF,NSPEC_INFINITE)
-
   integer,dimension(:),allocatable :: gdof_inf, gdof_inf1
   integer,dimension(:,:),allocatable :: ggdof_inf, ggdof_inf1
 

@@ -534,6 +534,7 @@
                                   normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
                                   ibelm_top_outer_core,ibelm_bottom_outer_core, &
                                   ibool_outer_core
+  use specfem_par_full_gravity, only: pgrav_oc
   implicit none
 
   ! checks if anything to do
@@ -557,7 +558,8 @@
                                           normal_top_outer_core,jacobian2D_top_outer_core, &
                                           normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
                                           ibelm_top_outer_core,NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE), &
-                                          ibelm_bottom_outer_core,NSPEC2D_TOP(IREGION_INNER_CORE))
+                                          ibelm_bottom_outer_core,NSPEC2D_TOP(IREGION_INNER_CORE), &
+                                          pgrav_oc)
     else
       ! separate only one coupling interface
       !---
@@ -570,7 +572,8 @@
                                         normal_top_outer_core,jacobian2D_top_outer_core, &
                                         wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
                                         RHO_TOP_OC,minus_g_cmb, &
-                                        NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE))
+                                        NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE), &
+                                        pgrav_oc)
 
       !---
       !--- couple with outer core at the top of the inner core
@@ -582,7 +585,8 @@
                                         normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
                                         wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
                                         RHO_BOTTOM_OC,minus_g_icb, &
-                                        NSPEC2D_TOP(IREGION_INNER_CORE))
+                                        NSPEC2D_TOP(IREGION_INNER_CORE), &
+                                        pgrav_oc)
     endif
   else
     ! on GPU
@@ -615,6 +619,7 @@
                                   normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
                                   ibelm_top_outer_core,ibelm_bottom_outer_core, &
                                   ibool_outer_core
+  use specfem_par_full_gravity, only: b_pgrav_oc
   implicit none
 
   ! checks if anything to do
@@ -638,7 +643,8 @@
                                           normal_top_outer_core,jacobian2D_top_outer_core, &
                                           normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
                                           ibelm_top_outer_core,NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE), &
-                                          ibelm_bottom_outer_core,NSPEC2D_TOP(IREGION_INNER_CORE))
+                                          ibelm_bottom_outer_core,NSPEC2D_TOP(IREGION_INNER_CORE), &
+                                          b_pgrav_oc)
     else
       ! separate only one coupling interface
       !---
@@ -651,7 +657,8 @@
                                         normal_top_outer_core,jacobian2D_top_outer_core, &
                                         wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
                                         RHO_TOP_OC,minus_g_cmb, &
-                                        NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE))
+                                        NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE), &
+                                        b_pgrav_oc)
 
       !---
       !--- couple with outer core at the top of the inner core
@@ -663,7 +670,8 @@
                                         normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
                                         wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
                                         RHO_BOTTOM_OC,minus_g_icb, &
-                                        NSPEC2D_TOP(IREGION_INNER_CORE))
+                                        NSPEC2D_TOP(IREGION_INNER_CORE), &
+                                        b_pgrav_oc)
 
     endif
   else
@@ -697,7 +705,8 @@
                                             normal_top_outer_core,jacobian2D_top_outer_core, &
                                             normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
                                             ibelm_top_outer_core,nspec_bottom, &
-                                            ibelm_bottom_outer_core,nspec2D_top)
+                                            ibelm_bottom_outer_core,nspec2D_top, &
+                                            pgrav_oc)
 
   use constants_solver
 
@@ -739,6 +748,9 @@
   integer, dimension(NSPEC2D_BOTTOM_OC), intent(in) :: ibelm_bottom_outer_core
   integer, intent(in) :: nspec2D_top
 
+  ! full gravity
+  real(kind=CUSTOM_REAL), dimension(NGLOB_OC), intent(in) :: pgrav_oc(NGLOB_OC)
+
   ! local parameters
   real(kind=CUSTOM_REAL) :: pressure,nx,ny,nz,weight
   integer :: i,j,k,k_corresp,ispec,ispec2D,iglob,iglob_mantle,iglob_inner_core,ispec_selected
@@ -779,10 +791,17 @@
 
         ! compute pressure, taking gravity into account
         if (GRAVITY_VAL) then
-          pressure = real(RHO_TOP_OC,kind=CUSTOM_REAL) * (- accel_outer_core(iglob) &
-             + minus_g_cmb *(displ_crust_mantle(1,iglob_mantle)*nx &
-                            + displ_crust_mantle(2,iglob_mantle)*ny &
-                            + displ_crust_mantle(3,iglob_mantle)*nz))
+          if (FULL_GRAVITY_VAL .and. .not. DISCARD_GCONTRIB) then
+            pressure = real(RHO_TOP_OC,kind=CUSTOM_REAL) * (- accel_outer_core(iglob) &
+               + minus_g_cmb *(displ_crust_mantle(1,iglob_mantle)*nx &
+                             + displ_crust_mantle(2,iglob_mantle)*ny &
+                             + displ_crust_mantle(3,iglob_mantle)*nz) - pgrav_oc(iglob))
+          else
+            pressure = real(RHO_TOP_OC,kind=CUSTOM_REAL) * (- accel_outer_core(iglob) &
+               + minus_g_cmb *(displ_crust_mantle(1,iglob_mantle)*nx &
+                             + displ_crust_mantle(2,iglob_mantle)*ny &
+                             + displ_crust_mantle(3,iglob_mantle)*nz))
+          endif
         else
           pressure = - real(RHO_TOP_OC,kind=CUSTOM_REAL) * accel_outer_core(iglob)
         endif
@@ -826,10 +845,17 @@
 
         ! compute pressure, taking gravity into account
         if (GRAVITY_VAL) then
-          pressure = real(RHO_BOTTOM_OC,kind=CUSTOM_REAL) * (- accel_outer_core(iglob) &
-             + minus_g_icb *(displ_inner_core(1,iglob_inner_core)*nx &
+          if (FULL_GRAVITY_VAL .and. .not. DISCARD_GCONTRIB) then
+            pressure = real(RHO_BOTTOM_OC,kind=CUSTOM_REAL) * (- accel_outer_core(iglob) &
+               + minus_g_icb *(displ_inner_core(1,iglob_inner_core)*nx &
+                             + displ_inner_core(2,iglob_inner_core)*ny &
+                             + displ_inner_core(3,iglob_inner_core)*nz) - pgrav_oc(iglob))
+          else
+            pressure = real(RHO_BOTTOM_OC,kind=CUSTOM_REAL) * (- accel_outer_core(iglob) &
+               + minus_g_icb *(displ_inner_core(1,iglob_inner_core)*nx &
                              + displ_inner_core(2,iglob_inner_core)*ny &
                              + displ_inner_core(3,iglob_inner_core)*nz))
+          endif
         else
           pressure = - real(RHO_BOTTOM_OC,kind=CUSTOM_REAL) * accel_outer_core(iglob)
         endif
@@ -863,7 +889,8 @@
                                         normal_top_outer_core,jacobian2D_top_outer_core, &
                                         wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
                                         RHO_TOP_OC,minus_g_cmb, &
-                                        nspec_bottom)
+                                        nspec_bottom, &
+                                        pgrav_oc)
 
   use constants_solver
 
@@ -890,6 +917,9 @@
   real(kind=CUSTOM_REAL), intent(in) :: minus_g_cmb
 
   integer, intent(in) :: nspec_bottom
+
+  ! full gravity
+  real(kind=CUSTOM_REAL), dimension(NGLOB_OC), intent(in) :: pgrav_oc(NGLOB_OC)
 
   ! local parameters
   real(kind=CUSTOM_REAL) :: pressure,nx,ny,nz,weight
@@ -931,10 +961,17 @@
 
         ! compute pressure, taking gravity into account
         if (GRAVITY_VAL) then
-          pressure = real(RHO_TOP_OC,kind=CUSTOM_REAL) * (- accel_outer_core(iglob) &
-             + minus_g_cmb *(displ_crust_mantle(1,iglob_mantle)*nx &
-                            + displ_crust_mantle(2,iglob_mantle)*ny &
-                            + displ_crust_mantle(3,iglob_mantle)*nz))
+          if (FULL_GRAVITY_VAL .and. .not. DISCARD_GCONTRIB) then
+            pressure = real(RHO_TOP_OC,kind=CUSTOM_REAL) * (- accel_outer_core(iglob) &
+               + minus_g_cmb *(displ_crust_mantle(1,iglob_mantle)*nx &
+                             + displ_crust_mantle(2,iglob_mantle)*ny &
+                             + displ_crust_mantle(3,iglob_mantle)*nz) - pgrav_oc(iglob))
+          else
+            pressure = real(RHO_TOP_OC,kind=CUSTOM_REAL) * (- accel_outer_core(iglob) &
+               + minus_g_cmb *(displ_crust_mantle(1,iglob_mantle)*nx &
+                             + displ_crust_mantle(2,iglob_mantle)*ny &
+                             + displ_crust_mantle(3,iglob_mantle)*nz))
+          endif
         else
           pressure = - real(RHO_TOP_OC,kind=CUSTOM_REAL) * accel_outer_core(iglob)
         endif
@@ -967,7 +1004,8 @@
                                         normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
                                         wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
                                         RHO_BOTTOM_OC,minus_g_icb, &
-                                        nspec2D_top)
+                                        nspec2D_top, &
+                                        pgrav_oc)
 
   use constants_solver
 
@@ -994,6 +1032,9 @@
   real(kind=CUSTOM_REAL), intent(in) :: minus_g_icb
 
   integer, intent(in) :: nspec2D_top
+
+  ! full gravity
+  real(kind=CUSTOM_REAL), dimension(NGLOB_OC), intent(in) :: pgrav_oc(NGLOB_OC)
 
   ! local parameters
   real(kind=CUSTOM_REAL) :: pressure,nx,ny,nz,weight
@@ -1035,10 +1076,17 @@
 
         ! compute pressure, taking gravity into account
         if (GRAVITY_VAL) then
-          pressure = real(RHO_BOTTOM_OC,kind=CUSTOM_REAL) * (- accel_outer_core(iglob) &
-             + minus_g_icb *(displ_inner_core(1,iglob_inner_core)*nx &
+          if (FULL_GRAVITY_VAL .and. .not. DISCARD_GCONTRIB) then
+            pressure = real(RHO_BOTTOM_OC,kind=CUSTOM_REAL) * (- accel_outer_core(iglob) &
+               + minus_g_icb *(displ_inner_core(1,iglob_inner_core)*nx &
+                             + displ_inner_core(2,iglob_inner_core)*ny &
+                             + displ_inner_core(3,iglob_inner_core)*nz) - pgrav_oc(iglob))
+          else
+            pressure = real(RHO_BOTTOM_OC,kind=CUSTOM_REAL) * (- accel_outer_core(iglob) &
+               + minus_g_icb *(displ_inner_core(1,iglob_inner_core)*nx &
                              + displ_inner_core(2,iglob_inner_core)*ny &
                              + displ_inner_core(3,iglob_inner_core)*nz))
+          endif
         else
           pressure = - real(RHO_BOTTOM_OC,kind=CUSTOM_REAL) * accel_outer_core(iglob)
         endif

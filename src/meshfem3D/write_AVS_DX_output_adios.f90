@@ -39,7 +39,7 @@
 
   use meshfem_models_par, only: &
     ELLIPTICITY,MODEL_3D_MANTLE_PERTUBATIONS, &
-    nspl,rspl,ellipicity_spline,ellipicity_spline2
+    nspl_ellip,rspl_ellip,ellipicity_spline,ellipicity_spline2
 
   use regions_mesh_par2
 
@@ -125,7 +125,7 @@
                                               iMPIcut_xi,iMPIcut_eta, &
                                               ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
                                               npointot,rhostore,kappavstore,muvstore, &
-                                              nspl,rspl,ellipicity_spline,ellipicity_spline2,ELLIPTICITY, &
+                                              nspl_ellip,rspl_ellip,ellipicity_spline,ellipicity_spline2,ELLIPTICITY, &
                                               MODEL_3D_MANTLE_PERTUBATIONS, &
                                               RICB,RCMB,RTOPDDOUBLEPRIME,R670,R220,R771,R400,R120,R80,RMOHO, &
                                               RMIDDLE_CRUST,iregion_code, &
@@ -136,7 +136,7 @@
   call prepare_AVS_DX_global_chunks_data_adios(prname,nspec, &
                                                iboun,ibool, idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
                                                npointot,rhostore,kappavstore,muvstore, &
-                                               nspl,rspl,ellipicity_spline,ellipicity_spline2,ELLIPTICITY, &
+                                               nspl_ellip,rspl_ellip,ellipicity_spline,ellipicity_spline2,ELLIPTICITY, &
                                                MODEL_3D_MANTLE_PERTUBATIONS, &
                                                RICB,RCMB,RTOPDDOUBLEPRIME,R670,R220,R771,R400,R120,R80,RMOHO, &
                                                RMIDDLE_CRUST,iregion_code, &
@@ -147,7 +147,7 @@
   call prepare_AVS_DX_surfaces_data_adios(nspec,iboun, &
                                           ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool,npointot, &
                                           rhostore,kappavstore,muvstore, &
-                                          nspl,rspl,ellipicity_spline,ellipicity_spline2,ELLIPTICITY, &
+                                          nspl_ellip,rspl_ellip,ellipicity_spline,ellipicity_spline2,ELLIPTICITY, &
                                           MODEL_3D_MANTLE_PERTUBATIONS, &
                                           RICB,RCMB,RTOPDDOUBLEPRIME,R670,R220,R771,R400,R120,R80,RMOHO, &
                                           RMIDDLE_CRUST,iregion_code, &

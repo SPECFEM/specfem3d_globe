@@ -109,7 +109,7 @@
   use meshfem_par, only: x_observation,y_observation,z_observation, &
                            lon_observation,lat_observation,ELLIPTICITY,TOPOGRAPHY,OUTPUT_FILES
 
-  use meshfem_models_par, only: nspl,rspl,ellipicity_spline,ellipicity_spline2,ibathy_topo
+  use meshfem_models_par, only: nspl_ellip,rspl_ellip,ellipicity_spline,ellipicity_spline2,ibathy_topo
 
   implicit none
 
@@ -248,7 +248,7 @@
       end select
 
       ! add ellipticity
-      if (ELLIPTICITY) call add_ellipticity(x_top,y_top,z_top,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+      if (ELLIPTICITY) call add_ellipticity(x_top,y_top,z_top,nspl_ellip,rspl_ellip,ellipicity_spline,ellipicity_spline2)
 
       ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
       call xyz_2_rlatlon_dble(x_top,y_top,z_top,r,lat,lon,ELLIPTICITY)
