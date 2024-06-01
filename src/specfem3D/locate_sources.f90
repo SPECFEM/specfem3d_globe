@@ -40,7 +40,7 @@
     LOCAL_TMP_PATH,SIMULATION_TYPE, &
     SAVE_SOURCE_MASK
 
-  use specfem_par, only: rspl,ellipicity_spline,ellipicity_spline2,nspl
+  use specfem_par, only: rspl_ellip,ellipicity_spline,ellipicity_spline2,nspl_ellip
 
   ! sources
   use specfem_par, only: &
@@ -336,7 +336,7 @@
       ! ellipticity
       if (ELLIPTICITY_VAL) then
         ! adds ellipticity factor to radius
-        call add_ellipticity_rtheta(r0,theta,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+        call add_ellipticity_rtheta(r0,theta,nspl_ellip,rspl_ellip,ellipicity_spline,ellipicity_spline2)
       endif
 
       ! stores surface radius for info output

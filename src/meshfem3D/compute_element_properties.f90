@@ -50,7 +50,7 @@
     REGIONAL_MOHO_MESH
 
   ! ellipticity
-  use meshfem_models_par, only: nspl,rspl,ellipicity_spline,ellipicity_spline2
+  use meshfem_models_par, only: nspl_ellip,rspl_ellip,ellipicity_spline,ellipicity_spline2
 
   use regions_mesh_par2, only: &
     xixstore,xiystore,xizstore, &
@@ -236,10 +236,10 @@
       ! note: after adding ellipticity, the mesh becomes elliptical and geocentric and geodetic/geographic colatitudes differ.
       if (USE_GLL) then
         ! make the Earth's ellipticity, use GLL points
-        call get_ellipticity_gll(xstore,ystore,zstore,ispec,nspec,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+        call get_ellipticity_gll(xstore,ystore,zstore,ispec,nspec,nspl_ellip,rspl_ellip,ellipicity_spline,ellipicity_spline2)
       else
         ! make the Earth's ellipticity, use element anchor points
-        call get_ellipticity(xelm,yelm,zelm,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+        call get_ellipticity(xelm,yelm,zelm,nspl_ellip,rspl_ellip,ellipicity_spline,ellipicity_spline2)
 
         ! re-interpolates GLL point locations
         ! needed for get_model(..) routine to consider stretched locations in xstore,.. arrays
@@ -373,10 +373,10 @@
     if (.not. is_model_with_ellipticity) then
       if (USE_GLL) then
         ! make the Earth's ellipticity, use GLL points
-        call get_ellipticity_gll(xstore,ystore,zstore,ispec,nspec,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+        call get_ellipticity_gll(xstore,ystore,zstore,ispec,nspec,nspl_ellip,rspl_ellip,ellipicity_spline,ellipicity_spline2)
       else
         ! make the Earth's ellipticity, use element anchor points
-        call get_ellipticity(xelm,yelm,zelm,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+        call get_ellipticity(xelm,yelm,zelm,nspl_ellip,rspl_ellip,ellipicity_spline,ellipicity_spline2)
       endif
 
       !debug

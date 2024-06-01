@@ -38,7 +38,7 @@
   integer :: ier
 
   ! sets up spline coefficients for ellipticity
-  if (ELLIPTICITY) call make_ellipticity(nspl,rspl,ellipicity_spline,ellipicity_spline2)
+  if (ELLIPTICITY) call make_ellipticity(nspl_ellip,rspl_ellip,ellipicity_spline,ellipicity_spline2)
 
   ! read topography and bathymetry file
   if (TOPOGRAPHY) then
@@ -1745,7 +1745,7 @@
   use shared_parameters, only: LOCAL_PATH,R_PLANET_KM,R_PLANET, &
     TOPOGRAPHY,ELLIPTICITY
   use meshfem_models_par, only: ibathy_topo
-  use meshfem_models_par, only: nspl,rspl,ellipicity_spline,ellipicity_spline2
+  use meshfem_models_par, only: nspl_ellip,rspl_ellip,ellipicity_spline,ellipicity_spline2
 
   implicit none
 
@@ -1826,7 +1826,7 @@
       ! ellipticity
       if (ELLIPTICITY) then
         ! adds ellipticity factor to radius
-        call add_ellipticity_rtheta(r,theta,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+        call add_ellipticity_rtheta(r,theta,nspl_ellip,rspl_ellip,ellipicity_spline,ellipicity_spline2)
       endif
 
       ! gets moho
@@ -1917,7 +1917,7 @@
   use shared_parameters, only: LOCAL_PATH,RESOLUTION_TOPO_FILE,R_PLANET,R_PLANET_KM, &
     TOPOGRAPHY,ELLIPTICITY
   use meshfem_models_par, only: ibathy_topo
-  use meshfem_models_par, only: nspl,rspl,ellipicity_spline,ellipicity_spline2
+  use meshfem_models_par, only: nspl_ellip,rspl_ellip,ellipicity_spline,ellipicity_spline2
 
   implicit none
 
@@ -2019,7 +2019,7 @@
       ! ellipticity
       if (ELLIPTICITY) then
         ! adds ellipticity factor to radius
-        call add_ellipticity_rtheta(r,theta,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+        call add_ellipticity_rtheta(r,theta,nspl_ellip,rspl_ellip,ellipicity_spline,ellipicity_spline2)
       endif
 
       ! gets point's position

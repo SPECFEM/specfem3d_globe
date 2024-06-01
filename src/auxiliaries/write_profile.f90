@@ -79,7 +79,7 @@
     CRUSTAL,ONE_CRUST
 
   ! ellipticity
-  use meshfem_models_par, only: nspl,rspl,ellipicity_spline,ellipicity_spline2
+  use meshfem_models_par, only: nspl_ellip,rspl_ellip,ellipicity_spline,ellipicity_spline2
 
   use shared_parameters, only: &
     doubling_index,MAX_NUMBER_OF_MESH_LAYERS,rmaxs,rmins, &
@@ -523,7 +523,7 @@
             ! ellipticity
             if (ELLIPTICITY) then
               ! adds ellipticity factor to radius
-              call add_ellipticity_rtheta(r_prem,theta,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+              call add_ellipticity_rtheta(r_prem,theta,nspl_ellip,rspl_ellip,ellipicity_spline,ellipicity_spline2)
             endif
 
             ! scale values read from routines back to true values
@@ -1151,7 +1151,7 @@
         ! ellipticity
         if (ELLIPTICITY) then
           ! adds ellipticity factor to radius
-          call add_ellipticity_rtheta(r_ocean,theta,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+          call add_ellipticity_rtheta(r_ocean,theta,nspl_ellip,rspl_ellip,ellipicity_spline,ellipicity_spline2)
         endif
 
         ! ocean properties (salt water parameters from PREM)
@@ -1171,7 +1171,7 @@
         ! ellipticity
         if (ELLIPTICITY) then
           ! adds ellipticity factor to radius
-          call add_ellipticity_rtheta(r_ocean,theta,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+          call add_ellipticity_rtheta(r_ocean,theta,nspl_ellip,rspl_ellip,ellipicity_spline,ellipicity_spline2)
         endif
         ! last line
         write(57,'(F10.0,7F12.2,F12.5)') sngl(r_ocean*R_PLANET),1020.0,1450.,0.0,57822.5,0.0,1450.,0.0,1.0

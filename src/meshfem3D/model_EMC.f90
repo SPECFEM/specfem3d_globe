@@ -3138,7 +3138,7 @@ contains
   use constants
   use shared_parameters, only: R_PLANET,R_PLANET_KM,RHOAV,TOPOGRAPHY,ELLIPTICITY
   use meshfem_models_par, only: ibathy_topo
-  use meshfem_models_par, only: rspl,ellipicity_spline,ellipicity_spline2,nspl
+  use meshfem_models_par, only: rspl_ellip,ellipicity_spline,ellipicity_spline2,nspl_ellip
 
   use model_emc_par
 
@@ -3216,7 +3216,7 @@ contains
   ! ellipticity
   if (ELLIPTICITY) then
     ! adds ellipticity factor to radius (needs geocentric colatitude)
-    call add_ellipticity_rtheta(r0,theta,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+    call add_ellipticity_rtheta(r0,theta,nspl_ellip,rspl_ellip,ellipicity_spline,ellipicity_spline2)
   endif
 
   ! depth with respect to surface (in km)

@@ -100,8 +100,8 @@
   integer, dimension(:,:),allocatable :: ibathy_topo
 
   ! for ellipticity
-  double precision,dimension(NR_DENSITY) :: rspl,ellipicity_spline,ellipicity_spline2
-  integer :: nspl
+  double precision,dimension(NR_DENSITY) :: rspl_ellip,ellipicity_spline,ellipicity_spline2
+  integer :: nspl_ellip
 
   end module meshfem_models_par
 
