@@ -28,7 +28,7 @@
 
   subroutine SIEM_get_index_region()
 
-  use constants, only: myrank,NGLLX,NGLLY,NGLLZ,NGLLCUBE,IFLAG_IN_FICTITIOUS_CUBE, &
+  use constants, only: myrank,NGLLX,NGLLY,NGLLZ,NGLLCUBE,IMAIN,SIZE_INTEGER,IFLAG_IN_FICTITIOUS_CUBE, &
     NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF,ADD_TRINF
 
   use constants_solver, only: NSPEC_INNER_CORE, &
@@ -108,19 +108,92 @@
   logical,dimension(:),allocatable :: isnode_ic,isnode_oc,isnode_cm,isnode_trinf,isnode_inf
   integer,allocatable :: nf(:,:),nf1(:,:),nmir(:)
 
-  integer :: nnode_ic,nnode_oc,nnode_cm,nnode_trinf,nnode_inf
   integer :: inode1,inum,igll
   logical,allocatable :: isnode(:)
 
   logical,allocatable :: isibool_interface_ic(:,:),isibool_interface_oc(:,:), &
                          isibool_interface_cm(:,:),isibool_interface_trinf(:,:),isibool_interface_inf(:,:)
 
-  ! array sizes
-  nnode_ic = NGLOB_INNER_CORE
-  nnode_oc = NGLOB_OUTER_CORE
-  nnode_cm = NGLOB_CRUST_MANTLE
-  nnode_trinf = NGLOB_TRINFINITE
-  nnode_inf = NGLOB_INFINITE
+  double precision :: sizeval
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) "  creating solver array indexing"
+    call flush_IMAIN()
+  endif
+
+  ! estimated memory size required in MB
+  ! inode_elmt_cm,..
+  sizeval = dble(NGLLCUBE)*dble(NSPEC_CRUST_MANTLE)*dble(SIZE_INTEGER)
+  sizeval = sizeval + dble(NGLLCUBE)*dble(NSPEC_INNER_CORE)*dble(SIZE_INTEGER)
+  sizeval = sizeval + dble(NGLLCUBE)*dble(NSPEC_OUTER_CORE)*dble(SIZE_INTEGER)
+  sizeval = sizeval + dble(NGLLCUBE)*dble(NSPEC_TRINFINITE)*dble(SIZE_INTEGER)
+  sizeval = sizeval + dble(NGLLCUBE)*dble(NSPEC_INFINITE)*dble(SIZE_INTEGER)
+  ! inode_elmt_cm1,..
+  sizeval = sizeval + dble(NGLLCUBE_INF)*dble(NSPEC_CRUST_MANTLE)*dble(SIZE_INTEGER)
+  sizeval = sizeval + dble(NGLLCUBE_INF)*dble(NSPEC_INNER_CORE)*dble(SIZE_INTEGER)
+  sizeval = sizeval + dble(NGLLCUBE_INF)*dble(NSPEC_OUTER_CORE)*dble(SIZE_INTEGER)
+  sizeval = sizeval + dble(NGLLCUBE_INF)*dble(NSPEC_TRINFINITE)*dble(SIZE_INTEGER)
+  sizeval = sizeval + dble(NGLLCUBE_INF)*dble(NSPEC_INFINITE)*dble(SIZE_INTEGER)
+  ! inode_map_cm,..
+  sizeval = sizeval + 2.d0*dble(NGLOB_CRUST_MANTLE)*dble(SIZE_INTEGER)
+  sizeval = sizeval + 2.d0*dble(NGLOB_INNER_CORE)*dble(SIZE_INTEGER)
+  sizeval = sizeval + 2.d0*dble(NGLOB_OUTER_CORE)*dble(SIZE_INTEGER)
+  sizeval = sizeval + 2.d0*dble(NGLOB_TRINFINITE)*dble(SIZE_INTEGER)
+  sizeval = sizeval + 2.d0*dble(NGLOB_INFINITE)*dble(SIZE_INTEGER)
+  ! nmir_cm,..
+  sizeval = sizeval + dble(NGLOB_CRUST_MANTLE)*dble(SIZE_INTEGER)
+  sizeval = sizeval + dble(NGLOB_INNER_CORE)*dble(SIZE_INTEGER)
+  sizeval = sizeval + dble(NGLOB_OUTER_CORE)*dble(SIZE_INTEGER)
+  sizeval = sizeval + dble(NGLOB_TRINFINITE)*dble(SIZE_INTEGER)
+  sizeval = sizeval + dble(NGLOB_INFINITE)*dble(SIZE_INTEGER)
+
+  ! in MB
+  sizeval = sizeval / 1024.d0 / 1024.d0
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '    size of indexing arrays = ',sngl(sizeval),'MB'
+    write(IMAIN,*) '                            = ',sngl(sizeval / 1024.d0),'GB'
+    call flush_IMAIN()
+  endif
+
+  ! allocate inode arrays
+  allocate(inode_elmt_cm(NGLLCUBE,NSPEC_CRUST_MANTLE), &
+           inode_elmt_ic(NGLLCUBE,NSPEC_INNER_CORE), &
+           inode_elmt_oc(NGLLCUBE,NSPEC_OUTER_CORE), &
+           inode_elmt_trinf(NGLLCUBE,NSPEC_TRINFINITE), &
+           inode_elmt_inf(NGLLCUBE,NSPEC_INFINITE),stat=ier)
+  if (ier /= 0) stop 'Error allocating inode_elmt_cm,.. arrays'
+  inode_elmt_cm(:,:) = 0; inode_elmt_ic(:,:) = 0; inode_elmt_oc(:,:) = 0
+  inode_elmt_trinf(:,:) = 0; inode_elmt_inf(:,:) = 0
+
+  allocate(inode_elmt_cm1(NGLLCUBE_INF,NSPEC_CRUST_MANTLE), &
+           inode_elmt_ic1(NGLLCUBE_INF,NSPEC_INNER_CORE), &
+           inode_elmt_oc1(NGLLCUBE_INF,NSPEC_OUTER_CORE), &
+           inode_elmt_trinf1(NGLLCUBE_INF,NSPEC_TRINFINITE), &
+           inode_elmt_inf1(NGLLCUBE_INF,NSPEC_INFINITE),stat=ier)
+  if (ier /= 0) stop 'Error allocating inode_elmt_cm1,.. arrays'
+  inode_elmt_cm1(:,:) = 0; inode_elmt_ic1(:,:) = 0; inode_elmt_oc1(:,:) = 0
+  inode_elmt_trinf1(:,:) = 0; inode_elmt_inf1(:,:) = 0
+
+  allocate(inode_map_ic(2,NGLOB_INNER_CORE), &
+           inode_map_oc(2,NGLOB_OUTER_CORE), &
+           inode_map_cm(2,NGLOB_CRUST_MANTLE), &
+           inode_map_trinf(2,NGLOB_TRINFINITE), &
+           inode_map_inf(2,NGLOB_INFINITE),stat=ier)
+  if (ier /= 0) stop 'Error allocating inode_map_ic,.. arrays'
+  inode_map_ic(:,:) = 0; inode_map_oc(:,:) = 0; inode_map_cm(:,:) = 0
+  inode_map_trinf(:,:) = 0; inode_map_inf(:,:) = 0
+
+  allocate(nmir_ic(NGLOB_INNER_CORE), &
+           nmir_oc(NGLOB_OUTER_CORE), &
+           nmir_cm(NGLOB_CRUST_MANTLE), &
+           nmir_trinf(NGLOB_TRINFINITE), &
+           nmir_inf(NGLOB_INFINITE),stat=ier)
+  if (ier /= 0) stop 'Error allocating nmir_ic,.. arrays'
+  nmir_ic(:) = 0; nmir_oc(:) = 0; nmir_cm(:) = 0
+  nmir_trinf(:) = 0; nmir_inf(:) = 0
 
   ! allocate temporary arrays
   allocate(inode_ic(NGLOB_INNER_CORE), &
@@ -252,11 +325,11 @@
       do j = 1,NGLLY
         do i = 1,NGLLX
           ibool_oc = ibool_outer_core(i,j,k,i_elmt)
-           if (.not. isnode_oc(ibool_oc)) then
-              isnode_oc(ibool_oc) = .true.
-              inode = inode+1
-              inode_oc(ibool_oc) = inode
-           endif
+          if (.not. isnode_oc(ibool_oc)) then
+            isnode_oc(ibool_oc) = .true.
+            inode = inode+1
+            inode_oc(ibool_oc) = inode
+          endif
         enddo
       enddo
     enddo
@@ -423,16 +496,16 @@
 
   ! outer core
   ! all freedoms are active
-  nf(1,inode_oc) = 1
+  nf(1,inode_oc(:)) = 1
 
   ! crust-mantle
   ! all freedoms are active
-  nf(1,inode_cm) = 1
+  nf(1,inode_cm(:)) = 1
 
   ! transition infinite
   if (ADD_TRINF) then
     ! all freedoms are active
-    nf(1,inode_trinf) = 1
+    nf(1,inode_trinf(:)) = 1
   endif
 
   ! infinite element
@@ -466,6 +539,9 @@
       nf(1,i_node) = inode
     endif
   enddo
+
+  ! Level-2 solver
+  ! number of active global degrees of freedom
   neq = inode
 
   allocate(gdof_ic(NGLOB_INNER_CORE), &
@@ -474,18 +550,29 @@
            gdof_trinf(NGLOB_TRINFINITE), &
            gdof_inf(NGLOB_INFINITE),stat=ier)
   if (ier /= 0) stop 'Error allocating gdof_ic,.. arrays'
+  gdof_ic(:) = 0; gdof_oc(:) = 0; gdof_cm(:) = 0
+  gdof_trinf(:) = 0; gdof_inf(:) = 0
+
   ! store gdof in a region array
-  gdof_ic(:) = nf(1,inode_ic)
-  gdof_oc(:) = nf(1,inode_oc)
-  gdof_cm(:) = nf(1,inode_cm)
-  gdof_trinf(:) = nf(1,inode_trinf)
-  gdof_inf(:) = nf(1,inode_inf)
+  gdof_ic(:) = nf(1,inode_ic(:))
+  gdof_oc(:) = nf(1,inode_oc(:))
+  gdof_cm(:) = nf(1,inode_cm(:))
+  if (ADD_TRINF) gdof_trinf(:) = nf(1,inode_trinf(:))
+  gdof_inf(:) = nf(1,inode_inf(:))
 
   deallocate(nf)
 
   !-------------------------------------------------------------------------------
 
   ! WARNING: ONLY APPLICABLE FOR 5 TO 3 SOLVER
+  if (NGLLX /= 5 .or. NGLLY /= 5 .or. NGLLZ /= 5 .or. &
+      NGLLX_INF /= 3 .or. NGLLY_INF /= 3 .or. NGLLZ_INF /= 3) then
+    print *,'Error: invalid NGLL setting for SIEM indexing'
+    print *,'       NGLLX/NGLLY/NGLLZ = ',NGLLX,NGLLY,NGLLZ, ' - all must be equal to 5 for SIEM'
+    print *,'       NGLLX_INF/NGLLY_INF/NGLLZ_INF = ',NGLLX_INF,NGLLY_INF,NGLLZ_INF,' - all must be equal to 3 for SIEM'
+    stop 'SIEM indexing only works for NGLLX==NGLLY==NGLLZ==5 and NGLLX_INF==NGLLY_INF==NGLLZ_INF==3 setting for now!'
+  endif
+
   ! Level-1 solver---------------
   ! count nodes for 1st level solver
   ! active GLL points
@@ -493,9 +580,9 @@
   inum = 0
   do k = 1,NGLLZ,2
     do j = 1,NGLLY,2
-      do i = 1,NGLLX,2
+      do i = 1,NGLLX,2     ! 1,3,5
         inum = inum+1
-        igll = NGLLY*NGLLX*(k-1)+NGLLX*(j-1)+i
+        igll = NGLLY*NGLLX*(k-1)+NGLLX*(j-1)+i    ! 1,3,5,(5+1),(5+3),(5+5),..
         is_active_gll(igll) = .true.
         igll_active_on(inum) = igll
       enddo
@@ -542,26 +629,24 @@
 
   ! find active nodes and mirror to orginal nodes
   ! inner core
-  allocate(nmir_ic(nnode_ic))
   nmir_ic(:) = 0
   inode = 0
-  do i_node = 1,nnode_ic
+  do i_node = 1,NGLOB_INNER_CORE
     if (isnode_ic(i_node)) then
       inode = inode+1
       nmir_ic(i_node) = inode
     endif
   enddo
   if (inode /= nnode_ic1) then
-    print *,inode,nnode_ic1,nnode_ic,size(isnode_ic),NGLOB_INNER_CORE
+    print *,inode,nnode_ic1,size(isnode_ic),NGLOB_INNER_CORE
     write(*,'(/,a)')'ERROR: counted level-1 active nodes mismatch in inner core!'
     stop
   endif
 
   ! outer core
-  allocate(nmir_oc(nnode_oc))
   nmir_oc(:) = 0
   inode = 0
-  do i_node = 1,nnode_oc
+  do i_node = 1,NGLOB_OUTER_CORE
     if (isnode_oc(i_node)) then
       inode = inode+1
       nmir_oc(i_node) = inode
@@ -573,10 +658,9 @@
   endif
 
   ! crust mantle
-  allocate(nmir_cm(nnode_cm))
   nmir_cm(:) = 0
   inode = 0
-  do i_node = 1,nnode_cm
+  do i_node = 1,NGLOB_CRUST_MANTLE
     if (isnode_cm(i_node)) then
       inode = inode+1
       nmir_cm(i_node) = inode
@@ -589,10 +673,9 @@
 
   ! transition infinite
   if (ADD_TRINF) then
-    allocate(nmir_trinf(nnode_trinf))
     nmir_trinf(:) = 0
     inode = 0
-    do i_node = 1,nnode_trinf
+    do i_node = 1,NGLOB_TRINFINITE
       if (isnode_trinf(i_node)) then
         inode = inode+1
         nmir_trinf(i_node) = inode
@@ -605,10 +688,9 @@
   endif
 
   ! infinite
-  allocate(nmir_inf(nnode_inf))
   nmir_inf(:) = 0
   inode = 0
-  do i_node = 1,nnode_inf
+  do i_node = 1,NGLOB_INFINITE
     if (isnode_inf(i_node)) then
       inode = inode+1
       nmir_inf(i_node) = inode
@@ -705,7 +787,7 @@
   inode_trinf1(:) = 0; inode_inf1(:) = 0
 
   ! inner core
-  do i_node = 1,nnode_ic!nnode_ic1
+  do i_node = 1,NGLOB_INNER_CORE
     if (isnode_ic(i_node)) then
       inode_ic1(nmir_ic(i_node)) = nmir(inode_ic(i_node))
     endif
@@ -713,7 +795,7 @@
   call synchronize_all()
 
   ! outer core
-  do i_node = 1,nnode_oc
+  do i_node = 1,NGLOB_OUTER_CORE
     if (isnode_oc(i_node)) then
       inode_oc1(nmir_oc(i_node)) = nmir(inode_oc(i_node))
     endif
@@ -721,7 +803,7 @@
   call synchronize_all()
 
   ! crust mantle
-  do i_node = 1,nnode_cm
+  do i_node = 1,NGLOB_CRUST_MANTLE
     if (isnode_cm(i_node)) then
       inode_cm1(nmir_cm(i_node)) = nmir(inode_cm(i_node))
     endif
@@ -730,7 +812,7 @@
 
   ! transition infinite
   if (ADD_TRINF) then
-    do i_node = 1,nnode_trinf
+    do i_node = 1,NGLOB_TRINFINITE
       if (isnode_trinf(i_node)) then
         inode_trinf1(nmir_trinf(i_node)) = nmir(inode_trinf(i_node))
       endif
@@ -739,7 +821,7 @@
   call synchronize_all()
 
   ! infinite
-  do i_node = 1,nnode_inf
+  do i_node = 1,NGLOB_INFINITE
     if (isnode_inf(i_node)) then
       inode_inf1(nmir_inf(i_node)) = nmir(inode_inf(i_node))
     endif
@@ -805,9 +887,10 @@
       nf1(1,i_node) = inode1
     endif
   enddo
-  neq1 = inode1
 
-  call synchronize_all()
+  ! Level-1 solver
+  ! number of active global degrees of freedom
+  neq1 = inode1
 
   allocate(gdof_ic1(nnode_ic1), &
            gdof_oc1(nnode_oc1), &
@@ -815,12 +898,15 @@
            gdof_trinf1(nnode_trinf1), &
            gdof_inf1(nnode_inf1),stat=ier)
   if (ier /= 0) stop 'Error allocating gdof_ic1,.. arrays'
+  gdof_ic1(:) = 0; gdof_oc1(:) = 0; gdof_cm1(:) = 0
+  gdof_trinf1(:) = 0; gdof_inf1(:) = 0
+
   ! store gdof in a region array
-  gdof_ic1(:) = nf1(1,inode_ic1)
-  gdof_oc1(:) = nf1(1,inode_oc1)
-  gdof_cm1(:) = nf1(1,inode_cm1)
-  if (ADD_TRINF) gdof_trinf1(:) = nf1(1,inode_trinf1)
-  gdof_inf1(:) = nf1(1,inode_inf1)
+  gdof_ic1(:) = nf1(1,inode_ic1(:))
+  gdof_oc1(:) = nf1(1,inode_oc1(:))
+  gdof_cm1(:) = nf1(1,inode_cm1(:))
+  if (ADD_TRINF) gdof_trinf1(:) = nf1(1,inode_trinf1(:))
+  gdof_inf1(:) = nf1(1,inode_inf1(:))
 
   deallocate(nf1)
 
@@ -1008,12 +1094,13 @@
   !-------------------------------------------------------------------------------
 
   ! node map with unique elements required for interpolation
+  !
   ! WARNING: isnode_ic, isnode_oc etc. will no longer represent the
-  ! active/deactive nodes for Level-1 solver after following segement
+  !          active/deactive nodes for Level-1 solver after following segment
   inode_map_ic(:,:) = -1
   isnode_ic(:) = .false.
   do i_elmt = 1,NSPEC_INNER_CORE
-    if (idoubling_inner_core(i_elmt) == IFLAG_IN_FICTITIOUS_CUBE)cycle
+    if (idoubling_inner_core(i_elmt) == IFLAG_IN_FICTITIOUS_CUBE) cycle
     do i = 1,NGLLCUBE
       inode = inode_elmt_ic(i,i_elmt)
       if (.not. isnode_ic(inode)) then
@@ -1079,6 +1166,13 @@
       endif
     enddo
   enddo
+
+  ! user info
+  if (myrank == 0) then
+    write(IMAIN,*) '    Level-1 solver number of active DOFs: ',neq1
+    write(IMAIN,*) '    Level-2 solver number of active DOFs: ',neq
+    call flush_IMAIN()
+  endif
 
   call synchronize_all()
 
