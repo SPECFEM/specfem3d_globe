@@ -64,8 +64,8 @@
   double precision :: dotrho
   double precision :: gvec(NDIM),gradg(6)
   ! ellipticity spline
-  integer :: nspl
-  double precision,dimension(NR_DENSITY) :: rspl,e_spline,e_spline2,eta_spline,eta_spline2
+  integer :: nspl2
+  double precision,dimension(NR_DENSITY) :: rspl2,e_spline,e_spline2,eta_spline,eta_spline2
   ! table
   double precision :: eps,eta
   double precision,dimension(:),allocatable :: eps_rad,eta_rad,dotrho_rad
@@ -158,8 +158,8 @@
       ! prepare ellipticity splines for epsilon and eta values
       if (ELLIPTICITY_VAL) then
         allocate(eps_rad(NRAD_GRAVITY),eta_rad(NRAD_GRAVITY),dotrho_rad(NRAD_GRAVITY))
-        ! ellipticity
-        call make_ellipticity(nspl,rspl,e_spline,e_spline2,eta_spline,eta_spline2)
+        ! gets ellipticity & eta splines
+        call make_ellipticity2(nspl2,rspl2,e_spline,e_spline2,eta_spline,eta_spline2)
         ! rotation rate omega
         omega = TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR)    ! rotation rate in rad/sec
         twothirdOmega2 = two_third * omega*omega / (PI*GRAV*RHOAV)
@@ -215,8 +215,8 @@
           g_rad(int_radius) = g
           if (ELLIPTICITY_VAL) then
             ! spline evaluations for epsilon and eta
-            call spline_evaluation(rspl,e_spline,e_spline2,nspl,radius,eps)
-            call spline_evaluation(rspl,eta_spline,eta_spline2,nspl,radius,eta)
+            call spline_evaluation(rspl2,e_spline,e_spline2,nspl2,radius,eps)
+            call spline_evaluation(rspl2,eta_spline,eta_spline2,nspl2,radius,eta)
             ! store into table
             eps_rad(int_radius) = eps
             eta_rad(int_radius) = eta
@@ -282,7 +282,8 @@
       ! note: the gravity spline evaluation is done for a perfectly spherical model, thus we remove the ellipicity in case.
       !       however, due to topograpy the radius r might still be > 1.0
       r_table = radius
-      if (ELLIPTICITY) call revert_ellipticity_rtheta(r_table,theta,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+      if (ELLIPTICITY) &
+        call revert_ellipticity_rtheta(r_table,theta,nspl_ellip,rspl_ellip,ellipicity_spline,ellipicity_spline2)
 
       ! integrated and multiply by rho / Kappa
       ! old: int_radius = nint(10.d0 * radius * R_PLANET_KM)
@@ -391,7 +392,8 @@
       ! note: the gravity spline evaluation is done for a perfectly spherical model, thus we remove the ellipicity in case.
       !       however, due to topograpy the radius r might still be > 1.0
       r_table = radius
-      if (ELLIPTICITY) call revert_ellipticity_rtheta(r_table,theta,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+      if (ELLIPTICITY) &
+        call revert_ellipticity_rtheta(r_table,theta,nspl_ellip,rspl_ellip,ellipicity_spline,ellipicity_spline2)
 
       ! radius index
       ! old: int_radius = nint(10.d0 * radius * R_PLANET_KM)
@@ -496,7 +498,8 @@
       ! note: the gravity spline evaluation is done for a perfectly spherical model, thus we remove the ellipicity in case.
       !       however, due to topograpy the radius r might still be > 1.0
       r_table = radius
-      if (ELLIPTICITY) call revert_ellipticity_rtheta(r_table,theta,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+      if (ELLIPTICITY) &
+        call revert_ellipticity_rtheta(r_table,theta,nspl_ellip,rspl_ellip,ellipicity_spline,ellipicity_spline2)
 
       ! for efficiency replace with lookup table every 100 m in radial direction
       ! old: int_radius = nint(10.d0 * radius * R_PLANET_KM)
@@ -548,7 +551,9 @@
         ! gravity kernels need g values and grad(g)
         if (SIMULATION_TYPE == 3) then
           ! note: this setup might not be needed if one takes gxl,.. and Hxxl,.. directly
-          !       and store them as g_cm and gradg_cm arrays
+          !       and store them as g_cm and gradg_cm arrays.
+          !       however, there is some difference between these two ways of calculating g and grad(g)
+          !       when ellipticity is turned on.
           !
           ! use pre-computed g vector (for consistency)
           !g_cm(:,iglob) = gravity_pre_store_crust_mantle(:,iglob)/rho
@@ -575,9 +580,11 @@
           gradg_cm(:,iglob) = real(gradg(:),kind=CUSTOM_REAL)
 
           !debug - compare gvec with gxl,gyl,gzl divided by rho
-          !print *,'debug: gvec ',gvec(:),'gxl/gyl/gzl',gravity_pre_store_crust_mantle(:,iglob)/rho,'rho',rho
+          !if (maxval(abs(gvec(:) - gravity_pre_store_crust_mantle(:,iglob)/rho)) > 7.e-5) &
+          !  print *,'debug: gvec ',gvec(:),'gxl/gyl/gzl',gravity_pre_store_crust_mantle(:,iglob)/rho,'rho',rho
           !debug - compare gradg with Hxxl,.. divided by rho
-          !print *,'debug: gradg ',gradg(:),'Hxxl/..',gravity_H_crust_mantle(:,iglob)/rho,'rho',rho
+          !if (maxval(abs(gradg(:) - gravity_H_crust_mantle(:,iglob)/rho)) > 7.e-5) &
+          !  print *,'debug: gradg ',gradg(:),'Hxxl/..',gravity_H_crust_mantle(:,iglob)/rho,'rho',rho
         endif
       endif
     enddo
@@ -587,7 +594,6 @@
              gravity_H_crust_mantle(6,1),stat=ier)
     if (ier /= 0) stop 'Error allocating gravity arrays for crust/mantle'
   endif
-
 
   ! inner core
   if (GRAVITY_VAL) then
@@ -633,7 +639,8 @@
       ! note: the gravity spline evaluation is done for a perfectly spherical model, thus we remove the ellipicity in case.
       !       however, due to topograpy the radius r might still be > 1.0
       r_table = radius
-      if (ELLIPTICITY) call revert_ellipticity_rtheta(r_table,theta,nspl,rspl,ellipicity_spline,ellipicity_spline2)
+      if (ELLIPTICITY) &
+        call revert_ellipticity_rtheta(r_table,theta,nspl_ellip,rspl_ellip,ellipicity_spline,ellipicity_spline2)
 
       ! for efficiency replace with lookup table every 100 m in radial direction
       ! make sure we never use zero for point exactly at the center of the Earth
