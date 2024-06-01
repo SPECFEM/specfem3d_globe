@@ -508,8 +508,8 @@
 
     ! full gravity
     if (FULL_GRAVITY_VAL .and. .not. DISCARD_GCONTRIB) then
-      call SIEM_compute_element_add_full_gravity(ispec,NSPEC_CRUST_MANTLE,NGLOB,gravity_rho,deriv_loc,ibool, &
-                                                 pgrav_crust_mantle,rho_s_H)
+      call SIEM_solve_element_add_full_gravity(ispec,NSPEC_CRUST_MANTLE,NGLOB,gravity_rho,deriv_loc,ibool, &
+                                               pgrav_crust_mantle,rho_s_H)
     endif
 
     do k = 1,NGLLZ

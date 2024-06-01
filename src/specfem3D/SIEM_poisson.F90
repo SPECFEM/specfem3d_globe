@@ -90,7 +90,8 @@ contains
 
   !dnx = NGLLX-1; dny = NGLLY-1; dnz = NGLLZ-1
 
-  storekmat(:,:,:) = zero; dprecon(:) = zero
+  storekmat(:,:,:) = zero
+  dprecon(:) = zero
 
   do i_elmt = 1,nelmt
     ! suppress fictitious elements in central cube
@@ -120,7 +121,11 @@ contains
       deriv = real(matmul(jac,dlagrange_gll(:,i,:)),kind=CUSTOM_REAL) ! use der for gll
       kmat = kmat + real(matmul(transpose(deriv),deriv)*detjac*gll_weights(i),kind=CUSTOM_REAL)
     enddo
+
+    ! stiffness matrix
     storekmat(:,:,i_elmt) = kmat
+
+    ! preconditioner
     do k = 1,NGLLCUBE
       dprecon(egdof(k)) = dprecon(egdof(k))+kmat(k,k)
     enddo
@@ -190,7 +195,8 @@ contains
 
   !dnx = NGLLX-1; dny = NGLLY-1; dnz = NGLLZ-2
 
-  storekmat(:,:,:) = zero; dprecon(:) = zero
+  storekmat(:,:,:) = zero
+  dprecon(:) = zero
 
   do i_elmt = 1,nelmt
     !ignod=reshape(ibool(1:NGLLX:dnx,1:NGLLY:dny,1:NGLLZ-1:dnz,i_elmt),(/ngnod/))
@@ -225,7 +231,11 @@ contains
       deriv = real(matmul(jac,dlagrange_gl(:,i,:)),kind=CUSTOM_REAL)
       kmat = kmat + real(matmul(transpose(deriv),deriv)*detjac*GLw(i),kind=CUSTOM_REAL)
     enddo
+
+    ! stiffness matrix
     storekmat(:,:,i_elmt) = kmat
+
+    ! preconditioner
     do k = 1,NGLLCUBE
       dprecon(egdof(k)) = dprecon(egdof(k))+kmat(k,k)
     enddo
@@ -288,12 +298,13 @@ contains
 
   !dnx = NGLLX-1; dny = NGLLY-1; dnz = NGLLZ-1
 
-  storekmat(:,:,:) = zero; dprecon(:) = zero
+  storekmat(:,:,:) = zero
+  dprecon(:) = zero
 
   do i_elmt = 1,nelmt
     ! suppress fictitious elements in central cube
     if (iregion == IREGION_INNER_CORE) then
-      if (idoubling_inner_core(i_elmt) == IFLAG_IN_FICTITIOUS_CUBE)cycle
+      if (idoubling_inner_core(i_elmt) == IFLAG_IN_FICTITIOUS_CUBE) cycle
     endif
 
     !ignod=reshape(ibool(1:NGLLX:dnx,1:NGLLY:dny,1:NGLLZ:dnz,i_elmt),(/ngnod/)) ! this is wrong!!!!
@@ -318,7 +329,11 @@ contains
       deriv = real(matmul(jac,dlagrange_gll(:,i,:)),kind=CUSTOM_REAL) ! use der for gll
       kmat = kmat + real(matmul(transpose(deriv),deriv)*detjac*gll_weights(i),kind=CUSTOM_REAL)
     enddo
+
+    ! stiffness matrix
     storekmat(:,:,i_elmt) = kmat
+
+    ! preconditioner
     do k = 1,NGLLCUBE_INF
       dprecon(egdof(k)) = dprecon(egdof(k))+kmat(k,k)
     enddo
@@ -378,7 +393,8 @@ contains
 
   !dnx = NGLLX-1; dny = NGLLY-1; dnz = NGLLZ-2
 
-  storekmat(:,:,:) = zero; dprecon(:) = zero
+  storekmat(:,:,:) = zero
+  dprecon(:) = zero
 
   do i_elmt = 1,nelmt
     !ignod=reshape(ibool(1:NGLLX:dnx,1:NGLLY:dny,1:NGLLZ-1:dnz,i_elmt),(/ngnod/))
@@ -413,7 +429,11 @@ contains
       deriv = real(matmul(jac,dlagrange_gl(:,i,:)),kind=CUSTOM_REAL)
       kmat = kmat + real(matmul(transpose(deriv),deriv)*detjac*GLw(i),kind=CUSTOM_REAL)
     enddo
+
+    ! stiffness matrix
     storekmat(:,:,i_elmt) = kmat
+
+    ! preconditioner
     do k = 1,NGLLCUBE_INF
       dprecon(egdof(k)) = dprecon(egdof(k))+kmat(k,k)
     enddo

@@ -923,6 +923,7 @@ contains
   real(kind=CUSTOM_REAL),intent(in) :: array(0:neq)
   real(kind=CUSTOM_REAL),intent(out) :: array_g(0:neq)
 
+  ! local parameters
   real(kind=CUSTOM_REAL) :: array_ic(nnode_ic1),array_oc(nnode_oc1),array_cm(nnode_cm1), &
                             array_trinf(nnode_trinf1),array_inf(nnode_inf1)
 
@@ -1000,32 +1001,41 @@ contains
   use siem_gll_library, only: gll_quadrature3inNGLL,zwgljd
 
   implicit none
-  integer,intent(in) :: nelmt,nnode,nnode1,inode_elmt(NGLLCUBE,nelmt),nmir(nnode), &
-                        inode_map(2,nnode),igll_active_on(NGLLCUBE_INF)
+  integer,intent(in) :: nelmt,nnode,nnode1
+  integer,intent(in) :: inode_elmt(NGLLCUBE,nelmt)
+  integer,intent(in) :: nmir(nnode)
+  integer,intent(in) :: inode_map(2,nnode)
+  integer,intent(in) :: igll_active_on(NGLLCUBE_INF)
   logical,intent(in) :: is_active_gll(NGLLCUBE)
+
   real(kind=CUSTOM_REAL),intent(in) :: x3(nnode1) ! array for 3 GLLX points
-  real(kind=CUSTOM_REAL),intent(out) :: x5(nnode) ! aray for 5 GLLX points
+  real(kind=CUSTOM_REAL),intent(out) :: x5(nnode) ! array for 5 GLLX points
 
-  double precision :: lagrange_gll3inNGLL(NGLLCUBE,27),xigll(NGLLX),wxgll(NGLLX), &
-                      xigll1(NGLLX_INF),wxgll1(NGLLX_INF)
+  ! local parameters
+  double precision :: lagrange_gll3inNGLL(NGLLCUBE,27)
+  double precision :: xigll(NGLLX),wxgll(NGLLX)
+  double precision :: xigll1(NGLLX_INF),wxgll1(NGLLX_INF)
 
-  integer :: i_node,ielmt,igll,inode1,inodes1(NGLLCUBE_INF)
+  integer :: i_node,ielmt,igll,inode1
+  integer :: inodes1(NGLLCUBE_INF)
 
   call zwgljd(xigll1,wxgll1,NGLLX_INF,0.d0,0.d0)
   call zwgljd(xigll,wxgll,NGLLX,0.d0,0.d0)
 
   call gll_quadrature3inNGLL(NDIM,NGLLX,NGLLCUBE,xigll,xigll1,lagrange_gll3inNGLL)
 
-  ! inner core
-  x5 = 0.0_CUSTOM_REAL
-  do i_node = 1,nnode!NGLOB_INNER_CORE
-    inode1 = nmir(i_node)
+  x5(:) = 0.0_CUSTOM_REAL
+
+  do i_node = 1,nnode
     ielmt = inode_map(1,i_node)
-    if (ielmt <= 0) then
-      cycle ! skip fictitious nodes
-    endif
+
+    ! skip fictitious nodes
+    if (ielmt <= 0) cycle
+
     igll = inode_map(2,i_node)
     if (is_active_gll(igll)) then
+      ! takes value of mirrored node in Level-1 array
+      inode1 = nmir(i_node)
       x5(i_node) = x3(inode1)
     else
       ! interpolate values

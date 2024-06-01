@@ -1230,11 +1230,11 @@ module specfem_par_full_gravity
   ! Level-1 solver arrays
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_ic1, b_pgrav_oc1, b_pgrav_cm1, b_pgrav_trinf1, b_pgrav_inf1
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav1
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_dprecon1, b_gravload1
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_gravload1
   ! Level-2 solver arrays
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav_ic, b_pgrav_oc, b_pgrav_cm, b_pgrav_trinf, b_pgrav_inf
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_pgrav
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_dprecon, b_gravload
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: b_gravload
 
   ! Level-2 solver
   ! number of global degrees of freedom

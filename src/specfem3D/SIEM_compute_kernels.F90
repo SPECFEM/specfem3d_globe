@@ -70,13 +70,14 @@
 
   use specfem_par_full_gravity, only: gdof_cm1, inode_elmt_cm, inode_map_cm, nmir_cm, nnode_cm1, &
     gknl1, &
-    gravload1, pgrav1, pgrav_cm1, pgrav_cm, &
-    is_active_gll,igll_active_on
+    gravload1, pgrav1, pgrav_cm1, pgrav_cm, neq1, ndscale1, dprecon1, &
+    is_active_gll,igll_active_on, &
+    CG_SCALING
 
   use siem_math_library_mpi, only: maxvec
   use siem_poisson, only: compute_grav_kl1_load
   use siem_solver_petsc, only: petsc_set_vector1, petsc_zero_initialguess1, petsc_solve1
-  use siem_solver_mpi, only: interpolate3to5
+  use siem_solver_mpi, only: cg_solver3, diagpcg_solver3, interpolate3to5
 
   implicit none
 
@@ -86,13 +87,6 @@
   real(kind=CUSTOM_REAL) :: tempx1l, tempx2l, tempx3l, tempy1l, tempy2l, tempy3l, tempz1l, tempz2l, tempz3l
   real(kind=CUSTOM_REAL) :: maxload
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: gknl1_cm ! (3,NGLOB_CRUST_MANTLE)
-
-  ! safety check
-  if (POISSON_SOLVER == ISOLVER_BUILTIN) then
-    !TODO: full gravity builtin solver for kernels
-    print *,'ERROR: builtin solver not setup for gravity kernels'
-    call exit_MPI(myrank,'Error builtin solver not setup for gravity kernels')
-  endif
 
   ! Allocate 1st grav kernel array :
   allocate(gknl1(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
@@ -117,7 +111,17 @@
     maxload = maxvec(abs(gravload1))
     if (myrank == 0) print *,'  -- Max load: ', maxload
 
-    if (POISSON_SOLVER == ISOLVER_PETSC) then
+    if (POISSON_SOLVER == ISOLVER_BUILTIN) then
+      ! builtin solver
+      pgrav1(:) = 0.0_CUSTOM_REAL
+      if (CG_SCALING) then
+        gravload1(:) = ndscale1(:) * gravload1(:)
+        call cg_solver3(myrank,neq1,pgrav1,gravload1)
+        pgrav1(:) = ndscale1(:) * pgrav1(:)
+      else
+        call diagpcg_solver3(myrank,neq1,pgrav1,gravload1,dprecon1)
+      endif
+    else
       ! Petsc solver
       call petsc_set_vector1(gravload1)
 
@@ -126,14 +130,14 @@
       call petsc_zero_initialguess1()
 
       pgrav1(:) = 0.0_CUSTOM_REAL
-      ! Here we use pgrav as the vector the solution is put into, just to
+      ! Here we use pgrav1 as the vector the solution is put into, just to
       ! save on allocating another array. Note that we could allocate a
-      ! separate temporary array but pgrav isnt used after this (apart from
+      ! separate temporary array but pgrav1 isnt used after this (apart from
       ! if the forward wavefield is being saved, but it shouldnt be for SIMTYPE 3)
       call petsc_solve1(pgrav1(1:))
     endif
 
-    ! Now interpolate this component to the 5GLL setup (Crust mantle only):
+    ! Now interpolate this component to the 5GLL setup (Crust mantle only)
     pgrav_cm1(:) = zero
     pgrav_cm1(:) = pgrav1(gdof_cm1(:))
 
@@ -207,13 +211,14 @@
 
   use specfem_par_full_gravity, only: gdof_cm1, inode_elmt_cm, inode_map_cm, nmir_cm, nnode_cm1, &
     gknl2, &
-    gravload1, pgrav1, pgrav_cm1, pgrav_cm, &
-    is_active_gll,igll_active_on
+    gravload1, pgrav1, pgrav_cm1, pgrav_cm, neq1, ndscale1, dprecon1, &
+    is_active_gll,igll_active_on, &
+    CG_SCALING
 
   use siem_math_library_mpi, only: maxvec
   use siem_poisson, only: compute_grav_kl2_load
   use siem_solver_petsc, only: petsc_set_vector1, petsc_zero_initialguess1, petsc_solve1
-  use siem_solver_mpi, only: interpolate3to5
+  use siem_solver_mpi, only: cg_solver3, diagpcg_solver3, interpolate3to5
 
   implicit none
 
@@ -224,13 +229,6 @@
   real(kind=CUSTOM_REAL) :: maxload
   real(kind=CUSTOM_REAL),dimension(:,:,:), allocatable :: gknl2_cm
   real(kind=CUSTOM_REAL),dimension(:,:,:,:,:), allocatable :: div_gknl2_cm
-
-  ! safety check
-  if (POISSON_SOLVER == ISOLVER_BUILTIN) then
-    !TODO: full gravity builtin solver for kernels
-    print *,'ERROR: builtin solver not setup for gravity kernels'
-    call exit_MPI(myrank,'Error builtin solver not setup for gravity kernels')
-  endif
 
   ! Allocate 2nd gravity kernel array
   allocate(gknl2(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
@@ -257,7 +255,17 @@
       maxload = maxvec(abs(gravload1))
       if (myrank == 0) print *,'  -- Max load: ', maxload
 
-      if (POISSON_SOLVER == ISOLVER_PETSC) then
+      if (POISSON_SOLVER == ISOLVER_BUILTIN) then
+        ! builtin solver
+        pgrav1(:) = 0.0_CUSTOM_REAL
+        if (CG_SCALING) then
+          gravload1(:) = ndscale1(:) * gravload1(:)
+          call cg_solver3(myrank,neq1,pgrav1,gravload1)
+          pgrav1(:) = ndscale1(:) * pgrav1(:)
+        else
+          call diagpcg_solver3(myrank,neq1,pgrav1,gravload1,dprecon1)
+        endif
+      else
         ! PETSc solver
         call petsc_set_vector1(gravload1)
 
@@ -267,9 +275,11 @@
         call petsc_solve1(pgrav1(1:))
       endif
 
-      pgrav_cm(:)  = zero
+      ! Now interpolate this component to the 5GLL setup (Crust mantle only)
       pgrav_cm1(:) = zero
       pgrav_cm1(:) = pgrav1(gdof_cm1(:))
+
+      pgrav_cm(:)  = zero !initialise before interpolating to be safe
 
       call interpolate3to5(NSPEC_CRUST_MANTLE, NGLOB_CRUST_MANTLE, nnode_cm1, &
                            inode_elmt_cm, nmir_cm, inode_map_cm, is_active_gll, igll_active_on, pgrav_cm1, pgrav_cm)
@@ -537,6 +547,7 @@
           ! Local values for the GLL point
           sdagtmp(:) = displ_crust_mantle(:,iglob)
           stmp(:)    = b_displ_crust_mantle(:,iglob)
+
           hmatloc(:) = gradg_cm(:, iglob)
 
           ! (3) Gravity contraction s \cdot \nabla\nabla\Phi \cdot \s_dagger

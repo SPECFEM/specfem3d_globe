@@ -191,9 +191,9 @@
   if (FULL_GRAVITY_VAL) then
     !TODO: implement full gravity adios read forward
     stop 'FULL_GRAVITY read_intermediate_forward_arrays_adios() not fully implemented yet'
-    !read(55) neq1
+    !read(IIN) neq1
     !allocate(pgrav1_oldrun(0:neq1))
-    !read(55) pgrav1_oldrun
+    !read(IIN) pgrav1_oldrun
   endif
 
   ! closes ADIOS handler to the restart file.
@@ -357,9 +357,9 @@
     ! Read in the gravity
     !TODO: implement full gravity adios read forward
     stop 'FULL_GRAVITY read_forward_arrays_adios() not fully implemented yet'
-    !read(55) b_neq
-    !read(55) b_neq1
-    !read(55) b_pgrav1
+    !read(IIN) b_neq_read
+    !read(IIN) b_neq1_read
+    !read(IIN) b_pgrav1
   endif
 
   ! closes ADIOS handler to the restart file.
@@ -581,6 +581,15 @@
     sel => selections(i)
     call delete_adios_selection(sel)
   enddo
+
+  if (FULL_GRAVITY_VAL) then
+    ! Read in the gravity
+    !TODO: implement full gravity adios read forward
+    stop 'FULL_GRAVITY read_forward_arrays_undoatt_adios() not fully implemented yet'
+    !read(IIN) b_neq_read
+    !read(IIN) b_neq1_read
+    !read(IIN) b_pgrav1
+  endif
 
   ! Close ADIOS handler to the restart file.
   ! note: for single file, only close at the very end

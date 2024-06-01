@@ -100,6 +100,9 @@
   ! get MPI starting time
   tstart = wtime()
 
+  ! indexify regions (determine inode_elmt_*,inode_map_*,nmir_* arrays)
+  call SIEM_get_index_region()
+
   ! sets the stiffness matrices for Poisson's solver
   ! calculate dprecon
   ! allocates gravload, regional pgravs (e.g. pgrav_cm1)
@@ -603,26 +606,8 @@
   endif
 
   ! estimated memory size required in MB
-  ! inode_elmt_cm,..
-  sizeval = dble(NGLLCUBE)*dble(NSPEC_CRUST_MANTLE)*dble(SIZE_INTEGER)
-  sizeval = sizeval + dble(NGLLCUBE)*dble(NSPEC_INNER_CORE)*dble(SIZE_INTEGER)
-  sizeval = sizeval + dble(NGLLCUBE)*dble(NSPEC_OUTER_CORE)*dble(SIZE_INTEGER)
-  sizeval = sizeval + dble(NGLLCUBE)*dble(NSPEC_TRINFINITE)*dble(SIZE_INTEGER)
-  sizeval = sizeval + dble(NGLLCUBE)*dble(NSPEC_INFINITE)*dble(SIZE_INTEGER)
-  ! inode_elmt_cm1,..
-  sizeval = sizeval + dble(NGLLCUBE_INF)*dble(NSPEC_CRUST_MANTLE)*dble(SIZE_INTEGER)
-  sizeval = sizeval + dble(NGLLCUBE_INF)*dble(NSPEC_INNER_CORE)*dble(SIZE_INTEGER)
-  sizeval = sizeval + dble(NGLLCUBE_INF)*dble(NSPEC_OUTER_CORE)*dble(SIZE_INTEGER)
-  sizeval = sizeval + dble(NGLLCUBE_INF)*dble(NSPEC_TRINFINITE)*dble(SIZE_INTEGER)
-  sizeval = sizeval + dble(NGLLCUBE_INF)*dble(NSPEC_INFINITE)*dble(SIZE_INTEGER)
-  ! inode_map_cm,..
-  sizeval = sizeval + 2.d0*dble(NGLOB_CRUST_MANTLE)*dble(SIZE_INTEGER)
-  sizeval = sizeval + 2.d0*dble(NGLOB_INNER_CORE)*dble(SIZE_INTEGER)
-  sizeval = sizeval + 2.d0*dble(NGLOB_OUTER_CORE)*dble(SIZE_INTEGER)
-  sizeval = sizeval + 2.d0*dble(NGLOB_TRINFINITE)*dble(SIZE_INTEGER)
-  sizeval = sizeval + 2.d0*dble(NGLOB_INFINITE)*dble(SIZE_INTEGER)
   ! storekmat_crust_mantle1,dprecon_crust_mantle1
-  sizeval = sizeval + dble(NGLLCUBE_INF)*dble(NGLLCUBE_INF)*dble(NSPEC_CRUST_MANTLE)*dble(CUSTOM_REAL)
+  sizeval = dble(NGLLCUBE_INF)*dble(NGLLCUBE_INF)*dble(NSPEC_CRUST_MANTLE)*dble(CUSTOM_REAL)
   sizeval = sizeval + dble(nnode_cm1)*dble(CUSTOM_REAL)
   ! storekmat_inner_core1,dprecon_inner_core1
   sizeval = sizeval + dble(NGLLCUBE_INF)*dble(NGLLCUBE_INF)*dble(NSPEC_INNER_CORE)*dble(CUSTOM_REAL)
@@ -672,37 +657,6 @@
     call flush_IMAIN()
   endif
 
-  ! allocate inode arrays
-  allocate(inode_elmt_cm(NGLLCUBE,NSPEC_CRUST_MANTLE), &
-           inode_elmt_ic(NGLLCUBE,NSPEC_INNER_CORE), &
-           inode_elmt_oc(NGLLCUBE,NSPEC_OUTER_CORE), &
-           inode_elmt_trinf(NGLLCUBE,NSPEC_TRINFINITE), &
-           inode_elmt_inf(NGLLCUBE,NSPEC_INFINITE),stat=ier)
-  if (ier /= 0) stop 'Error allocating inode_elmt_cm,.. arrays'
-  inode_elmt_cm(:,:) = 0; inode_elmt_ic(:,:) = 0; inode_elmt_oc(:,:) = 0
-  inode_elmt_trinf(:,:) = 0; inode_elmt_inf(:,:) = 0
-
-  allocate(inode_elmt_cm1(NGLLCUBE_INF,NSPEC_CRUST_MANTLE), &
-           inode_elmt_ic1(NGLLCUBE_INF,NSPEC_INNER_CORE), &
-           inode_elmt_oc1(NGLLCUBE_INF,NSPEC_OUTER_CORE), &
-           inode_elmt_trinf1(NGLLCUBE_INF,NSPEC_TRINFINITE), &
-           inode_elmt_inf1(NGLLCUBE_INF,NSPEC_INFINITE),stat=ier)
-  if (ier /= 0) stop 'Error allocating inode_elmt_cm1,.. arrays'
-  inode_elmt_cm1(:,:) = 0; inode_elmt_ic1(:,:) = 0; inode_elmt_oc1(:,:) = 0
-  inode_elmt_trinf1(:,:) = 0; inode_elmt_inf1(:,:) = 0
-
-  allocate(inode_map_ic(2,NGLOB_INNER_CORE), &
-           inode_map_oc(2,NGLOB_OUTER_CORE), &
-           inode_map_cm(2,NGLOB_CRUST_MANTLE), &
-           inode_map_trinf(2,NGLOB_TRINFINITE), &
-           inode_map_inf(2,NGLOB_INFINITE),stat=ier)
-  if (ier /= 0) stop 'Error allocating inode_map_ic,.. arrays'
-  inode_map_ic(:,:) = 0; inode_map_oc(:,:) = 0; inode_map_cm(:,:) = 0
-  inode_map_trinf(:,:) = 0; inode_map_inf(:,:) = 0
-
-  ! indexify regions
-  call SIEM_get_index_region()
-
   ! Level-1 solver-------------------
   allocate(storekmat_crust_mantle1(NGLLCUBE_INF,NGLLCUBE_INF,NSPEC_CRUST_MANTLE), &
            dprecon_crust_mantle1(nnode_cm1))
@@ -743,8 +697,13 @@
   pgrav_ic1(:) = 0.0_CUSTOM_REAL; pgrav_oc1(:) = 0.0_CUSTOM_REAL; pgrav_cm1(:) = 0.0_CUSTOM_REAL;
   pgrav_trinf1(:) = 0.0_CUSTOM_REAL; pgrav_inf1(:) = 0.0_CUSTOM_REAL
 
-  allocate(dprecon1(0:neq1),gravload1(0:neq1))
-  dprecon1(:) = 0.0_CUSTOM_REAL; gravload1(:) = 0.0_CUSTOM_REAL
+  ! Level-1 solver RHS
+  allocate(gravload1(0:neq1))
+  gravload1(:) = 0.0_CUSTOM_REAL
+
+  ! preconditioner for PCG solver
+  allocate(dprecon1(0:neq1))
+  dprecon1(:) = 0.0_CUSTOM_REAL
 
   if (SIMULATION_TYPE == 3) then
     allocate(b_pgrav_ic(NGLOB_INNER_CORE_ADJOINT), &
@@ -798,6 +757,7 @@
     debug_rho_kl_cm(:,:,:,:,:) = 0.0_CUSTOM_REAL
   endif
 
+  ! setup stiffness matrix (storekmat_*) and preconditioner (dprecon_*) arrays for Level-1 solver
   ! crust mantle
   call poisson_stiffness3(IREGION_CRUST_MANTLE,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
                           ibool_crust_mantle,xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
@@ -827,7 +787,7 @@
 
   call synchronize_all()
 
-  ! assemble stiffness matrices
+  ! assemble preconditioner matrices
   ! assemble across the MPI processes in a region
   ! crust_mantle
   call assemble_MPI_scalar(NPROCTOT_VAL,nnode_cm1,dprecon_crust_mantle1, &
@@ -928,6 +888,7 @@
       call flush_IMAIN()
     endif
 
+    ! Level-2 solver arrays
     allocate(storekmat_crust_mantle(NGLLCUBE,NGLLCUBE,NSPEC_CRUST_MANTLE), &
              dprecon_crust_mantle(NGLOB_CRUST_MANTLE))
     storekmat_crust_mantle(:,:,:) = 0.0_CUSTOM_REAL; dprecon_crust_mantle(:) = 0.0_CUSTOM_REAL

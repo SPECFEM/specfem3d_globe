@@ -36,6 +36,8 @@
   use specfem_par_innercore
   use specfem_par_full_gravity
 
+  use siem_math_library, only: compute_g_gradg,compute_g_gradg_elliptical
+
   implicit none
 
   ! local parameters
@@ -56,6 +58,20 @@
   double precision :: r_table
   integer :: int_radius,idummy,nspl_gravity,iglob,ier
   integer :: index_fluid
+
+  ! full gravity
+  double precision,dimension(:),allocatable :: g_rad
+  double precision :: dotrho
+  double precision :: gvec(NDIM),gradg(6)
+  ! ellipticity spline
+  integer :: nspl
+  double precision,dimension(NR_DENSITY) :: rspl,e_spline,e_spline2,eta_spline,eta_spline2
+  ! table
+  double precision :: eps,eta
+  double precision,dimension(:),allocatable :: eps_rad,eta_rad,dotrho_rad
+  ! rotation rate
+  double precision :: omega,twothirdOmega2
+  double precision,parameter :: two_third = 2.d0/3.d0
 
   ! debugging
   logical, parameter :: DEBUG = .false.
@@ -132,6 +148,25 @@
     !       for example: r = RCMB/R_PLANET  -> int_radius = RCMB/R_PLANET * NRAD_GRAVITY / range_max
   enddo
 
+  ! for full gravity
+  if (FULL_GRAVITY_VAL) then
+    ! gravity kernels need g values and grad(g)
+    if (SIMULATION_TYPE == 3) then
+      ! note: this setup might not be needed if one takes gxl,.. and Hxxl,.. directly
+      !       and store them as g_cm and gradg_cm arrays
+      allocate(g_rad(NRAD_GRAVITY))
+      ! prepare ellipticity splines for epsilon and eta values
+      if (ELLIPTICITY_VAL) then
+        allocate(eps_rad(NRAD_GRAVITY),eta_rad(NRAD_GRAVITY),dotrho_rad(NRAD_GRAVITY))
+        ! ellipticity
+        call make_ellipticity(nspl,rspl,e_spline,e_spline2,eta_spline,eta_spline2)
+        ! rotation rate omega
+        omega = TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR)    ! rotation rate in rad/sec
+        twothirdOmega2 = two_third * omega*omega / (PI*GRAV*RHOAV)
+      endif
+    endif
+  endif
+
   ! store g, rho and dg/dr=dg using normalized radius in lookup table every 100 m
   ! get density and velocity from PREM model using dummy doubling flag
   ! this assumes that the gravity perturbations are small and smooth
@@ -169,6 +204,26 @@
       minus_deriv_gravity_table(int_radius) = - dg
       density_table(int_radius) = rho
       minus_rho_g_over_kappa_fluid(int_radius) = - g / vp**2     ! for fluid: vp**2 = kappa/rho
+
+      ! for full gravity
+      if (FULL_GRAVITY_VAL) then
+        ! gravity kernels need g values and grad(g)
+        if (SIMULATION_TYPE == 3) then
+          ! note: this setup might not be needed if one takes gxl,.. and Hxxl,.. directly
+          !       and store them as g_cm and gradg_cm arrays
+          ! store table data
+          g_rad(int_radius) = g
+          if (ELLIPTICITY_VAL) then
+            ! spline evaluations for epsilon and eta
+            call spline_evaluation(rspl,e_spline,e_spline2,nspl,radius,eps)
+            call spline_evaluation(rspl,eta_spline,eta_spline2,nspl,radius,eta)
+            ! store into table
+            eps_rad(int_radius) = eps
+            eta_rad(int_radius) = eta
+            dotrho_rad(int_radius) = drhodr
+          endif
+        endif
+      endif
     enddo
 
     ! make sure fluid array is only assigned in outer core between 1222 and 3478 km
@@ -254,7 +309,30 @@
 
       ! for full gravity contribution in compute forces
       if (FULL_GRAVITY_VAL) then
+        ! store factor rho_g_over_kappa
         gravity_rho_g_over_kappa_outer_core(iglob) = real(fac,kind=CUSTOM_REAL)
+
+        ! gravity kernels need g values and grad(g)
+        ! outer core kernel not implemented yet...
+        !if (SIMULATION_TYPE == 3) then
+        !  ! get g in outer core
+        !  g = g_rad(int_radius)
+        !  rho = density_table(int_radius)
+        !  if (ELLIPTICITY_VAL) then
+        !    ! w/ ellipticity
+        !    dotrho = dotrho_rad(int_radius)
+        !    eps = eps_rad(int_radius)
+        !    eta = eta_rad(int_radius)
+        !    ! compute g
+        !    call compute_g_gradg_elliptical(NDIM,radius,theta,phi,rho,dotrho,g,eps,eta,twothirdOmega2,gvec)
+        !  else
+        !    ! no ellipticity
+        !    ! compute g
+        !    call compute_g_gradg(NDIM,radius,theta,phi,rho,g,gvec)
+        !  endif
+        !  ! in outer core we need only g
+        !  g_oc(:,iglob) = real(gvec(:),kind=CUSTOM_REAL)
+        !endif
       endif
     enddo
 
@@ -370,6 +448,28 @@
       allocate(gravity_rho_crust_mantle(NGLOB_CRUST_MANTLE),stat=ier)
       if (ier /= 0) stop 'Error allocating gravity rho array for crust/mantle'
       gravity_rho_crust_mantle(:) = 0._CUSTOM_REAL
+
+      ! gravity kernels need g values and grad(g)
+      if (SIMULATION_TYPE == 3) then
+        ! for crust/mantle kernels
+        allocate(g_cm(NDIM,NGLOB_CRUST_MANTLE),stat=ier)
+        if (ier /= 0) stop 'Error allocating gravity g_cm array'
+        g_cm(:,:) = 0._CUSTOM_REAL
+        allocate(gradg_cm(6,NGLOB_CRUST_MANTLE),stat=ier)
+        if (ier /= 0) stop 'Error allocating gravity gradg_cm array'
+        gradg_cm(:,:) = 0._CUSTOM_REAL
+        ! for outer core kernels - not implemented yet
+        !allocate(g_oc(NDIM,NGLOB_OUTER_CORE),stat=ier)
+        !if (ier /= 0) stop 'Error allocating gravity g_oc array'
+        !g_oc(:,:) = 0._CUSTOM_REAL
+        ! for inner core kernels - not implemented yet
+        !allocate(g_ic(NDIM,NGLOB_INNER_CORE),stat=ier)
+        !if (ier /= 0) stop 'Error allocating gravity g_ic array'
+        !g_ic(:,:) = 0._CUSTOM_REAL
+        !allocate(gradg_ic(6,NGLOB_INNER_CORE),stat=ier)
+        !if (ier /= 0) stop 'Error allocating gravity grad_ic array'
+        !gradg_ic(:,:) = 0._CUSTOM_REAL
+      endif
     endif
 
     do iglob = 1,NGLOB_CRUST_MANTLE
@@ -444,6 +544,41 @@
       ! for full gravity contribution in compute forces
       if (FULL_GRAVITY_VAL) then
         gravity_rho_crust_mantle(iglob) = real(rho,kind=CUSTOM_REAL)
+
+        ! gravity kernels need g values and grad(g)
+        if (SIMULATION_TYPE == 3) then
+          ! note: this setup might not be needed if one takes gxl,.. and Hxxl,.. directly
+          !       and store them as g_cm and gradg_cm arrays
+          !
+          ! use pre-computed g vector (for consistency)
+          !g_cm(:,iglob) = gravity_pre_store_crust_mantle(:,iglob)/rho
+          !gradg(:) = gravity_H_crust_mantle(:,iglob)/rho
+          !
+          ! or re-compute g & grad(g)
+          !
+          ! get g in crust/mantle
+          g = g_rad(int_radius)
+          if (ELLIPTICITY_VAL) then
+            ! w/ ellipicity
+            dotrho = dotrho_rad(int_radius)
+            eps = eps_rad(int_radius)
+            eta = eta_rad(int_radius)
+            ! compute g
+            call compute_g_gradg_elliptical(NDIM,radius,theta,phi,rho,dotrho,g,eps,eta,twothirdOmega2,gvec,gradg)
+          else
+            ! no ellipticity
+            ! compute g
+            call compute_g_gradg(NDIM,radius,theta,phi,rho,g,gvec,gradg)
+          endif
+          ! store g vector & grad(g)
+          g_cm(:,iglob) = real(gvec(:),kind=CUSTOM_REAL)
+          gradg_cm(:,iglob) = real(gradg(:),kind=CUSTOM_REAL)
+
+          !debug - compare gvec with gxl,gyl,gzl divided by rho
+          !print *,'debug: gvec ',gvec(:),'gxl/gyl/gzl',gravity_pre_store_crust_mantle(:,iglob)/rho,'rho',rho
+          !debug - compare gradg with Hxxl,.. divided by rho
+          !print *,'debug: gradg ',gradg(:),'Hxxl/..',gravity_H_crust_mantle(:,iglob)/rho,'rho',rho
+        endif
       endif
     enddo
   else
@@ -548,6 +683,29 @@
       ! for full gravity contribution in compute forces
       if (FULL_GRAVITY_VAL) then
         gravity_rho_inner_core(iglob) = real(rho,kind=CUSTOM_REAL)
+
+        ! gravity kernels need g values and grad(g)
+        ! inner core kernels not implemented yet...
+        !if (SIMULATION_TYPE == 3) then
+        !  ! get g in inner core
+        !  g = g_rad(int_radius)
+        !  rho = rho_rad(int_radius)
+        !  if (ELLIPTICITY_VAL) then
+        !    ! w/ ellipicity
+        !    dotrho = dotrho_rad(int_radius)
+        !    eps = eps_rad(int_radius)
+        !    eta = eta_rad(int_radius)
+        !    ! compute g
+        !    call compute_g_gradg_elliptical(NDIM,radius,theta,phi,rho,dotrho,g,eps,eta,twothirdOmega2,gvec,gradg)
+        !  else
+        !    ! no ellipticity
+        !    ! compute g
+        !    call compute_g_gradg(NDIM,radius,theta,phi,rho,g,gvec,gradg)
+        !  endif
+        !  ! store g vector & grad(g)
+        !  g_ic(:,iglob) = real(gvec(:),kind=CUSTOM_REAL)
+        !  gradg_ic(:,iglob) = real(gradg(:),kind=CUSTOM_REAL)
+        !endif
       endif
     enddo
   else

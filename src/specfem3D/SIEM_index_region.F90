@@ -570,7 +570,7 @@
     print *,'Error: invalid NGLL setting for SIEM indexing'
     print *,'       NGLLX/NGLLY/NGLLZ = ',NGLLX,NGLLY,NGLLZ, ' - all must be equal to 5 for SIEM'
     print *,'       NGLLX_INF/NGLLY_INF/NGLLZ_INF = ',NGLLX_INF,NGLLY_INF,NGLLZ_INF,' - all must be equal to 3 for SIEM'
-    stop 'SIEM indexing only works for NGLLX==NGLLY==NGLLZ==5 and NGLLX_INF==NGLLY_INF==NGLLZ_INF==3 setting for now!'
+    stop 'SIEM indexing only works for NGLLX == 5 and NGLLX_INF == 3 setting for now!'
   endif
 
   ! Level-1 solver---------------

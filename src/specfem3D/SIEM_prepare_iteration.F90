@@ -83,7 +83,7 @@
   ! method in make_gravity.f90
   ! compute background gravitational field only once
   ! WARNING: We have not currently using this for the time marching.
-  if (NUMBER_OF_THIS_RUN == 1) call compute_background_gravity_SIEM()
+  if (NUMBER_OF_THIS_RUN == 1) call SIEM_compute_background_gravity()
 
   ! initialize for dynamic solver
   pgrav1(:) = 0.0_CUSTOM_REAL
@@ -109,6 +109,8 @@
 
   subroutine SIEM_interpolate_gravity()
 
+! interpolates Level-1 forward pgrav1 values onto Level-2 pgrav
+
   use constants, only: myrank,ADD_TRINF
 
   use constants_solver, only: NSPEC_CRUST_MANTLE,NSPEC_OUTER_CORE,NSPEC_INNER_CORE, &
@@ -116,13 +118,75 @@
     NGLOB_CRUST_MANTLE,NGLOB_OUTER_CORE,NGLOB_INNER_CORE,NGLOB_TRINFINITE,NGLOB_INFINITE
 
   use specfem_par_full_gravity, only: is_active_gll,igll_active_on, &
-    b_pgrav1,b_pgrav_ic1,b_pgrav_oc1,b_pgrav_cm1,b_pgrav_trinf1,b_pgrav_inf1, &
-    b_pgrav_ic,b_pgrav_oc,b_pgrav_cm,b_pgrav_trinf,b_pgrav_inf, &
-    gdof_ic1,gdof_oc1,gdof_cm1,gdof_trinf1,gdof_inf1, &
     inode_elmt_ic,inode_elmt_oc,inode_elmt_cm,inode_elmt_trinf,inode_elmt_inf, &
     inode_map_ic,inode_map_oc,inode_map_cm,inode_map_trinf,inode_map_inf, &
     nmir_ic,nmir_oc,nmir_cm,nmir_trinf,nmir_inf, &
-    nnode_ic1,nnode_oc1,nnode_cm1,nnode_trinf1,nnode_inf1
+    nnode_ic1,nnode_oc1,nnode_cm1,nnode_trinf1,nnode_inf1, &
+    gdof_ic1,gdof_oc1,gdof_cm1,gdof_trinf1,gdof_inf1
+
+  use specfem_par_full_gravity, only: &
+    pgrav1,pgrav_ic1,pgrav_oc1,pgrav_cm1,pgrav_trinf1,pgrav_inf1, &
+    pgrav_ic,pgrav_oc,pgrav_cm,pgrav_trinf,pgrav_inf
+
+  use siem_solver_mpi, only: interpolate3to5
+
+  implicit none
+
+  ! interpolate the gravity values
+  ! transfer to array for each region (cm, ic, oc)
+  pgrav_ic1(:) = pgrav1(gdof_ic1(:))
+  pgrav_oc1(:) = pgrav1(gdof_oc1(:))
+  pgrav_cm1(:) = pgrav1(gdof_cm1(:))
+  if (ADD_TRINF) pgrav_trinf1(:) = pgrav1(gdof_trinf1(:))
+  pgrav_inf1(:) = pgrav1(gdof_inf1(:))
+
+  ! interpolate values for each region
+  call interpolate3to5(NSPEC_INNER_CORE,NGLOB_INNER_CORE,nnode_ic1, &
+                       inode_elmt_ic,nmir_ic,inode_map_ic,is_active_gll,igll_active_on,pgrav_ic1,pgrav_ic)
+
+  call interpolate3to5(NSPEC_OUTER_CORE,NGLOB_OUTER_CORE,nnode_oc1, &
+                       inode_elmt_oc,nmir_oc,inode_map_oc,is_active_gll,igll_active_on,pgrav_oc1,pgrav_oc)
+
+  call interpolate3to5(NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,nnode_cm1, &
+                       inode_elmt_cm,nmir_cm,inode_map_cm,is_active_gll,igll_active_on,pgrav_cm1,pgrav_cm)
+
+  if (ADD_TRINF) then
+    call interpolate3to5(NSPEC_TRINFINITE,NGLOB_TRINFINITE,nnode_trinf1, &
+                         inode_elmt_trinf,nmir_trinf,inode_map_trinf,is_active_gll,igll_active_on,pgrav_trinf1,pgrav_trinf)
+  endif
+
+  call interpolate3to5(NSPEC_INFINITE,NGLOB_INFINITE,nnode_inf1, &
+                       inode_elmt_inf,nmir_inf,inode_map_inf,is_active_gll,igll_active_on,pgrav_inf1,pgrav_inf)
+
+  !debug
+  if (myrank == 0) print *,' Finished gravity interpolation of loaded (saved) forward wavefield'
+
+  end subroutine SIEM_interpolate_gravity
+
+!
+!-------------------------------------------------------------------------------
+!
+
+  subroutine SIEM_interpolate_backward_gravity()
+
+! interpolates Level-1 backward b_pgrav1 values onto Level-2 b_pgrav
+
+  use constants, only: myrank,ADD_TRINF
+
+  use constants_solver, only: NSPEC_CRUST_MANTLE,NSPEC_OUTER_CORE,NSPEC_INNER_CORE, &
+    NSPEC_TRINFINITE,NSPEC_INFINITE, &
+    NGLOB_CRUST_MANTLE,NGLOB_OUTER_CORE,NGLOB_INNER_CORE,NGLOB_TRINFINITE,NGLOB_INFINITE
+
+  use specfem_par_full_gravity, only: is_active_gll,igll_active_on, &
+    inode_elmt_ic,inode_elmt_oc,inode_elmt_cm,inode_elmt_trinf,inode_elmt_inf, &
+    inode_map_ic,inode_map_oc,inode_map_cm,inode_map_trinf,inode_map_inf, &
+    nmir_ic,nmir_oc,nmir_cm,nmir_trinf,nmir_inf, &
+    nnode_ic1,nnode_oc1,nnode_cm1,nnode_trinf1,nnode_inf1, &
+    gdof_ic1,gdof_oc1,gdof_cm1,gdof_trinf1,gdof_inf1
+
+  use specfem_par_full_gravity, only: &
+    b_pgrav1,b_pgrav_ic1,b_pgrav_oc1,b_pgrav_cm1,b_pgrav_trinf1,b_pgrav_inf1, &
+    b_pgrav_ic,b_pgrav_oc,b_pgrav_cm,b_pgrav_trinf,b_pgrav_inf
 
   use siem_solver_mpi, only: interpolate3to5
 
@@ -155,9 +219,9 @@
                        inode_elmt_inf,nmir_inf,inode_map_inf,is_active_gll,igll_active_on,b_pgrav_inf1,b_pgrav_inf)
 
   !debug
-  if (myrank == 0) print *,' Finished gravity interpolation of loaded (saved) wavefield'
+  if (myrank == 0) print *,' Finished gravity interpolation of loaded (saved) backward wavefield'
 
-  end subroutine SIEM_interpolate_gravity
+  end subroutine SIEM_interpolate_backward_gravity
 
 !
 !-------------------------------------------------------------------------------
@@ -204,11 +268,13 @@
   if (istat /= 0) stop 'Error allocating ndscale1 array'
   ndscale1(:) = 1.0_CUSTOM_REAL
 
+  ! scaling based on inverted preconditioner values
   do i = 1,neq1
     val = sqrt(abs(dprecon1(i)))
     if (val /= 0.0_CUSTOM_REAL) ndscale1(i) = 1.0_CUSTOM_REAL / val
   enddo
 
+  ! scales stiffness matrices (storekmat_*)
   do i_elmt = 1,NSPEC_INNER_CORE
     inodes1 = inode_elmt_ic1(:,i_elmt)
     igdof1  = gdof_ic1(inodes1)
@@ -267,7 +333,7 @@
   enddo
 
   !debug
-  if (myrank == 0) print *,'builtin solver: check stiffness',minval(ndscale1),maxval(ndscale1)
+  if (myrank == 0) print *,'builtin solver: scaling min/max = ',minval(ndscale1),'/',maxval(ndscale1)
   if (myrank == 0) print *
   call synchronize_all()
 
@@ -291,7 +357,7 @@
 !-------------------------------------------------------------------------------
 !
 
-  subroutine compute_background_gravity_SIEM()
+  subroutine SIEM_compute_background_gravity()
 
   use specfem_par
 
@@ -699,7 +765,7 @@
     call flush_IMAIN()
   endif
 
-  end subroutine compute_background_gravity_SIEM
+  end subroutine SIEM_compute_background_gravity
 
 !
 !-------------------------------------------------------------------------------
@@ -879,9 +945,11 @@
   endif
 
   ! free arrays
+  ! Level-1 solver
   if (allocated(storederiv_cm1)) deallocate(storederiv_cm1,storerhojw_cm1)
   if (allocated(storederiv_ic1)) deallocate(storederiv_ic1,storerhojw_ic1)
   if (allocated(storederiv_oc1)) deallocate(storederiv_oc1,storerhojw_oc1)
+  ! Level-2 solver
   if (allocated(storederiv_cm)) deallocate(storederiv_cm,storerhojw_cm)
   if (allocated(storederiv_ic)) deallocate(storederiv_ic,storerhojw_ic)
   if (allocated(storederiv_oc)) deallocate(storederiv_oc,storerhojw_oc)
@@ -898,18 +966,21 @@
   if (allocated(ndscale)) deallocate(ndscale)
 
   ! gravity perturbation arrays
+  ! Level-1 solver
   if (allocated(pgrav1)) deallocate(pgrav1)
   if (allocated(pgrav_ic1)) deallocate(pgrav_ic1,pgrav_oc1,pgrav_cm1,pgrav_trinf1,pgrav_inf1)
-  if (allocated(pgrav)) deallocate(pgrav)
-  if (allocated(pgrav_ic)) deallocate(pgrav_ic,pgrav_oc,pgrav_cm,pgrav_trinf,pgrav_inf)
   if (allocated(dprecon1)) deallocate(dprecon1,gravload1)
   if (allocated(b_gravload1)) deallocate(b_gravload1)
+  ! Level-2 solver
+  if (allocated(pgrav)) deallocate(pgrav)
+  if (allocated(pgrav_ic)) deallocate(pgrav_ic,pgrav_oc,pgrav_cm,pgrav_trinf,pgrav_inf)
   if (allocated(dprecon)) deallocate(dprecon,gravload)
-
   ! sparse petsc solver arrays
+  ! Level-1 solver
   if (allocated(l2gdof1)) deallocate(l2gdof1)
   if (allocated(krow_sparse1)) deallocate(krow_sparse1,kcol_sparse1)
   if (allocated(kgrow_sparse1)) deallocate(kgrow_sparse1,kgcol_sparse1)
+  ! Level-2 solver
   if (allocated(l2gdof)) deallocate(l2gdof)
   if (allocated(krow_sparse)) deallocate(krow_sparse,kcol_sparse)
   if (allocated(kgrow_sparse)) deallocate(kgrow_sparse,kgcol_sparse)
