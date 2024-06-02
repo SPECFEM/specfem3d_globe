@@ -35,9 +35,11 @@
 !
 ! the PETSc base type file petscsys.h defines an error checking macro CHKERRA(ierr) as
 ! long free-from version:
-!#define CHKERRA(ierr) if (ierr /= 0) then;call PetscErrorF(ierr,__LINE__,__FILE__);call MPIU_Abort(PETSC_COMM_SELF,ierr);endif
+!#define CHKERRA(ierr) if (ierr /= 0) then;call PetscErrorF(ierr,__LINE__,__FILE__);\
+!                      call MPIU_Abort(PETSC_COMM_SELF,ierr);endif
 ! short version:
-!#define CHKERRA(ierr) if (ierr /= 0) then;call PetscErrorF(ierr);call MPIU_Abort(PETSC_COMM_SELF,ierr);endif
+!#define CHKERRA(ierr) if (ierr /= 0) then;call PetscErrorF(ierr);\
+!                      call MPIU_Abort(PETSC_COMM_SELF,ierr);endif
 !
 ! with gfortran, it uses the long free-form version that leads to compilation errors like
 !   "Error: Line truncated at (1) [-Werror=line-truncation]"
@@ -2354,9 +2356,11 @@ contains
 
   ! the PETSc base type file petscsys.h defines an error checking macro CHKERRA(ierr) as
   ! long free-from version:
-  !#define CHKERRA(ierr) if (ierr /= 0) then;call PetscErrorF(ierr,__LINE__,__FILE__);call MPIU_Abort(PETSC_COMM_SELF,ierr);endif
+  !#define CHKERRA(ierr) if (ierr /= 0) then;call PetscErrorF(ierr,__LINE__,__FILE__);\
+  !                      call MPIU_Abort(PETSC_COMM_SELF,ierr);endif
   ! short version:
-  !#define CHKERRA(ierr) if (ierr /= 0) then;call PetscErrorF(ierr);call MPIU_Abort(PETSC_COMM_SELF,ierr);endif
+  !#define CHKERRA(ierr) if (ierr /= 0) then;call PetscErrorF(ierr);\
+  !                      call MPIU_Abort(PETSC_COMM_SELF,ierr);endif
   !
   ! given the __LINE__ and __FILE__ info is not very useful when called in this subroutine, we use the short version here.
 
