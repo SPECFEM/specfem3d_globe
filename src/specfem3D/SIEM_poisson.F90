@@ -813,8 +813,8 @@ contains
 
   call poisson_load_fluidNEW3FAST(nspec_outer_core,nglob_outer_core, &
                                   ibool_outer_core,storederiv_oc1,storerhojw_oc1,timeval,deltat,two_omega_earth, &
-                                  A_array_rotationL3,B_array_rotationL3,displ_outer_core,nnode_oc1,inode_elmt_oc1, &
-                                  load_oc)
+                                  A_array_rotationL3, B_array_rotationL3, &
+                                  displ_outer_core,nnode_oc1,inode_elmt_oc1,load_oc)
 
   ! infinite
   ! this region has no contribution
@@ -893,8 +893,8 @@ contains
   ! Note that two_omega_earth is already reversed
   call poisson_load_fluidNEW3FAST(nspec_outer_core,nglob_outer_core, &
                                   ibool_outer_core,storederiv_oc1,storerhojw_oc1,timeval,b_deltat,two_omega_earth, &
-                                  b_A_array_rotationL3, b_B_array_rotationL3,b_displ_outer_core,nnode_oc1,inode_elmt_oc1, &
-                                  b_load_oc)
+                                  b_A_array_rotationL3, b_B_array_rotationL3, &
+                                  b_displ_outer_core,nnode_oc1,inode_elmt_oc1,b_load_oc)
 
   ! infinite
   ! this region has no contribution
@@ -2010,7 +2010,8 @@ contains
 !
 
   subroutine poisson_load_fluidNEW3FAST(nelmt,nnode,ibool,storederiv,storerhojw, &
-                                        timeval,deltat,two_omega_earth,A_array_rot,B_array_rot,dispf,nnode1,ibool1,load)
+                                        timeval,deltat,two_omega_earth,A_array_rot,B_array_rot, &
+                                        dispf,nnode1,ibool1,load)
 
   use constants, only: NDIM,NGLLX,NGLLY,NGLLZ,NGLLCUBE,NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF
   use constants_solver, only: ROTATION_VAL

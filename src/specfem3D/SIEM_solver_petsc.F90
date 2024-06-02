@@ -1036,7 +1036,7 @@ contains
   PetscInt:: istart,iend,ndiag,noffdiag
 
   !debugging
-  logical, parameter :: DEBUG_FILE_OUTPUT = .true.
+  logical, parameter :: DEBUG_FILE_OUTPUT = .false.
   integer :: ncols
   integer,dimension(:),allocatable :: cols
 
