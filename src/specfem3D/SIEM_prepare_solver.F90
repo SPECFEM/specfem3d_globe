@@ -1098,7 +1098,8 @@
           NSPEC_INFINITE*(nedof_inf1*nedof_inf1)
 
   allocate(col0(nmax1),row0(nmax1),gcol0(nmax1),grow0(nmax1))
-  col0(:) = 0; row0(:) = 0; gcol0(:) = 0; grow0(:) = 0
+  col0(:) = 0; row0(:) = 0
+  gcol0(:) = 0; grow0(:) = 0
 
   !debug
   if (myrank == 0) then
@@ -1251,23 +1252,25 @@
   enddo
 
   ! transition infinite
-  do i_elmt = 1,NSPEC_TRINFINITE
-    gdof_elmt1(:) = reshape(gdof_trinf1(inode_elmt_trinf1(:,i_elmt)),(/NEDOF1/))
-    ggdof_elmt1(:) = reshape(ggdof_trinf1(:,inode_elmt_trinf1(:,i_elmt)),(/NEDOF1/))
-    do i = 1,nedof_trinf1
-      do j = 1,nedof_trinf1
-        igdof = gdof_elmt1(imap_trinf(i))
-        jgdof = gdof_elmt1(imap_trinf(j))
-        if (igdof > 0 .and. jgdof > 0 .and. storekmat_trinfinite1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
-          ncount = ncount+1
-          row0(ncount) = igdof
-          col0(ncount) = jgdof
-          grow0(ncount) = ggdof_elmt1(imap_trinf(i))
-          gcol0(ncount) = ggdof_elmt1(imap_trinf(j))
-        endif
+  if (ADD_TRINF) then
+    do i_elmt = 1,NSPEC_TRINFINITE
+      gdof_elmt1(:) = reshape(gdof_trinf1(inode_elmt_trinf1(:,i_elmt)),(/NEDOF1/))
+      ggdof_elmt1(:) = reshape(ggdof_trinf1(:,inode_elmt_trinf1(:,i_elmt)),(/NEDOF1/))
+      do i = 1,nedof_trinf1
+        do j = 1,nedof_trinf1
+          igdof = gdof_elmt1(imap_trinf(i))
+          jgdof = gdof_elmt1(imap_trinf(j))
+          if (igdof > 0 .and. jgdof > 0 .and. storekmat_trinfinite1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
+            ncount = ncount+1
+            row0(ncount) = igdof
+            col0(ncount) = jgdof
+            grow0(ncount) = ggdof_elmt1(imap_trinf(i))
+            gcol0(ncount) = ggdof_elmt1(imap_trinf(j))
+          endif
+        enddo
       enddo
     enddo
-  enddo
+  endif
 
   ! infinite
   do i_elmt = 1,NSPEC_INFINITE
@@ -1333,7 +1336,7 @@
   l2gdof1(gdof_ic1(:)) = ggdof_ic1(1,:)
   l2gdof1(gdof_oc1(:)) = ggdof_oc1(1,:)
   l2gdof1(gdof_cm1(:)) = ggdof_cm1(1,:)
-  l2gdof1(gdof_trinf1(:)) = ggdof_trinf1(1,:)
+  if (ADD_TRINF) l2gdof1(gdof_trinf1(:)) = ggdof_trinf1(1,:)
   l2gdof1(gdof_inf1(:)) = ggdof_inf1(1,:)
 
   do i = 1,nsparse1
