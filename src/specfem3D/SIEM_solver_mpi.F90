@@ -587,7 +587,7 @@ contains
 !============================================
 !
 
-!TODO: this subroutine can be made non-blocking decomposing inner and outer element
+!TODO: this subroutine can be made non-blocking decomposing inner and outer elements
 
   subroutine product_stiffness_vector(neq,p_g,kp)
 
@@ -664,24 +664,19 @@ contains
 
   ! assemble acroos the regions but not across the MPIs
   kp = zero
+
   ! crust_mantle
   kp(gdof_cm) = kp(gdof_cm)+kp_cm
-
   ! outer core
   kp(gdof_oc) = kp(gdof_oc)+kp_oc
-
   ! inner core
   kp(gdof_ic) = kp(gdof_ic)+kp_ic
-
   ! transition infinite
   if (ADD_TRINF) kp(gdof_trinf) = kp(gdof_trinf)+kp_trinf
-
   ! infinite
   kp(gdof_inf) = kp(gdof_inf)+kp_inf
 
   kp(0) = zero
-
-  return
 
   end subroutine product_stiffness_vector
 
@@ -761,22 +756,17 @@ contains
                            nibool_interfaces_infinite,ibool_interfaces_infinite,my_neighbors_infinite)
 
   ! gather from all regions but not assemble since it is already assembled across
-  ! the regions assemble across the different regions in a process
   array_g = zero
+
+  ! the regions assemble across the different regions in a process
   ! crust_mantle
   array_g(gdof_cm) = array_cm
-
   ! outer core
   array_g(gdof_oc) = array_oc
-
   ! inner core
   array_g(gdof_ic) = array_ic
-
   ! transition infinite
-  if (ADD_TRINF) then
-    array_g(gdof_trinf) = array_trinf
-  endif
-
+  if (ADD_TRINF) array_g(gdof_trinf) = array_trinf
   ! infinite
   array_g(gdof_inf) = array_inf
 
@@ -788,13 +778,16 @@ contains
 !============================================
 !
 
-! TODO: this subroutine can be made non-blocking decomposing inner and outer
-! element
+! TODO: this subroutine can be made non-blocking decomposing inner and outer elements
 
   subroutine product_stiffness_vector3(neq,p_g,kp)
 
-  use specfem_par, only: ADD_TRINF,NGLLCUBE_INF,NSPEC_INNER_CORE,NSPEC_OUTER_CORE,NSPEC_CRUST_MANTLE, &
+  use constants, only: ADD_TRINF,NGLLCUBE_INF,IFLAG_IN_FICTITIOUS_CUBE
+
+  use specfem_par, only: NSPEC_INNER_CORE,NSPEC_OUTER_CORE,NSPEC_CRUST_MANTLE, &
     NSPEC_TRINFINITE,NSPEC_INFINITE
+
+  !use specfem_par_innercore, only: idoubling_inner_core
 
   use specfem_par_full_gravity, only: &
     nnode_ic1,nnode_oc1,nnode_cm1,nnode_trinf1,nnode_inf1, &
@@ -818,76 +811,97 @@ contains
   integer :: inode(NGLLCUBE_INF),igdof(NGLLCUBE_INF),inode_trinf(NGLLCUBE_INF),igdof_trinf(NGLLCUBE_INF), &
              inode_inf(NGLLCUBE_INF),igdof_inf(NGLLCUBE_INF)
 
+  ! explicit loop
+  !integer :: i,j,iglob,igll
+  !real(kind=CUSTOM_REAL) :: sum
+  !real(kind=CUSTOM_REAL) :: p_g_elmt(NGLLCUBE_INF)
+
   ! inner core
-  kp_ic = zero
+  kp_ic(:) = zero
   do i_elmt = 1,NSPEC_INNER_CORE
-    inode = inode_elmt_ic1(:,i_elmt)
-    igdof = gdof_ic1(inode)
+    !? if (idoubling_inner_core(i_elmt) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+    inode(:) = inode_elmt_ic1(:,i_elmt)
+    igdof(:) = gdof_ic1(inode(:))
     km = storekmat_inner_core1(:,:,i_elmt)
-    kp_ic(inode) = kp_ic(inode)+matmul(km,p_g(igdof))
+    kp_ic(inode(:)) = kp_ic(inode(:)) + matmul(km,p_g(igdof))
   enddo
 
   ! outer core
-  kp_oc = zero
+  kp_oc(:) = zero
   do i_elmt = 1,NSPEC_OUTER_CORE
-    inode = inode_elmt_oc1(:,i_elmt)
-    igdof = gdof_oc1(inode)
+    inode(:) = inode_elmt_oc1(:,i_elmt)
+    igdof(:) = gdof_oc1(inode(:))
     km = storekmat_outer_core1(:,:,i_elmt)
-    kp_oc(inode) = kp_oc(inode)+matmul(km,p_g(igdof))
+    kp_oc(inode(:)) = kp_oc(inode) + matmul(km,p_g(igdof))
   enddo
 
   ! crust mantle
-  kp_cm = zero
+  kp_cm(:) = zero
   do i_elmt = 1,NSPEC_CRUST_MANTLE
-    inode = inode_elmt_cm1(:,i_elmt)
-    igdof = gdof_cm1(inode)
+    inode(:) = inode_elmt_cm1(:,i_elmt)
+    igdof(:) = gdof_cm1(inode(:))
+
+    ! w/ intrinsic matmul: background solve -> 11.40 s
     km = storekmat_crust_mantle1(:,:,i_elmt)
-    kp_cm(inode) = kp_cm(inode)+matmul(km,p_g(igdof))
+    kp_cm(inode(:)) = kp_cm(inode(:)) + matmul(km,p_g(igdof))
+
+    ! w/out km copy: background solve -> 13.74 s
+    !kp_cm(inode(:)) = kp_cm(inode(:)) + matmul(storekmat_crust_mantle1(:,:,i_elmt),p_g(igdof))
+
+    ! w/ local copies: background solve -> 11.48 s
+    !km = storekmat_crust_mantle1(:,:,i_elmt)
+    !p_g_elmt(:) = p_g(igdof(:))
+    !kp_cm(inode(:)) = kp_cm(inode(:)) + matmul(km,p_g_elmt)
+
+    ! w/ explicit loop: background solve -> 14.88 s
+    ! with kp_i = km_ij * pg_j    with kp = (n), kmat = (n x n), pg = (n)
+    !do i = 1,NGLLCUBE_INF
+    !  sum = 0.0_CUSTOM_REAL
+    !  do j = 1,NGLLCUBE_INF
+    !    iglob = igdof(j)
+    !    sum = sum + km(i,j) * p_g(iglob)
+    !  enddo
+    !  igll = inode(i)
+    !  kp_cm(igll) = kp_cm(igll) + sum
+    !enddo
   enddo
 
   ! transition infinite
   if (ADD_TRINF) then
-    kp_trinf = zero
+    kp_trinf(:) = zero
     do i_elmt = 1,NSPEC_TRINFINITE
-      inode_trinf = inode_elmt_trinf1(:,i_elmt)
-      igdof_trinf = gdof_trinf1(inode_trinf)
+      inode_trinf(:) = inode_elmt_trinf1(:,i_elmt)
+      igdof_trinf(:) = gdof_trinf1(inode_trinf(:))
       km_trinf = storekmat_trinfinite1(:,:,i_elmt)
-      kp_trinf(inode_trinf) = kp_trinf(inode_trinf)+matmul(km_trinf,p_g(igdof_trinf))
+      kp_trinf(inode_trinf(:)) = kp_trinf(inode_trinf(:)) + matmul(km_trinf,p_g(igdof_trinf))
     enddo
   endif
 
   ! infinite
-  kp_inf = zero
+  kp_inf(:) = zero
   do i_elmt = 1,NSPEC_INFINITE
-    inode_inf = inode_elmt_inf1(:,i_elmt)
-    igdof_inf = gdof_inf1(inode_inf)
+    inode_inf(:) = inode_elmt_inf1(:,i_elmt)
+    igdof_inf(:) = gdof_inf1(inode_inf(:))
     km_inf = storekmat_infinite1(:,:,i_elmt)
-    kp_inf(inode_inf) = kp_inf(inode_inf)+matmul(km_inf,p_g(igdof_inf))
+    kp_inf(inode_inf(:)) = kp_inf(inode_inf(:)) + matmul(km_inf,p_g(igdof_inf))
   enddo
 
   ! assemble acroos the regions but not across the MPIs
+  kp(:) = zero
+
   ! assemble across the different regions in a process
-  kp = zero
   ! crust_mantle
-  kp(gdof_cm1) = kp(gdof_cm1)+kp_cm
-
+  kp(gdof_cm1(:)) = kp(gdof_cm1(:)) + kp_cm(:)
   ! outer core
-  kp(gdof_oc1) = kp(gdof_oc1)+kp_oc
-
+  kp(gdof_oc1(:)) = kp(gdof_oc1(:)) + kp_oc(:)
   ! inner core
-  kp(gdof_ic1) = kp(gdof_ic1)+kp_ic
-
-  ! transitio infinite
-  if (ADD_TRINF) then
-    kp(gdof_trinf1) = kp(gdof_trinf1)+kp_trinf
-  endif
-
+  kp(gdof_ic1(:)) = kp(gdof_ic1(:)) + kp_ic(:)
+  ! transition infinite
+  if (ADD_TRINF) kp(gdof_trinf1(:)) = kp(gdof_trinf1(:)) + kp_trinf(:)
   ! infinite
-  kp(gdof_inf1) = kp(gdof_inf1)+kp_inf
+  kp(gdof_inf1(:)) = kp(gdof_inf1(:)) + kp_inf(:)
 
   kp(0) = zero
-
-  return
 
   end subroutine product_stiffness_vector3
 
@@ -930,11 +944,11 @@ contains
   real(kind=CUSTOM_REAL),parameter :: zero = 0.0_CUSTOM_REAL
 
   ! scatter array
-  array_ic = array(gdof_ic1)
-  array_oc = array(gdof_oc1)
-  array_cm = array(gdof_cm1)
-  if (ADD_TRINF) array_trinf = array(gdof_trinf1)
-  array_inf = array(gdof_inf1)
+  array_ic(:) = array(gdof_ic1(:))
+  array_oc(:) = array(gdof_oc1(:))
+  array_cm(:) = array(gdof_cm1(:))
+  if (ADD_TRINF) array_trinf(:) = array(gdof_trinf1(:))
+  array_inf(:) = array(gdof_inf1(:))
 
   ! assemble across the MPI processes in a region
   ! crust_mantle
@@ -969,20 +983,18 @@ contains
 
   ! gather from all regions but not assemble since it is already assembled across
   ! the regions assemble across the different regions in a process
-  array_g = zero
+  array_g(:) = zero
+
   ! crust_mantle
-  array_g(gdof_cm1) = array_cm
-
+  array_g(gdof_cm1(:)) = array_cm(:)
   ! outer core
-  array_g(gdof_oc1) = array_oc
-
+  array_g(gdof_oc1(:)) = array_oc(:)
   ! inner core
-  array_g(gdof_ic1) = array_ic
-
+  array_g(gdof_ic1(:)) = array_ic(:)
   ! transition infinite
-  if (ADD_TRINF) array_g(gdof_trinf1) = array_trinf
+  if (ADD_TRINF) array_g(gdof_trinf1(:)) = array_trinf(:)
   ! infinite
-  array_g(gdof_inf1) = array_inf
+  array_g(gdof_inf1(:)) = array_inf(:)
 
   array_g(0) = zero
 

@@ -32,6 +32,12 @@ module siem_infinite_element
 
   use siem_gll_library, only: kdble
 
+  implicit none
+
+  private
+
+  public :: shape_function_infiniteGLHEX8ZW_GLLR
+
 contains
 
 ! TODO: compute 1D lagrange shape function iusing GEN rotuine since we take
@@ -55,8 +61,10 @@ contains
   real(kind=kdble),dimension(nip,ngll),intent(out) :: lagrange_gl
   real(kind=kdble),dimension(ndim,nip,ngll),intent(out) :: dlagrange_gl
   real(kind=kdble),intent(out) :: GLw(nip)
+
   real(kind=kdble),parameter :: jacobi_alpha=0.0_kdble,jacobi_beta=0.0_kdble, &
                                 one = 1.0_kdble!,five = 5.0_kdble
+
   integer :: i,ii,j,k,n,i1,j1,k1,nipx(ndim)
   real(kind=kdble) :: ddir,xi(ndim) !,eta,zeta
   real(kind=kdble),dimension(ngllx) :: gllpx,gllwx,igllpx,igllwx ! GLL points and weights
@@ -186,7 +194,9 @@ contains
 !  real(kind=kdble),dimension(nip,ngll),intent(out) :: lagrange_gl
 !  real(kind=kdble),dimension(ndim,nip,ngll),intent(out) :: dlagrange_gl
 !  real(kind=kdble),intent(out) :: GLw(nip)
+!
 !  real(kind=kdble),parameter :: jacobi_alpha=0.0_kdble,jacobi_beta=0.0_kdble,one=1.0_kdble
+!
 !  integer :: i,ii,j,k,n,i1,j1,k1
 !  real(kind=kdble) :: ddir,xi(ndim)
 !  real(kind=kdble),dimension(ngllx) :: gllpx,gllwx ! GLL points and weights
@@ -301,63 +311,65 @@ contains
 !
 ! this subroutine extracts the nodes for HEX8 of the finite region of an infinite element
 
-  subroutine get_gnodinfHEX8(ndim,ngllx,nglly,ngllz,nginf,iface,gnodinf)
+! not used yet...
 
-  implicit none
-  integer,intent(in) :: ndim,ngllx,nglly,ngllz,nginf,iface
-  integer,intent(out) :: gnodinf(nginf)
-  integer :: i,j,k,inum
-  integer :: inc(ndim),ngllxINF0(ndim),ngllxINF(ndim),iINF
-  real(kind=kdble) :: ddir
-  real(kind=kdble),parameter :: one=1.0_kdble
-
-  if (iface < 1.or.iface > 6) then
-    print *,'ERROR: illegal outer face ID:',iface
-    stop
-  endif
-
-  ! initialize ngllINF indices
-  ngllxINF0 = 1
-  ngllxINF(1) = ngllx
-  ngllxINF(2) = nglly
-  ngllxINF(3) = ngllz
-
-  iINF = 0
-  ddir = one
-
-  if (iface == 1) then
-    iINF = 2; ddir = -one
-  else if (iface == 2) then
-    iINF = 1; ddir = one
-  else if (iface == 3) then
-    iINF = 2; ddir = one
-  else if (iface == 4) then
-    iINF = 1; ddir = -one
-  else if (iface == 5) then
-    iINF = 3; ddir = -one
-  else if (iface == 6) then
-    iINF = 3; ddir = one
-  endif
-
-  if (ddir < 0) then
-    ngllxINF0(iINF) = 2
-  else
-    ngllxINF(iINF) = ngllxINF(iINF)-1
-  endif
-
-  ! extract only the corner nodes
-  inc = ngllxINF - ngllxINF0
-  inum = 0
-  do k = ngllxINF0(3),ngllxINF(3),inc(3)
-    do j = ngllxINF0(2),ngllxINF(2),inc(2)
-      do i = ngllxINF0(1),ngllxINF(1),inc(1)
-        inum = inum+1
-        gnodinf(inum) = nglly*ngllx*(k-1) + ngllx*(j-1)+i
-      enddo
-    enddo
-  enddo
-
-  end subroutine get_gnodinfHEX8
+!  subroutine get_gnodinfHEX8(ndim,ngllx,nglly,ngllz,nginf,iface,gnodinf)
+!
+!  implicit none
+!  integer,intent(in) :: ndim,ngllx,nglly,ngllz,nginf,iface
+!  integer,intent(out) :: gnodinf(nginf)
+!  integer :: i,j,k,inum
+!  integer :: inc(ndim),ngllxINF0(ndim),ngllxINF(ndim),iINF
+!  real(kind=kdble) :: ddir
+!  real(kind=kdble),parameter :: one=1.0_kdble
+!
+!  if (iface < 1.or.iface > 6) then
+!    print *,'ERROR: illegal outer face ID:',iface
+!    stop
+!  endif
+!
+!  ! initialize ngllINF indices
+!  ngllxINF0 = 1
+!  ngllxINF(1) = ngllx
+!  ngllxINF(2) = nglly
+!  ngllxINF(3) = ngllz
+!
+!  iINF = 0
+!  ddir = one
+!
+!  if (iface == 1) then
+!    iINF = 2; ddir = -one
+!  else if (iface == 2) then
+!    iINF = 1; ddir = one
+!  else if (iface == 3) then
+!    iINF = 2; ddir = one
+!  else if (iface == 4) then
+!    iINF = 1; ddir = -one
+!  else if (iface == 5) then
+!    iINF = 3; ddir = -one
+!  else if (iface == 6) then
+!    iINF = 3; ddir = one
+!  endif
+!
+!  if (ddir < 0) then
+!    ngllxINF0(iINF) = 2
+!  else
+!    ngllxINF(iINF) = ngllxINF(iINF)-1
+!  endif
+!
+!  ! extract only the corner nodes
+!  inc = ngllxINF - ngllxINF0
+!  inum = 0
+!  do k = ngllxINF0(3),ngllxINF(3),inc(3)
+!    do j = ngllxINF0(2),ngllxINF(2),inc(2)
+!      do i = ngllxINF0(1),ngllxINF(1),inc(1)
+!        inum = inum+1
+!        gnodinf(inum) = nglly*ngllx*(k-1) + ngllx*(j-1)+i
+!      enddo
+!    enddo
+!  enddo
+!
+!  end subroutine get_gnodinfHEX8
 
 !
 !===========================================
@@ -366,7 +378,7 @@ contains
 ! this subroutine computes the 1d lagrange interpolation functions and their
 ! derivatives at a given point xi.
 
-! not used so far...
+! not used yet...
 !
 !  subroutine lagrange1d_infiniteMO(nenod,nd,xi,ddir,phi,dphi_dxi)
 !
@@ -433,30 +445,32 @@ contains
 ! this subroutine computes the 1d lagrange interpolation functions and their
 ! derivatives at a given point xi.
 
-  subroutine lagrange1d_infiniteZW(nenod,xi,phi,dphi_dxi)
+! not used ...
 
-  implicit none
-  integer,intent(in) :: nenod ! number of nodes in an 1d element
-  real(kind=kdble),intent(in) :: xi ! xi: point where to calculate lagrange
-  !function and its derivative
-
-  real(kind=kdble),dimension(nenod-1),intent(out) :: phi,dphi_dxi
-  real(kind=kdble) :: fac !dx
-  real(kind=kdble),parameter :: one=1.0_kdble
-
-  if (nenod /= 3) then
-    stop 'ERROR: infinite element is currently implemented only for 3 nodes!'
-  endif
-
-  fac = one/(one-xi)
-
-  phi(1) = -xi*fac
-  phi(2) = fac !one-phi(1) !+xi*fac
-
-  dphi_dxi(1) = -fac*fac
-  dphi_dxi(2) = fac*fac
-
-  end subroutine lagrange1d_infiniteZW
+!  subroutine lagrange1d_infiniteZW(nenod,xi,phi,dphi_dxi)
+!
+!  implicit none
+!  integer,intent(in) :: nenod ! number of nodes in an 1d element
+!  real(kind=kdble),intent(in) :: xi ! xi: point where to calculate lagrange
+!  !function and its derivative
+!
+!  real(kind=kdble),dimension(nenod-1),intent(out) :: phi,dphi_dxi
+!  real(kind=kdble) :: fac !dx
+!  real(kind=kdble),parameter :: one=1.0_kdble
+!
+!  if (nenod /= 3) then
+!    stop 'ERROR: infinite element is currently implemented only for 3 nodes!'
+!  endif
+!
+!  fac = one/(one-xi)
+!
+!  phi(1) = -xi*fac
+!  phi(2) = fac !one-phi(1) !+xi*fac
+!
+!  dphi_dxi(1) = -fac*fac
+!  dphi_dxi(2) = fac*fac
+!
+!  end subroutine lagrange1d_infiniteZW
 
 !
 !===========================================
@@ -532,6 +546,7 @@ contains
   integer :: i,j
   real(kind=kdble),intent(out) :: x(n),w(n)
   real(kind=kdble) :: rj,rn,fac,p(n,n+1),xold(n)
+
   real(kind=kdble),parameter :: one=1.0_kdble,pi=3.141592653589793_kdble, &
                                 two = 2.0_kdble,tol = 1.0e-12_kdble,zero = 0.0_kdble,zerotol = 1.0e-12_kdble
 

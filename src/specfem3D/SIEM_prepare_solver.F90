@@ -166,15 +166,13 @@
   !not used yet...
   !use specfem_par_full_gravity, only: SAVE_JACOBIAN_ENSIGHT,storedetjac_cm
 
-  use siem_gll_library, only: kdble,zwgljd,dshape_function_hex8,gll_quadrature
+  use siem_gll_library, only: kdble,NGNOD_INF,zwgljd,dshape_function_hex8,gll_quadrature
   use siem_math_library, only: determinant,invert
 
   implicit none
 
-  integer,parameter :: ngnod = 8
-
   integer :: i,i_elmt,ier
-  integer :: ignod(ngnod)
+  integer :: ignod(NGNOD_INF)
   real(kind=CUSTOM_REAL) :: detjac,rho(NGLLCUBE)
 
   real(kind=kdble),parameter :: jalpha=0.0_kdble,jbeta=0.0_kdble,zero=0.0_kdble
@@ -186,7 +184,8 @@
 
   real(kind=kdble),dimension(:,:,:), allocatable :: dshape_hex8,dlagrange_gll
 
-  real(kind=CUSTOM_REAL) :: coord(ngnod,NDIM),jac(NDIM,NDIM)
+  real(kind=CUSTOM_REAL) :: coord(NGNOD_INF,NDIM)
+  real(kind=CUSTOM_REAL) :: jac(NDIM,NDIM)
 
   double precision :: sizeval
 
@@ -239,7 +238,7 @@
   storerhojw_oc(:,:) = 0.0_CUSTOM_REAL
 
   ! allocates local arrays to avoid error about exceeding stack size limit
-  allocate(dshape_hex8(NDIM,ngnod,NGLLCUBE), &
+  allocate(dshape_hex8(NDIM,NGNOD_INF,NGLLCUBE), &
            dlagrange_gll(NDIM,NGLLCUBE,NGLLCUBE))
   dshape_hex8(:,:,:) = 0.0_kdble
   dlagrange_gll(:,:,:) = 0.0_kdble
@@ -255,7 +254,7 @@
   call zwgljd(zetagll,wzgll,NGLLZ,jalpha,jbeta)
 
   ! get derivatives of shape functions for 8-noded hex
-  call dshape_function_hex8(NDIM,ngnod,NGLLX,NGLLY,NGLLZ,NGLLCUBE,xigll,etagll,zetagll,dshape_hex8)
+  call dshape_function_hex8(NDIM,NGNOD_INF,NGLLX,NGLLY,NGLLZ,NGLLCUBE,xigll,etagll,zetagll,dshape_hex8)
 
   ! compute gauss-lobatto-legendre quadrature information
   call gll_quadrature(NDIM,NGLLX,NGLLY,NGLLZ,NGLLCUBE,gll_points,gll_weights,lagrange_gll,dlagrange_gll)
@@ -395,15 +394,13 @@
     storederiv_ic1,storerhojw_ic1, &
     storederiv_oc1,storerhojw_oc1
 
-  use siem_gll_library, only: kdble,zwgljd,dshape_function_hex8,gll_quadrature
+  use siem_gll_library, only: kdble,NGNOD_INF,zwgljd,dshape_function_hex8,gll_quadrature
   use siem_math_library, only: determinant,invert
 
   implicit none
 
-  integer,parameter :: ngnod = 8
-
   integer :: i,i_elmt,ier
-  integer :: ignod(ngnod)
+  integer :: ignod(NGNOD_INF)
   real(kind=CUSTOM_REAL) :: detjac,rho(NGLLCUBE_INF)
 
   real(kind=kdble),parameter :: jalpha=0.0_kdble,jbeta=0.0_kdble,zero=0.0_kdble
@@ -412,9 +409,10 @@
                       zetagll(NGLLZ_INF),wzgll(NGLLZ_INF)
 
   real(kind=kdble) :: gll_weights1(NGLLCUBE_INF),gll_points1(NDIM,NGLLCUBE_INF), &
-                      dlagrange_gll1(NDIM,NGLLCUBE_INF,NGLLCUBE_INF),dshape_hex8(NDIM,ngnod,NGLLCUBE_INF)
+                      dlagrange_gll1(NDIM,NGLLCUBE_INF,NGLLCUBE_INF),dshape_hex8(NDIM,NGNOD_INF,NGLLCUBE_INF)
 
-  real(kind=CUSTOM_REAL) :: coord(ngnod,NDIM),jac(NDIM,NDIM)
+  real(kind=CUSTOM_REAL) :: coord(NGNOD_INF,NDIM)
+  real(kind=CUSTOM_REAL) :: jac(NDIM,NDIM)
 
   double precision :: sizeval
 
@@ -476,7 +474,7 @@
   call zwgljd(zetagll,wzgll,NGLLZ_INF,jalpha,jbeta)
 
   ! get derivatives of shape functions for 8-noded hex
-  call dshape_function_hex8(NDIM,ngnod,NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF,xigll,etagll,zetagll,dshape_hex8)
+  call dshape_function_hex8(NDIM,NGNOD_INF,NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF,xigll,etagll,zetagll,dshape_hex8)
 
   ! compute gauss-lobatto-legendre quadrature information
   call gll_quadrature(NDIM,NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF,gll_points1,gll_weights1,lagrange_gll1,dlagrange_gll1)
