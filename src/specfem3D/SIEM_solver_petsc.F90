@@ -261,7 +261,7 @@ contains
   type(tVec) :: nzeror_gvec1,nzeror_dvec1,nzeror_ovec1,iproc_gvec1, &
                 interface_gvec1,ninterface_dvec1,ninterface_ovec1,nself_gvec1
   PetscInt :: i,istart,iend,n
-  PetscInt :: nzerosoff_max
+  !PetscInt :: nzerosoff_max
   PetscInt :: inzeros_max,inzeros_min
   PetscInt,allocatable :: nzeros(:),ig_array1(:)
   PetscScalar,allocatable :: rproc_array1(:)
@@ -318,11 +318,10 @@ contains
   nzeros_max = maxvec(nzeros)
   nzeros_min = minvec(nzeros)
 
-  nzerosoff_max = nzeros_max
-
-  !nzeros_max=4*nzeros_max
-  !nzeros=nzeros
-  !nzeros=5*nzeros
+  !nzerosoff_max = nzeros_max
+  !nzeros_max = 4*nzeros_max
+  !nzeros = nzeros
+  !nzeros = 5*nzeros
 
   if (myrank == 0) print *,'PETSc solver: nzeros in 1st index:',nzeros(1)
   if (myrank == 0) print *,'PETSc solver: ngdof1:',ngdof1,' nzeros_max:',nzeros_max,' nzeros_min:',nzeros_min, &
@@ -593,7 +592,7 @@ contains
     igc = kgcol_sparse1(i)-1
     ir = krow_sparse1(i)
     ic = kcol_sparse1(i)
-    if (l2gdof1(ir) /= igr.or.l2gdof1(ic) /= igc) then
+    if (l2gdof1(ir) /= igr .or. l2gdof1(ic) /= igc) then
       print *,'Error: strange:',l2gdof1(ir),igr,l2gdof1(ic),igc
       stop
     endif
@@ -671,12 +670,13 @@ contains
   call VecAssemblyEnd(ninterface_ovec1,ierr)
 
   ! apply correction for repeatition due to interfaces
+  ! diagonal matrix
   call VecGetLocalSize(nzeror_dvec1,n,ierr)
   call VecGetArrayF90(nzeror_dvec1,nzeror_darray1,ierr)
 
   allocate(nnzero_diag1(n))
-  nnzero_diag1 = int(nzeror_darray1(1:n))
-  nnzero_diag1 = nnzero_diag1-nself_array1
+  nnzero_diag1(:) = int(nzeror_darray1(1:n))
+  nnzero_diag1(:) = nnzero_diag1(:) - nself_array1(:)
 
   !debug
   if (myrank == 0) print *,'PETSc solver: n: ',n,minval(nzeror_darray1),maxval(nzeror_darray1), &
@@ -686,10 +686,11 @@ contains
   call VecRestoreArrayF90(nzeror_dvec1,nzeror_darray1,ierr)
   call VecDestroy(nzeror_dvec1,ierr)
 
+  ! off-diagonal matrix
   call VecGetArrayF90(nzeror_ovec1,nzeror_oarray1,ierr)
 
   allocate(nnzero_offdiag1(n))
-  nnzero_offdiag1 = int(nzeror_oarray1(1:n))
+  nnzero_offdiag1(:) = int(nzeror_oarray1(1:n))
 
   call VecRestoreArrayF90(nzeror_ovec1,nzeror_oarray1,ierr)
   call VecDestroy(nzeror_ovec1,ierr)
@@ -707,7 +708,7 @@ contains
   call VecRestoreArrayF90(ninterface_dvec1,rninterface_darray1,ierr)
   call VecDestroy(ninterface_dvec1,ierr)
 
-  where(ninterface_darray1 > 0) ninterface_darray1 = ninterface_darray1-4
+  where(ninterface_darray1 > 0) ninterface_darray1 = ninterface_darray1 - 4
   where(ninterface_darray1 < 0) ninterface_darray1 = 0
 
   call VecGetArrayF90(ninterface_ovec1,rninterface_oarray1,ierr)
@@ -720,14 +721,19 @@ contains
   call VecRestoreArrayF90(ninterface_ovec1,rninterface_oarray1,ierr)
   call VecDestroy(ninterface_ovec1,ierr)
 
-  where(ninterface_oarray1 > 0) ninterface_oarray1 = ninterface_oarray1-8
+  where(ninterface_oarray1 > 0) ninterface_oarray1 = ninterface_oarray1 - 8
   where(ninterface_oarray1 < 0) ninterface_oarray1 = 0
 
-  nnzero_diag1 = nnzero_diag1-ninterface_darray1
-  nnzero_offdiag1 = nnzero_offdiag1-ninterface_oarray1
+  nnzero_diag1(:) = nnzero_diag1(:) - ninterface_darray1(:)
+  nnzero_offdiag1(:) = nnzero_offdiag1(:) - ninterface_oarray1(:)
 
+  !debug
+  if (myrank == 0) print *,'PETSc solver: non-zero diag   :',minval(nnzero_diag1),maxval(nnzero_diag1)
+  if (myrank == 0) print *,'PETSc solver: non-zero offdiag:',minval(nnzero_offdiag1),maxval(nnzero_offdiag1)
+  call synchronize_all()
+
+  rval = 1.0
   do i = 1,nsparse1
-    rval = 1.0
     igdof = kgrow_sparse1(i)-1 ! Fortran index
     call VecSetValues(nzeror_gvec1,1,igdof,rval,ADD_VALUES,ierr); CHECK_PETSC_ERROR(ierr)
   enddo
@@ -770,7 +776,23 @@ contains
   call synchronize_all()
 
   ! preallocation
-  call MatMPIAIJSetPreallocation(Amat1,nzeros_max,inzeror_array1,nzeros_max,inzeror_array1,ierr); CHECK_PETSC_ERROR(ierr)
+  !TODO: please re-asses this preallocation for different meshes and/or correct the diagonal/off-diagonal non-zero row entries
+  !
+  ! way 1: explicitly specifies diagonal and off-diagonal local submatrices by setting array inzeror_array1,
+  !        containing the number of non-zeros per row.
+  !
+  !        this will lead to a lot of re-allocations when setting the region values by MatSetValues() in petsc_set_matrix1(),
+  !        as the non-zero estimates seem to be off.
+  !
+  !call MatMPIAIJSetPreallocation(Amat1,nzeros_max,inzeror_array1,nzeros_max,inzeror_array1,ierr); CHECK_PETSC_ERROR(ierr)
+
+  ! way 2: only specify the nonzero structure by nzeros_max, and let Petsc decide about array structuring.
+  !
+  !        this seems to lead to a much faster petsc_set_matrix1() routine without the re-allocations.
+  !        however, the diagonal and in particular the off-diagonal estimate with nzeros_max might be still off.
+  call MatMPIAIJSetPreallocation(Amat1,nzeros_max,PETSC_NULL_INTEGER, &
+                                 nzeros_max,PETSC_NULL_INTEGER,ierr); CHECK_PETSC_ERROR(ierr)
+
   call MatSetFromOptions(Amat1,ierr); CHECK_PETSC_ERROR(ierr)
   call MatGetOwnershipRange(Amat1,istart,iend,ierr); CHECK_PETSC_ERROR(ierr)
 
@@ -1072,7 +1094,7 @@ contains
   !   note that the preallocation of Amat1 might be slightly off, in that the number of non-zero elements
   !   for the diagonal and off-diagonal matrices could be estimated wrongly.
   !
-  !   assigning the matrix entry values below with MatSetValues() will lead to errors like:
+  !   assigning the matrix entry values below with MatSetValues() might lead to errors like:
   !       [4]PETSC ERROR: Argument out of range
   !       [4]PETSC ERROR: New nonzero at (11346,11355) caused a malloc
   !       Use MatSetOption(A, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE) to turn off this check
@@ -1081,7 +1103,7 @@ contains
   !   and abort execution.
   !
   ! this is to turn off new malloc check error messages, when a new malloc is required by MatSetValues()
-  call MatSetOption(Amat1, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE, ierr); CHECK_PETSC_ERROR(ierr)
+  !call MatSetOption(Amat1, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE, ierr); CHECK_PETSC_ERROR(ierr)
 
   ! note: although the execution works by turning this check off, the matrix value assignment in particular
   !       for the crust/mantle region below takes very long. this might be due to excessive malloc's required.
@@ -1115,6 +1137,7 @@ contains
       enddo
     enddo
   enddo
+  call synchronize_all()
   deallocate(storekmat_inner_core1)
 
   ! user output
@@ -1143,6 +1166,7 @@ contains
       enddo
     enddo
   enddo
+  call synchronize_all()
   deallocate(storekmat_outer_core1)
 
   ! user output
@@ -1171,6 +1195,7 @@ contains
       enddo
     enddo
   enddo
+  call synchronize_all()
   deallocate(storekmat_crust_mantle1)
 
   ! user output
@@ -1211,6 +1236,7 @@ contains
       write(IMAIN,*) '    elapsed time: ',sngl(tCPU),'(s)'
     endif
   endif
+  call synchronize_all()
   deallocate(storekmat_trinfinite1)
 
   ! user output
@@ -1237,6 +1263,7 @@ contains
       enddo
     enddo
   enddo
+  call synchronize_all()
   deallocate(storekmat_infinite1)
 
   ! user output
