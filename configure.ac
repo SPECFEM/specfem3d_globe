@@ -922,7 +922,7 @@ AS_IF([test x"$want_petsc" != xno], [
   use petscksp
   implicit none
   PetscErrorCode :: ierr
-  call PetscInitialize(ierr)
+  call PetscInitialize(PETSC_NULL_CHARACTER,ierr)
   call PetscFinalize(ierr)
       ]])
     ], [

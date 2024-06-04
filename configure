@@ -11843,7 +11843,7 @@ printf %s "checking PETSc linking with PetscInitialize in -lpetsc... " >&6; }
   use petscksp
   implicit none
   PetscErrorCode :: ierr
-  call PetscInitialize(ierr)
+  call PetscInitialize(PETSC_NULL_CHARACTER,ierr)
   call PetscFinalize(ierr)
 
       end
