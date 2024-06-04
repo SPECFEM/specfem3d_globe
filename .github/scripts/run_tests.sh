@@ -34,10 +34,12 @@ my_test(){
 cd $dir
 
 # default setup
-# limit number of time steps
-sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.5:" DATA/Par_file
-# shortens output interval to avoid timeouts
-sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
+if [ ! "${RUN_KERNEL}" == "true" ]; then
+  # limit number of time steps
+  sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.5:" DATA/Par_file
+  # shortens output interval to avoid timeouts
+  sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
+fi
 
 # specific example setups
 if [ "${TESTDIR}" == "EXAMPLES/global_small" ]; then
@@ -54,15 +56,16 @@ fi
 if [ "${FULL_GRAVITY}" == "true" ]; then
   # turns on full gravity
   sed -i "s:^FULL_GRAVITY .*:FULL_GRAVITY = .true.:" DATA/Par_file
-  # switch to PETSc Poisson solver
+  # PETSc
   if [ "${PETSC}" == "true" ]; then
+    # switch to PETSc Poisson solver
     sed -i "s:^POISSON_SOLVER .*:POISSON_SOLVER = 1:" DATA/Par_file
   fi
   # set NSTEP for short checks only
   echo "NSTEP = 2" >> DATA/Par_file
 fi
 
-# full gravity
+# adios
 if [ "${ADIOS2}" == "true" ]; then
   # turns on ADIOS
   sed -i "s:^ADIOS_ENABLED .*:ADIOS_ENABLED = .true.:" DATA/Par_file
