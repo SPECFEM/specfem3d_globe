@@ -86,15 +86,24 @@ module siem_solver_petsc
 #ifdef USE_PETSC
 ! PETSc
 ! all of PETSc
-!#include "petsc/finclude/petsc.h"
+#include "petsc/finclude/petsc.h"
+  use petsc
 ! base types
-!#include "petsc/finclude/petscsys.h"
+#include "petsc/finclude/petscsys.h"
+  use petscsys
 ! Vec package
-!#include "petsc/finclude/petscvec.h"
+#include "petsc/finclude/petscvec.h"
+  use petscvec
 ! Mat package
-!#include "petsc/finclude/petscmat.h"
+#include "petsc/finclude/petscmat.h"
+  use petscmat
+! IS (index set) package
+#include "petsc/finclude/petscis.h"
+  use petscis
 ! Krylov subspace method package
 #include "petsc/finclude/petscksp.h"
+  use petscksp
+
 ! preconditioner package
 !#include "petsc/finclude/petscpc.h"
 
@@ -109,7 +118,6 @@ module siem_solver_petsc
   !use petscpc, only: tPC
   !use petscis, only: tIS
 
-  use petscksp
 #endif
 
   use constants, only: myrank,IMAIN,CUSTOM_REAL
@@ -2267,10 +2275,6 @@ contains
 
   subroutine petsc_solve(sdata,niter)
 
-#ifdef USE_PETSC
-  use petscksp, only: KSPSolve, KSPView, KSPGetConvergedReason, KSPGetIterationNumber
-#endif
-
   implicit none
   !PetscScalar :: sdata(:)
   real(kind=CUSTOM_REAL) :: sdata(:)
@@ -2346,10 +2350,6 @@ contains
   subroutine petsc_finalize()
 
 #ifdef USE_PETSC
-  use petscvec, only: VecDestroy
-  use petscmat, only: MatDestroy
-  use petscksp, only: KSPDestroy
-
   implicit none
 
   ! Free work space.  All PETSc objects should be destroyed when they
