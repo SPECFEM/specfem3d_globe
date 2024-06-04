@@ -266,7 +266,8 @@ contains
   PetscInt,allocatable :: nzeros(:),ig_array1(:)
   PetscScalar,allocatable :: rproc_array1(:)
   PetscScalar :: rval
-  type(tIS) :: global_is, local_is, b_global_is, b_local_is
+  type(tIS) :: global_is, local_is
+  type(tIS) :: b_global_is, b_local_is
 
   PetscInt :: igdof,ind,maxrank0,ng,ng0,ng1,np0
   PetscInt,allocatable :: inzeror_array1(:),iproc_array1(:),nzeros_row(:)
@@ -289,6 +290,7 @@ contains
   PetscLogDouble :: bytes
 
   !character(len=10) :: char_myrank
+  character(len=128) :: version
 
   ! timing
   double precision :: tstart,tCPU
@@ -307,6 +309,10 @@ contains
   if (myrank == 0) print *,'PETSc solver: ---------- Initialise PETSC: ---------- '
 
   call PetscInitialize(PETSC_NULL_CHARACTER,ierr); CHECK_PETSC_ERROR(ierr)
+
+  ! version info
+  call PetscGetVersion(version,ierr); CHECK_PETSC_ERROR(ierr)
+  if (myrank == 0) print *,'PETSc solver: version: ',trim(version)
 
   ! count number of nonzeros per row
   allocate(nzeros(neq1))
@@ -370,6 +376,7 @@ contains
   !write(char_myrank,'(i4)') myrank
 
   call VecCreateMPI(PETSC_COMM_WORLD,PETSC_DECIDE,ngdof1,xvec1,ierr); CHECK_PETSC_ERROR(ierr)
+
   call VecDuplicate(xvec1,bvec1,ierr); CHECK_PETSC_ERROR(ierr)
   call VecDuplicate(xvec1,uvec1,ierr); CHECK_PETSC_ERROR(ierr)
   call VecDuplicate(xvec1,nzeror_gvec1,ierr); CHECK_PETSC_ERROR(ierr)
@@ -413,8 +420,11 @@ contains
 
   call ISDestroy(global_is,ierr) ! no longer necessary
   call ISDestroy(local_is,ierr)  ! no longer necessary
-  call ISDestroy(b_global_is,ierr) ! no longer necessary
-  call ISDestroy(b_local_is,ierr)  ! no longer necessary
+
+  if (SIMULATION_TYPE == 3) then
+    call ISDestroy(b_global_is,ierr) ! no longer necessary
+    call ISDestroy(b_local_is,ierr)  ! no longer necessary
+  endif
 
   ! assign owner processor ID to each gdof (or row)
   allocate(ig_array1(ng),rproc_array1(ng))
@@ -2393,7 +2403,11 @@ contains
 
   if (ierr /= 0) then
     ! petsc error function
+#if defined(PETSC_HAVE_FORTRAN_FREE_LINE_LENGTH_NONE)
     call PetscErrorF(ierr,line,"SIEM_solver_petsc.F90")
+#else
+    call PetscErrorF(ierr)
+#endif
 
     ! user info
     print *

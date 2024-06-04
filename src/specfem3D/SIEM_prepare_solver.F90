@@ -1048,7 +1048,7 @@
 
   character(len=12) :: spm
   character(len=60) :: fname
-
+  integer :: ier
   integer :: gmin,gmax
 
   ! checks if anything to do
@@ -1151,28 +1151,34 @@
   ! read global degrees of freedoms from DATABASE files (created by running xgindex3D)
   write(spm,*) myrank
   fname='DATABASES_MPI/gdof1_proc'//trim(adjustl(spm))
-  open(10,file=fname,action='read',status='old')
+
+  open(IIN,file=trim(fname),action='read',status='old',iostat=ier)
+  if (ier /= 0 ) then
+    print *,'Error: could not open file: ',trim(fname)
+    print *,'       Please check that xgindex3D was run prior to this simulation.'
+    call exit_MPI(myrank,'Error opening file gdof1_proc_*** for reading')
+  endif
   ! inner core
-  read(10,*) nglob_ic1                   ! Global DOF in inner core
+  read(IIN,*) nglob_ic1                   ! Global DOF in inner core
   allocate(ggdof_ic1(NNDOF,nglob_ic1))
-  read(10,*) ggdof_ic1
+  read(IIN,*) ggdof_ic1
   ! outer core
-  read(10,*) nglob_oc1                   ! Global DOF in outer core
+  read(IIN,*) nglob_oc1                   ! Global DOF in outer core
   allocate(ggdof_oc1(NNDOF,nglob_oc1))
-  read(10,*) ggdof_oc1
+  read(IIN,*) ggdof_oc1
   ! crust mantle
-  read(10,*) nglob_cm1                   ! Global DOF in crust mantle
+  read(IIN,*) nglob_cm1                   ! Global DOF in crust mantle
   allocate(ggdof_cm1(NNDOF,nglob_cm1))
-  read(10,*) ggdof_cm1
+  read(IIN,*) ggdof_cm1
   ! transition
-  read(10,*) nglob_trinf1                ! Global DOF in transition
+  read(IIN,*) nglob_trinf1                ! Global DOF in transition
   allocate(ggdof_trinf1(NNDOF,nglob_trinf1))
-  read(10,*) ggdof_trinf1
+  read(IIN,*) ggdof_trinf1
   ! infinite elements
-  read(10,*) nglob_inf1                  ! Global DOF in infinite
+  read(IIN,*) nglob_inf1                  ! Global DOF in infinite
   allocate(ggdof_inf1(NNDOF,nglob_inf1))
-  read(10,*) ggdof_inf1
-  close(10)
+  read(IIN,*) ggdof_inf1
+  close(IIN)
 
   ! Find maximum ID (dof value) for any of the regions
   ngdof1 = maxscal(maxval( (/ maxval(ggdof_ic1),maxval(ggdof_oc1), &
@@ -1393,25 +1399,31 @@
 
     ! read global degrees of freedoms from DATABASE files
     ! inner core
-    write(spm,*)myrank
+    write(spm,*) myrank
     fname='DATABASES_MPI/gdof_proc'//trim(adjustl(spm))
-    open(10,file=fname,action='read',status='old')
-    read(10,*)nglob_ic !NGLOB_INNER_CORE
+
+    open(IIN,file=trim(fname),action='read',status='old',iostat=ier)
+    if (ier /= 0 ) then
+      print *,'Error: could not open file: ',trim(fname)
+      print *,'       Please check that xgindex3D was run prior to this simulation.'
+      call exit_MPI(myrank,'Error opening file gdof_proc_*** for reading')
+    endif
+    read(IIN,*)nglob_ic !NGLOB_INNER_CORE
     allocate(ggdof_ic(NNDOF,nglob_ic))
-    read(10,*)ggdof_ic
-    read(10,*)nglob_oc !NGLOB_OUTER_CORE
+    read(IIN,*)ggdof_ic
+    read(IIN,*)nglob_oc !NGLOB_OUTER_CORE
     allocate(ggdof_oc(NNDOF,nglob_oc))
-    read(10,*)ggdof_oc
-    read(10,*)nglob_cm !NGLOB_CRUST_MANTLE
+    read(IIN,*)ggdof_oc
+    read(IIN,*)nglob_cm !NGLOB_CRUST_MANTLE
     allocate(ggdof_cm(NNDOF,nglob_cm))
-    read(10,*)ggdof_cm
-    read(10,*)nglob_trinf !NGLOB_TRINFINITE
+    read(IIN,*)ggdof_cm
+    read(IIN,*)nglob_trinf !NGLOB_TRINFINITE
     allocate(ggdof_trinf(NNDOF,nglob_trinf))
-    read(10,*)ggdof_trinf
-    read(10,*)nglob_inf !NGLOB_INFINITE
+    read(IIN,*)ggdof_trinf
+    read(IIN,*)nglob_inf !NGLOB_INFINITE
     allocate(ggdof_inf(NNDOF,nglob_inf))
-    read(10,*)ggdof_inf
-    close(10)
+    read(IIN,*)ggdof_inf
+    close(IIN)
 
     ngdof = maxscal(maxval( (/ maxval(ggdof_ic),maxval(ggdof_oc),maxval(ggdof_cm), &
                                maxval(ggdof_trinf),maxval(ggdof_inf) /) ))

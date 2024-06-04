@@ -1015,6 +1015,7 @@
 
   write(spm,*) i_proc
 
+  ! file output
   fname = 'DATABASES_MPI/gibool_proc'//trim(adjustl(spm))
   open(10,file=fname,action='write',status='replace')
 
@@ -1317,6 +1318,8 @@
 
   write(spm,*) i_proc
 
+  ! file output
+  ! (needed for PETSc Level-2 solver setup)
   fname='DATABASES_MPI/gdof_proc'//trim(adjustl(spm))
   open(10,file=fname,action='write',status='replace')
 
@@ -2095,6 +2098,8 @@
 
   write(spm,*)i_proc
 
+  ! file output
+  ! (needed for PETSc Level-1 solver setup)
   fname='DATABASES_MPI/gdof1_proc'//trim(adjustl(spm))
   open(10,file=fname,action='write',status='replace')
   write(10,*)nnode_ic1
