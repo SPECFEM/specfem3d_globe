@@ -20,6 +20,9 @@ echo
 
 # PETSc
 if [ "${PETSC}" == "true" ]; then
+  echo
+  echo "PETSc installation:"
+  echo
   # requires gfortran version 10 as default
   #mv -v /usr/local/bin/gfortran /usr/local/bin/gfortran-9
   #sudo update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-10 60
@@ -28,6 +31,7 @@ if [ "${PETSC}" == "true" ]; then
   sudo apt-get install -yq --no-install-recommends petsc-dev
   # checks exit code
   if [[ $? -ne 0 ]]; then exit 1; fi
+  echo "done"; echo
 fi
 
 # python3 pip upgrade might complain: "ERROR: launchpadlib 1.10.13 requires testresources"

@@ -508,7 +508,7 @@ jobs:
 
     - name: Run build
       env:
-        TESTFLAGS: --enable-vectorization --with-petsc PETSC_INC=/usr/include/petsc
+        TESTFLAGS: "--enable-vectorization --with-petsc PETSC_INC=/usr/include/petsc"
       run: ./.github/scripts/run_build.sh
       shell: bash
 
