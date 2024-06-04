@@ -29,13 +29,35 @@ echo "mpif90 --version"
 mpif90 --version
 echo
 
+## NetCDF
+if [ "${NETCDF}" == "true" ]; then
+  echo
+  echo "enabling NetCDF"
+  echo
+  netcdf=(--with-netcdf NETCDF_INC="/usr/include" NETCDF_LIBS="-lnetcdff" )
+else
+  netcdf=()
+fi
+
+# PETSc
+if [ "${PETSC}" == "true" ]; then
+  echo
+  echo "enabling PETSc"
+  echo
+  petsc=(--with-petsc PETSC_INC="/usr/include/petsc" )
+else
+  petsc=()
+fi
 
 # configuration
 echo
-echo "configuration: default"
+echo "configuration:"
 echo
 
-./configure FC=gfortran MPIFC=mpif90 CC=gcc "${TESTFLAGS}"
+./configure \
+${netcdf[@]} \
+${petsc[@]} \
+FC=gfortran MPIFC=mpif90 CC=gcc "${TESTFLAGS}"
 
 # checks
 if [[ $? -ne 0 ]]; then echo "configuration failed:"; cat config.log; echo ""; echo "exiting..."; exit 1; fi

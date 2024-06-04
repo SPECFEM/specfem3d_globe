@@ -18,6 +18,18 @@ sudo apt-get install -yq --no-install-recommends gfortran g++ openmpi-bin libope
 if [[ $? -ne 0 ]]; then exit 1; fi
 echo
 
+# NetCDF
+if [ "${NETCDF}" == "true" ]; then
+  echo
+  echo "NETCDF installation:"
+  echo
+  # installs fortran netcdf
+  sudo apt-get install -yq --no-install-recommends libnetcdff-dev
+  # checks exit code
+  if [[ $? -ne 0 ]]; then exit 1; fi
+  echo "done"; echo
+fi
+
 # PETSc
 if [ "${PETSC}" == "true" ]; then
   echo
@@ -131,9 +143,6 @@ echo "OMPI_MCA_rmaps_base_inherit=1" >> $GITHUB_ENV
 
 # exports for xterm output (for make tests)
 echo "TERM=xterm" >> $GITHUB_ENV
-
-# PETSc setting
-if [ "${PETSC}" == "true" ]; then echo "PETSC=true" >> $GITHUB_ENV; fi
 
 echo
 echo "exports:"

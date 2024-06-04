@@ -52,14 +52,14 @@ fi
 
 # full gravity
 if [ "${FULL_GRAVITY}" == "true" ]; then
-  # set NSTEP for short check
-  echo "NSTEP = 2" >> DATA/Par_file
   # turns on full gravity
   sed -i "s:^FULL_GRAVITY .*:FULL_GRAVITY = .true.:" DATA/Par_file
   # switch to PETSc Poisson solver
   if [ "${PETSC}" == "true" ]; then
     sed -i "s:^POISSON_SOLVER .*:POISSON_SOLVER = 1:" DATA/Par_file
   fi
+  # set NSTEP for short checks only
+  echo "NSTEP = 2" >> DATA/Par_file
 fi
 
 # default script
