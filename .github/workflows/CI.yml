@@ -511,7 +511,7 @@ jobs:
 
     - name: Run build
       env:
-        TESTFLAGS: --enable-vectorization
+        TESTFLAGS:  # no extra flags
         PETSC: true
       run: ./.github/scripts/run_build.sh
       shell: bash
@@ -521,5 +521,34 @@ jobs:
         TESTDIR: EXAMPLES/global_small
         FULL_GRAVITY: true
         PETSC: true
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+  linuxTest_10:
+    name: Test run example 10 - regional_Greece_small_LDDRK kernel ADIOS2
+    runs-on: ubuntu-latest
+    needs: [linuxCheck]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install packages
+      env:
+        ADIOS2: true
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS: # no extra flags
+        ADIOS2: true
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/regional_Greece_small_LDDRK
+        ADIOS2: true
+        RUN_KERNEL: true
       run: ./.github/scripts/run_tests.sh
       shell: bash

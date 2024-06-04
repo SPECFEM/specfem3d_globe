@@ -62,9 +62,20 @@ if [ "${FULL_GRAVITY}" == "true" ]; then
   echo "NSTEP = 2" >> DATA/Par_file
 fi
 
-# default script
-./run_this_example.sh
+# full gravity
+if [ "${ADIOS2}" == "true" ]; then
+  # turns on ADIOS
+  sed -i "s:^ADIOS_ENABLED .*:ADIOS_ENABLED = .true.:" DATA/Par_file
+fi
 
+# use kernel script
+if [ "${RUN_KERNEL}" == "true" ]; then
+  # use kernel script
+  ./run_this_example.kernel.sh
+else
+  # default script
+  ./run_this_example.sh
+fi
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
 
@@ -75,7 +86,7 @@ echo `date`
 echo
 
 # seismogram comparison
-if [ "${DEBUG}" == "true" ] || [ "${FULL_GRAVITY}" == "true" ]; then
+if [ "${DEBUG}" == "true" ] || [ "${FULL_GRAVITY}" == "true" ] || [ "${RUN_KERNEL}" == "true" ]; then
   # no comparisons
   :     # do nothing
 else

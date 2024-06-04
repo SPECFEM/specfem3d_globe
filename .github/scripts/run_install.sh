@@ -18,7 +18,7 @@ sudo apt-get install -yq --no-install-recommends gfortran g++ openmpi-bin libope
 if [[ $? -ne 0 ]]; then exit 1; fi
 echo
 
-# NetCDF
+## NetCDF
 if [ "${NETCDF}" == "true" ]; then
   echo
   echo "NETCDF installation:"
@@ -27,10 +27,10 @@ if [ "${NETCDF}" == "true" ]; then
   sudo apt-get install -yq --no-install-recommends libnetcdff-dev
   # checks exit code
   if [[ $? -ne 0 ]]; then exit 1; fi
-  echo "done"; echo
+  echo; echo "done netCDF"; echo
 fi
 
-# PETSc
+## PETSc
 if [ "${PETSC}" == "true" ]; then
   echo
   echo "PETSc installation:"
@@ -43,7 +43,7 @@ if [ "${PETSC}" == "true" ]; then
   sudo apt-get install -yq --no-install-recommends petsc-dev
   # checks exit code
   if [[ $? -ne 0 ]]; then exit 1; fi
-  echo "done"; echo
+  echo; echo "done PETSc"; echo
 fi
 
 # python3 pip upgrade might complain: "ERROR: launchpadlib 1.10.13 requires testresources"
@@ -87,6 +87,39 @@ gfortran --version
 echo "mpif90 --version"
 mpif90 --version
 echo
+
+## ADIOS2
+if [ "${ADIOS2}" == "true" ]; then
+  echo
+  echo "ADIOS2 installation:"
+  echo
+  # installs cmake wget
+  sudo apt-get install -yq --no-install-recommends cmake wget
+  # checks exit code
+  if [[ $? -ne 0 ]]; then exit 1; fi
+  # uses /opt as installation directory
+  mkdir -p /opt; cd /opt
+  # download source
+  wget https://github.com/ornladios/ADIOS2/archive/refs/tags/v2.10.1.tar.gz
+  tar zxvf v2.10.1.tar.gz
+  cd ADIOS2-2.10.1/
+  # build source
+  mkdir -p build; cd build/
+  CC=gcc CXX=g++ FC=gfortran cmake -DADIOS2_USE_Fortran=ON \
+    -DADIOS2_USE_HDF5=OFF -DADIOS2_BUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF \
+    -DCMAKE_INSTALL_PREFIX=/opt/ADIOS2 ../
+  # checks exit code
+  if [[ $? -ne 0 ]]; then exit 1; fi
+  make -j4
+  # checks exit code
+  if [[ $? -ne 0 ]]; then exit 1; fi
+  make install
+  # checks exit code
+  if [[ $? -ne 0 ]]; then exit 1; fi
+  # environment for directory
+  echo "ADIOS2_DIR=/opt/ADIOS2" >> $GITHUB_ENV
+  echo; echo "done ADIOS2"; echo
+fi
 
 # MPI
 # github actions uses for Linux virtual machines a 2-core CPU environment

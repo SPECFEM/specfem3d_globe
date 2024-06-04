@@ -29,6 +29,17 @@ echo "mpif90 --version"
 mpif90 --version
 echo
 
+## ADIOS2
+if [ "${ADIOS2}" == "true" ]; then
+  echo
+  echo "enabling ADIOS2"
+  echo
+  ADIOS2_CONFIG="${ADIOS2_DIR}/bin/adios2-config"
+  adios=(--with-adios2 ADIOS2_CONFIG="$ADIOS2_CONFIG" )
+else
+  adios=()
+fi
+
 ## NetCDF
 if [ "${NETCDF}" == "true" ]; then
   echo
@@ -39,7 +50,7 @@ else
   netcdf=()
 fi
 
-# PETSc
+## PETSc
 if [ "${PETSC}" == "true" ]; then
   echo
   echo "enabling PETSc"
@@ -55,6 +66,7 @@ echo "configuration:"
 echo
 
 ./configure \
+${adios[@]} \
 ${netcdf[@]} \
 ${petsc[@]} \
 FC=gfortran MPIFC=mpif90 CC=gcc "${TESTFLAGS}"
