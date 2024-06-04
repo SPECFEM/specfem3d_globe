@@ -1161,7 +1161,7 @@ module specfem_par_full_gravity
   integer, dimension(:), allocatable :: request_send_scalar_infinite,request_recv_scalar_infinite
   integer, dimension(:), allocatable :: b_request_send_scalar_infinite,b_request_recv_scalar_infinite
 
-  ! Level-1 solver-------------------
+  ! Level-1 solver
   ! MPI crust/mantle mesh
   integer :: num_interfaces_crust_mantle1
   integer :: max_nibool_interfaces_crust_mantle1
@@ -1209,7 +1209,6 @@ module specfem_par_full_gravity
   integer :: max_nibool_interfaces_infinite1
   integer, dimension(:), allocatable :: my_neighbors_infinite1,nibool_interfaces_infinite1
   integer, dimension(:,:), allocatable :: ibool_interfaces_infinite1
-  !----------------Level-1 solver
 
   ! parameters for Poisson's equation
   integer :: neq, nnode
@@ -1264,8 +1263,6 @@ module specfem_par_full_gravity
   logical,dimension(NGLLCUBE) :: is_active_gll
 
   ! parameters for ENSIGHT GOLD files
-  !character(len=20) :: ptail
-  !integer :: twidth
   !integer :: nnode4_ic,nnode4_oc,nnode4_cm
   !integer,allocatable :: inode4_ic(:),inode4_oc(:),inode4_cm(:)
 
@@ -1276,56 +1273,56 @@ module specfem_par_full_gravity
 
   ! full gravity arrays for kernels
   ! crust/mantle
-  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: g_cm     ! (NDIM,NGLOB_CRUST_MANTLE)
-  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: gradg_cm ! (6,NGLOB_CRUST_MANTLE)
+  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: g_cm
+  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: gradg_cm
   ! inner core - kernels not implemented yet
-  !real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: g_ic       ! (NDIM,NGLOB_INNER_CORE)
-  !real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: gradg_ic   ! (6,NGLOB_INNER_CORE)
+  !real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: g_ic
+  !real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: gradg_ic
   ! outer core - kernels not implemented yet
-  !real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: g_oc ! (NDIM,NGLOB_OUTER_CORE)
+  !real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: g_oc
 
   ! parameters for Poisson's solver
   ! crust/mantle
   integer,dimension(:),allocatable :: gdof_cm, gdof_cm1
   integer,dimension(:,:),allocatable :: ggdof_cm, ggdof_cm1
 
-  real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable :: storekmat_crust_mantle   ! (NGLLCUBE,NGLLCUBE,NSPEC_CRUST_MANTLE)
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon_crust_mantle         ! (NGLOB_CRUST_MANTLE)
+  real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable :: storekmat_crust_mantle
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon_crust_mantle
   real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable :: storekmat_crust_mantle1
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon_crust_mantle1
 
-  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: storederiv_cm    ! (NDIM,NGLLCUBE,NGLLCUBE,NSPEC_CRUST_MANTLE)
-  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: storerhojw_cm        ! (NGLLCUBE,NSPEC_CRUST_MANTLE)
-  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: storederiv_cm1   ! (NDIM,NGLLCUBE_INF,NGLLCUBE_INF,NSPEC_CRUST_MANTLE)
-  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: storerhojw_cm1,storejw_cm1  ! (NGLLCUBE_INF,NSPEC_CRUST_MANTLE)
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: storederiv_cm
+  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: storerhojw_cm
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: storederiv_cm1
+  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: storerhojw_cm1,storejw_cm1
 
   ! outer core
   integer,dimension(:),allocatable :: gdof_oc, gdof_oc1
   integer,dimension(:,:),allocatable :: ggdof_oc, ggdof_oc1
 
-  real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable :: storekmat_outer_core ! (NGLLCUBE,NGLLCUBE,NSPEC_OUTER_CORE)
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon_outer_core   ! (NGLOB_OUTER_CORE)
+  real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable :: storekmat_outer_core
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon_outer_core
   real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable :: storekmat_outer_core1
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon_outer_core1
 
-  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: storederiv_oc  ! (NDIM,NGLLCUBE,NGLLCUBE,NSPEC_OUTER_CORE)
-  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: storerhojw_oc      ! (NGLLCUBE,NSPEC_OUTER_CORE)
-  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: storederiv_oc1 ! (NDIM,NGLLCUBE_INF,NGLLCUBE_INF,NSPEC_OUTER_CORE)
-  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: storerhojw_oc1     ! (NGLLCUBE_INF,NSPEC_OUTER_CORE)
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: storederiv_oc
+  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: storerhojw_oc
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: storederiv_oc1
+  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: storerhojw_oc1
 
   ! inner core
   integer,dimension(:),allocatable :: gdof_ic, gdof_ic1
   integer,dimension(:,:),allocatable :: ggdof_ic, ggdof_ic1
 
-  real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable :: storekmat_inner_core   ! (NGLLCUBE,NGLLCUBE,NSPEC_INNER_CORE)
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon_inner_core         ! (NGLOB_INNER_CORE)
+  real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable :: storekmat_inner_core
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon_inner_core
   real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable ::  storekmat_inner_core1
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: dprecon_inner_core1
 
-  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: storederiv_ic        ! (NDIM,NGLLCUBE,NGLLCUBE,NSPEC_INNER_CORE)
-  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: storerhojw_ic            ! (NGLLCUBE,NSPEC_INNER_CORE)
-  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: storederiv_ic1       ! (NDIM,NGLLCUBE_INF,NGLLCUBE_INF,NSPEC_INNER_CORE)
-  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: storerhojw_ic1           ! (NGLLCUBE_INF,NSPEC_INNER_CORE)
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: storederiv_ic
+  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: storerhojw_ic
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: storederiv_ic1
+  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: storerhojw_ic1
 
   ! transition-to-infinite
   integer,dimension(:),allocatable :: gdof_trinf, gdof_trinf1
@@ -1354,13 +1351,13 @@ module specfem_par_full_gravity
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable ::  gknl1, gknl2
 
   ! for debugging only: delete at some point
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: debug_rho_kl_cm ! (5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT)
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: debug_rho_kl_cm
 
   ! for the Euler scheme for rotation in linear indexing
-  real(kind=CUSTOM_REAL),dimension(:,:), allocatable :: A_array_rotationL,B_array_rotationL
+  real(kind=CUSTOM_REAL),dimension(:,:), allocatable :: A_array_rotationL, B_array_rotationL
 
   ! for the Euler scheme for rotation in linear indexing for 3-GLLX points
-  real(kind=CUSTOM_REAL),dimension(:,:), allocatable :: A_array_rotationL3,B_array_rotationL3
+  real(kind=CUSTOM_REAL),dimension(:,:), allocatable :: A_array_rotationL3, B_array_rotationL3
 
   ! for the adjoint Euler scheme for rotation in linear indexing for 3-GLLX points
   real(kind=CUSTOM_REAL),dimension(:,:), allocatable :: b_A_array_rotationL3, b_B_array_rotationL3
@@ -1379,68 +1376,23 @@ module specfem_par_trinfinite
 
   ! ----------------- trinfinite ---------------------
   ! mesh parameters
-  integer,dimension(:,:,:,:),allocatable :: ibool_trinfinite    ! (NGLLX,NGLLY,NGLLZ,NSPEC_TRINFINITE)
+  integer,dimension(:,:,:,:),allocatable :: ibool_trinfinite
 
   real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: &
     xix_trinfinite, xiy_trinfinite, xiz_trinfinite, &
     etax_trinfinite, etay_trinfinite, etaz_trinfinite, &
-    gammax_trinfinite, gammay_trinfinite, gammaz_trinfinite     ! (NGLLX,NGLLY,NGLLZ,NSPEC_TRINFINITE)
+    gammax_trinfinite, gammay_trinfinite, gammaz_trinfinite
 
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: xstore_trinfinite, ystore_trinfinite, zstore_trinfinite, &
-    xstore0_trinfinite, ystore0_trinfinite, zstore0_trinfinite  ! (NGLOB_TRINFINITE)
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: xstore_trinfinite, ystore_trinfinite, zstore_trinfinite
 
   integer :: nspec2D_xmin_trinfinite,nspec2D_xmax_trinfinite, &
-             nspec2D_ymin_trinfinite,nspec2D_ymax_trinfinite, &
-             nspec2D_zmin_trinfinite
-
-  integer,dimension(:,:),allocatable :: nimin_trinfinite,nimax_trinfinite,nkmin_eta_trinfinite  ! (2,NSPEC2DMAX_YMIN_YMAX_TRINF)
-  integer,dimension(:,:),allocatable :: njmin_trinfinite,njmax_trinfinite,nkmin_xi_trinfinite   ! (2,NSPEC2DMAX_XMIN_XMAX_TRINF)
-
-  integer :: reclen_xmin_trinfinite,reclen_xmax_trinfinite, &
-             reclen_ymin_trinfinite,reclen_ymax_trinfinite, &
-             reclen_zmin
-
-  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: &
-    vector_accel_trinfinite,vector_displ_trinfinite,b_vector_displ_trinfinite       ! (NDIM,NGLOB_TRINFINITE_ADJOINT)
+             nspec2D_ymin_trinfinite,nspec2D_ymax_trinfinite
 
   ! arrays to couple with the fluid regions by pointwise matching
-  integer,dimension(:),allocatable :: ibelm_xmin_trinfinite,ibelm_xmax_trinfinite   ! (NSPEC2DMAX_XMIN_XMAX_TRINF)
-  integer,dimension(:),allocatable :: ibelm_ymin_trinfinite,ibelm_ymax_trinfinite   ! (NSPEC2DMAX_YMIN_YMAX_TRINF)
-  integer,dimension(:),allocatable :: ibelm_bottom_trinfinite                       ! (NSPEC2D_BOTTOM_TRINF)
-  integer,dimension(:),allocatable :: ibelm_top_trinfinite                          ! (NSPEC2D_TOP_TRINF)
-
-  ! (NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX_TRINF)
-  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: normal_xmin_trinfinite,normal_xmax_trinfinite
-  ! (NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX_TRINF)
-  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: normal_ymin_trinfinite,normal_ymax_trinfinite
-  ! (NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM_TRINF)
-  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: normal_bottom_trinfinite
-  ! (NDIM,NGLLX,NGLLY,NSPEC2D_TOP_TRINF)
-  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: normal_top_trinfinite
-
-  ! (NGLLX,NGLLY,NSPEC2D_BOTTOM_TRINF)
-  real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable :: jacobian2D_bottom_trinfinite
-  ! (NGLLX,NGLLY,NSPEC2D_TOP_TRINF)
-  real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable :: jacobian2D_top_trinfinite
-  ! (NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX_TRINF)
-  real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable :: jacobian2D_xmin_trinfinite,jacobian2D_xmax_trinfinite
-  ! (NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX_TRINF)
-  real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable :: jacobian2D_ymin_trinfinite,jacobian2D_ymax_trinfinite
-
-  ! adjoint kernels
-  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: &
-    rho_kl_trinfinite,alpha_kl_trinfinite   ! (NGLLX,NGLLY,NGLLZ,NSPEC_TRINFINITE_ADJOINT)
-
-  ! kernel runs
-  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: &
-    div_displ_trinfinite                    ! (NGLLX,NGLLY,NGLLZ,NSPEC_TRINFINITE_ADJOINT)
-  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: &
-    b_div_displ_trinfinite                  ! (NGLLX,NGLLY,NGLLZ,NSPEC_TRINFINITE_ADJOINT)
-
-  ! check for deviatoric kernel for outer core region
-  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: beta_kl_trinfinite
-  integer :: nspec_beta_kl_trinfinite
-  logical,parameter:: deviatoric_trinfinite = .false.
+  integer,dimension(:),allocatable :: ibelm_xmin_trinfinite,ibelm_xmax_trinfinite
+  integer,dimension(:),allocatable :: ibelm_ymin_trinfinite,ibelm_ymax_trinfinite
+  integer,dimension(:),allocatable :: ibelm_bottom_trinfinite
+  integer,dimension(:),allocatable :: ibelm_top_trinfinite
 
   ! inner / outer elements outer core region
   integer :: num_phase_ispec_trinfinite
@@ -1465,70 +1417,23 @@ module specfem_par_infinite
 
   ! ----------------- infinite ---------------------
   ! mesh parameters
-  integer,dimension(:,:,:,:),allocatable :: ibool_infinite  ! (NGLLX,NGLLY,NGLLZ,NSPEC_INFINITE)
+  integer,dimension(:,:,:,:),allocatable :: ibool_infinite
 
   real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: &
     xix_infinite, xiy_infinite, xiz_infinite, &
     etax_infinite, etay_infinite, etaz_infinite, &
-    gammax_infinite, gammay_infinite, gammaz_infinite       ! (NGLLX,NGLLY,NGLLZ,NSPEC_INFINITE)
+    gammax_infinite, gammay_infinite, gammaz_infinite
 
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: &
-    xstore_infinite, ystore_infinite, zstore_infinite, &
-    xstore0_infinite, ystore0_infinite, zstore0_infinite    ! (NGLOB_INFINITE)
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: xstore_infinite, ystore_infinite, zstore_infinite
 
   integer :: nspec2D_xmin_infinite,nspec2D_xmax_infinite, &
-             nspec2D_ymin_infinite,nspec2D_ymax_infinite, &
-             nspec2D_zmin_infinite
-
-  integer, dimension(:,:),allocatable :: nimin_infinite,nimax_infinite,nkmin_eta_infinite ! (2,NSPEC2DMAX_YMIN_YMAX_INF)
-  integer, dimension(:,:),allocatable :: njmin_infinite,njmax_infinite,nkmin_xi_infinite  ! (2,NSPEC2DMAX_XMIN_XMAX_INF)
-
-  integer :: reclen_xmin_infinite, reclen_xmax_infinite, &
-             reclen_ymin_infinite, reclen_ymax_infinite, &
-             reclen_zmin
-
-  real(kind=CUSTOM_REAL), dimension(:,:),allocatable :: &
-    vector_accel_infinite,vector_displ_infinite,b_vector_displ_infinite  ! (NDIM,NGLOB_INFINITE_ADJOINT)
+             nspec2D_ymin_infinite,nspec2D_ymax_infinite
 
   ! arrays to couple with the fluid regions by pointwise matching
-  integer, dimension(:),allocatable :: ibelm_xmin_infinite,ibelm_xmax_infinite    ! (NSPEC2DMAX_XMIN_XMAX_INF)
-  integer, dimension(:),allocatable :: ibelm_ymin_infinite,ibelm_ymax_infinite    ! (NSPEC2DMAX_YMIN_YMAX_INF)
-  integer, dimension(:),allocatable :: ibelm_bottom_infinite                      ! (NSPEC2D_BOTTOM_INF)
-  integer, dimension(:),allocatable :: ibelm_top_infinite                         ! (NSPEC2D_TOP_INF)
-
-  ! (NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX_INF)
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: normal_xmin_infinite,normal_xmax_infinite
-  ! (NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX_INF)
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: normal_ymin_infinite,normal_ymax_infinite
-  ! (NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM_INF)
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: normal_bottom_infinite
-  ! (NDIM,NGLLX,NGLLY,NSPEC2D_TOP_INF)
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: normal_top_infinite
-
-  ! (NGLLX,NGLLY,NSPEC2D_BOTTOM_INF)
-  real(kind=CUSTOM_REAL), dimension(:,:,:),allocatable :: jacobian2D_bottom_infinite
-  ! (NGLLX,NGLLY,NSPEC2D_TOP_INF)
-  real(kind=CUSTOM_REAL), dimension(:,:,:),allocatable :: jacobian2D_top_infinite
-  ! (NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX_INF)
-  real(kind=CUSTOM_REAL), dimension(:,:,:),allocatable :: jacobian2D_xmin_infinite,jacobian2D_xmax_infinite
-  ! (NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX_INF)
-  real(kind=CUSTOM_REAL), dimension(:,:,:),allocatable :: jacobian2D_ymin_infinite,jacobian2D_ymax_infinite
-
-  ! adjoint kernels
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: &
-    rho_kl_infinite,alpha_kl_infinite   ! (NGLLX,NGLLY,NGLLZ,NSPEC_INFINITE_ADJOINT)
-
-  ! kernel runs
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: &
-    div_displ_infinite                  ! (NGLLX,NGLLY,NGLLZ,NSPEC_INFINITE_ADJOINT)
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: &
-    b_div_displ_infinite                ! (NGLLX,NGLLY,NGLLZ,NSPEC_INFINITE_ADJOINT)
-
-  ! check for deviatoric kernel for outer core region
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: beta_kl_infinite
-  integer :: nspec_beta_kl_infinite
-
-  logical, parameter:: deviatoric_infinite = .false.
+  integer, dimension(:),allocatable :: ibelm_xmin_infinite,ibelm_xmax_infinite
+  integer, dimension(:),allocatable :: ibelm_ymin_infinite,ibelm_ymax_infinite
+  integer, dimension(:),allocatable :: ibelm_bottom_infinite
+  integer, dimension(:),allocatable :: ibelm_top_infinite
 
   ! inner / outer elements outer core region
   integer :: num_phase_ispec_infinite

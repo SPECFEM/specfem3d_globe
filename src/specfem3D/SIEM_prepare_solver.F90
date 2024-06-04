@@ -166,15 +166,13 @@
   !not used yet...
   !use specfem_par_full_gravity, only: SAVE_JACOBIAN_ENSIGHT,storedetjac_cm
 
-  use siem_gll_library, only: kdble,zwgljd,dshape_function_hex8,gll_quadrature
+  use siem_gll_library, only: kdble,NGNOD_INF,zwgljd,dshape_function_hex8,gll_quadrature
   use siem_math_library, only: determinant,invert
 
   implicit none
 
-  integer,parameter :: ngnod = 8
-
   integer :: i,i_elmt,ier
-  integer :: ignod(ngnod)
+  integer :: ignod(NGNOD_INF)
   real(kind=CUSTOM_REAL) :: detjac,rho(NGLLCUBE)
 
   real(kind=kdble),parameter :: jalpha=0.0_kdble,jbeta=0.0_kdble,zero=0.0_kdble
@@ -186,7 +184,8 @@
 
   real(kind=kdble),dimension(:,:,:), allocatable :: dshape_hex8,dlagrange_gll
 
-  real(kind=CUSTOM_REAL) :: coord(ngnod,NDIM),jac(NDIM,NDIM)
+  real(kind=CUSTOM_REAL) :: coord(NGNOD_INF,NDIM)
+  real(kind=CUSTOM_REAL) :: jac(NDIM,NDIM)
 
   double precision :: sizeval
 
@@ -239,7 +238,7 @@
   storerhojw_oc(:,:) = 0.0_CUSTOM_REAL
 
   ! allocates local arrays to avoid error about exceeding stack size limit
-  allocate(dshape_hex8(NDIM,ngnod,NGLLCUBE), &
+  allocate(dshape_hex8(NDIM,NGNOD_INF,NGLLCUBE), &
            dlagrange_gll(NDIM,NGLLCUBE,NGLLCUBE))
   dshape_hex8(:,:,:) = 0.0_kdble
   dlagrange_gll(:,:,:) = 0.0_kdble
@@ -255,7 +254,7 @@
   call zwgljd(zetagll,wzgll,NGLLZ,jalpha,jbeta)
 
   ! get derivatives of shape functions for 8-noded hex
-  call dshape_function_hex8(NDIM,ngnod,NGLLX,NGLLY,NGLLZ,NGLLCUBE,xigll,etagll,zetagll,dshape_hex8)
+  call dshape_function_hex8(NDIM,NGNOD_INF,NGLLX,NGLLY,NGLLZ,NGLLCUBE,xigll,etagll,zetagll,dshape_hex8)
 
   ! compute gauss-lobatto-legendre quadrature information
   call gll_quadrature(NDIM,NGLLX,NGLLY,NGLLZ,NGLLCUBE,gll_points,gll_weights,lagrange_gll,dlagrange_gll)
@@ -395,15 +394,13 @@
     storederiv_ic1,storerhojw_ic1, &
     storederiv_oc1,storerhojw_oc1
 
-  use siem_gll_library, only: kdble,zwgljd,dshape_function_hex8,gll_quadrature
+  use siem_gll_library, only: kdble,NGNOD_INF,zwgljd,dshape_function_hex8,gll_quadrature
   use siem_math_library, only: determinant,invert
 
   implicit none
 
-  integer,parameter :: ngnod = 8
-
   integer :: i,i_elmt,ier
-  integer :: ignod(ngnod)
+  integer :: ignod(NGNOD_INF)
   real(kind=CUSTOM_REAL) :: detjac,rho(NGLLCUBE_INF)
 
   real(kind=kdble),parameter :: jalpha=0.0_kdble,jbeta=0.0_kdble,zero=0.0_kdble
@@ -412,9 +409,10 @@
                       zetagll(NGLLZ_INF),wzgll(NGLLZ_INF)
 
   real(kind=kdble) :: gll_weights1(NGLLCUBE_INF),gll_points1(NDIM,NGLLCUBE_INF), &
-                      dlagrange_gll1(NDIM,NGLLCUBE_INF,NGLLCUBE_INF),dshape_hex8(NDIM,ngnod,NGLLCUBE_INF)
+                      dlagrange_gll1(NDIM,NGLLCUBE_INF,NGLLCUBE_INF),dshape_hex8(NDIM,NGNOD_INF,NGLLCUBE_INF)
 
-  real(kind=CUSTOM_REAL) :: coord(ngnod,NDIM),jac(NDIM,NDIM)
+  real(kind=CUSTOM_REAL) :: coord(NGNOD_INF,NDIM)
+  real(kind=CUSTOM_REAL) :: jac(NDIM,NDIM)
 
   double precision :: sizeval
 
@@ -476,7 +474,7 @@
   call zwgljd(zetagll,wzgll,NGLLZ_INF,jalpha,jbeta)
 
   ! get derivatives of shape functions for 8-noded hex
-  call dshape_function_hex8(NDIM,ngnod,NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF,xigll,etagll,zetagll,dshape_hex8)
+  call dshape_function_hex8(NDIM,NGNOD_INF,NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF,xigll,etagll,zetagll,dshape_hex8)
 
   ! compute gauss-lobatto-legendre quadrature information
   call gll_quadrature(NDIM,NGLLX_INF,NGLLY_INF,NGLLZ_INF,NGLLCUBE_INF,gll_points1,gll_weights1,lagrange_gll1,dlagrange_gll1)
@@ -1050,7 +1048,7 @@
 
   character(len=12) :: spm
   character(len=60) :: fname
-
+  integer :: ier
   integer :: gmin,gmax
 
   ! checks if anything to do
@@ -1100,7 +1098,8 @@
           NSPEC_INFINITE*(nedof_inf1*nedof_inf1)
 
   allocate(col0(nmax1),row0(nmax1),gcol0(nmax1),grow0(nmax1))
-  col0(:) = 0; row0(:) = 0; gcol0(:) = 0; grow0(:) = 0
+  col0(:) = 0; row0(:) = 0
+  gcol0(:) = 0; grow0(:) = 0
 
   !debug
   if (myrank == 0) then
@@ -1152,28 +1151,34 @@
   ! read global degrees of freedoms from DATABASE files (created by running xgindex3D)
   write(spm,*) myrank
   fname='DATABASES_MPI/gdof1_proc'//trim(adjustl(spm))
-  open(10,file=fname,action='read',status='old')
+
+  open(IIN,file=trim(fname),action='read',status='old',iostat=ier)
+  if (ier /= 0 ) then
+    print *,'Error: could not open file: ',trim(fname)
+    print *,'       Please check that xgindex3D was run prior to this simulation.'
+    call exit_MPI(myrank,'Error opening file gdof1_proc_*** for reading')
+  endif
   ! inner core
-  read(10,*) nglob_ic1                   ! Global DOF in inner core
+  read(IIN,*) nglob_ic1                   ! Global DOF in inner core
   allocate(ggdof_ic1(NNDOF,nglob_ic1))
-  read(10,*) ggdof_ic1
+  read(IIN,*) ggdof_ic1
   ! outer core
-  read(10,*) nglob_oc1                   ! Global DOF in outer core
+  read(IIN,*) nglob_oc1                   ! Global DOF in outer core
   allocate(ggdof_oc1(NNDOF,nglob_oc1))
-  read(10,*) ggdof_oc1
+  read(IIN,*) ggdof_oc1
   ! crust mantle
-  read(10,*) nglob_cm1                   ! Global DOF in crust mantle
+  read(IIN,*) nglob_cm1                   ! Global DOF in crust mantle
   allocate(ggdof_cm1(NNDOF,nglob_cm1))
-  read(10,*) ggdof_cm1
+  read(IIN,*) ggdof_cm1
   ! transition
-  read(10,*) nglob_trinf1                ! Global DOF in transition
+  read(IIN,*) nglob_trinf1                ! Global DOF in transition
   allocate(ggdof_trinf1(NNDOF,nglob_trinf1))
-  read(10,*) ggdof_trinf1
+  read(IIN,*) ggdof_trinf1
   ! infinite elements
-  read(10,*) nglob_inf1                  ! Global DOF in infinite
+  read(IIN,*) nglob_inf1                  ! Global DOF in infinite
   allocate(ggdof_inf1(NNDOF,nglob_inf1))
-  read(10,*) ggdof_inf1
-  close(10)
+  read(IIN,*) ggdof_inf1
+  close(IIN)
 
   ! Find maximum ID (dof value) for any of the regions
   ngdof1 = maxscal(maxval( (/ maxval(ggdof_ic1),maxval(ggdof_oc1), &
@@ -1253,23 +1258,25 @@
   enddo
 
   ! transition infinite
-  do i_elmt = 1,NSPEC_TRINFINITE
-    gdof_elmt1(:) = reshape(gdof_trinf1(inode_elmt_trinf1(:,i_elmt)),(/NEDOF1/))
-    ggdof_elmt1(:) = reshape(ggdof_trinf1(:,inode_elmt_trinf1(:,i_elmt)),(/NEDOF1/))
-    do i = 1,nedof_trinf1
-      do j = 1,nedof_trinf1
-        igdof = gdof_elmt1(imap_trinf(i))
-        jgdof = gdof_elmt1(imap_trinf(j))
-        if (igdof > 0 .and. jgdof > 0 .and. storekmat_trinfinite1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
-          ncount = ncount+1
-          row0(ncount) = igdof
-          col0(ncount) = jgdof
-          grow0(ncount) = ggdof_elmt1(imap_trinf(i))
-          gcol0(ncount) = ggdof_elmt1(imap_trinf(j))
-        endif
+  if (ADD_TRINF) then
+    do i_elmt = 1,NSPEC_TRINFINITE
+      gdof_elmt1(:) = reshape(gdof_trinf1(inode_elmt_trinf1(:,i_elmt)),(/NEDOF1/))
+      ggdof_elmt1(:) = reshape(ggdof_trinf1(:,inode_elmt_trinf1(:,i_elmt)),(/NEDOF1/))
+      do i = 1,nedof_trinf1
+        do j = 1,nedof_trinf1
+          igdof = gdof_elmt1(imap_trinf(i))
+          jgdof = gdof_elmt1(imap_trinf(j))
+          if (igdof > 0 .and. jgdof > 0 .and. storekmat_trinfinite1(i,j,i_elmt) /= 0.0_CUSTOM_REAL) then
+            ncount = ncount+1
+            row0(ncount) = igdof
+            col0(ncount) = jgdof
+            grow0(ncount) = ggdof_elmt1(imap_trinf(i))
+            gcol0(ncount) = ggdof_elmt1(imap_trinf(j))
+          endif
+        enddo
       enddo
     enddo
-  enddo
+  endif
 
   ! infinite
   do i_elmt = 1,NSPEC_INFINITE
@@ -1335,7 +1342,7 @@
   l2gdof1(gdof_ic1(:)) = ggdof_ic1(1,:)
   l2gdof1(gdof_oc1(:)) = ggdof_oc1(1,:)
   l2gdof1(gdof_cm1(:)) = ggdof_cm1(1,:)
-  l2gdof1(gdof_trinf1(:)) = ggdof_trinf1(1,:)
+  if (ADD_TRINF) l2gdof1(gdof_trinf1(:)) = ggdof_trinf1(1,:)
   l2gdof1(gdof_inf1(:)) = ggdof_inf1(1,:)
 
   do i = 1,nsparse1
@@ -1392,25 +1399,31 @@
 
     ! read global degrees of freedoms from DATABASE files
     ! inner core
-    write(spm,*)myrank
+    write(spm,*) myrank
     fname='DATABASES_MPI/gdof_proc'//trim(adjustl(spm))
-    open(10,file=fname,action='read',status='old')
-    read(10,*)nglob_ic !NGLOB_INNER_CORE
+
+    open(IIN,file=trim(fname),action='read',status='old',iostat=ier)
+    if (ier /= 0 ) then
+      print *,'Error: could not open file: ',trim(fname)
+      print *,'       Please check that xgindex3D was run prior to this simulation.'
+      call exit_MPI(myrank,'Error opening file gdof_proc_*** for reading')
+    endif
+    read(IIN,*)nglob_ic !NGLOB_INNER_CORE
     allocate(ggdof_ic(NNDOF,nglob_ic))
-    read(10,*)ggdof_ic
-    read(10,*)nglob_oc !NGLOB_OUTER_CORE
+    read(IIN,*)ggdof_ic
+    read(IIN,*)nglob_oc !NGLOB_OUTER_CORE
     allocate(ggdof_oc(NNDOF,nglob_oc))
-    read(10,*)ggdof_oc
-    read(10,*)nglob_cm !NGLOB_CRUST_MANTLE
+    read(IIN,*)ggdof_oc
+    read(IIN,*)nglob_cm !NGLOB_CRUST_MANTLE
     allocate(ggdof_cm(NNDOF,nglob_cm))
-    read(10,*)ggdof_cm
-    read(10,*)nglob_trinf !NGLOB_TRINFINITE
+    read(IIN,*)ggdof_cm
+    read(IIN,*)nglob_trinf !NGLOB_TRINFINITE
     allocate(ggdof_trinf(NNDOF,nglob_trinf))
-    read(10,*)ggdof_trinf
-    read(10,*)nglob_inf !NGLOB_INFINITE
+    read(IIN,*)ggdof_trinf
+    read(IIN,*)nglob_inf !NGLOB_INFINITE
     allocate(ggdof_inf(NNDOF,nglob_inf))
-    read(10,*)ggdof_inf
-    close(10)
+    read(IIN,*)ggdof_inf
+    close(IIN)
 
     ngdof = maxscal(maxval( (/ maxval(ggdof_ic),maxval(ggdof_oc),maxval(ggdof_cm), &
                                maxval(ggdof_trinf),maxval(ggdof_inf) /) ))

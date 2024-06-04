@@ -90,6 +90,10 @@ program convert_model_file_adios
   call world_size(sizeprocs)
   call world_rank(myrank)
 
+  ! initialization
+  is_model_file_conversion = .false.
+  convert_format = 0
+
   ! reads input arguments
   do i = 1, 4
     call get_command_argument(i,arg)

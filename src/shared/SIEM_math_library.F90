@@ -36,127 +36,208 @@ module siem_math_library
 
   use constants, only: CUSTOM_REAL
 
-contains
+  implicit none
 
+  private
+
+  public :: determinant
+  public :: invert
+
+  public :: i_uniinv
+  public :: compute_g_gradg
+  public :: compute_g_gradg_elliptical
+
+  !public :: dotmat
+
+contains
 
   function determinant(jac) result(det)
 
-  ! this function returns the determinant of a 1x1, 2x2 or 3x3 jacobian matrix.
-
-  ! the routine is following the idea from
-  ! Smith and Griffiths (2004): Programming the finite element method
-  ! see: https://github.com/ParaFEM/ParaFEM
+  ! this function returns the determinant of a 3x3 jacobian matrix.
 
   implicit none
-  real(kind=CUSTOM_REAL),intent(in) :: jac(:,:)
+  real(kind=CUSTOM_REAL),intent(in) :: jac(3,3)
   real(kind=CUSTOM_REAL) :: det
-  integer :: it
 
-  it = ubound(jac,1)
-
-  select case(it)
-  case(1)
-    det = 1.0_CUSTOM_REAL
-  case(2)
-    det = jac(1,1)*jac(2,2) - jac(1,2)*jac(2,1)
-  case(3)
-    det = jac(1,1)*(jac(2,2)*jac(3,3) - jac(3,2)*jac(2,3))
-    det = det - jac(1,2)*(jac(2,1)*jac(3,3) - jac(3,1)*jac(2,3))
-    det = det + jac(1,3)*(jac(2,1)*jac(3,2) - jac(3,1)*jac(2,2))
-  case default
-    stop 'ERROR: wrong dimension for jacobian matrix!'
-  end select
-
-  return
+  det = jac(1,1) * (jac(2,2)*jac(3,3) - jac(3,2)*jac(2,3))
+  det = det - jac(1,2) * (jac(2,1)*jac(3,3) - jac(3,1)*jac(2,3))
+  det = det + jac(1,3) * (jac(2,1)*jac(3,2) - jac(3,1)*jac(2,2))
 
   end function determinant
 
   !=======================================================
 
+! not used yet...
+
+!  function determinant_generic(jac) result(det)
+!
+!  ! this generic function returns the determinant of a 1x1, 2x2 or 3x3 jacobian matrix.
+!
+!  ! the routine is following the idea from
+!  ! Smith and Griffiths (2004): Programming the finite element method
+!  ! see: https://github.com/ParaFEM/ParaFEM
+!
+!  implicit none
+!  real(kind=CUSTOM_REAL),intent(in) :: jac(:,:)
+!  real(kind=CUSTOM_REAL) :: det
+!  integer :: it
+!
+!  it = ubound(jac,1)
+!
+!  select case(it)
+!  case(1)
+!    det = 1.0_CUSTOM_REAL
+!  case(2)
+!    det = jac(1,1)*jac(2,2) - jac(1,2)*jac(2,1)
+!  case(3)
+!    det = jac(1,1)*(jac(2,2)*jac(3,3) - jac(3,2)*jac(2,3))
+!    det = det - jac(1,2)*(jac(2,1)*jac(3,3) - jac(3,1)*jac(2,3))
+!    det = det + jac(1,3)*(jac(2,1)*jac(3,2) - jac(3,1)*jac(2,2))
+!  case default
+!    stop 'ERROR: wrong dimension for jacobian matrix!'
+!  end select
+!
+!  return
+!
+!  end function determinant_generic
+
+  !=======================================================
+
   subroutine invert(matrix)
 
-  ! this subroutine inverts a small square matrix onto itself.
-
-  ! the routine is following the idea from
-  ! Smith and Griffiths (2004): Programming the finite element method
-  ! see: https://github.com/ParaFEM/ParaFEM
+  ! this subroutine inverts a small square 3x3 matrix onto itself.
 
   implicit none
-  real(kind=CUSTOM_REAL),intent(inout) :: matrix(:,:)
-  real(kind=CUSTOM_REAL) :: det,j11,j12,j13,j21,j22,j23,j31,j32,j33,con
-  integer :: ndim,i,k
+  real(kind=CUSTOM_REAL),intent(inout) :: matrix(3,3)
+  real(kind=CUSTOM_REAL) :: det,detInv
+  real(kind=CUSTOM_REAL) :: j11,j12,j13,j21,j22,j23,j31,j32,j33
 
-  ndim = ubound(matrix,1)
+  det = matrix(1,1) * (matrix(2,2)*matrix(3,3) - matrix(3,2)*matrix(2,3))
+  det = det - matrix(1,2) * (matrix(2,1)*matrix(3,3) - matrix(3,1)*matrix(2,3))
+  det = det + matrix(1,3) * (matrix(2,1)*matrix(3,2) - matrix(3,1)*matrix(2,2))
 
-  if (ndim == 2) then
-    det = matrix(1,1)*matrix(2,2) - matrix(1,2)*matrix(2,1)
-    j11 = matrix(1,1)
-    matrix(1,1) = matrix(2,2)
-    matrix(2,2) = j11
-    matrix(1,2) = -matrix(1,2)
-    matrix(2,1) = -matrix(2,1)
-    matrix = matrix/det
-
-  else if (ndim == 3) then
-    det = matrix(1,1)*(matrix(2,2)*matrix(3,3)-matrix(3,2)*matrix(2,3))
-    det = det-matrix(1,2)*(matrix(2,1)*matrix(3,3)-matrix(3,1)*matrix(2,3))
-    det = det+matrix(1,3)*(matrix(2,1)*matrix(3,2)-matrix(3,1)*matrix(2,2))
-
-    j11 = matrix(2,2)*matrix(3,3)-matrix(3,2)*matrix(2,3)
-    j21 = -matrix(2,1)*matrix(3,3)+matrix(3,1)*matrix(2,3)
-    j31 = matrix(2,1)*matrix(3,2)-matrix(3,1)*matrix(2,2)
-    j12 = -matrix(1,2)*matrix(3,3)+matrix(3,2)*matrix(1,3)
-    j22 = matrix(1,1)*matrix(3,3)-matrix(3,1)*matrix(1,3)
-    j32 = -matrix(1,1)*matrix(3,2)+matrix(3,1)*matrix(1,2)
-    j13 = matrix(1,2)*matrix(2,3)-matrix(2,2)*matrix(1,3)
-    j23 = -matrix(1,1)*matrix(2,3)+matrix(2,1)*matrix(1,3)
-    j33 = matrix(1,1)*matrix(2,2)-matrix(2,1)*matrix(1,2)
-
-    matrix(1,1) = j11
-    matrix(1,2) = j12
-    matrix(1,3) = j13
-    matrix(2,1) = j21
-    matrix(2,2) = j22
-    matrix(2,3) = j23
-    matrix(3,1) = j31
-    matrix(3,2) = j32
-    matrix(3,3) = j33
-    matrix = matrix/det
-
-  else
-    do k = 1,ndim
-      con = matrix(k,k)
-      matrix(k,k) = 1.0_CUSTOM_REAL
-      matrix(k,:) = matrix(k,:)/con
-      do i = 1,ndim
-        if (i /= k) then
-          con = matrix(i,k)
-          matrix(i,k) = 0.0_CUSTOM_REAL
-          matrix(i,:) = matrix(i,:) - matrix(k,:)*con
-        endif
-      enddo
-    enddo
+  if (det == 0.0_CUSTOM_REAL) then
+    matrix(:,:) = 0.0_CUSTOM_REAL
+    return
   endif
+
+  detInv = 1.0_CUSTOM_REAL / det
+
+  j11 = matrix(2,2)*matrix(3,3) - matrix(3,2)*matrix(2,3)
+  j21 = -matrix(2,1)*matrix(3,3) + matrix(3,1)*matrix(2,3)
+  j31 = matrix(2,1)*matrix(3,2) - matrix(3,1)*matrix(2,2)
+  j12 = -matrix(1,2)*matrix(3,3) + matrix(3,2)*matrix(1,3)
+  j22 = matrix(1,1)*matrix(3,3) - matrix(3,1)*matrix(1,3)
+  j32 = -matrix(1,1)*matrix(3,2) + matrix(3,1)*matrix(1,2)
+  j13 = matrix(1,2)*matrix(2,3) - matrix(2,2)*matrix(1,3)
+  j23 = -matrix(1,1)*matrix(2,3) + matrix(2,1)*matrix(1,3)
+  j33 = matrix(1,1)*matrix(2,2) - matrix(2,1)*matrix(1,2)
+
+  matrix(1,1) = j11
+  matrix(1,2) = j12
+  matrix(1,3) = j13
+  matrix(2,1) = j21
+  matrix(2,2) = j22
+  matrix(2,3) = j23
+  matrix(3,1) = j31
+  matrix(3,2) = j32
+  matrix(3,3) = j33
+
+  matrix(:,:) = matrix(:,:) * detInv
 
   end subroutine invert
 
   !=======================================================
 
-  function dotmat(m,n,x1,x2) result(dotm)
+! not used yet...
 
-  implicit none
-  integer,intent(in) :: m,n
-  real(kind=CUSTOM_REAL),intent(in) :: x1(m,n),x2(m,n)
-  real(kind=CUSTOM_REAL) :: dotm(n)
-  integer :: i
+!  subroutine invert_generic(matrix)
+!
+!  ! this subroutine inverts a small square matrix onto itself.
+!
+!  ! the routine is following the idea from
+!  ! Smith and Griffiths (2004): Programming the finite element method
+!  ! see: https://github.com/ParaFEM/ParaFEM
+!
+!  implicit none
+!  real(kind=CUSTOM_REAL),intent(inout) :: matrix(:,:)
+!  real(kind=CUSTOM_REAL) :: det,j11,j12,j13,j21,j22,j23,j31,j32,j33,con
+!  integer :: ndim,i,k
+!
+!  ndim = ubound(matrix,1)
+!
+!  if (ndim == 2) then
+!    det = matrix(1,1)*matrix(2,2) - matrix(1,2)*matrix(2,1)
+!    j11 = matrix(1,1)
+!    matrix(1,1) = matrix(2,2)
+!    matrix(2,2) = j11
+!    matrix(1,2) = -matrix(1,2)
+!    matrix(2,1) = -matrix(2,1)
+!    matrix = matrix/det
+!
+!  else if (ndim == 3) then
+!    det = matrix(1,1)*(matrix(2,2)*matrix(3,3)-matrix(3,2)*matrix(2,3))
+!    det = det-matrix(1,2)*(matrix(2,1)*matrix(3,3)-matrix(3,1)*matrix(2,3))
+!    det = det+matrix(1,3)*(matrix(2,1)*matrix(3,2)-matrix(3,1)*matrix(2,2))
+!
+!    j11 = matrix(2,2)*matrix(3,3)-matrix(3,2)*matrix(2,3)
+!    j21 = -matrix(2,1)*matrix(3,3)+matrix(3,1)*matrix(2,3)
+!    j31 = matrix(2,1)*matrix(3,2)-matrix(3,1)*matrix(2,2)
+!    j12 = -matrix(1,2)*matrix(3,3)+matrix(3,2)*matrix(1,3)
+!    j22 = matrix(1,1)*matrix(3,3)-matrix(3,1)*matrix(1,3)
+!    j32 = -matrix(1,1)*matrix(3,2)+matrix(3,1)*matrix(1,2)
+!    j13 = matrix(1,2)*matrix(2,3)-matrix(2,2)*matrix(1,3)
+!    j23 = -matrix(1,1)*matrix(2,3)+matrix(2,1)*matrix(1,3)
+!    j33 = matrix(1,1)*matrix(2,2)-matrix(2,1)*matrix(1,2)
+!
+!    matrix(1,1) = j11
+!    matrix(1,2) = j12
+!    matrix(1,3) = j13
+!    matrix(2,1) = j21
+!    matrix(2,2) = j22
+!    matrix(2,3) = j23
+!    matrix(3,1) = j31
+!    matrix(3,2) = j32
+!    matrix(3,3) = j33
+!    matrix = matrix/det
+!
+!  else
+!    do k = 1,ndim
+!      con = matrix(k,k)
+!      matrix(k,k) = 1.0_CUSTOM_REAL
+!      matrix(k,:) = matrix(k,:)/con
+!      do i = 1,ndim
+!        if (i /= k) then
+!          con = matrix(i,k)
+!          matrix(i,k) = 0.0_CUSTOM_REAL
+!          matrix(i,:) = matrix(i,:) - matrix(k,:)*con
+!        endif
+!      enddo
+!    enddo
+!  endif
+!
+!  end subroutine invert_generic
+!
+  !=======================================================
 
-  do i = 1,n
-    dotm(i) = dot_product(x1(:,i),x2(:,i))
-  enddo
 
-  return
+! not used ...
 
-  end function dotmat
+!  function dotmat(m,n,x1,x2) result(dotm)
+!
+!  implicit none
+!  integer,intent(in) :: m,n
+!  real(kind=CUSTOM_REAL),intent(in) :: x1(m,n),x2(m,n)
+!  real(kind=CUSTOM_REAL) :: dotm(n)
+!  integer :: i
+!
+!  do i = 1,n
+!    dotm(i) = dot_product(x1(:,i),x2(:,i))
+!  enddo
+!
+!  return
+!
+!  end function dotmat
 
   !=======================================================
 
@@ -406,27 +487,30 @@ contains
   unitphi(1) = -sphi;   unitphi(2) = cphi;    unitphi(3) = zero
 
   end subroutine dspherical_unitvect
+
   !=======================================================
 
-  subroutine spherical_unitvect(theta,phi,unitr,unittheta,unitphi)
+! not used yet...
 
-  ! this function computes unit vectors in spherical coordinates at a point
-  ! defined by (r,theta,phi)
-
-  implicit none
-  real(kind=CUSTOM_REAL),intent(in) :: theta,phi
-  real(kind=CUSTOM_REAL),intent(out) :: unitr(3),unittheta(3),unitphi(3)
-  real(kind=CUSTOM_REAL) :: ctheta,cphi,stheta,sphi
-  real(kind=CUSTOM_REAL),parameter :: zero=0.0_CUSTOM_REAL
-
-  ctheta = cos(theta); stheta = sin(theta)
-  cphi = cos(phi);     sphi = sin(phi)
-
-  unitr(1) = stheta*cphi;   unitr(2) = stheta*sphi;   unitr(3) = ctheta
-  unittheta(1) = ctheta*cphi; unittheta(2) = ctheta*sphi; unittheta(3) = -stheta
-  unitphi(1) = -sphi;   unitphi(2) = cphi;    unitphi(3) = zero
-
-  end subroutine spherical_unitvect
+!  subroutine spherical_unitvect(theta,phi,unitr,unittheta,unitphi)
+!
+!  ! this function computes unit vectors in spherical coordinates at a point
+!  ! defined by (r,theta,phi)
+!
+!  implicit none
+!  real(kind=CUSTOM_REAL),intent(in) :: theta,phi
+!  real(kind=CUSTOM_REAL),intent(out) :: unitr(3),unittheta(3),unitphi(3)
+!  real(kind=CUSTOM_REAL) :: ctheta,cphi,stheta,sphi
+!  real(kind=CUSTOM_REAL),parameter :: zero=0.0_CUSTOM_REAL
+!
+!  ctheta = cos(theta); stheta = sin(theta)
+!  cphi = cos(phi);     sphi = sin(phi)
+!
+!  unitr(1) = stheta*cphi;   unitr(2) = stheta*sphi;   unitr(3) = ctheta
+!  unittheta(1) = ctheta*cphi; unittheta(2) = ctheta*sphi; unittheta(3) = -stheta
+!  unitphi(1) = -sphi;   unitphi(2) = cphi;    unitphi(3) = zero
+!
+!  end subroutine spherical_unitvect
 
   !=======================================================
 
@@ -448,21 +532,23 @@ contains
 
   !=======================================================
 
-  subroutine legendreP2_costheta(theta,P2,dP2,d2P2)
+! not used yet...
 
-  implicit none
-  real(kind=CUSTOM_REAL),intent(in) :: theta ! radian
-  real(kind=CUSTOM_REAL),intent(out) :: P2,dP2,d2P2
-  real(kind=CUSTOM_REAL) :: ctheta
-  real(kind=CUSTOM_REAL),parameter :: half=0.5_CUSTOM_REAL,one=1.0_CUSTOM_REAL,two=2.0_CUSTOM_REAL,three=3.0_CUSTOM_REAL
-
-  ctheta = cos(theta)
-
-  P2 = half*(three*ctheta*ctheta-one)
-  dP2 = -three*sin(theta)*ctheta
-  d2P2 = -3*cos(two*theta)
-
-  end subroutine legendreP2_costheta
+!  subroutine legendreP2_costheta(theta,P2,dP2,d2P2)
+!
+!  implicit none
+!  real(kind=CUSTOM_REAL),intent(in) :: theta ! radian
+!  real(kind=CUSTOM_REAL),intent(out) :: P2,dP2,d2P2
+!  real(kind=CUSTOM_REAL) :: ctheta
+!  real(kind=CUSTOM_REAL),parameter :: half=0.5_CUSTOM_REAL,one=1.0_CUSTOM_REAL,two=2.0_CUSTOM_REAL,three=3.0_CUSTOM_REAL
+!
+!  ctheta = cos(theta)
+!
+!  P2 = half*(three*ctheta*ctheta-one)
+!  dP2 = -three*sin(theta)*ctheta
+!  d2P2 = -3*cos(two*theta)
+!
+!  end subroutine legendreP2_costheta
 
   !=======================================================
 
@@ -592,23 +678,26 @@ module siem_math_library_mpi
 
   implicit none
 
-  private :: iminscal,fminscal
-  private :: iminvec,fminvec
-  private :: isumscal,fsumscal
-  private :: imaxscal,fmaxscal
-  private :: imaxvec,fmaxvec
+  private
+
+  public :: maxscal
+  public :: minvec
+  public :: maxvec
+
+  public :: dot_product_all_proc
+
 
   ! global sum of a scalar in all processors
-  interface sumscal
-    module procedure isumscal
-    module procedure fsumscal
-  end interface
+  !interface sumscal
+  !  module procedure isumscal
+  !  module procedure fsumscal
+  !end interface
 
   ! global maximum of a scalar in all processors
-  interface minscal
-    module procedure iminscal
-    module procedure fminscal
-  end interface
+  !interface minscal
+  !  module procedure iminscal
+  !  module procedure fminscal
+  !end interface
 
   ! global maximum of a scalar in all processors
   interface maxscal
@@ -630,33 +719,37 @@ module siem_math_library_mpi
 
 contains
 
-  function iminscal(scal) result(gmin)
-  !
-  ! this finds a global minimum of a scalar across the processors
-  !
-  implicit none
-  integer,intent(in)::scal
-  integer :: gmin
+! not used yet ...
 
-  call min_all_all_i(scal,gmin)
-
-  return
-  end function iminscal
+!  function iminscal(scal) result(gmin)
+!  !
+!  ! this finds a global minimum of a scalar across the processors
+!  !
+!  implicit none
+!  integer,intent(in)::scal
+!  integer :: gmin
+!
+!  call min_all_all_i(scal,gmin)
+!
+!  return
+!  end function iminscal
 
   !=======================================================
 
-  function fminscal(scal) result(gmin)
-  !
-  ! this finds a global minimum of a scalar across the processors
-  !
-  implicit none
-  real(kind=CUSTOM_REAL),intent(in)::scal
-  real(kind=CUSTOM_REAL) :: gmin
+! not used yet ...
 
-  call min_all_all_cr(scal,gmin)
-
-  return
-  end function fminscal
+!  function fminscal(scal) result(gmin)
+!  !
+!  ! this finds a global minimum of a scalar across the processors
+!  !
+!  implicit none
+!  real(kind=CUSTOM_REAL),intent(in)::scal
+!  real(kind=CUSTOM_REAL) :: gmin
+!
+!  call min_all_all_cr(scal,gmin)
+!
+!  return
+!  end function fminscal
 
   !=======================================================
 
@@ -746,33 +839,37 @@ contains
 
   !=======================================================
 
-  function isumscal(scal) result(gsum)
-  !
-  ! this finds a global summation of a scalar across the processors
-  !
-  implicit none
-  integer,intent(in)::scal
-  integer :: gsum
+! not used yet...
 
-  call sum_all_all_i(scal,gsum)
-
-  return
-  end function isumscal
+!  function isumscal(scal) result(gsum)
+!  !
+!  ! this finds a global summation of a scalar across the processors
+!  !
+!  implicit none
+!  integer,intent(in)::scal
+!  integer :: gsum
+!
+!  call sum_all_all_i(scal,gsum)
+!
+!  return
+!  end function isumscal
 
   !=======================================================
 
-  function fsumscal(scal) result(gsum)
-  !
-  ! this finds a global summation of a scalar across the processors
-  !
-  implicit none
-  real(kind=CUSTOM_REAL),intent(in)::scal
-  real(kind=CUSTOM_REAL) :: gsum
+! not used yet...
 
-  call sum_all_all_cr(scal,gsum)
-
-  return
-  end function fsumscal
+!  function fsumscal(scal) result(gsum)
+!  !
+!  ! this finds a global summation of a scalar across the processors
+!  !
+!  implicit none
+!  real(kind=CUSTOM_REAL),intent(in)::scal
+!  real(kind=CUSTOM_REAL) :: gsum
+!
+!  call sum_all_all_cr(scal,gsum)
+!
+!  return
+!  end function fsumscal
 
   !=======================================================
 
@@ -806,9 +903,25 @@ end module siem_math_library_mpi
 
 module siem_gll_library
 
-  integer,parameter :: kdble = selected_real_kind(15) ! double precision
+  implicit none
 
-  private :: endw1,endw2,gammaf,jacg
+  private
+
+  ! double precision
+  integer,parameter :: kdble = selected_real_kind(15)
+
+  ! number of shape function for 8-noded Hex
+  integer,parameter :: NGNOD_INF = 8
+
+  public :: kdble
+  public :: NGNOD_INF
+
+  public :: dshape_function_hex8
+  public :: gll_quadrature
+  public :: gll_quadrature3inNGLL
+  public :: lagrange1dGLLAS
+  public :: lagrange1dGENAS
+  public :: zwgljd
 
 contains
 
@@ -841,7 +954,7 @@ contains
   zero = 0.0_kdble,zerotol = 1.0e-12_kdble !1.0e-12_kdble WARNING: please correct immediately
 
   ! check that the parameter file is correct
-  if (ngnod /= 8) then
+  if (ngnod /= NGNOD_INF) then
     stop 'ERROR: elements must have 8 geometrical nodes!'
   endif
 
@@ -942,94 +1055,96 @@ contains
 
 !NOTE: dimension of dshape_hex8 is (ngnod,3) NOT (3,ngnode)
 
-  subroutine dshape_function_hex8_point(ngnod,xi,eta,zeta,dshape_hex8)
+! not used yet...
 
-  implicit none
-  integer,intent(in) :: ngnod
-
-  ! given point
-  double precision :: xi
-  double precision :: eta
-  double precision :: zeta
-
-  ! derivatives of the 3d shape functions
-  double precision :: dshape_hex8(ngnod,3)
-
-  integer :: i_gnod
-
-  double precision :: xip,xim,etap,etam,zetap,zetam
-
-  ! for checking the 3d shape functions
-  double precision :: sum_dshapexi,sum_dshapeeta,sum_dshapezeta
-
-  real(kind=kdble),parameter :: one=1.0_kdble,one_eighth = 0.125_kdble, &
-  zero = 0.0_kdble,zerotol = 1.0e-12_kdble !1.0e-12_kdble WARNING: please correct immediately
-
-  ! check that the parameter file is correct
-  if (ngnod /= 8) then
-    stop 'ERROR: elements must have 8 geometrical nodes!'
-  endif
-
-  ! compute the derivatives of 3d shape functions
-  zetap = one + zeta
-  zetam = one - zeta
-  etap =  one + eta
-  etam =  one - eta
-  xip =   one + xi
-  xim =   one - xi
-
-  dshape_hex8 = zero
-
-  dshape_hex8(1,1) = - one_eighth*etam*zetam
-  dshape_hex8(2,1) = one_eighth*etam*zetam
-  dshape_hex8(3,1) = one_eighth*etap*zetam
-  dshape_hex8(4,1) = - one_eighth*etap*zetam
-  dshape_hex8(5,1) = - one_eighth*etam*zetap
-  dshape_hex8(6,1) = one_eighth*etam*zetap
-  dshape_hex8(7,1) = one_eighth*etap*zetap
-  dshape_hex8(8,1) = - one_eighth*etap*zetap
-
-  dshape_hex8(1,2) = - one_eighth*xim*zetam
-  dshape_hex8(2,2) = - one_eighth*xip*zetam
-  dshape_hex8(3,2) = one_eighth*xip*zetam
-  dshape_hex8(4,2) = one_eighth*xim*zetam
-  dshape_hex8(5,2) = - one_eighth*xim*zetap
-  dshape_hex8(6,2) = - one_eighth*xip*zetap
-  dshape_hex8(7,2) = one_eighth*xip*zetap
-  dshape_hex8(8,2) = one_eighth*xim*zetap
-
-  dshape_hex8(1,3) = - one_eighth*xim*etam
-  dshape_hex8(2,3) = - one_eighth*xip*etam
-  dshape_hex8(3,3) = - one_eighth*xip*etap
-  dshape_hex8(4,3) = - one_eighth*xim*etap
-  dshape_hex8(5,3) = one_eighth*xim*etam
-  dshape_hex8(6,3) = one_eighth*xip*etam
-  dshape_hex8(7,3) = one_eighth*xip*etap
-  dshape_hex8(8,3) = one_eighth*xim*etap
-
-  ! check the shape functions and their derivatives
-  sum_dshapexi = zero
-  sum_dshapeeta = zero
-  sum_dshapezeta = zero
-
-  do i_gnod = 1,ngnod
-    sum_dshapexi = sum_dshapexi + dshape_hex8(i_gnod,1)
-    sum_dshapeeta = sum_dshapeeta + dshape_hex8(i_gnod,2)
-    sum_dshapezeta = sum_dshapezeta + dshape_hex8(i_gnod,3)
-  enddo
-
-  ! sum of derivative of shape functions should be zero
-  if (abs(sum_dshapexi) > zerotol) then
-    stop 'ERROR: derivative xi shape functions!'
-  endif
-  if (abs(sum_dshapeeta) > zerotol) then
-    stop 'ERROR: derivative eta shape functions!'
-  endif
-  if (abs(sum_dshapezeta) > zerotol) then
-    stop 'ERROR: derivative gamma shape functions!'
-  endif
-
-  end subroutine dshape_function_hex8_point
+!  subroutine dshape_function_hex8_point(ngnod,xi,eta,zeta,dshape_hex8)
+!
+!  implicit none
+!  integer,intent(in) :: ngnod
+!
+!  ! given point
+!  double precision :: xi
+!  double precision :: eta
+!  double precision :: zeta
+!
+!  ! derivatives of the 3d shape functions
+!  double precision :: dshape_hex8(ngnod,3)
+!
+!  integer :: i_gnod
+!
+!  double precision :: xip,xim,etap,etam,zetap,zetam
+!
+!  ! for checking the 3d shape functions
+!  double precision :: sum_dshapexi,sum_dshapeeta,sum_dshapezeta
+!
+!  real(kind=kdble),parameter :: one=1.0_kdble,one_eighth = 0.125_kdble, &
+!  zero = 0.0_kdble,zerotol = 1.0e-12_kdble !1.0e-12_kdble WARNING: please correct immediately
+!
+!  ! check that the parameter file is correct
+!  if (ngnod /= NGNOD_INF) then
+!    stop 'ERROR: elements must have 8 geometrical nodes!'
+!  endif
+!
+!  ! compute the derivatives of 3d shape functions
+!  zetap = one + zeta
+!  zetam = one - zeta
+!  etap =  one + eta
+!  etam =  one - eta
+!  xip =   one + xi
+!  xim =   one - xi
+!
+!  dshape_hex8 = zero
+!
+!  dshape_hex8(1,1) = - one_eighth*etam*zetam
+!  dshape_hex8(2,1) = one_eighth*etam*zetam
+!  dshape_hex8(3,1) = one_eighth*etap*zetam
+!  dshape_hex8(4,1) = - one_eighth*etap*zetam
+!  dshape_hex8(5,1) = - one_eighth*etam*zetap
+!  dshape_hex8(6,1) = one_eighth*etam*zetap
+!  dshape_hex8(7,1) = one_eighth*etap*zetap
+!  dshape_hex8(8,1) = - one_eighth*etap*zetap
+!
+!  dshape_hex8(1,2) = - one_eighth*xim*zetam
+!  dshape_hex8(2,2) = - one_eighth*xip*zetam
+!  dshape_hex8(3,2) = one_eighth*xip*zetam
+!  dshape_hex8(4,2) = one_eighth*xim*zetam
+!  dshape_hex8(5,2) = - one_eighth*xim*zetap
+!  dshape_hex8(6,2) = - one_eighth*xip*zetap
+!  dshape_hex8(7,2) = one_eighth*xip*zetap
+!  dshape_hex8(8,2) = one_eighth*xim*zetap
+!
+!  dshape_hex8(1,3) = - one_eighth*xim*etam
+!  dshape_hex8(2,3) = - one_eighth*xip*etam
+!  dshape_hex8(3,3) = - one_eighth*xip*etap
+!  dshape_hex8(4,3) = - one_eighth*xim*etap
+!  dshape_hex8(5,3) = one_eighth*xim*etam
+!  dshape_hex8(6,3) = one_eighth*xip*etam
+!  dshape_hex8(7,3) = one_eighth*xip*etap
+!  dshape_hex8(8,3) = one_eighth*xim*etap
+!
+!  ! check the shape functions and their derivatives
+!  sum_dshapexi = zero
+!  sum_dshapeeta = zero
+!  sum_dshapezeta = zero
+!
+!  do i_gnod = 1,ngnod
+!    sum_dshapexi = sum_dshapexi + dshape_hex8(i_gnod,1)
+!    sum_dshapeeta = sum_dshapeeta + dshape_hex8(i_gnod,2)
+!    sum_dshapezeta = sum_dshapezeta + dshape_hex8(i_gnod,3)
+!  enddo
+!
+!  ! sum of derivative of shape functions should be zero
+!  if (abs(sum_dshapexi) > zerotol) then
+!    stop 'ERROR: derivative xi shape functions!'
+!  endif
+!  if (abs(sum_dshapeeta) > zerotol) then
+!    stop 'ERROR: derivative eta shape functions!'
+!  endif
+!  if (abs(sum_dshapezeta) > zerotol) then
+!    stop 'ERROR: derivative gamma shape functions!'
+!  endif
+!
+!  end subroutine dshape_function_hex8_point
 
 !
 !===============================================================================
@@ -1175,39 +1290,41 @@ contains
 ! this subroutine computes lagrange polynomials and their derivatives defined on
 ! GLL points at an arbitrary point
 
-  subroutine gll_lagrange3d_point(ndim,ngllx,nglly,ngllz,ngll,xi,eta,zeta, &
-                                  lagrange_gll,dlagrange_gll)
+! not used yet...
 
-  implicit none
-  integer,intent(in) :: ndim,ngllx,nglly,ngllz,ngll
-  real(kind=kdble),intent(in) :: xi,eta,zeta
-  real(kind=kdble),dimension(ngll),intent(out) :: lagrange_gll
-  real(kind=kdble),dimension(ndim,ngll),intent(out) :: dlagrange_gll
-
-  integer :: i,j,k,n
-  real(kind=kdble),dimension(ngllx) :: lagrange_x,lagrange_dx
-  real(kind=kdble),dimension(nglly) :: lagrange_y,lagrange_dy
-  real(kind=kdble),dimension(ngllz) :: lagrange_z,lagrange_dz
-
-  ! compute 1d lagrange polynomials
-  call lagrange1d(ngllx,xi,lagrange_x,lagrange_dx)
-  call lagrange1d(nglly,eta,lagrange_y,lagrange_dy)
-  call lagrange1d(ngllz,zeta,lagrange_z,lagrange_dz)
-
-  n = 0
-  do k = 1,ngllz
-    do j = 1,nglly
-      do i = 1,ngllx
-        n = n+1
-        lagrange_gll(n)=lagrange_x(i)*lagrange_y(j)*lagrange_z(k)
-        dlagrange_gll(1,n)=lagrange_dx(i)*lagrange_y(j)*lagrange_z(k)
-        dlagrange_gll(2,n)=lagrange_x(i)*lagrange_dy(j)*lagrange_z(k)
-        dlagrange_gll(3,n)=lagrange_x(i)*lagrange_y(j)*lagrange_dz(k)
-      enddo
-    enddo
-  enddo
-
-  end subroutine gll_lagrange3d_point
+!  subroutine gll_lagrange3d_point(ndim,ngllx,nglly,ngllz,ngll,xi,eta,zeta, &
+!                                  lagrange_gll,dlagrange_gll)
+!
+!  implicit none
+!  integer,intent(in) :: ndim,ngllx,nglly,ngllz,ngll
+!  real(kind=kdble),intent(in) :: xi,eta,zeta
+!  real(kind=kdble),dimension(ngll),intent(out) :: lagrange_gll
+!  real(kind=kdble),dimension(ndim,ngll),intent(out) :: dlagrange_gll
+!
+!  integer :: i,j,k,n
+!  real(kind=kdble),dimension(ngllx) :: lagrange_x,lagrange_dx
+!  real(kind=kdble),dimension(nglly) :: lagrange_y,lagrange_dy
+!  real(kind=kdble),dimension(ngllz) :: lagrange_z,lagrange_dz
+!
+!  ! compute 1d lagrange polynomials
+!  call lagrange1d(ngllx,xi,lagrange_x,lagrange_dx)
+!  call lagrange1d(nglly,eta,lagrange_y,lagrange_dy)
+!  call lagrange1d(ngllz,zeta,lagrange_z,lagrange_dz)
+!
+!  n = 0
+!  do k = 1,ngllz
+!    do j = 1,nglly
+!      do i = 1,ngllx
+!        n = n+1
+!        lagrange_gll(n)=lagrange_x(i)*lagrange_y(j)*lagrange_z(k)
+!        dlagrange_gll(1,n)=lagrange_dx(i)*lagrange_y(j)*lagrange_z(k)
+!        dlagrange_gll(2,n)=lagrange_x(i)*lagrange_dy(j)*lagrange_z(k)
+!        dlagrange_gll(3,n)=lagrange_x(i)*lagrange_y(j)*lagrange_dz(k)
+!      enddo
+!    enddo
+!  enddo
+!
+!  end subroutine gll_lagrange3d_point
 
 !
 !===========================================
@@ -1279,69 +1396,71 @@ contains
 
 ! this subroutine computes GLL quadrature points and weights for 2D
 
-  subroutine gll_quadrature2d(ndim,ngllx,nglly,ngll,gll_points2d,gll_weights2d, &
-                              lagrange_gll2d,dlagrange_gll2d)
-  implicit none
-  integer,intent(in) :: ndim,ngllx,nglly,ngll
-  real(kind=kdble),dimension(ngll),intent(out) :: gll_weights2d
-  real(kind=kdble),dimension(2,ngll),intent(out) :: gll_points2d
-  real(kind=kdble),dimension(ngll,ngll),intent(out) :: lagrange_gll2d
-  real(kind=kdble),dimension(ndim,ngll,ngll),intent(out) :: dlagrange_gll2d
+! not used yet ...
 
-  real(kind=kdble),parameter :: jacobi_alpha=0.0_kdble,jacobi_beta=0.0_kdble
-  integer :: i,ii,j,n
-  real(kind=kdble) :: xi,eta !,zeta
-  real(kind=kdble),dimension(ngllx) :: gllpx,gllwx ! GLL points and weights
-  real(kind=kdble),dimension(nglly) :: gllpy,gllwy ! GLL points and weights
-  real(kind=kdble),dimension(ngllx) :: lagrange_x,lagrange_dx
-  real(kind=kdble),dimension(nglly) :: lagrange_y,lagrange_dy
-
-  ! compute everything in indexed order
-
-  ! GLL points and weights (source: http://mathworld.wolfram.com/lobattoquadrature.html)
-  !gllp(1)=-1.0_kdble   ; gllw(1)=1.0_kdble/3.0_kdble
-  !gllp(2)= 0.0_kdble   ; gllw(2)=4.0_kdble/3.0_kdble
-  !gllp(3)= 1.0_kdble   ; gllw(3)=gllw(1)
-
-  ! get GLL points
-  ! for alpha=beta=0, jacobi polynomial is legendre polynomial
-  ! for ngllx=nglly=ngllz=ngll, need to call only once
-  call zwgljd(gllpx,gllwx,ngllx,jacobi_alpha,jacobi_beta)
-  call zwgljd(gllpy,gllwy,nglly,jacobi_alpha,jacobi_beta)
-
-  n = 0
-  do j = 1,nglly
-    do i = 1,ngllx
-      n = n+1
-      ! integration points
-      gll_points2d(1,n)=gllpx(i)
-      gll_points2d(2,n)=gllpy(j)
-
-      ! integration weights
-      gll_weights2d(n)=gllwx(i)*gllwy(j)
-    enddo
-  enddo
-
-  do ii = 1,ngll ! ngllx*nglly
-    xi=gll_points2d(1,ii)
-    eta=gll_points2d(2,ii)
-
-    ! compute 1d lagrange polynomials
-    ! this can also be computed in a simple manner due to the orthogonality
-    call lagrange1dGLL(ngllx,gllpx,xi,lagrange_x,lagrange_dx)
-    call lagrange1dGLL(nglly,gllpy,eta,lagrange_y,lagrange_dy)
-    n = 0
-    do j = 1,nglly
-      do i = 1,ngllx
-        n = n+1
-        lagrange_gll2d(ii,n)=lagrange_x(i)*lagrange_y(j)
-        dlagrange_gll2d(1,ii,n)=lagrange_dx(i)*lagrange_y(j)
-        dlagrange_gll2d(2,ii,n)=lagrange_x(i)*lagrange_dy(j)
-      enddo
-    enddo
-  enddo
-
-  end subroutine gll_quadrature2d
+!  subroutine gll_quadrature2d(ndim,ngllx,nglly,ngll,gll_points2d,gll_weights2d, &
+!                              lagrange_gll2d,dlagrange_gll2d)
+!  implicit none
+!  integer,intent(in) :: ndim,ngllx,nglly,ngll
+!  real(kind=kdble),dimension(ngll),intent(out) :: gll_weights2d
+!  real(kind=kdble),dimension(2,ngll),intent(out) :: gll_points2d
+!  real(kind=kdble),dimension(ngll,ngll),intent(out) :: lagrange_gll2d
+!  real(kind=kdble),dimension(ndim,ngll,ngll),intent(out) :: dlagrange_gll2d
+!
+!  real(kind=kdble),parameter :: jacobi_alpha=0.0_kdble,jacobi_beta=0.0_kdble
+!  integer :: i,ii,j,n
+!  real(kind=kdble) :: xi,eta !,zeta
+!  real(kind=kdble),dimension(ngllx) :: gllpx,gllwx ! GLL points and weights
+!  real(kind=kdble),dimension(nglly) :: gllpy,gllwy ! GLL points and weights
+!  real(kind=kdble),dimension(ngllx) :: lagrange_x,lagrange_dx
+!  real(kind=kdble),dimension(nglly) :: lagrange_y,lagrange_dy
+!
+!  ! compute everything in indexed order
+!
+!  ! GLL points and weights (source: http://mathworld.wolfram.com/lobattoquadrature.html)
+!  !gllp(1)=-1.0_kdble   ; gllw(1)=1.0_kdble/3.0_kdble
+!  !gllp(2)= 0.0_kdble   ; gllw(2)=4.0_kdble/3.0_kdble
+!  !gllp(3)= 1.0_kdble   ; gllw(3)=gllw(1)
+!
+!  ! get GLL points
+!  ! for alpha=beta=0, jacobi polynomial is legendre polynomial
+!  ! for ngllx=nglly=ngllz=ngll, need to call only once
+!  call zwgljd(gllpx,gllwx,ngllx,jacobi_alpha,jacobi_beta)
+!  call zwgljd(gllpy,gllwy,nglly,jacobi_alpha,jacobi_beta)
+!
+!  n = 0
+!  do j = 1,nglly
+!    do i = 1,ngllx
+!      n = n+1
+!      ! integration points
+!      gll_points2d(1,n)=gllpx(i)
+!      gll_points2d(2,n)=gllpy(j)
+!
+!      ! integration weights
+!      gll_weights2d(n)=gllwx(i)*gllwy(j)
+!    enddo
+!  enddo
+!
+!  do ii = 1,ngll ! ngllx*nglly
+!    xi=gll_points2d(1,ii)
+!    eta=gll_points2d(2,ii)
+!
+!    ! compute 1d lagrange polynomials
+!    ! this can also be computed in a simple manner due to the orthogonality
+!    call lagrange1dGLL(ngllx,gllpx,xi,lagrange_x,lagrange_dx)
+!    call lagrange1dGLL(nglly,gllpy,eta,lagrange_y,lagrange_dy)
+!    n = 0
+!    do j = 1,nglly
+!      do i = 1,ngllx
+!        n = n+1
+!        lagrange_gll2d(ii,n)=lagrange_x(i)*lagrange_y(j)
+!        dlagrange_gll2d(1,ii,n)=lagrange_dx(i)*lagrange_y(j)
+!        dlagrange_gll2d(2,ii,n)=lagrange_x(i)*lagrange_dy(j)
+!      enddo
+!    enddo
+!  enddo
+!
+!  end subroutine gll_quadrature2d
 
 !
 !===========================================
@@ -1349,59 +1468,61 @@ contains
 
 ! this subroutine computes GLL quadrature points and weights for 1D
 
-  subroutine gll_quadrature1d(ndim,ngllx,ngll,gll_points1d,gll_weights1d, &
-                              lagrange_gll1d,dlagrange_gll1d)
-  implicit none
-  integer,intent(in) :: ndim,ngllx,ngll
-  real(kind=kdble),dimension(ngll),intent(out) :: gll_weights1d
-  real(kind=kdble),dimension(ndim,ngll),intent(out) :: gll_points1d
-  real(kind=kdble),dimension(ngll,ngll),intent(out) :: lagrange_gll1d
-  real(kind=kdble),dimension(ndim,ngll,ngll),intent(out) :: dlagrange_gll1d
+! not used yet...
 
-  real(kind=kdble),parameter :: jacobi_alpha=0.0_kdble,jacobi_beta=0.0_kdble
-  integer :: i,ii,n
-  real(kind=kdble) :: xi
-  real(kind=kdble),dimension(ngllx) :: gllpx,gllwx ! GLL points and weights
-  real(kind=kdble),dimension(ngllx) :: lagrange_x,lagrange_dx
-
-  ! compute everything in indexed order
-
-  ! GLL points and weights (source: http://mathworld.wolfram.com/lobattoquadrature.html)
-  !gllp(1)=-1.0_kdble   ; gllw(1)=1.0_kdble/3.0_kdble
-  !gllp(2)= 0.0_kdble   ; gllw(2)=4.0_kdble/3.0_kdble
-  !gllp(3)= 1.0_kdble   ; gllw(3)=gllw(1)
-
-  ! get GLL points
-  ! for alpha=beta=0, jacobi polynomial is legendre polynomial
-  ! for ngllx=nglly=ngllz=ngll, need to call only once
-  call zwgljd(gllpx,gllwx,ngllx,jacobi_alpha,jacobi_beta)
-
-  n = 0
-  do i = 1,ngllx
-    n = n+1
-    ! integration points
-    gll_points1d(1,n)=gllpx(i)
-
-    ! integration weights
-    gll_weights1d(n)=gllwx(i)
-  enddo
-
-  do ii = 1,ngll ! ngllx
-    xi=gll_points1d(1,ii)
-
-    ! compute 1d lagrange polynomials
-    ! this can also be computed in a simple manner due to the orthogonality
-    call lagrange1dGLL(ngllx,gllpx,xi,lagrange_x,lagrange_dx)
-
-    n = 0
-    do i = 1,ngllx
-      n = n+1
-      lagrange_gll1d(ii,n)=lagrange_x(i)
-      dlagrange_gll1d(1,ii,n)=lagrange_dx(i)
-    enddo
-  enddo
-
-  end subroutine gll_quadrature1d
+!  subroutine gll_quadrature1d(ndim,ngllx,ngll,gll_points1d,gll_weights1d, &
+!                              lagrange_gll1d,dlagrange_gll1d)
+!  implicit none
+!  integer,intent(in) :: ndim,ngllx,ngll
+!  real(kind=kdble),dimension(ngll),intent(out) :: gll_weights1d
+!  real(kind=kdble),dimension(ndim,ngll),intent(out) :: gll_points1d
+!  real(kind=kdble),dimension(ngll,ngll),intent(out) :: lagrange_gll1d
+!  real(kind=kdble),dimension(ndim,ngll,ngll),intent(out) :: dlagrange_gll1d
+!
+!  real(kind=kdble),parameter :: jacobi_alpha=0.0_kdble,jacobi_beta=0.0_kdble
+!  integer :: i,ii,n
+!  real(kind=kdble) :: xi
+!  real(kind=kdble),dimension(ngllx) :: gllpx,gllwx ! GLL points and weights
+!  real(kind=kdble),dimension(ngllx) :: lagrange_x,lagrange_dx
+!
+!  ! compute everything in indexed order
+!
+!  ! GLL points and weights (source: http://mathworld.wolfram.com/lobattoquadrature.html)
+!  !gllp(1)=-1.0_kdble   ; gllw(1)=1.0_kdble/3.0_kdble
+!  !gllp(2)= 0.0_kdble   ; gllw(2)=4.0_kdble/3.0_kdble
+!  !gllp(3)= 1.0_kdble   ; gllw(3)=gllw(1)
+!
+!  ! get GLL points
+!  ! for alpha=beta=0, jacobi polynomial is legendre polynomial
+!  ! for ngllx=nglly=ngllz=ngll, need to call only once
+!  call zwgljd(gllpx,gllwx,ngllx,jacobi_alpha,jacobi_beta)
+!
+!  n = 0
+!  do i = 1,ngllx
+!    n = n+1
+!    ! integration points
+!    gll_points1d(1,n)=gllpx(i)
+!
+!    ! integration weights
+!    gll_weights1d(n)=gllwx(i)
+!  enddo
+!
+!  do ii = 1,ngll ! ngllx
+!    xi=gll_points1d(1,ii)
+!
+!    ! compute 1d lagrange polynomials
+!    ! this can also be computed in a simple manner due to the orthogonality
+!    call lagrange1dGLL(ngllx,gllpx,xi,lagrange_x,lagrange_dx)
+!
+!    n = 0
+!    do i = 1,ngllx
+!      n = n+1
+!      lagrange_gll1d(ii,n)=lagrange_x(i)
+!      dlagrange_gll1d(1,ii,n)=lagrange_dx(i)
+!    enddo
+!  enddo
+!
+!  end subroutine gll_quadrature1d
 
 !
 !===========================================
@@ -1410,57 +1531,59 @@ contains
 ! this subroutine computes the 1d lagrange interpolation functions and their
 ! derivatives at a given point xi.
 
-  subroutine lagrange1d(nenode,xi,phi,dphi_dxi)
+! not used ...
 
-  implicit none
-  integer,intent(in) :: nenode ! number of nodes in an 1d element
-  integer :: i,j,k
-  real(kind=kdble),intent(in) :: xi ! point where to calculate lagrange function and
-  !its derivative
-  real(kind=kdble),dimension(nenode),intent(out) :: phi,dphi_dxi
-  real(kind=kdble),dimension(nenode) :: xii,term,dterm,sum_term
-  real(kind=kdble) :: dx
-
-  ! compute natural coordnates
-  dx = 2.0_kdble/real((nenode-1),kdble)! length = 2.0 as xi is taken -1 to +1
-  do i = 1,nenode
-    ! coordinates when origin is in the left
-    xii(i)=real((i-1),kdble)*dx
-  enddo
-
-  ! origin is tranformed to mid point
-  xii = xii-1.0_kdble
-
-  do i = 1,nenode
-    k = 0
-    phi(i)=1.0_kdble
-    do j = 1,nenode
-      if (j /= i) then
-        k = k+1
-        term(k)=(xi-xii(j))/(xii(i)-xii(j))
-        dterm(k)=1.0_kdble/(xii(i)-xii(j)) ! derivative of the term wrt xi
-
-        phi(i)=phi(i)*(xi-xii(j))/(xii(i)-xii(j))
-      endif
-    enddo
-
-    sum_term = 1.0_kdble
-    do j = 1,nenode-1
-      do k = 1,nenode-1
-        if (k == j) then
-          sum_term(j)=sum_term(j)*dterm(k)
-        else
-          sum_term(j)=sum_term(j)*term(k)
-        endif
-      enddo
-    enddo
-    dphi_dxi(i)=0.0_kdble
-    do j = 1,nenode-1
-      dphi_dxi(i)=dphi_dxi(i)+sum_term(j)
-    enddo
-  enddo
-
-  end subroutine lagrange1d
+!  subroutine lagrange1d(nenode,xi,phi,dphi_dxi)
+!
+!  implicit none
+!  integer,intent(in) :: nenode ! number of nodes in an 1d element
+!  integer :: i,j,k
+!  real(kind=kdble),intent(in) :: xi ! point where to calculate lagrange function and
+!  !its derivative
+!  real(kind=kdble),dimension(nenode),intent(out) :: phi,dphi_dxi
+!  real(kind=kdble),dimension(nenode) :: xii,term,dterm,sum_term
+!  real(kind=kdble) :: dx
+!
+!  ! compute natural coordnates
+!  dx = 2.0_kdble/real((nenode-1),kdble)! length = 2.0 as xi is taken -1 to +1
+!  do i = 1,nenode
+!    ! coordinates when origin is in the left
+!    xii(i)=real((i-1),kdble)*dx
+!  enddo
+!
+!  ! origin is tranformed to mid point
+!  xii = xii-1.0_kdble
+!
+!  do i = 1,nenode
+!    k = 0
+!    phi(i)=1.0_kdble
+!    do j = 1,nenode
+!      if (j /= i) then
+!        k = k+1
+!        term(k)=(xi-xii(j))/(xii(i)-xii(j))
+!        dterm(k)=1.0_kdble/(xii(i)-xii(j)) ! derivative of the term wrt xi
+!
+!        phi(i)=phi(i)*(xi-xii(j))/(xii(i)-xii(j))
+!      endif
+!    enddo
+!
+!    sum_term = 1.0_kdble
+!    do j = 1,nenode-1
+!      do k = 1,nenode-1
+!        if (k == j) then
+!          sum_term(j)=sum_term(j)*dterm(k)
+!        else
+!          sum_term(j)=sum_term(j)*term(k)
+!        endif
+!      enddo
+!    enddo
+!    dphi_dxi(i)=0.0_kdble
+!    do j = 1,nenode-1
+!      dphi_dxi(i)=dphi_dxi(i)+sum_term(j)
+!    enddo
+!  enddo
+!
+!  end subroutine lagrange1d
 
 !
 !===============================================================================
@@ -1469,61 +1592,63 @@ contains
 ! this subroutine computes the 1d lagrange interpolation functions and their
 ! derivatives at a given point xi.
 
-  subroutine lagrange1dGEN(nenod,xi,phi,dphi_dxi)
+! not used ...
 
-  implicit none
-  integer,intent(in) :: nenod ! number of nodes in an 1d element
-  integer :: i,j,k
-  real(kind=kdble),intent(in) :: xi ! point where to calculate lagrange function and
-  !its derivative
-  real(kind=kdble),dimension(nenod),intent(out) :: phi,dphi_dxi
-  real(kind=kdble),dimension(nenod) :: xii
-  real(kind=kdble),dimension(nenod-1) :: term,dterm,sum_term
-  real(kind=kdble) :: dx
-  real(kind=kdble),parameter :: one=1.0_kdble
-
-  ! compute natural coordnates
-  dx = 2.0_kdble/real((nenod-1),kdble)! length = 2.0 as xi is taken -1 to +1
-  do i = 1,nenod
-    ! coordinates when origin is in the left
-    xii(i)=real((i-1),kdble)*dx
-  enddo
-
-  ! origin is tranformed to mid point
-  xii = xii-one
-
-  do i = 1,nenod
-    k = 0
-    phi(i)=one
-    do j = 1,nenod
-      if (j /= i) then
-        k = k+1
-        term(k)=(xi-xii(j))/(xii(i)-xii(j))
-        dterm(k)=one/(xii(i)-xii(j)) ! derivative of the term wrt xi
-
-        phi(i)=phi(i)*term(k) !(xi-xii(j))/(xii(i)-xii(j))
-      endif
-    enddo
-
-    ! derivative of the polynomial: product rule
-    sum_term = one
-    do j = 1,nenod-1
-      do k = 1,nenod-1
-        if (k == j) then
-          sum_term(j)=sum_term(j)*dterm(k)
-        else
-          sum_term(j)=sum_term(j)*term(k)
-        endif
-      enddo
-    enddo
-    dphi_dxi(i)=sum(sum_term)
-    !dphi_dxi(i)=0.0_kdble
-    !do j=1,nenod-1
-    !  dphi_dxi(i)=dphi_dxi(i)+sum_term(j)
-    !enddo
-  enddo
-
-  end subroutine lagrange1dGEN
+!  subroutine lagrange1dGEN(nenod,xi,phi,dphi_dxi)
+!
+!  implicit none
+!  integer,intent(in) :: nenod ! number of nodes in an 1d element
+!  integer :: i,j,k
+!  real(kind=kdble),intent(in) :: xi ! point where to calculate lagrange function and
+!  !its derivative
+!  real(kind=kdble),dimension(nenod),intent(out) :: phi,dphi_dxi
+!  real(kind=kdble),dimension(nenod) :: xii
+!  real(kind=kdble),dimension(nenod-1) :: term,dterm,sum_term
+!  real(kind=kdble) :: dx
+!  real(kind=kdble),parameter :: one=1.0_kdble
+!
+!  ! compute natural coordnates
+!  dx = 2.0_kdble/real((nenod-1),kdble)! length = 2.0 as xi is taken -1 to +1
+!  do i = 1,nenod
+!    ! coordinates when origin is in the left
+!    xii(i)=real((i-1),kdble)*dx
+!  enddo
+!
+!  ! origin is tranformed to mid point
+!  xii = xii-one
+!
+!  do i = 1,nenod
+!    k = 0
+!    phi(i)=one
+!    do j = 1,nenod
+!      if (j /= i) then
+!        k = k+1
+!        term(k)=(xi-xii(j))/(xii(i)-xii(j))
+!        dterm(k)=one/(xii(i)-xii(j)) ! derivative of the term wrt xi
+!
+!        phi(i)=phi(i)*term(k) !(xi-xii(j))/(xii(i)-xii(j))
+!      endif
+!    enddo
+!
+!    ! derivative of the polynomial: product rule
+!    sum_term = one
+!    do j = 1,nenod-1
+!      do k = 1,nenod-1
+!        if (k == j) then
+!          sum_term(j)=sum_term(j)*dterm(k)
+!        else
+!          sum_term(j)=sum_term(j)*term(k)
+!        endif
+!      enddo
+!    enddo
+!    dphi_dxi(i)=sum(sum_term)
+!    !dphi_dxi(i)=0.0_kdble
+!    !do j=1,nenod-1
+!    !  dphi_dxi(i)=dphi_dxi(i)+sum_term(j)
+!    !enddo
+!  enddo
+!
+!  end subroutine lagrange1dGEN
 
 !
 !===========================================

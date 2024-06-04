@@ -902,7 +902,8 @@
 !            enddo !k
 !          enddo !i
 !          write(file_head,'(a,i1,a)')'reg',1,'_proc'
-!          write(grav_file, '(a,a,a,a,a,i1,i1)')trim(LOCAL_PATH), '/', trim(file_head), trim(ptail), '.rho2int', icomponent,jcomponent
+!          write(grav_file, '(a,a,a,a,a,i1,i1)') trim(LOCAL_PATH), '/', trim(file_head), trim(ptail), &
+!                                                '.rho2int', icomponent, jcomponent
 !          call write_ensight_pernodeSCALAS(grav_file,destag,npart,nnode4_cm,real(ensight_tmp(inode4_cm)))
 !        enddo ! icomponent
 !      enddo ! jcomponent
@@ -920,7 +921,8 @@
 !          enddo !k
 !        enddo !i
 !        write(file_head,'(a,i1,a)')'reg',1,'_proc'
-!        write(grav_file, '(a,a,a,a,a,i1,i1)')trim(LOCAL_PATH), '/', trim(file_head), trim(ptail), '.debug_rho', icomponent
+!        write(grav_file, '(a,a,a,a,a,i1,i1)') trim(LOCAL_PATH), '/', trim(file_head), trim(ptail), &
+!                                              '.debug_rho', icomponent
 !        call write_ensight_pernodeSCALAS(grav_file,destag,npart,nnode4_cm,real(ensight_tmp(inode4_cm)))
 !      enddo
 !    endif ! SAVE_INTERMEDIATE_GRAV_KERNELS_MESH_ENSIGHT

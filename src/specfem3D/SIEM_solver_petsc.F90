@@ -35,9 +35,11 @@
 !
 ! the PETSc base type file petscsys.h defines an error checking macro CHKERRA(ierr) as
 ! long free-from version:
-!#define CHKERRA(ierr) if (ierr /= 0) then;call PetscErrorF(ierr,__LINE__,__FILE__);call MPIU_Abort(PETSC_COMM_SELF,ierr);endif
+!#define CHKERRA(ierr) if (ierr /= 0) then;call PetscErrorF(ierr,__LINE__,__FILE__);\
+!                      call MPIU_Abort(PETSC_COMM_SELF,ierr);endif
 ! short version:
-!#define CHKERRA(ierr) if (ierr /= 0) then;call PetscErrorF(ierr);call MPIU_Abort(PETSC_COMM_SELF,ierr);endif
+!#define CHKERRA(ierr) if (ierr /= 0) then;call PetscErrorF(ierr);\
+!                      call MPIU_Abort(PETSC_COMM_SELF,ierr);endif
 !
 ! with gfortran, it uses the long free-form version that leads to compilation errors like
 !   "Error: Line truncated at (1) [-Werror=line-truncation]"
@@ -84,15 +86,24 @@ module siem_solver_petsc
 #ifdef USE_PETSC
 ! PETSc
 ! all of PETSc
-!#include "petsc/finclude/petsc.h"
+#include "petsc/finclude/petsc.h"
+  use petsc
 ! base types
-!#include "petsc/finclude/petscsys.h"
+#include "petsc/finclude/petscsys.h"
+  use petscsys
 ! Vec package
-!#include "petsc/finclude/petscvec.h"
+#include "petsc/finclude/petscvec.h"
+  use petscvec
 ! Mat package
-!#include "petsc/finclude/petscmat.h"
+#include "petsc/finclude/petscmat.h"
+  use petscmat
+! IS (index set) package
+#include "petsc/finclude/petscis.h"
+  use petscis
 ! Krylov subspace method package
 #include "petsc/finclude/petscksp.h"
+  use petscksp
+
 ! preconditioner package
 !#include "petsc/finclude/petscpc.h"
 
@@ -107,7 +118,6 @@ module siem_solver_petsc
   !use petscpc, only: tPC
   !use petscis, only: tIS
 
-  use petscksp
 #endif
 
   use constants, only: myrank,IMAIN,CUSTOM_REAL
@@ -259,12 +269,13 @@ contains
   type(tVec) :: nzeror_gvec1,nzeror_dvec1,nzeror_ovec1,iproc_gvec1, &
                 interface_gvec1,ninterface_dvec1,ninterface_ovec1,nself_gvec1
   PetscInt :: i,istart,iend,n
-  PetscInt :: nzerosoff_max
+  !PetscInt :: nzerosoff_max
   PetscInt :: inzeros_max,inzeros_min
   PetscInt,allocatable :: nzeros(:),ig_array1(:)
   PetscScalar,allocatable :: rproc_array1(:)
   PetscScalar :: rval
-  type(tIS) :: global_is, local_is, b_global_is, b_local_is
+  type(tIS) :: global_is, local_is
+  type(tIS) :: b_global_is, b_local_is
 
   PetscInt :: igdof,ind,maxrank0,ng,ng0,ng1,np0
   PetscInt,allocatable :: inzeror_array1(:),iproc_array1(:),nzeros_row(:)
@@ -287,6 +298,7 @@ contains
   PetscLogDouble :: bytes
 
   !character(len=10) :: char_myrank
+  character(len=128) :: version
 
   ! timing
   double precision :: tstart,tCPU
@@ -306,6 +318,10 @@ contains
 
   call PetscInitialize(PETSC_NULL_CHARACTER,ierr); CHECK_PETSC_ERROR(ierr)
 
+  ! version info
+  call PetscGetVersion(version,ierr); CHECK_PETSC_ERROR(ierr)
+  if (myrank == 0) print *,'PETSc solver: version: ',trim(version)
+
   ! count number of nonzeros per row
   allocate(nzeros(neq1))
   nzeros(:) = 0
@@ -316,11 +332,10 @@ contains
   nzeros_max = maxvec(nzeros)
   nzeros_min = minvec(nzeros)
 
-  nzerosoff_max = nzeros_max
-
-  !nzeros_max=4*nzeros_max
-  !nzeros=nzeros
-  !nzeros=5*nzeros
+  !nzerosoff_max = nzeros_max
+  !nzeros_max = 4*nzeros_max
+  !nzeros = nzeros
+  !nzeros = 5*nzeros
 
   if (myrank == 0) print *,'PETSc solver: nzeros in 1st index:',nzeros(1)
   if (myrank == 0) print *,'PETSc solver: ngdof1:',ngdof1,' nzeros_max:',nzeros_max,' nzeros_min:',nzeros_min, &
@@ -369,6 +384,7 @@ contains
   !write(char_myrank,'(i4)') myrank
 
   call VecCreateMPI(PETSC_COMM_WORLD,PETSC_DECIDE,ngdof1,xvec1,ierr); CHECK_PETSC_ERROR(ierr)
+
   call VecDuplicate(xvec1,bvec1,ierr); CHECK_PETSC_ERROR(ierr)
   call VecDuplicate(xvec1,uvec1,ierr); CHECK_PETSC_ERROR(ierr)
   call VecDuplicate(xvec1,nzeror_gvec1,ierr); CHECK_PETSC_ERROR(ierr)
@@ -412,8 +428,11 @@ contains
 
   call ISDestroy(global_is,ierr) ! no longer necessary
   call ISDestroy(local_is,ierr)  ! no longer necessary
-  call ISDestroy(b_global_is,ierr) ! no longer necessary
-  call ISDestroy(b_local_is,ierr)  ! no longer necessary
+
+  if (SIMULATION_TYPE == 3) then
+    call ISDestroy(b_global_is,ierr) ! no longer necessary
+    call ISDestroy(b_local_is,ierr)  ! no longer necessary
+  endif
 
   ! assign owner processor ID to each gdof (or row)
   allocate(ig_array1(ng),rproc_array1(ng))
@@ -591,7 +610,7 @@ contains
     igc = kgcol_sparse1(i)-1
     ir = krow_sparse1(i)
     ic = kcol_sparse1(i)
-    if (l2gdof1(ir) /= igr.or.l2gdof1(ic) /= igc) then
+    if (l2gdof1(ir) /= igr .or. l2gdof1(ic) /= igc) then
       print *,'Error: strange:',l2gdof1(ir),igr,l2gdof1(ic),igc
       stop
     endif
@@ -669,12 +688,13 @@ contains
   call VecAssemblyEnd(ninterface_ovec1,ierr)
 
   ! apply correction for repeatition due to interfaces
+  ! diagonal matrix
   call VecGetLocalSize(nzeror_dvec1,n,ierr)
   call VecGetArrayF90(nzeror_dvec1,nzeror_darray1,ierr)
 
   allocate(nnzero_diag1(n))
-  nnzero_diag1 = int(nzeror_darray1(1:n))
-  nnzero_diag1 = nnzero_diag1-nself_array1
+  nnzero_diag1(:) = int(nzeror_darray1(1:n))
+  nnzero_diag1(:) = nnzero_diag1(:) - nself_array1(:)
 
   !debug
   if (myrank == 0) print *,'PETSc solver: n: ',n,minval(nzeror_darray1),maxval(nzeror_darray1), &
@@ -684,10 +704,11 @@ contains
   call VecRestoreArrayF90(nzeror_dvec1,nzeror_darray1,ierr)
   call VecDestroy(nzeror_dvec1,ierr)
 
+  ! off-diagonal matrix
   call VecGetArrayF90(nzeror_ovec1,nzeror_oarray1,ierr)
 
   allocate(nnzero_offdiag1(n))
-  nnzero_offdiag1 = int(nzeror_oarray1(1:n))
+  nnzero_offdiag1(:) = int(nzeror_oarray1(1:n))
 
   call VecRestoreArrayF90(nzeror_ovec1,nzeror_oarray1,ierr)
   call VecDestroy(nzeror_ovec1,ierr)
@@ -705,7 +726,7 @@ contains
   call VecRestoreArrayF90(ninterface_dvec1,rninterface_darray1,ierr)
   call VecDestroy(ninterface_dvec1,ierr)
 
-  where(ninterface_darray1 > 0) ninterface_darray1 = ninterface_darray1-4
+  where(ninterface_darray1 > 0) ninterface_darray1 = ninterface_darray1 - 4
   where(ninterface_darray1 < 0) ninterface_darray1 = 0
 
   call VecGetArrayF90(ninterface_ovec1,rninterface_oarray1,ierr)
@@ -718,14 +739,19 @@ contains
   call VecRestoreArrayF90(ninterface_ovec1,rninterface_oarray1,ierr)
   call VecDestroy(ninterface_ovec1,ierr)
 
-  where(ninterface_oarray1 > 0) ninterface_oarray1 = ninterface_oarray1-8
+  where(ninterface_oarray1 > 0) ninterface_oarray1 = ninterface_oarray1 - 8
   where(ninterface_oarray1 < 0) ninterface_oarray1 = 0
 
-  nnzero_diag1 = nnzero_diag1-ninterface_darray1
-  nnzero_offdiag1 = nnzero_offdiag1-ninterface_oarray1
+  nnzero_diag1(:) = nnzero_diag1(:) - ninterface_darray1(:)
+  nnzero_offdiag1(:) = nnzero_offdiag1(:) - ninterface_oarray1(:)
 
+  !debug
+  if (myrank == 0) print *,'PETSc solver: non-zero diag   :',minval(nnzero_diag1),maxval(nnzero_diag1)
+  if (myrank == 0) print *,'PETSc solver: non-zero offdiag:',minval(nnzero_offdiag1),maxval(nnzero_offdiag1)
+  call synchronize_all()
+
+  rval = 1.0
   do i = 1,nsparse1
-    rval = 1.0
     igdof = kgrow_sparse1(i)-1 ! Fortran index
     call VecSetValues(nzeror_gvec1,1,igdof,rval,ADD_VALUES,ierr); CHECK_PETSC_ERROR(ierr)
   enddo
@@ -768,7 +794,23 @@ contains
   call synchronize_all()
 
   ! preallocation
-  call MatMPIAIJSetPreallocation(Amat1,nzeros_max,inzeror_array1,nzeros_max,inzeror_array1,ierr); CHECK_PETSC_ERROR(ierr)
+  !TODO: please re-asses this preallocation for different meshes and/or correct the diagonal/off-diagonal non-zero row entries
+  !
+  ! way 1: explicitly specifies diagonal and off-diagonal local submatrices by setting array inzeror_array1,
+  !        containing the number of non-zeros per row.
+  !
+  !        this will lead to a lot of re-allocations when setting the region values by MatSetValues() in petsc_set_matrix1(),
+  !        as the non-zero estimates seem to be off.
+  !
+  !call MatMPIAIJSetPreallocation(Amat1,nzeros_max,inzeror_array1,nzeros_max,inzeror_array1,ierr); CHECK_PETSC_ERROR(ierr)
+
+  ! way 2: only specify the nonzero structure by nzeros_max, and let Petsc decide about array structuring.
+  !
+  !        this seems to lead to a much faster petsc_set_matrix1() routine without the re-allocations.
+  !        however, the diagonal and in particular the off-diagonal estimate with nzeros_max might be still off.
+  call MatMPIAIJSetPreallocation(Amat1,nzeros_max,PETSC_NULL_INTEGER, &
+                                 nzeros_max,PETSC_NULL_INTEGER,ierr); CHECK_PETSC_ERROR(ierr)
+
   call MatSetFromOptions(Amat1,ierr); CHECK_PETSC_ERROR(ierr)
   call MatGetOwnershipRange(Amat1,istart,iend,ierr); CHECK_PETSC_ERROR(ierr)
 
@@ -1034,7 +1076,7 @@ contains
   PetscInt:: istart,iend,ndiag,noffdiag
 
   !debugging
-  logical, parameter :: DEBUG_FILE_OUTPUT = .true.
+  logical, parameter :: DEBUG_FILE_OUTPUT = .false.
   integer :: ncols
   integer,dimension(:),allocatable :: cols
 
@@ -1070,7 +1112,7 @@ contains
   !   note that the preallocation of Amat1 might be slightly off, in that the number of non-zero elements
   !   for the diagonal and off-diagonal matrices could be estimated wrongly.
   !
-  !   assigning the matrix entry values below with MatSetValues() will lead to errors like:
+  !   assigning the matrix entry values below with MatSetValues() might lead to errors like:
   !       [4]PETSC ERROR: Argument out of range
   !       [4]PETSC ERROR: New nonzero at (11346,11355) caused a malloc
   !       Use MatSetOption(A, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE) to turn off this check
@@ -1079,7 +1121,7 @@ contains
   !   and abort execution.
   !
   ! this is to turn off new malloc check error messages, when a new malloc is required by MatSetValues()
-  call MatSetOption(Amat1, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE, ierr); CHECK_PETSC_ERROR(ierr)
+  !call MatSetOption(Amat1, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE, ierr); CHECK_PETSC_ERROR(ierr)
 
   ! note: although the execution works by turning this check off, the matrix value assignment in particular
   !       for the crust/mantle region below takes very long. this might be due to excessive malloc's required.
@@ -1113,6 +1155,7 @@ contains
       enddo
     enddo
   enddo
+  call synchronize_all()
   deallocate(storekmat_inner_core1)
 
   ! user output
@@ -1141,6 +1184,7 @@ contains
       enddo
     enddo
   enddo
+  call synchronize_all()
   deallocate(storekmat_outer_core1)
 
   ! user output
@@ -1169,6 +1213,7 @@ contains
       enddo
     enddo
   enddo
+  call synchronize_all()
   deallocate(storekmat_crust_mantle1)
 
   ! user output
@@ -1209,6 +1254,7 @@ contains
       write(IMAIN,*) '    elapsed time: ',sngl(tCPU),'(s)'
     endif
   endif
+  call synchronize_all()
   deallocate(storekmat_trinfinite1)
 
   ! user output
@@ -1235,6 +1281,7 @@ contains
       enddo
     enddo
   enddo
+  call synchronize_all()
   deallocate(storekmat_infinite1)
 
   ! user output
@@ -2228,10 +2275,6 @@ contains
 
   subroutine petsc_solve(sdata,niter)
 
-#ifdef USE_PETSC
-  use petscksp, only: KSPSolve, KSPView, KSPGetConvergedReason, KSPGetIterationNumber
-#endif
-
   implicit none
   !PetscScalar :: sdata(:)
   real(kind=CUSTOM_REAL) :: sdata(:)
@@ -2307,10 +2350,6 @@ contains
   subroutine petsc_finalize()
 
 #ifdef USE_PETSC
-  use petscvec, only: VecDestroy
-  use petscmat, only: MatDestroy
-  use petscksp, only: KSPDestroy
-
   implicit none
 
   ! Free work space.  All PETSc objects should be destroyed when they
@@ -2354,15 +2393,21 @@ contains
 
   ! the PETSc base type file petscsys.h defines an error checking macro CHKERRA(ierr) as
   ! long free-from version:
-  !#define CHKERRA(ierr) if (ierr /= 0) then;call PetscErrorF(ierr,__LINE__,__FILE__);call MPIU_Abort(PETSC_COMM_SELF,ierr);endif
+  !#define CHKERRA(ierr) if (ierr /= 0) then;call PetscErrorF(ierr,__LINE__,__FILE__);\
+  !                      call MPIU_Abort(PETSC_COMM_SELF,ierr);endif
   ! short version:
-  !#define CHKERRA(ierr) if (ierr /= 0) then;call PetscErrorF(ierr);call MPIU_Abort(PETSC_COMM_SELF,ierr);endif
+  !#define CHKERRA(ierr) if (ierr /= 0) then;call PetscErrorF(ierr);\
+  !                      call MPIU_Abort(PETSC_COMM_SELF,ierr);endif
   !
   ! given the __LINE__ and __FILE__ info is not very useful when called in this subroutine, we use the short version here.
 
   if (ierr /= 0) then
     ! petsc error function
+#if defined(PETSC_HAVE_FORTRAN_FREE_LINE_LENGTH_NONE)
     call PetscErrorF(ierr,line,"SIEM_solver_petsc.F90")
+#else
+    call PetscErrorF(ierr)
+#endif
 
     ! user info
     print *

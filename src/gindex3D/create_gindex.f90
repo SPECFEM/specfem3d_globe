@@ -87,26 +87,19 @@
 
   ! local parameters
   integer :: j_proc
-  integer :: i,j,k,i_elmt,i_node,ispec_ic,ispec_oc,ispec_cm, &
-             ispec_trinf,ispec_inf,ibool_ic,ibool_oc,ibool_cm,ibool_trinf,ibool_inf,k_ic, &
-             k_oc,k_cm,k_trinf,k_inf
+  integer :: i,j,k,i_elmt,i_node,ier
+  integer :: ispec_ic,ispec_oc,ispec_cm,ispec_trinf,ispec_inf
+  integer :: ibool_ic,ibool_oc,ibool_cm,ibool_trinf,ibool_inf
+  integer :: k_ic,k_oc,k_cm,k_trinf,k_inf
   integer :: ibool,inode,ignode,ispec,nnode_icb,nnode_cmb,nnode_trinfb,nnode_infb
 
   ! local
-  integer :: inode_ic(NGLOB_INNER_CORE),inode_oc(NGLOB_OUTER_CORE), &
-             inode_cm(NGLOB_CRUST_MANTLE),inode_trinf(NGLOB_TRINFINITE), &
-             inode_inf(NGLOB_INFINITE)
-  logical :: isnode_ic(NGLOB_INNER_CORE),isnode_oc(NGLOB_OUTER_CORE), &
-             isnode_cm(NGLOB_CRUST_MANTLE),isnode_trinf(NGLOB_TRINFINITE), &
-             isnode_inf(NGLOB_INFINITE)
+  integer,dimension(:),allocatable :: inode_ic,inode_oc,inode_cm,inode_trinf,inode_inf
+  logical,dimension(:),allocatable :: isnode_ic,isnode_oc,isnode_cm,isnode_trinf,isnode_inf
 
   ! global
-  integer :: ignode_ic(NGLOB_INNER_CORE),ignode_oc(NGLOB_OUTER_CORE), &
-             ignode_cm(NGLOB_CRUST_MANTLE),ignode_trinf(NGLOB_TRINFINITE), &
-             ignode_inf(NGLOB_INFINITE)
-  logical :: isgnode_ic(NGLOB_INNER_CORE),isgnode_oc(NGLOB_OUTER_CORE), &
-             isgnode_cm(NGLOB_CRUST_MANTLE),isgnode_trinf(NGLOB_TRINFINITE), &
-             isgnode_inf(NGLOB_INFINITE)
+  integer,dimension(:),allocatable :: ignode_ic,ignode_oc,ignode_cm,ignode_trinf,ignode_inf
+  logical,dimension(:),allocatable :: isgnode_ic,isgnode_oc,isgnode_cm,isgnode_trinf,isgnode_inf
 
   integer,allocatable :: inode_oc1(:),inode_ic1(:),inode_cm1(:),inode_trinf1(:),inode_inf1(:)
   integer,allocatable :: gdf_ic(:,:),gdf_oc(:,:),gdf_cm(:,:),gdf_trinf(:,:),gdf_inf(:,:),gnf(:,:)
@@ -296,17 +289,41 @@
   nnode_trinf = NGLOB_TRINFINITE
   nnode_inf = NGLOB_INFINITE
 
-  inode_ic(:) = -1;    isnode_ic(:) = .false.
-  inode_oc(:) = -1;    isnode_oc(:) = .false.
-  inode_cm(:) = -1;    isnode_cm(:) = .false.
-  inode_trinf(:) = -1; isnode_trinf(:) = .false.
-  inode_inf(:) = -1;   isnode_inf(:) = .false.
+  allocate(inode_ic(NGLOB_INNER_CORE), &
+           inode_oc(NGLOB_OUTER_CORE), &
+           inode_cm(NGLOB_CRUST_MANTLE), &
+           inode_trinf(NGLOB_TRINFINITE), &
+           inode_inf(NGLOB_INFINITE),stat=ier)
+  if (ier /= 0) stop 'Error allocating inode_ic,.. arrays'
+  inode_ic(:) = -1; inode_oc(:) = -1; inode_cm(:) = -1
+  inode_trinf(:) = -1; inode_inf(:) = -1
 
-  ignode_ic(:) = -1;    isgnode_ic(:) = .false.
-  ignode_oc(:) = -1;    isgnode_oc(:) = .false.
-  ignode_cm(:) = -1;    isgnode_cm(:) = .false.
-  ignode_trinf(:) = -1; isgnode_trinf(:) = .false.
-  ignode_inf(:) = -1;   isgnode_inf(:) = .false.
+  allocate(isnode_ic(NGLOB_INNER_CORE), &
+           isnode_oc(NGLOB_OUTER_CORE), &
+           isnode_cm(NGLOB_CRUST_MANTLE), &
+           isnode_trinf(NGLOB_TRINFINITE), &
+           isnode_inf(NGLOB_INFINITE),stat=ier)
+  if (ier /= 0) stop 'Error allocating isnode_ic,.. arrays'
+  isnode_ic(:) = .false.; isnode_oc(:) = .false.; isnode_cm(:) = .false.
+  isnode_trinf(:) = .false.; isnode_inf(:) = .false.
+
+  allocate(ignode_ic(NGLOB_INNER_CORE), &
+           ignode_oc(NGLOB_OUTER_CORE), &
+           ignode_cm(NGLOB_CRUST_MANTLE), &
+           ignode_trinf(NGLOB_TRINFINITE), &
+           ignode_inf(NGLOB_INFINITE),stat=ier)
+  if (ier /= 0) stop 'Error allocating ignode_ic,.. arrays'
+  ignode_ic(:) = -1; ignode_oc(:) = -1; ignode_cm(:) = -1
+  ignode_trinf(:) = -1; ignode_inf(:) = -1
+
+  allocate(isgnode_ic(NGLOB_INNER_CORE), &
+           isgnode_oc(NGLOB_OUTER_CORE), &
+           isgnode_cm(NGLOB_CRUST_MANTLE), &
+           isgnode_trinf(NGLOB_TRINFINITE), &
+           isgnode_inf(NGLOB_INFINITE),stat=ier)
+  if (ier /= 0) stop 'Error allocating isgnode_ic,.. arrays'
+  isgnode_ic(:) = .false.; isgnode_oc(:) = .false.; isgnode_cm(:) = .false.
+  isgnode_trinf(:) = .false.; isgnode_inf(:) = .false.
 
   ! allocate necessary arrays
   if (.not. allocated(inode_elmt_cm)) then
@@ -998,6 +1015,7 @@
 
   write(spm,*) i_proc
 
+  ! file output
   fname = 'DATABASES_MPI/gibool_proc'//trim(adjustl(spm))
   open(10,file=fname,action='write',status='replace')
 
@@ -1300,6 +1318,8 @@
 
   write(spm,*) i_proc
 
+  ! file output
+  ! (needed for PETSc Level-2 solver setup)
   fname='DATABASES_MPI/gdof_proc'//trim(adjustl(spm))
   open(10,file=fname,action='write',status='replace')
 
@@ -2078,6 +2098,8 @@
 
   write(spm,*)i_proc
 
+  ! file output
+  ! (needed for PETSc Level-1 solver setup)
   fname='DATABASES_MPI/gdof1_proc'//trim(adjustl(spm))
   open(10,file=fname,action='write',status='replace')
   write(10,*)nnode_ic1
@@ -2097,6 +2119,11 @@
   print *,'*********************************************************'
 
   ! deallocate variables
+  deallocate(inode_ic,inode_oc,inode_cm,inode_trinf,inode_inf)
+  deallocate(isnode_ic,isnode_oc,isnode_cm,isnode_trinf,isnode_inf)
+  deallocate(ignode_ic,ignode_oc,ignode_cm,ignode_trinf,ignode_inf)
+  deallocate(isgnode_ic,isgnode_oc,isgnode_cm,isgnode_trinf,isgnode_inf)
+
   ! for NGLL=5
   deallocate(gnf,isgnf)
   deallocate(gdf_ic,gdf_oc,gdf_cm,gdf_trinf,gdf_inf)
