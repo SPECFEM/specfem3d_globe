@@ -442,3 +442,79 @@ jobs:
         TESTDIR: EXAMPLES/mars_regional
       run: ./.github/scripts/run_tests.sh
       shell: bash
+
+  linuxTest_7:
+    name: Test run example 7 - global_small
+    runs-on: ubuntu-latest
+    needs: [linuxCheck]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS: --enable-vectorization
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/global_small
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+  linuxTest_8:
+    name: Test run example 7 - global_small w/ FULL_GRAVITY
+    runs-on: ubuntu-latest
+    needs: [linuxCheck]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install packages
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS: --enable-debug
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/global_small
+        FULL_GRAVITY: true
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
+  linuxTest_9:
+    name: Test run example 7 - global_small w/ FULL_GRAVITY PETSC
+    runs-on: ubuntu-latest
+    needs: [linuxCheck]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install packages
+      env:
+        PETSC: true
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        TESTFLAGS: --enable-vectorization --with-petsc PETSC_INC=/usr/include/petsc
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/global_small
+        FULL_GRAVITY: true
+      run: ./.github/scripts/run_tests.sh
+      shell: bash

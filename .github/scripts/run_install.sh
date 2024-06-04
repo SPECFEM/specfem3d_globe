@@ -18,6 +18,18 @@ sudo apt-get install -yq --no-install-recommends gfortran g++ openmpi-bin libope
 if [[ $? -ne 0 ]]; then exit 1; fi
 echo
 
+# PETSc
+if [ "${PETSC}" == "true" ]; then
+  # requires gfortran version 10 as default
+  #mv -v /usr/local/bin/gfortran /usr/local/bin/gfortran-9
+  #sudo update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-10 60
+  #sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 60
+  # installs petsc
+  sudo apt-get install -yq --no-install-recommends petsc-dev
+  # checks exit code
+  if [[ $? -ne 0 ]]; then exit 1; fi
+fi
+
 # python3 pip upgrade might complain: "ERROR: launchpadlib 1.10.13 requires testresources"
 sudo apt-get install -yq --no-install-recommends python3-testresources
 # checks exit code
@@ -116,7 +128,8 @@ echo "OMPI_MCA_rmaps_base_inherit=1" >> $GITHUB_ENV
 # exports for xterm output (for make tests)
 echo "TERM=xterm" >> $GITHUB_ENV
 
-
+# PETSc setting
+if [ "${PETSC}" == "true" ]; then echo "PETSC=true" >> $GITHUB_ENV; fi
 
 echo
 echo "exports:"

@@ -50,6 +50,18 @@ if [ "${DEBUG}" == "true" ]; then
   sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
 fi
 
+# full gravity
+if [ "${FULL_GRAVITY}" == "true" ]; then
+  # set NSTEP for short check
+  echo "NSTEP = 5" >> DATA/Par_file
+  # turns on full gravity
+  sed -i "s:^FULL_GRAVITY .*:FULL_GRAVITY = .true.:" DATA/Par_file
+  # switch to PETSc Poisson solver
+  if [ "${PETSC}" == "true" ]; then
+    sed -i "s:^POISSON_SOLVER .*:POISSON_SOLVER = 1:" DATA/Par_file
+  fi
+fi
+
 # default script
 ./run_this_example.sh
 
@@ -63,7 +75,7 @@ echo `date`
 echo
 
 # seismogram comparison
-if [ "${DEBUG}" == "true" ]; then
+if [ "${DEBUG}" == "true" ] || [ "${FULL_GRAVITY}" == "true" ]; then
   # no comparisons
   :     # do nothing
 else
