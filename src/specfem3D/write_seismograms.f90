@@ -990,10 +990,6 @@ contains
       ! orientation 1=N,2=E,3=Z
       ! note here that in write_seismograms the order ZRT is used, but because the original matrix is defined in NEZ order,
       ! which we will rotate, its easier to use RTZ here
-
-      !debug
-      print *,'Rotating the gravity matrix'
-
       call get_backazimuth(cmt_lat,cmt_lon,stlat(irec),stlon(irec),backaz)
 
       ! rotation angle phi takes opposite direction; to have radial direction pointing in outgoing direction
