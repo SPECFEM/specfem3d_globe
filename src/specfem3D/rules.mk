@@ -115,6 +115,7 @@ specfem3D_SOLVER_OBJECTS += \
 	$O/read_mesh_databases.solverstatic.o \
 	$O/read_topography_bathymetry.solverstatic.o \
 	$O/SIEM_compute_kernels.solverstatic.o \
+	$O/SIEM_compute_seismograms.solverstatic.o \
 	$O/SIEM_index_region.solverstatic.o \
 	$O/SIEM_infinite_element.solverstatic.o \
 	$O/SIEM_poisson.solverstatic.o \
@@ -415,7 +416,7 @@ $O/SIEM_solve.solverstatic.o: $O/SIEM_math_library.shared.o $O/SIEM_poisson.solv
 															$O/SIEM_solver_petsc.solverstatic.o $O/SIEM_solver_mpi.solverstatic.o
 $O/SIEM_solver_mpi.solverstatic.o: $O/SIEM_math_library.shared.o
 $O/SIEM_solver_petsc.solverstatic.o: $O/SIEM_math_library.shared.o
-
+$O/SIEM_compute_seismograms.solverstatic.o: $O/SIEM_math_library.shared.o
 
 ###
 ### specfem3D - optimized flags and dependence on values from mesher here

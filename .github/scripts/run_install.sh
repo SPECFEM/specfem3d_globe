@@ -101,7 +101,7 @@ if [ "${ADIOS2}" == "true" ]; then
   mkdir -p /opt; cd /opt
   # download source
   wget https://github.com/ornladios/ADIOS2/archive/refs/tags/v2.10.1.tar.gz
-  tar zxvf v2.10.1.tar.gz
+  tar zxf v2.10.1.tar.gz
   cd ADIOS2-2.10.1/
   # build source
   mkdir -p build; cd build/

@@ -111,6 +111,9 @@
   ! create sparse matrix
   call SIEM_prepare_solver_sparse_petsc()
 
+  ! setup seismograms
+  call SIEM_prepare_seismos()
+
   ! user output
   if (myrank == 0) then
     tCPU = wtime() - tstart
@@ -1597,3 +1600,276 @@
 
   end subroutine SIEM_prepare_solver_sparse_petsc
 
+!
+!-------------------------------------------------------------------------------
+!
+
+  subroutine SIEM_prepare_seismos()
+
+  use constants, only: NDIM,NGLLCUBE,CUSTOM_REAL
+
+  use specfem_par, only: SIMULATION_TYPE, FULL_GRAVITY, SAVE_SEISMOGRAMS_STRAIN, ROTATION_VAL, &
+    nrec_local,nlength_seismogram, &
+    scale_t_inv, scale_displ, scale_veloc
+
+  use specfem_par_full_gravity
+
+  implicit none
+  integer :: ier
+
+  ! safety check
+  if (.not. FULL_GRAVITY) return
+
+  ! additional scaling factors for gravity seismograms
+  scale_accel = scale_veloc * scale_t_inv    ! [m / s^2]
+  scale_pgrav = scale_displ**2 * scale_t_inv**2  ! [m^2 / s^2]  ONE NEED TO BE CHECKED!!!
+
+  ! allocate seismogram array
+  if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
+    ! forward/kernel run
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) "  preparing full gravity seismogram arrays"
+      call flush_IMAIN()
+    endif
+
+    ! (perturbed) gravitational potential
+    allocate(seismograms_phi(1,nrec_local,nlength_seismogram),stat=ier)
+    if (ier /= 0) stop 'Error allocating seismograms_phi'
+    seismograms_phi = 0.0_CUSTOM_REAL
+
+    ! perturbed gravity
+    allocate(seismograms_pgrav(NDIM,nrec_local,nlength_seismogram),stat=ier)
+    if (ier /= 0) stop 'Error allocating seismograms_pgrav'
+    seismograms_pgrav = 0.0_CUSTOM_REAL
+
+    ! perturbed gravity gradient
+    if (SAVE_SEISMOGRAMS_STRAIN) then
+      allocate(seismograms_Hgrav(NDIM,NDIM,nrec_local,nlength_seismogram),stat=ier)
+      if (ier /= 0) stop 'Error allocating seismograms_Hgrav'
+      seismograms_Hgrav = 0.0_CUSTOM_REAL
+    endif
+
+    ! Due to background gravity. Free-air change in the gravity (vertical) or tilt of the ground surface(horizontal)
+    allocate(seismograms_grav(NDIM,nrec_local,nlength_seismogram),stat=ier)
+    if (ier /= 0) stop 'Error allocating seismograms_grav'
+    seismograms_grav = 0.0_CUSTOM_REAL
+
+    allocate(g_spec_rec(NDIM,NGLLCUBE,nrec_local),stat=ier)
+    if (ier /= 0) stop 'Error allocating g_spec_rec'
+    g_spec_rec = 0.0_CUSTOM_REAL
+
+    allocate(gradg_rec(NDIM,nrec_local),stat=ier)
+    if (ier /= 0) stop 'Error allocating gradg_rec'
+    gradg_rec = 0.0_CUSTOM_REAL
+
+    ! Coriolis acceleration
+    if (ROTATION_VAL) then
+      allocate(seismograms_corio(NDIM,nrec_local,nlength_seismogram),stat=ier)
+      if (ier /= 0) stop 'Error allocating seismograms_corio'
+      seismograms_corio = 0.0_CUSTOM_REAL
+    endif
+
+    ! pre-computes receiver derivatives
+    call SIEM_setup_receivers_precompute_dintp()
+
+    ! compute background g at receivers
+    call SIEM_compute_background_gravity_receiver()
+  endif
+
+  end subroutine SIEM_prepare_seismos
+
+!
+!-------------------------------------------------------------------------------
+!
+
+  subroutine SIEM_setup_receivers_precompute_dintp()
+
+  use constants, only: NDIM,NGLLX,NGLLY,NGLLZ,NGLLCUBE,CUSTOM_REAL
+  use specfem_par, only: nrec_local,number_receiver_global,ispec_selected_rec, &
+    xi_receiver,eta_receiver,gamma_receiver
+
+  use siem_gll_library, only: kdble,NGNOD_INF,dshape_function_hex8_point,gll_lagrange3d_point
+  use siem_math_library, only: determinant,invert
+
+  use specfem_par_crustmantle, only: ibool_crust_mantle,xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle
+
+  use specfem_par_full_gravity, only: storederiv_rec
+
+  implicit none
+
+  ! local parameters
+  integer :: ier
+  integer :: irec,irec_local,ispec
+  integer :: ignod(NGNOD_INF)
+  real(kind=kdble) :: lagrange_gllp(NGLLCUBE),dlagrange_gllp(NDIM,NGLLCUBE),dshape_hex8p(NDIM,NGNOD_INF)
+  real(kind=CUSTOM_REAL) :: detjac
+  real(kind=CUSTOM_REAL) :: coord(NGNOD_INF,NDIM),jac(NDIM,NDIM),deriv(NDIM,NGLLCUBE)
+
+  allocate(storederiv_rec(NDIM,NGLLCUBE,nrec_local),stat=ier)
+  if (ier /= 0) stop 'Error allocating storederiv_rec'
+  storederiv_rec = 0.0_CUSTOM_REAL
+
+  do irec_local = 1,nrec_local
+    irec = number_receiver_global(irec_local)
+    ispec = ispec_selected_rec(irec)
+
+    ! get derivatives of shape functions for 8-noded hex
+    call dshape_function_hex8_point(NGNOD_INF,xi_receiver(irec),eta_receiver(irec),gamma_receiver(irec),dshape_hex8p)
+
+    ! compute gauss-lobatto-legendre quadrature information
+    call gll_lagrange3d_point(NDIM,NGLLX,NGLLY,NGLLZ,NGLLCUBE, &
+                              xi_receiver(irec),eta_receiver(irec),gamma_receiver(irec), &
+                              lagrange_gllp,dlagrange_gllp)
+    ! crust mantle
+    ! EXODUS order NOT indicial order
+    ! bottom corner nodes
+    ignod(1) = ibool_crust_mantle(1,1,1,ispec)
+    ignod(2) = ibool_crust_mantle(NGLLX,1,1,ispec)
+    ignod(3) = ibool_crust_mantle(NGLLX,NGLLY,1,ispec)
+    ignod(4) = ibool_crust_mantle(1,NGLLY,1,ispec)
+    ! second-last corner nodes
+    ignod(5) = ibool_crust_mantle(1,1,NGLLZ,ispec)
+    ignod(6) = ibool_crust_mantle(NGLLX,1,NGLLZ,ispec)
+    ignod(7) = ibool_crust_mantle(NGLLX,NGLLY,NGLLZ,ispec)
+    ignod(8) = ibool_crust_mantle(1,NGLLY,NGLLZ,ispec)
+
+    coord(:,1) = xstore_crust_mantle(ignod(:))
+    coord(:,2) = ystore_crust_mantle(ignod(:))
+    coord(:,3) = zstore_crust_mantle(ignod(:))
+
+    jac = real(matmul(dshape_hex8p(:,:),coord),kind=CUSTOM_REAL)
+    detjac = determinant(jac)
+    call invert(jac)
+    deriv = real(matmul(jac,dlagrange_gllp(:,:)),kind=CUSTOM_REAL)
+
+    ! store for seismos
+    storederiv_rec(:,:,irec_local) = deriv(:,:)
+  enddo
+
+  end subroutine SIEM_setup_receivers_precompute_dintp
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine SIEM_compute_background_gravity_receiver()
+
+! This subroutine should be called only once before the time loop to compute the
+! background gravity at receiver location for the free air and tilt corrections.
+
+  use constants, only: NDIM,NGLLX,NGLLY,NGLLZ,NGLLCUBE,CUSTOM_REAL,NR_DENSITY
+
+  !use specfem_par, only: minus_gravity_table
+  use specfem_par, only: ELLIPTICITY,nspl_ellip,rspl_ellip,ellipicity_spline,ellipicity_spline2
+  use specfem_par, only: nrec_local,ispec_selected_rec,number_receiver_global
+
+  use specfem_par_crustmantle, only: ibool_crust_mantle,rstore_crust_mantle
+    !xstore => xstore_crust_mantle, &
+    !ystore => ystore_crust_mantle, &
+    !zstore => zstore_crust_mantle
+
+  use specfem_par_full_gravity, only: storederiv_rec,g_spec_rec,gradg_rec
+
+  implicit none
+
+  ! local parameters
+  ! phir = perturbed gravitational potential at receiver
+  double precision :: g_elm(NGLLCUBE)
+  double precision :: radius,theta,phi
+  double precision :: cos_theta,sin_theta,cos_phi,sin_phi
+  double precision :: g_val,minus_g
+  integer :: i,j,k,igll,ispec,iglob,irec_local,irec,ier
+  real(kind=CUSTOM_REAL) :: deriv(NDIM,NGLLCUBE),gradg(NDIM)
+
+  ! gravity
+  integer :: nspl_gravity
+  double precision,dimension(:),allocatable :: rspl_gravity,gravity_spline,gravity_spline2
+
+  ! checks if anything to do
+  if (nrec_local == 0) return
+
+  ! helper arrays
+  allocate(rspl_gravity(NR_DENSITY), &
+           gravity_spline(NR_DENSITY), &
+           gravity_spline2(NR_DENSITY),stat=ier)
+  if (ier /= 0) stop 'Error allocating gravity helper arrays'
+
+  ! initializes spline coefficients
+  rspl_gravity(:) = 0.d0
+  gravity_spline(:) = 0.d0
+  gravity_spline2(:) = 0.d0
+
+  ! gravity term
+  call make_gravity(nspl_gravity,rspl_gravity,gravity_spline,gravity_spline2)
+
+  do irec_local = 1,nrec_local
+
+    ! get global number of that receiver
+    irec = number_receiver_global(irec_local)
+    ispec = ispec_selected_rec(irec)
+
+    ! first determine the nodal ||g||
+    igll = 0
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          igll = igll+1
+          iglob = ibool_crust_mantle(i,j,k,ispec)
+
+          !radius = dble(xstore(iglob))
+          !theta = ystore(iglob)
+          !phi = zstore(iglob)
+
+          radius = dble(rstore_crust_mantle(1,iglob))
+          theta = dble(rstore_crust_mantle(2,iglob))
+          phi = dble(rstore_crust_mantle(3,iglob))
+
+          cos_theta = cos(theta)
+          sin_theta = sin(theta)
+          cos_phi = cos(phi)
+          sin_phi = sin(phi)
+
+          ! puts point locations back into a perfectly spherical shape by removing the ellipticity factor
+          ! note: the gravity spline evaluation is done for a perfectly spherical model, thus we remove the ellipicity in case.
+          !       however, due to topograpy the radius r might still be > 1.0
+          if (ELLIPTICITY) &
+            call revert_ellipticity_rtheta(radius,theta,nspl_ellip,rspl_ellip,ellipicity_spline,ellipicity_spline2)
+
+          if (radius > 1.d0) radius = 1.d0
+
+          ! get g
+          call spline_evaluation(rspl_gravity,gravity_spline,gravity_spline2,nspl_gravity,radius,g_val)
+
+          !debug
+          !print *,'debug: gravity: receiver = ',irec_local,'r = ',radius,'g = ',g_val
+
+          ! spherical components of the gravitational acceleration
+          ! for efficiency replace with lookup table every 100 m in radial direction
+          !int_radius = nint(radius*R_EARTH_KM*10.d0)
+          !minus_g = minus_gravity_table(int_radius)
+          !g_elm(igll) = abs(minus_g)
+
+          minus_g = - g_val
+          g_elm(igll) = abs(minus_g)
+
+          ! store for seismos
+          ! Cartesian components of the gravitational acceleration
+          g_spec_rec(1,igll,irec_local) = real(minus_g * sin_theta * cos_phi,kind=CUSTOM_REAL) !gxl
+          g_spec_rec(2,igll,irec_local) = real(minus_g * sin_theta * sin_phi,kind=CUSTOM_REAL) !gyl
+          g_spec_rec(3,igll,irec_local) = real(minus_g * cos_theta,kind=CUSTOM_REAL)           !gzl
+        enddo
+      enddo
+    enddo
+
+    deriv = storederiv_rec(:,:,irec_local)
+    gradg = real(matmul(deriv,g_elm),kind=CUSTOM_REAL)
+
+    ! store for seismos
+    gradg_rec(:,irec_local) = gradg(:)
+  enddo
+
+  ! free temporary arrays
+  deallocate(rspl_gravity,gravity_spline,gravity_spline2)
+
+  end subroutine SIEM_compute_background_gravity_receiver

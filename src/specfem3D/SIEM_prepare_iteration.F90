@@ -935,6 +935,9 @@
 
   implicit none
 
+  ! safety check
+  if (.not. FULL_GRAVITY) return
+
   if (POISSON_SOLVER == ISOLVER_PETSC) then
     ! petsc solver
     call petsc_finalize1()
@@ -984,5 +987,15 @@
   if (allocated(l2gdof)) deallocate(l2gdof)
   if (allocated(krow_sparse)) deallocate(krow_sparse,kcol_sparse)
   if (allocated(kgrow_sparse)) deallocate(kgrow_sparse,kgcol_sparse)
+
+  ! seismos
+  if (allocated(seismograms_phi)) deallocate(seismograms_phi)
+  if (allocated(seismograms_pgrav)) deallocate(seismograms_pgrav)
+  if (allocated(seismograms_Hgrav)) deallocate(seismograms_Hgrav)
+  if (allocated(seismograms_corio)) deallocate(seismograms_corio)
+  if (allocated(seismograms_grav)) deallocate(seismograms_grav)
+  if (allocated(g_spec_rec)) deallocate(g_spec_rec)
+  if (allocated(gradg_rec)) deallocate(gradg_rec)
+  if (allocated(storederiv_rec)) deallocate(storederiv_rec)
 
   end subroutine SIEM_finalize

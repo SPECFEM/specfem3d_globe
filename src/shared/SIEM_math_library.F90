@@ -917,8 +917,10 @@ module siem_gll_library
   public :: NGNOD_INF
 
   public :: dshape_function_hex8
+  public :: dshape_function_hex8_point
   public :: gll_quadrature
   public :: gll_quadrature3inNGLL
+  public :: gll_lagrange3d_point
   public :: lagrange1dGLLAS
   public :: lagrange1dGENAS
   public :: zwgljd
@@ -1055,96 +1057,92 @@ contains
 
 !NOTE: dimension of dshape_hex8 is (ngnod,3) NOT (3,ngnode)
 
-! not used yet...
+  subroutine dshape_function_hex8_point(ngnod,xi,eta,zeta,dshape_hex8)
 
-!  subroutine dshape_function_hex8_point(ngnod,xi,eta,zeta,dshape_hex8)
-!
-!  implicit none
-!  integer,intent(in) :: ngnod
-!
-!  ! given point
-!  double precision :: xi
-!  double precision :: eta
-!  double precision :: zeta
-!
-!  ! derivatives of the 3d shape functions
-!  double precision :: dshape_hex8(ngnod,3)
-!
-!  integer :: i_gnod
-!
-!  double precision :: xip,xim,etap,etam,zetap,zetam
-!
-!  ! for checking the 3d shape functions
-!  double precision :: sum_dshapexi,sum_dshapeeta,sum_dshapezeta
-!
-!  real(kind=kdble),parameter :: one=1.0_kdble,one_eighth = 0.125_kdble, &
-!  zero = 0.0_kdble,zerotol = 1.0e-12_kdble !1.0e-12_kdble WARNING: please correct immediately
-!
-!  ! check that the parameter file is correct
-!  if (ngnod /= NGNOD_INF) then
-!    stop 'ERROR: elements must have 8 geometrical nodes!'
-!  endif
-!
-!  ! compute the derivatives of 3d shape functions
-!  zetap = one + zeta
-!  zetam = one - zeta
-!  etap =  one + eta
-!  etam =  one - eta
-!  xip =   one + xi
-!  xim =   one - xi
-!
-!  dshape_hex8 = zero
-!
-!  dshape_hex8(1,1) = - one_eighth*etam*zetam
-!  dshape_hex8(2,1) = one_eighth*etam*zetam
-!  dshape_hex8(3,1) = one_eighth*etap*zetam
-!  dshape_hex8(4,1) = - one_eighth*etap*zetam
-!  dshape_hex8(5,1) = - one_eighth*etam*zetap
-!  dshape_hex8(6,1) = one_eighth*etam*zetap
-!  dshape_hex8(7,1) = one_eighth*etap*zetap
-!  dshape_hex8(8,1) = - one_eighth*etap*zetap
-!
-!  dshape_hex8(1,2) = - one_eighth*xim*zetam
-!  dshape_hex8(2,2) = - one_eighth*xip*zetam
-!  dshape_hex8(3,2) = one_eighth*xip*zetam
-!  dshape_hex8(4,2) = one_eighth*xim*zetam
-!  dshape_hex8(5,2) = - one_eighth*xim*zetap
-!  dshape_hex8(6,2) = - one_eighth*xip*zetap
-!  dshape_hex8(7,2) = one_eighth*xip*zetap
-!  dshape_hex8(8,2) = one_eighth*xim*zetap
-!
-!  dshape_hex8(1,3) = - one_eighth*xim*etam
-!  dshape_hex8(2,3) = - one_eighth*xip*etam
-!  dshape_hex8(3,3) = - one_eighth*xip*etap
-!  dshape_hex8(4,3) = - one_eighth*xim*etap
-!  dshape_hex8(5,3) = one_eighth*xim*etam
-!  dshape_hex8(6,3) = one_eighth*xip*etam
-!  dshape_hex8(7,3) = one_eighth*xip*etap
-!  dshape_hex8(8,3) = one_eighth*xim*etap
-!
-!  ! check the shape functions and their derivatives
-!  sum_dshapexi = zero
-!  sum_dshapeeta = zero
-!  sum_dshapezeta = zero
-!
-!  do i_gnod = 1,ngnod
-!    sum_dshapexi = sum_dshapexi + dshape_hex8(i_gnod,1)
-!    sum_dshapeeta = sum_dshapeeta + dshape_hex8(i_gnod,2)
-!    sum_dshapezeta = sum_dshapezeta + dshape_hex8(i_gnod,3)
-!  enddo
-!
-!  ! sum of derivative of shape functions should be zero
-!  if (abs(sum_dshapexi) > zerotol) then
-!    stop 'ERROR: derivative xi shape functions!'
-!  endif
-!  if (abs(sum_dshapeeta) > zerotol) then
-!    stop 'ERROR: derivative eta shape functions!'
-!  endif
-!  if (abs(sum_dshapezeta) > zerotol) then
-!    stop 'ERROR: derivative gamma shape functions!'
-!  endif
-!
-!  end subroutine dshape_function_hex8_point
+  implicit none
+  integer,intent(in) :: ngnod
+
+  ! given point
+  double precision,intent(in) :: xi,eta,zeta
+
+  ! derivatives of the 3d shape functions
+  double precision :: dshape_hex8(ngnod,3)
+
+  integer :: i_gnod
+
+  double precision :: xip,xim,etap,etam,zetap,zetam
+
+  ! for checking the 3d shape functions
+  double precision :: sum_dshapexi,sum_dshapeeta,sum_dshapezeta
+
+  real(kind=kdble),parameter :: one=1.0_kdble,one_eighth = 0.125_kdble, &
+                                zero = 0.0_kdble,zerotol = 1.0e-12_kdble !1.0e-12_kdble WARNING: please correct immediately
+
+  ! check that the parameter file is correct
+  if (ngnod /= NGNOD_INF) then
+    stop 'ERROR: elements must have 8 geometrical nodes!'
+  endif
+
+  ! compute the derivatives of 3d shape functions
+  zetap = one + zeta
+  zetam = one - zeta
+  etap =  one + eta
+  etam =  one - eta
+  xip =   one + xi
+  xim =   one - xi
+
+  dshape_hex8 = zero
+
+  dshape_hex8(1,1) = - one_eighth*etam*zetam
+  dshape_hex8(2,1) = one_eighth*etam*zetam
+  dshape_hex8(3,1) = one_eighth*etap*zetam
+  dshape_hex8(4,1) = - one_eighth*etap*zetam
+  dshape_hex8(5,1) = - one_eighth*etam*zetap
+  dshape_hex8(6,1) = one_eighth*etam*zetap
+  dshape_hex8(7,1) = one_eighth*etap*zetap
+  dshape_hex8(8,1) = - one_eighth*etap*zetap
+
+  dshape_hex8(1,2) = - one_eighth*xim*zetam
+  dshape_hex8(2,2) = - one_eighth*xip*zetam
+  dshape_hex8(3,2) = one_eighth*xip*zetam
+  dshape_hex8(4,2) = one_eighth*xim*zetam
+  dshape_hex8(5,2) = - one_eighth*xim*zetap
+  dshape_hex8(6,2) = - one_eighth*xip*zetap
+  dshape_hex8(7,2) = one_eighth*xip*zetap
+  dshape_hex8(8,2) = one_eighth*xim*zetap
+
+  dshape_hex8(1,3) = - one_eighth*xim*etam
+  dshape_hex8(2,3) = - one_eighth*xip*etam
+  dshape_hex8(3,3) = - one_eighth*xip*etap
+  dshape_hex8(4,3) = - one_eighth*xim*etap
+  dshape_hex8(5,3) = one_eighth*xim*etam
+  dshape_hex8(6,3) = one_eighth*xip*etam
+  dshape_hex8(7,3) = one_eighth*xip*etap
+  dshape_hex8(8,3) = one_eighth*xim*etap
+
+  ! check the shape functions and their derivatives
+  sum_dshapexi = zero
+  sum_dshapeeta = zero
+  sum_dshapezeta = zero
+
+  do i_gnod = 1,ngnod
+    sum_dshapexi = sum_dshapexi + dshape_hex8(i_gnod,1)
+    sum_dshapeeta = sum_dshapeeta + dshape_hex8(i_gnod,2)
+    sum_dshapezeta = sum_dshapezeta + dshape_hex8(i_gnod,3)
+  enddo
+
+  ! sum of derivative of shape functions should be zero
+  if (abs(sum_dshapexi) > zerotol) then
+    stop 'ERROR: derivative xi shape functions!'
+  endif
+  if (abs(sum_dshapeeta) > zerotol) then
+    stop 'ERROR: derivative eta shape functions!'
+  endif
+  if (abs(sum_dshapezeta) > zerotol) then
+    stop 'ERROR: derivative gamma shape functions!'
+  endif
+
+  end subroutine dshape_function_hex8_point
 
 !
 !===============================================================================
@@ -1290,41 +1288,39 @@ contains
 ! this subroutine computes lagrange polynomials and their derivatives defined on
 ! GLL points at an arbitrary point
 
-! not used yet...
+  subroutine gll_lagrange3d_point(ndim,ngllx,nglly,ngllz,ngll,xi,eta,zeta, &
+                                  lagrange_gll,dlagrange_gll)
 
-!  subroutine gll_lagrange3d_point(ndim,ngllx,nglly,ngllz,ngll,xi,eta,zeta, &
-!                                  lagrange_gll,dlagrange_gll)
-!
-!  implicit none
-!  integer,intent(in) :: ndim,ngllx,nglly,ngllz,ngll
-!  real(kind=kdble),intent(in) :: xi,eta,zeta
-!  real(kind=kdble),dimension(ngll),intent(out) :: lagrange_gll
-!  real(kind=kdble),dimension(ndim,ngll),intent(out) :: dlagrange_gll
-!
-!  integer :: i,j,k,n
-!  real(kind=kdble),dimension(ngllx) :: lagrange_x,lagrange_dx
-!  real(kind=kdble),dimension(nglly) :: lagrange_y,lagrange_dy
-!  real(kind=kdble),dimension(ngllz) :: lagrange_z,lagrange_dz
-!
-!  ! compute 1d lagrange polynomials
-!  call lagrange1d(ngllx,xi,lagrange_x,lagrange_dx)
-!  call lagrange1d(nglly,eta,lagrange_y,lagrange_dy)
-!  call lagrange1d(ngllz,zeta,lagrange_z,lagrange_dz)
-!
-!  n = 0
-!  do k = 1,ngllz
-!    do j = 1,nglly
-!      do i = 1,ngllx
-!        n = n+1
-!        lagrange_gll(n)=lagrange_x(i)*lagrange_y(j)*lagrange_z(k)
-!        dlagrange_gll(1,n)=lagrange_dx(i)*lagrange_y(j)*lagrange_z(k)
-!        dlagrange_gll(2,n)=lagrange_x(i)*lagrange_dy(j)*lagrange_z(k)
-!        dlagrange_gll(3,n)=lagrange_x(i)*lagrange_y(j)*lagrange_dz(k)
-!      enddo
-!    enddo
-!  enddo
-!
-!  end subroutine gll_lagrange3d_point
+  implicit none
+  integer,intent(in) :: ndim,ngllx,nglly,ngllz,ngll
+  double precision,intent(in) :: xi,eta,zeta
+  real(kind=kdble),dimension(ngll),intent(out) :: lagrange_gll
+  real(kind=kdble),dimension(ndim,ngll),intent(out) :: dlagrange_gll
+
+  integer :: i,j,k,n
+  real(kind=kdble),dimension(ngllx) :: lagrange_x,lagrange_dx
+  real(kind=kdble),dimension(nglly) :: lagrange_y,lagrange_dy
+  real(kind=kdble),dimension(ngllz) :: lagrange_z,lagrange_dz
+
+  ! compute 1d lagrange polynomials
+  call lagrange1d(ngllx,xi,lagrange_x,lagrange_dx)
+  call lagrange1d(nglly,eta,lagrange_y,lagrange_dy)
+  call lagrange1d(ngllz,zeta,lagrange_z,lagrange_dz)
+
+  n = 0
+  do k = 1,ngllz
+    do j = 1,nglly
+      do i = 1,ngllx
+        n = n+1
+        lagrange_gll(n) = lagrange_x(i)*lagrange_y(j)*lagrange_z(k)
+        dlagrange_gll(1,n) = lagrange_dx(i)*lagrange_y(j)*lagrange_z(k)
+        dlagrange_gll(2,n) = lagrange_x(i)*lagrange_dy(j)*lagrange_z(k)
+        dlagrange_gll(3,n) = lagrange_x(i)*lagrange_y(j)*lagrange_dz(k)
+      enddo
+    enddo
+  enddo
+
+  end subroutine gll_lagrange3d_point
 
 !
 !===========================================
@@ -1531,59 +1527,57 @@ contains
 ! this subroutine computes the 1d lagrange interpolation functions and their
 ! derivatives at a given point xi.
 
-! not used ...
+  subroutine lagrange1d(nenode,xi,phi,dphi_dxi)
 
-!  subroutine lagrange1d(nenode,xi,phi,dphi_dxi)
-!
-!  implicit none
-!  integer,intent(in) :: nenode ! number of nodes in an 1d element
-!  integer :: i,j,k
-!  real(kind=kdble),intent(in) :: xi ! point where to calculate lagrange function and
-!  !its derivative
-!  real(kind=kdble),dimension(nenode),intent(out) :: phi,dphi_dxi
-!  real(kind=kdble),dimension(nenode) :: xii,term,dterm,sum_term
-!  real(kind=kdble) :: dx
-!
-!  ! compute natural coordnates
-!  dx = 2.0_kdble/real((nenode-1),kdble)! length = 2.0 as xi is taken -1 to +1
-!  do i = 1,nenode
-!    ! coordinates when origin is in the left
-!    xii(i)=real((i-1),kdble)*dx
-!  enddo
-!
-!  ! origin is tranformed to mid point
-!  xii = xii-1.0_kdble
-!
-!  do i = 1,nenode
-!    k = 0
-!    phi(i)=1.0_kdble
-!    do j = 1,nenode
-!      if (j /= i) then
-!        k = k+1
-!        term(k)=(xi-xii(j))/(xii(i)-xii(j))
-!        dterm(k)=1.0_kdble/(xii(i)-xii(j)) ! derivative of the term wrt xi
-!
-!        phi(i)=phi(i)*(xi-xii(j))/(xii(i)-xii(j))
-!      endif
-!    enddo
-!
-!    sum_term = 1.0_kdble
-!    do j = 1,nenode-1
-!      do k = 1,nenode-1
-!        if (k == j) then
-!          sum_term(j)=sum_term(j)*dterm(k)
-!        else
-!          sum_term(j)=sum_term(j)*term(k)
-!        endif
-!      enddo
-!    enddo
-!    dphi_dxi(i)=0.0_kdble
-!    do j = 1,nenode-1
-!      dphi_dxi(i)=dphi_dxi(i)+sum_term(j)
-!    enddo
-!  enddo
-!
-!  end subroutine lagrange1d
+  implicit none
+  integer,intent(in) :: nenode ! number of nodes in an 1d element
+  integer :: i,j,k
+  real(kind=kdble),intent(in) :: xi ! point where to calculate lagrange function and
+  !its derivative
+  real(kind=kdble),dimension(nenode),intent(out) :: phi,dphi_dxi
+  real(kind=kdble),dimension(nenode) :: xii,term,dterm,sum_term
+  real(kind=kdble) :: dx
+
+  ! compute natural coordnates
+  dx = 2.0_kdble/real((nenode-1),kdble)! length = 2.0 as xi is taken -1 to +1
+  do i = 1,nenode
+    ! coordinates when origin is in the left
+    xii(i) = real((i-1),kdble)*dx
+  enddo
+
+  ! origin is tranformed to mid point
+  xii = xii-1.0_kdble
+
+  do i = 1,nenode
+    k = 0
+    phi(i) = 1.0_kdble
+    do j = 1,nenode
+      if (j /= i) then
+        k = k+1
+        term(k) = (xi-xii(j))/(xii(i)-xii(j))
+        dterm(k) = 1.0_kdble/(xii(i)-xii(j)) ! derivative of the term wrt xi
+
+        phi(i) = phi(i)*(xi-xii(j))/(xii(i)-xii(j))
+      endif
+    enddo
+
+    sum_term = 1.0_kdble
+    do j = 1,nenode-1
+      do k = 1,nenode-1
+        if (k == j) then
+          sum_term(j) = sum_term(j)*dterm(k)
+        else
+          sum_term(j) = sum_term(j)*term(k)
+        endif
+      enddo
+    enddo
+    dphi_dxi(i) = 0.0_kdble
+    do j = 1,nenode-1
+      dphi_dxi(i) = dphi_dxi(i) + sum_term(j)
+    enddo
+  enddo
+
+  end subroutine lagrange1d
 
 !
 !===============================================================================
@@ -1619,14 +1613,14 @@ contains
 !
 !  do i = 1,nenod
 !    k = 0
-!    phi(i)=one
+!    phi(i) = one
 !    do j = 1,nenod
 !      if (j /= i) then
 !        k = k+1
-!        term(k)=(xi-xii(j))/(xii(i)-xii(j))
-!        dterm(k)=one/(xii(i)-xii(j)) ! derivative of the term wrt xi
+!        term(k) = (xi-xii(j))/(xii(i)-xii(j))
+!        dterm(k) = one/(xii(i)-xii(j)) ! derivative of the term wrt xi
 !
-!        phi(i)=phi(i)*term(k) !(xi-xii(j))/(xii(i)-xii(j))
+!        phi(i) = phi(i)*term(k) !(xi-xii(j))/(xii(i)-xii(j))
 !      endif
 !    enddo
 !
@@ -1635,16 +1629,16 @@ contains
 !    do j = 1,nenod-1
 !      do k = 1,nenod-1
 !        if (k == j) then
-!          sum_term(j)=sum_term(j)*dterm(k)
+!          sum_term(j) = sum_term(j)*dterm(k)
 !        else
-!          sum_term(j)=sum_term(j)*term(k)
+!          sum_term(j) = sum_term(j)*term(k)
 !        endif
 !      enddo
 !    enddo
-!    dphi_dxi(i)=sum(sum_term)
-!    !dphi_dxi(i)=0.0_kdble
+!    dphi_dxi(i) = sum(sum_term)
+!    !dphi_dxi(i) = 0.0_kdble
 !    !do j=1,nenod-1
-!    !  dphi_dxi(i)=dphi_dxi(i)+sum_term(j)
+!    !  dphi_dxi(i) = dphi_dxi(i)+sum_term(j)
 !    !enddo
 !  enddo
 !
@@ -1683,14 +1677,14 @@ contains
 
   do i = 1,nenod
     k = 0
-    phi(i)=one
+    phi(i) = one
     do j = 1,nenod
       if (j /= i) then
         k = k+1
-        term(k)=(xi-xii(j))/(xii(i)-xii(j))
-        dterm(k)=one/(xii(i)-xii(j)) ! derivative of the term wrt xi
+        term(k) = (xi-xii(j))/(xii(i)-xii(j))
+        dterm(k) = one/(xii(i)-xii(j)) ! derivative of the term wrt xi
 
-        phi(i)=phi(i)*term(k) !(xi-xii(j))/(xii(i)-xii(j))
+        phi(i) = phi(i)*term(k) !(xi-xii(j))/(xii(i)-xii(j))
       endif
     enddo
 
@@ -1699,16 +1693,16 @@ contains
     do j = 1,nenod-1
       do k = 1,nenod-1
         if (k == j) then
-          sum_term(j)=sum_term(j)*dterm(k)
+          sum_term(j) = sum_term(j)*dterm(k)
         else
-          sum_term(j)=sum_term(j)*term(k)
+          sum_term(j) = sum_term(j)*term(k)
         endif
       enddo
     enddo
-    dphi_dxi(i)=sum(sum_term)
-    !dphi_dxi(i)=0.0_kdble
+    dphi_dxi(i) = sum(sum_term)
+    !dphi_dxi(i) = 0.0_kdble
     !do j=1,nenod-1
-    !  dphi_dxi(i)=dphi_dxi(i)+sum_term(j)
+    !  dphi_dxi(i) = dphi_dxi(i)+sum_term(j)
     !enddo
   enddo
 
@@ -1736,14 +1730,14 @@ contains
 
   do i = 1,nenod
     k = 0
-    phi(i)=one
+    phi(i) = one
     do j = 1,nenod
       if (j /= i) then
         k = k+1
-        term(k)=(xi-xii(j))/(xii(i)-xii(j))
-        dterm(k)=one/(xii(i)-xii(j)) ! derivative of the term wrt xi
+        term(k) = (xi-xii(j))/(xii(i)-xii(j))
+        dterm(k) = one/(xii(i)-xii(j)) ! derivative of the term wrt xi
 
-        phi(i)=phi(i)*term(k)!(xi-xii(j))/(xii(i)-xii(j))
+        phi(i) = phi(i)*term(k)!(xi-xii(j))/(xii(i)-xii(j))
       endif
     enddo
 
@@ -1752,16 +1746,16 @@ contains
     do j = 1,nenod-1
       do k = 1,nenod-1
         if (k == j) then
-          sum_term(j)=sum_term(j)*dterm(k)
+          sum_term(j) = sum_term(j)*dterm(k)
         else
-          sum_term(j)=sum_term(j)*term(k)
+          sum_term(j) = sum_term(j)*term(k)
         endif
       enddo
     enddo
-    dphi_dxi(i)=sum(sum_term)
-    !dphi_dxi(i)=0.0_kdble
+    dphi_dxi(i) = sum(sum_term)
+    !dphi_dxi(i) = 0.0_kdble
     !do j=1,nenod-1
-    !  dphi_dxi(i)=dphi_dxi(i)+sum_term(j)
+    !  dphi_dxi(i) = dphi_dxi(i)+sum_term(j)
     !enddo
   enddo
 
@@ -1790,14 +1784,14 @@ contains
 
   do i = 1,nenod
     k = 0
-    phi(i)=one
+    phi(i) = one
     do j = 1,nenod
       if (j /= i) then
         k = k+1
-        term(k)=(xi-xii(j))/(xii(i)-xii(j))
-        dterm(k)=one/(xii(i)-xii(j)) ! derivative of the term wrt xi
+        term(k) = (xi-xii(j))/(xii(i)-xii(j))
+        dterm(k) = one/(xii(i)-xii(j)) ! derivative of the term wrt xi
 
-        phi(i)=phi(i)*term(k)!(xi-xii(j))/(xii(i)-xii(j))
+        phi(i) = phi(i)*term(k)!(xi-xii(j))/(xii(i)-xii(j))
       endif
     enddo
 
@@ -1806,16 +1800,16 @@ contains
     do j = 1,nenod-1
       do k = 1,nenod-1
         if (k == j) then
-          sum_term(j)=sum_term(j)*dterm(k)
+          sum_term(j) = sum_term(j)*dterm(k)
         else
-          sum_term(j)=sum_term(j)*term(k)
+          sum_term(j) = sum_term(j)*term(k)
         endif
       enddo
     enddo
-    dphi_dxi(i)=sum(sum_term)
-    !dphi_dxi(i)=0.0_kdble
+    dphi_dxi(i) = sum(sum_term)
+    !dphi_dxi(i) = 0.0_kdble
     !do j=1,nenod-1
-    !  dphi_dxi(i)=dphi_dxi(i)+sum_term(j)
+    !  dphi_dxi(i) = dphi_dxi(i)+sum_term(j)
     !enddo
   enddo
 

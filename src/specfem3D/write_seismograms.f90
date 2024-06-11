@@ -29,7 +29,7 @@
 
   use constants, only: IMAIN,OUTPUT_ADJOINT_WAVEFIELD_SEISMOGRAMS
 
-  use constants_solver, only: NGLOB_CRUST_MANTLE,NGLOB_CRUST_MANTLE_ADJOINT
+  use constants_solver, only: NGLOB_CRUST_MANTLE,NGLOB_CRUST_MANTLE_ADJOINT,FULL_GRAVITY_VAL,ROTATION_VAL
 
   use specfem_par, only: myrank,Mesh_pointer,GPU_MODE,GPU_ASYNC_COPY,SIMULATION_TYPE, &
     nrec_local,number_receiver_global,ispec_selected_rec,ispec_selected_source, &
@@ -143,6 +143,9 @@
         end select
       endif
 
+      ! full gravity seismograms
+      if (FULL_GRAVITY_VAL) call SIEM_compute_seismos()
+
     endif ! nrec_local
   endif
 
@@ -162,6 +165,12 @@
   !   we would write out at mod(it,NTSTEP_BETWEEN_OUTPUT_SEISMOS) == 0, which is at it==10
   !
   if (mod(it,NTSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == it_end) then
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) 'Writing the seismograms'
+      call flush_IMAIN()
+    endif
+
     ! timing
     write_time_begin = wtime()
 
@@ -173,10 +182,21 @@
       select case (SIMULATION_TYPE)
       case (1,3)
         ! forward/reconstructed wavefields
-        if (do_save_seismograms) &
-          call write_seismograms_to_file()
-        if (SAVE_SEISMOGRAMS_STRAIN) &
-          call write_seismograms_strain()
+        if (do_save_seismograms) then
+          ! displacement (seismograms)
+          call write_seismograms_to_file(1)
+          if (FULL_GRAVITY_VAL) then
+            call write_seismograms_to_file(5) ! seismograms_phi
+            call write_seismograms_to_file(6) ! seismograms_pgrav
+            call write_seismograms_to_file(7) ! seismograms_grav
+            if (ROTATION_VAL) call write_seismograms_to_file(8) ! seismograms_corio
+          endif
+        endif
+        if (SAVE_SEISMOGRAMS_STRAIN) then
+          ! strain
+          call write_seismograms_strain(1)
+          if (FULL_GRAVITY_VAL) call write_seismograms_strain(2)  ! gravity strain
+        endif
       case (2)
         ! adjoint wavefield
         call write_adj_seismograms()
@@ -213,9 +233,9 @@
 !
 
 ! write seismograms to files
-  subroutine write_seismograms_to_file()
+  subroutine write_seismograms_to_file(istore)
 
-  use constants_solver, only: MAX_STRING_LEN,CUSTOM_REAL,NDIM,IMAIN,IOUT,itag
+  use constants, only: MAX_STRING_LEN,CUSTOM_REAL,NDIM,IMAIN,IOUT,itag
 
   use specfem_par, only: &
     NPROCTOT_VAL,myrank,nrec,nrec_local, &
@@ -236,13 +256,49 @@
 
   implicit none
 
+  integer,intent(in) :: istore
+
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: one_seismogram
 
   integer :: iproc,sender,irec_local,irec,ier,receiver
   integer :: nrec_local_received
   integer :: total_seismos,length_network_name,length_station_name
+
   character(len=MAX_STRING_LEN) :: sisname,staname
+  character(len=8) :: component
+
+  ! saves displacement or potential
+  component = ''
+  select case (istore)
+  case (1)
+    !component = 'd'   ! displacement (seismograms array holds displacement)
+    ! for backward compatibility with older globe versions:
+    ! we leave this blank to ignore adding a type indicator to the seismogram names
+    component = ''
+  case (2)
+    component = 'v'   ! velocity - not used yet...
+  case (3)
+    component = 'a'   ! acceleration - not used yet...
+  case (4)
+    component = 'p'   ! pressure - not used yet...
+  case (5)
+    component = 'G'   ! gravity potential (seismograms_phi)
+  case (6)
+    component = 'C.PGRAV'  ! gravity perturbation (seismograms_pgrav)
+  case (7)
+    component = 'C.GRAV'  ! free-air gravity change (seismograms_grav)
+  case (8)
+    component = 'C.CORIO'  ! Coriolis acceleration (seismograms_corio)
+  case default
+    call exit_MPI(myrank,'wrong component to save for seismograms')
+  end select
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) 'Component: .sem '//trim(component)
+    call flush_IMAIN()
+  endif
 
   ! allocates single station seismogram
   allocate(one_seismogram(NDIM,nlength_seismogram),stat=ier)
@@ -250,7 +306,7 @@
   one_seismogram(:,:) = 0.0_CUSTOM_REAL
 
   ! ASDF format
-  if (OUTPUT_SEISMOS_ASDF) then
+  if (OUTPUT_SEISMOS_ASDF .and. istore == 1) then     ! only supported for seismogram output
     ! The writing of seismograms by the main proc is handled within write_asdf()
     do irec_local = 1,nrec_local
 
@@ -262,7 +318,7 @@
       ! write this seismogram
       ! note: ASDF data structure is given in module
       !       stores all traces into ASDF container in case
-      call write_one_seismogram(one_seismogram,irec,irec_local,.true.)
+      call write_one_seismogram(one_seismogram,irec,irec_local,.true.,component,istore)
     enddo
 
     ! writes ASDF file output
@@ -275,7 +331,7 @@
   endif
 
   ! write 3D seismogram array
-  if (OUTPUT_SEISMOS_3D_ARRAY) then
+  if (OUTPUT_SEISMOS_3D_ARRAY .and. istore == 1) then   ! only supported for seismogram output
     write(sisname,'(A,I5.5)') '/array_seismograms_node_',myrank
     write(staname,'(A,I5.5)') '/array_stations_node_',myrank
     if (seismo_offset == 0) then
@@ -319,13 +375,15 @@
     enddo
     close(IOUT)
 
-  else if (NTSTEP_BETWEEN_OUTPUT_SAMPLE > 1) then
-    ! save original DT and NSTEP for adjoint simulation
-    if (myrank == 0 .and. seismo_offset == 0) then
-      open(unit=IOUT,file=trim(OUTPUT_FILES)//'seismogram_stats.txt',status='unknown',form='formatted',action='write')
-      write(IOUT,*) 'DT0     =', DT
-      write(IOUT,*) 'NSTEP0  =', NSTEP
-      close(IOUT)
+  else
+    if (NTSTEP_BETWEEN_OUTPUT_SAMPLE > 1 .and. istore == 1) then
+      ! save original DT and NSTEP for adjoint simulation
+      if (myrank == 0 .and. seismo_offset == 0) then
+        open(unit=IOUT,file=trim(OUTPUT_FILES)//'seismogram_stats.txt',status='unknown',form='formatted',action='write')
+        write(IOUT,*) 'DT0     =', DT
+        write(IOUT,*) 'NSTEP0  =', NSTEP
+        close(IOUT)
+      endif
     endif
   endif
 
@@ -337,7 +395,7 @@
 
       ! all the processes write their local seismograms themselves
       if (SAVE_ALL_SEISMOS_IN_ONE_FILE .and. OUTPUT_SEISMOS_ASCII_TEXT) then
-        write(sisname,'(A,I5.5)') '/all_seismograms_node_',myrank
+        write(sisname,'(A,I5.5)') '/all_seismograms_'//trim(component)//'_node_',myrank
 
         if (USE_BINARY_FOR_LARGE_FILE) then
           if (seismo_offset == 0) then
@@ -358,16 +416,16 @@
 
       ! loop on all the local receivers
       do irec_local = 1,nrec_local
+        ! gets trace
+        call get_single_trace(istore,irec_local,one_seismogram)
 
         ! get global number of that receiver
         irec = number_receiver_global(irec_local)
 
-        one_seismogram(:,:) = seismograms(:,irec_local,:)
-
         ! write this seismogram
         ! note: ASDF data structure is given in module
         !       stores all traces into ASDF container in case
-        call write_one_seismogram(one_seismogram,irec,irec_local,.false.)
+        call write_one_seismogram(one_seismogram,irec,irec_local,.false.,component,istore)
       enddo
 
       ! create one large file instead of one small file per station to avoid file system overload
@@ -381,7 +439,7 @@
       if (SAVE_ALL_SEISMOS_IN_ONE_FILE .and. OUTPUT_SEISMOS_ASCII_TEXT) then
         if (myrank == 0) then
           ! create one large file instead of one small file per station to avoid file system overload
-          write(sisname,'(A)') '/all_seismograms'
+          write(sisname,'(A)') '/all_seismograms_'//trim(component)//'_main'
 
           if (USE_BINARY_FOR_LARGE_FILE) then
             if (seismo_offset == 0) then
@@ -412,7 +470,7 @@
         do iproc = 0,NPROCTOT_VAL-1
 
           ! communicates only with processes that contain local receivers (to minimize MPI chatter)
-          if (islice_num_rec_local(iproc) == 0 ) cycle
+          if (islice_num_rec_local(iproc) == 0) cycle
 
           ! receive except from proc 0, which is me and therefore I already have this value
           sender = iproc
@@ -434,16 +492,18 @@
               if (iproc == 0) then
                 ! get global number of that receiver
                 irec = number_receiver_global(irec_local)
-                one_seismogram(:,:) = seismograms(:,irec_local,:)
+                ! gets trace
+                call get_single_trace(istore,irec_local,one_seismogram)
               else
                 ! receives info from secondary processes
                 call recv_singlei(irec,sender,itag)
                 if (irec < 1 .or. irec > nrec) call exit_MPI(myrank,'Error while receiving global receiver number')
+                ! gets trace from secondary processes
                 call recv_cr(one_seismogram,NDIM*seismo_current,sender,itag)
               endif
 
               ! write this seismogram
-              call write_one_seismogram(one_seismogram,irec,irec_local,.false.)
+              call write_one_seismogram(one_seismogram,irec,irec_local,.false.,component,istore)
 
               ! counts seismos written
               total_seismos = total_seismos + 1
@@ -460,9 +520,12 @@
           do irec_local = 1,nrec_local
             ! get global number of that receiver
             irec = number_receiver_global(irec_local)
+            ! sends receiver number
             call send_singlei(irec,receiver,itag)
 
-            one_seismogram(:,:) = seismograms(:,irec_local,:)
+            ! gets trace
+            call get_single_trace(istore,irec_local,one_seismogram)
+            ! sends traces
             call send_cr(one_seismogram,NDIM*seismo_current,receiver,itag)
           enddo
         endif
@@ -487,13 +550,86 @@
 
   deallocate(one_seismogram)
 
+contains
+
+  subroutine get_single_trace(istore,irec_local,one_seismogram)
+
+  use constants, only: NDIM,CUSTOM_REAL
+  use specfem_par, only: seismograms,nlength_seismogram,seismo_current
+  use specfem_par_full_gravity, only: seismograms_phi,seismograms_pgrav,seismograms_grav,seismograms_corio
+
+  implicit none
+
+  integer,intent(in) :: istore,irec_local
+  real(kind=CUSTOM_REAL),intent(out) :: one_seismogram(NDIM,nlength_seismogram)
+
+  ! local parameters
+  integer :: i
+
+  ! init trace
+  one_seismogram(:,:) = 0.0_CUSTOM_REAL
+
+  select case (istore)
+  case (1)
+    ! displacement
+    !one_seismogram(:,:) = seismograms(:,irec_local,:)
+    do i = 1,seismo_current
+      one_seismogram(:,i) = seismograms(:,irec_local,i)
+    enddo
+  case (2)
+    ! velocity
+    !do i = 1,seismo_current
+    !  one_seismogram(:,i) = seismograms_v(:,irec_local,i)
+    !enddo
+    ! not used yet...
+    continue
+  case (3)
+    ! acceleration
+    !do i = 1,seismo_current
+    !  one_seismogram(:,i) = seismograms_a(:,irec_local,i)
+    !enddo
+    ! not used yet...
+    continue
+  case (4)
+    ! pressure
+    !do i = 1,seismo_current
+    !  one_seismogram(1,i) = seismograms_p(1,irec_local,i) ! single component
+    !enddo
+    ! not used yet...
+    continue
+  case (5)
+    ! gravity potential (seismograms_phi)
+    do i = 1,seismo_current
+      one_seismogram(1,i) = seismograms_phi(1,irec_local,i)  ! potential (single component)
+    enddo
+  case (6)
+    ! gravity perturbation (seismograms_pgrav)
+    do i = 1,seismo_current
+      one_seismogram(:,i) = seismograms_pgrav(:,irec_local,i)
+    enddo
+  case (7)
+    ! free-air gravity (seismograms_grav)
+    do i = 1,seismo_current
+      one_seismogram(:,i) = seismograms_grav(:,irec_local,i)
+    enddo
+  case (8)
+    ! Coriolis acceleration (seismograms_corio)
+    do i = 1,seismo_current
+      one_seismogram(:,i) = seismograms_corio(:,irec_local,i)
+    enddo
+  case default
+    call exit_MPI(myrank,'wrong istore component to get single trace')
+  end select
+
+  end subroutine get_single_trace
+
   end subroutine write_seismograms_to_file
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine write_one_seismogram(one_seismogram,irec,irec_local,is_for_asdf)
+  subroutine write_one_seismogram(one_seismogram,irec,irec_local,is_for_asdf,component,istore)
 
   use constants_solver, only: MAX_STRING_LEN,CUSTOM_REAL,NDIM,DEGREES_TO_RADIANS, &
     MAX_LENGTH_STATION_NAME,MAX_LENGTH_NETWORK_NAME
@@ -515,6 +651,9 @@
   integer,intent(in) :: irec,irec_local
   logical,intent(in) :: is_for_asdf
   real(kind=CUSTOM_REAL), dimension(NDIM,nlength_seismogram),intent(in) :: one_seismogram
+
+  integer,intent(in) :: istore
+  character(len=8),intent(in) :: component
 
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(5,nlength_seismogram) :: seismogram_tmp
@@ -546,6 +685,12 @@
     ior_end   = 3    ! ending with Z => NEZ
   endif
 
+  ! single component only for pressure & gravitational potential
+  if (istore == 4 .or. istore == 5) then
+    ior_start = 1
+    ior_end = 1
+  endif
+
   do iorientation = ior_start,ior_end    ! changes according to ROTATE_SEISMOGRAMS_RT
 
     select case (iorientation)
@@ -568,6 +713,12 @@
       call exit_MPI(myrank,'incorrect channel value')
     end select
 
+    ! single component only for pressure & gravitational potential
+    if (istore == 4 .or. istore == 5) then
+      chn = bic(1:2)//'P'
+    endif
+
+    ! backazimuth rotation
     if (iorientation == 4 .or. iorientation == 5) then
       ! calculate backazimuth needed to rotate East and North
       ! components to Radial and Transverse components
@@ -632,6 +783,18 @@
     ! create this name also for the text line added to the unique big seismogram file
     write(sisname_big_file,"(a,'.',a,'.',a3,'.sem')") network_name(irec)(1:length_network_name), &
                    station_name(irec)(1:length_station_name),chn
+
+    ! full gravity seismos add an additional component indicator to the name
+    if (istore > 4) then
+      ! using format: **net**.**sta**.channel.C.GRAV.sem.ascii
+      write(sisname,"('/',a,'.',a,'.',a3,'.',a,'.sem')") network_name(irec)(1:length_network_name), &
+                     station_name(irec)(1:length_station_name),chn,trim(component)
+
+      ! create this name also for the text line added to the unique big seismogram file
+      write(sisname_big_file,"(a,'.',a,'.',a3,'.',a,'.sem')") network_name(irec)(1:length_network_name), &
+                     station_name(irec)(1:length_station_name),chn,trim(component)
+    endif
+
 
     if (is_for_asdf) then
       ! ASDF output format
@@ -764,16 +927,24 @@
 
 ! write strain seismograms to text files
 
-  subroutine write_seismograms_strain()
+  subroutine write_seismograms_strain(istore)
 
-  use constants, only: MAX_STRING_LEN,CUSTOM_REAL,IOUT,myrank
+  use constants, only: MAX_STRING_LEN,CUSTOM_REAL,IOUT,IMAIN,myrank,NDIM,DEGREES_TO_RADIANS
 
   use specfem_par, only: NSTEP,DT,t0,seismo_current,seismo_offset, &
-    OUTPUT_FILES,WRITE_SEISMOGRAMS_BY_MAIN,SIMULATION_TYPE, &
+    OUTPUT_FILES,WRITE_SEISMOGRAMS_BY_MAIN,ROTATE_SEISMOGRAMS_RT,SIMULATION_TYPE, &
     number_receiver_global,nrec_local,network_name,station_name, &
+    stlat,stlon, &
     seismograms_eps
 
+  use specfem_par_full_gravity, only: seismograms_Hgrav
+
+  use specfem_par, only: &
+    cmt_lat => cmt_lat_SAC,cmt_lon => cmt_lon_SAC
+
   implicit none
+
+  integer,intent(in) :: istore
 
   ! local parameters
   integer :: irec,irec_local,ier,it_tmp
@@ -784,9 +955,26 @@
   character(len=3) :: chn
   character(len=MAX_STRING_LEN) :: sisname
 
+  ! full gravity strain
+  integer :: idim,jdim
+  integer :: ior_start,ior_end
+  real(kind=CUSTOM_REAL),dimension(NDIM,NDIM) :: one_matrix
+  real(kind=CUSTOM_REAL),dimension(NDIM,NDIM) :: Qmat,QmatT
+  double precision :: backaz,phi
+  real(kind=CUSTOM_REAL) :: cphi,sphi
+
   ! safety check
   if (WRITE_SEISMOGRAMS_BY_MAIN) &
     call exit_MPI(myrank,'Error write_seismograms_strain() needs WRITE_SEISMOGRAMS_BY_MAIN turned off')
+
+  ! user output
+  if (myrank == 0) then
+    if (istore == 1) &
+      write(IMAIN,*) 'Strain        : .S**'
+    if (istore == 2) &
+      write(IMAIN,*) 'Gravity strain: .H**.PGRAV'
+    call flush_IMAIN()
+  endif
 
   ! checks if anything to do
   if (nrec_local <= 0 ) return
@@ -796,24 +984,133 @@
     ! get global number of that receiver
     irec = number_receiver_global(irec_local)
 
-    ! strain orientation in local, radial direction (N-E-UP)
-    do iorientation = 1,6
+    ! gravity strain rotation
+    if (istore == 2 .and. ROTATE_SEISMOGRAMS_RT) then
+      ! edit the channel names:
+      ! orientation 1=N,2=E,3=Z
+      ! note here that in write_seismograms the order ZRT is used, but because the original matrix is defined in NEZ order,
+      ! which we will rotate, its easier to use RTZ here
+      call get_backazimuth(cmt_lat,cmt_lon,stlat(irec),stlon(irec),backaz)
 
-      select case (iorientation)
+      ! rotation angle phi takes opposite direction; to have radial direction pointing in outgoing direction
+      phi = backaz
+      if (phi > 180.d0) then
+         phi = phi-180.d0
+      else if (phi < 180.d0) then
+         phi = phi+180.d0
+      else if (phi == 180.d0) then
+         phi = 0.d0
+      endif
+
+      cphi = real(cos(phi*DEGREES_TO_RADIANS),kind=CUSTOM_REAL)
+      sphi = real(sin(phi*DEGREES_TO_RADIANS),kind=CUSTOM_REAL)
+
+      ! Create rotation matrix and transpose:
+      Qmat(1,1) = cphi
+      Qmat(1,2) = sphi
+      Qmat(1,3) = 0.0_CUSTOM_REAL
+      Qmat(2,1) = -sphi
+      Qmat(2,2) = cphi
+      Qmat(2,3) = 0.0_CUSTOM_REAL
+      Qmat(3,1) = 0.0_CUSTOM_REAL
+      Qmat(3,2) = 0.0_CUSTOM_REAL
+      Qmat(3,3) = 1.0_CUSTOM_REAL
+
+      QmatT = transpose(Qmat)
+
+      ! Rotate the matrix for each timestep Q M Q^T :
+      do isample = 1,seismo_current
+        ! gets strain matrix
+        one_matrix(:,:) = seismograms_Hgrav(:,:,irec_local,isample)
+        ! rotates
+        one_matrix(:,:) = matmul(Qmat, one_matrix)
+        one_matrix(:,:) = matmul(one_matrix, QmatT)
+        ! stores
+        seismograms_Hgrav(:,:,irec_local,isample) = one_matrix(:,:)
+      enddo
+    endif
+
+    ! strain orientation in local, radial direction (N-E-UP)
+    ! default - symmetric strain tensor (w/ 6 components)
+    ior_start = 1
+    ior_end = 6
+
+    ! asymmetric gravity strain tensor (all 3x3 components might be different)
+    if (istore == 2) ior_end = 9
+
+    do iorientation = ior_start,ior_end
+
+      ! determines channel name
+      chn = ''
+      select case (istore)
       case (1)
-       chn = 'SNN'
+        ! default
+        ! elastic strain
+        ! see compute_seismograms_strain() routine for orientations
+        select case (iorientation)
+        case (1)
+         chn = 'SNN'
+        case (2)
+         chn = 'SEE'
+        case (3)
+         chn = 'SZZ'
+        case (4)
+         chn = 'SNE'
+        case (5)
+         chn = 'SNZ'
+        case (6)
+         chn = 'SEZ'
+        case default
+          call exit_MPI(myrank,'incorrect channel value in write_seismograms_strain()')
+        end select
+
       case (2)
-       chn = 'SEE'
-      case (3)
-       chn = 'SZZ'
-      case (4)
-       chn = 'SNE'
-      case (5)
-       chn = 'SNZ'
-      case (6)
-       chn = 'SEZ'
+        ! gravity strain
+        ! see SIEM_compute_seismograms_pgrav() routine for orientations
+        ! global -> local (n-e-up)
+        ! eps_xx -> eps_nn
+        ! eps_xy -> eps_ne
+        ! eps_xz -> eps_nz
+        ! eps_yx -> eps_en
+        ! eps_yy -> eps_ee
+        ! eps_yz -> eps_ez
+        ! eps_zx -> eps_zn
+        ! eps_zy -> eps_ze
+        ! eps_zz -> eps_zz (z in radial direction up)
+        select case (iorientation)
+        case (1)
+         chn = 'HNN'
+         if (ROTATE_SEISMOGRAMS_RT) chn = 'HRR'
+        case (2)
+         chn = 'HNE'
+         if (ROTATE_SEISMOGRAMS_RT) chn = 'HRT'
+        case (3)
+         chn = 'HNZ'
+         if (ROTATE_SEISMOGRAMS_RT) chn = 'HRZ'
+        case (4)
+         chn = 'HEN'
+         if (ROTATE_SEISMOGRAMS_RT) chn = 'HTR'
+        case (5)
+         chn = 'HEE'
+         if (ROTATE_SEISMOGRAMS_RT) chn = 'HTT'
+        case (6)
+         chn = 'HEZ'
+         if (ROTATE_SEISMOGRAMS_RT) chn = 'HTZ'
+        case (7)
+         chn = 'HZN'
+         if (ROTATE_SEISMOGRAMS_RT) chn = 'HZR'
+        case (8)
+         chn = 'HZE'
+         if (ROTATE_SEISMOGRAMS_RT) chn = 'HZT'
+        case (9)
+         chn = 'HZZ'
+         if (ROTATE_SEISMOGRAMS_RT) chn = 'HZZ'
+        case default
+          call exit_MPI(myrank,'incorrect channel value in write_seismograms_strain()')
+        end select
+
       case default
-        call exit_MPI(myrank,'incorrect channel value in write_seismograms_strain()')
+        call exit_MPI(myrank,'wrong component to save for strains')
       end select
 
       ! strain seismograms will have channel-code S**
@@ -822,6 +1119,12 @@
       ! using format: **net**.**sta**.channel
       ! for example: IU.KONO.SNN.sem.ascii
       write(sisname,"('/',a,'.',a,'.',a3,'.sem.ascii')") trim(network_name(irec)),trim(station_name(irec)),chn
+
+      ! full gravity strain has channel-code H**
+      if (istore == 2) then
+        ! for example: IU.KONO.HNN.PGRAV.sem.ascii
+        write(sisname,"('/',a,'.',a,'.',a3,'.PGRAV','.sem.ascii')") trim(network_name(irec)),trim(station_name(irec)),chn
+      endif
 
       ! save seismograms in text format
       if (seismo_offset == 0) then
@@ -834,14 +1137,30 @@
       endif
       if (ier /= 0) call exit_mpi(myrank,'Error opening file: '//trim(OUTPUT_FILES)//trim(sisname))
 
-      ! subtract half duration of the source to make sure travel time is correct
+      ! make sure we never write more than the maximum number of time steps
       do isample = 1,seismo_current
-        ! seismogram value
-        value = dble(seismograms_eps(iorientation,irec_local,isample))
+        ! initializes
+        value = 0.d0
+
+        ! gets strain value
+        select case (istore)
+        case (1)
+          value = dble(seismograms_eps(iorientation,irec_local,isample))
+        case (2)
+          ! example: iorientation == 1 -> idim = 1, jdim = 1
+          !          iorientation == 2 -> idim = 1, jdim = 2
+          !          iorientation == 3 -> idim = 1, jdim = 3
+          !          iorientation == 4 -> idim = 2, jdim = 1
+          !          ..
+          idim = int((iorientation-1)/3) + 1
+          jdim = iorientation - (idim-1) * 3
+          value = dble(seismograms_Hgrav(idim,jdim,irec_local,isample))
+        end select
 
         ! current time increment
         it_tmp = seismo_offset + isample
 
+        ! subtract half duration of the source to make sure travel time is correct
         ! current time
         if (SIMULATION_TYPE == 3) then
           timeval = dble(NSTEP-it_tmp)*DT - t0

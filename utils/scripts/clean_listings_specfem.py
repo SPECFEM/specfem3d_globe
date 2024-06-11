@@ -150,7 +150,7 @@ patterns = [
     (r'restaure', 'restore'),
     (r'memmory', 'memory'),
     (r'convolution formation', 'convolution formulation'),
-    (r'fortran', 'Fortran'),
+    (r' fortran', ' Fortran'),
     (r'adress', 'address'),
     (r'gFortran', 'gfortran'),
     (r' usefull ', ' useful '),

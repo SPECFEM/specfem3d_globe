@@ -1132,6 +1132,27 @@ module specfem_par_full_gravity
 
   implicit none
 
+  ! non-dimensionalization
+  double precision :: scale_accel,scale_pgrav
+
+  ! seismograms
+  ! perturbed gravitational potential
+  real(kind=CUSTOM_REAL),allocatable :: seismograms_phi(:,:,:)
+  ! perturbed gravity
+  real(kind=CUSTOM_REAL),allocatable :: seismograms_pgrav(:,:,:)
+  ! perturbed gravity gradient
+  real(kind=CUSTOM_REAL),allocatable :: seismograms_Hgrav(:,:,:,:)
+  ! Due to background gravity. Free-air change in the gravity (vertical) or tilt of the ground surface(horizontal)
+  real(kind=CUSTOM_REAL),allocatable :: seismograms_grav(:,:,:)
+  ! Coriolis acceleration
+  real(kind=CUSTOM_REAL),allocatable :: seismograms_corio(:,:,:)
+
+  ! gradient of the background gravity at receiver location: \nabla g, where g = ||g||
+  real(kind=CUSTOM_REAL),allocatable :: g_spec_rec(:,:,:),gradg_rec(:,:)
+
+  ! Lagrange interpolators at receivers
+  real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable :: storederiv_rec
+
   ! full gravity solver
   real(kind=CUSTOM_REAL), dimension(:),allocatable :: gravity_rho_crust_mantle,gravity_rho_inner_core
   real(kind=CUSTOM_REAL), dimension(:),allocatable :: gravity_rho_g_over_kappa_outer_core
