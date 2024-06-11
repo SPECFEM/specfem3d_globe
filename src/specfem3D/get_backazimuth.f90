@@ -26,21 +26,25 @@
 !=====================================================================
 
 ! get backazimuth baz from event and station coordinates the, phe, ths and phs
-  subroutine get_backazimuth(the,phe,ths,phs,baz)
+  subroutine get_backazimuth(the,phe,ths,phs,Baz)
 
-  use constants
+  use constants, only: DEGREES_TO_RADIANS,RADIANS_TO_DEGREES
 
   implicit none
 
-  double precision the, phe
-  double precision ths, phs
-  double precision az,baz,xdeg
+  ! event location
+  double precision,intent(in) :: the, phe
+  ! station location
+  double precision,intent(in) :: ths, phs
+  ! back-azimuth
+  double precision,intent(inout) :: Baz
 
-  double precision a, a1, b, b1, c, c1
-  double precision d, d1, e, e1
-  double precision ec2, f, f1, g, g1, h, h1, onemec2, pherad
-  double precision phsrad, sc, sd, ss
-  double precision temp, therad, thg, thsrad
+  double precision :: az,xdeg
+  double precision :: a, a1, b, b1, c, c1
+  double precision :: d, d1, e, e1
+  double precision :: ec2, f, f1, g, g1, h, h1, onemec2, pherad
+  double precision :: phsrad, sc, sd, ss
+  double precision :: temp, therad, thg, thsrad
 
   !double precision, parameter :: rad = 6378.160d0
   double precision, parameter :: fl = 0.00335293d0
@@ -96,14 +100,14 @@
   ! - Initialize.
   !nerr = 0
 
-  ec2 = 2.*fl - fl*fl
-  onemec2 = 1. - ec2
+  ec2 = 2.d0*fl - fl*fl
+  onemec2 = 1.d0 - ec2
 
   ! - Convert event location to radians.
   !   (Equations are unstable for latitudes of exactly 0 degrees.)
 
   temp = the
-  if (temp == 0. ) temp = 1.0d-08
+  if (temp == 0.d0) temp = 1.0d-08
   therad = TORAD*temp
   pherad = TORAD*phe
 
@@ -111,7 +115,7 @@
   !   to use the spherical trig equations.  This requires a latitude
   !   correction given by: 1-EC2=1-2*FL+FL*FL
 
-  if (the == 90 .or. the == -90) then         ! special attention at the poles
+  if (the == 90.d0 .or. the == -90.d0) then         ! special attention at the poles
     thg = the*TORAD                   ! ... to avoid division by zero.
   else
     thg = atan( onemec2*tan( therad ) )
@@ -128,12 +132,12 @@
 
   ! -- Convert to radians.
   temp = Ths
-  if (temp == 0. ) temp = 1.0d-08
+  if (temp == 0.d0 ) temp = 1.0d-08
   thsrad = TORAD*temp
   phsrad = TORAD*Phs
 
   ! -- Calculate some trig constants.
-  if (Ths == 90 .or. Ths == -90) then
+  if (Ths == 90.d0 .or. Ths == -90.d0) then
     thg = Ths * TORAD
   else
     thg = atan( onemec2*tan( thsrad ) )
@@ -151,22 +155,18 @@
 
   ! - Spherical trig relationships used to compute angles.
 
-  sd = 0.5*sqrt( ((a - a1)**2 + (b - b1)**2 + (c - &
-   c1)**2)*((a + a1)**2 + (b + b1)**2 + (c + c1)**2) )
+  sd = 0.5d0 * sqrt( ((a - a1)**2 + (b - b1)**2 + (c - c1)**2)*((a + a1)**2 + (b + b1)**2 + (c + c1)**2) )
   Xdeg = atan2( sd, sc )*TODEG
-  if (Xdeg < 0. ) &
-      Xdeg = Xdeg + twopideg
+  if (Xdeg < 0.d0 ) Xdeg = Xdeg + twopideg
 
   ss = (a1 - d)**2 + (b1 - e)**2 + (c1)**2 - 2.
   sc = (a1 - g)**2 + (b1 - h)**2 + (c1 - f)**2 - 2.
   Az = atan2( ss, sc )*TODEG
-  if (Az < 0. ) &
-      Az = Az + twopideg
+  if (Az < 0.d0 ) Az = Az + twopideg
 
   ss = (a - d1)**2 + (b - e1)**2 + (c)**2 - 2.
   sc = (a - g1)**2 + (b - h1)**2 + (c - f1)**2 - 2.
   Baz = atan2( ss, sc )*TODEG
-  if (Baz < 0. ) &
-      Baz = Baz + twopideg
+  if (Baz < 0.d0) Baz = Baz + twopideg
 
   end subroutine get_backazimuth
