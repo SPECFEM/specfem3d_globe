@@ -1555,7 +1555,12 @@
     jacobian = (xixl*(etayl*gammazl-etazl*gammayl) &
               - xiyl*(etaxl*gammazl-etazl*gammaxl) &
               + xizl*(etaxl*gammayl-etayl*gammaxl))
-    if (jacobian <= 0.0_CUSTOM_REAL) stop 'Error invalid jacobian in compute_element_precompute_factors()'
+
+    ! checks Jacobian
+    ! note: try to avoid this if-statement as it hinders the compiler to tune and vectorize this inner loop.
+    !       an if-statement would slow this loop down significantly...
+    ! already checked before in prepare optimized arrays:
+    !   if (jacobian <= 0.0_CUSTOM_REAL) stop 'Error invalid jacobian in compute_element_precompute_factors()'
 
     jacobianl(INDEX_IJK) = 1.0_CUSTOM_REAL / jacobian
 
