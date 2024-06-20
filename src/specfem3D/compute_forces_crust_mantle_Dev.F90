@@ -245,37 +245,12 @@
     ! for incompressible fluid flow, Cambridge University Press (2002),
     ! pages 386 and 389 and Figure 8.3.1
 
-#ifdef DANIEL_TEST_LOOP
-    ! loop over single x/y/z-component, to test if cache utilization is better
-    ! x-comp
-!DIR$ FORCEINLINE
-    call mxm5_3comp_singleA_1(hprime_xx,m1,dummyx_loc,tempx1,m2)
-!DIR$ FORCEINLINE
-    call mxm5_3comp_3dmat_singleB_1(dummyx_loc,m1,hprime_xxT,m1,tempx2,NGLLX)
-!DIR$ FORCEINLINE
-    call mxm5_3comp_singleB_1(dummyx_loc,m2,hprime_xxT,tempx3,m1)
-    ! y-comp
-!DIR$ FORCEINLINE
-    call mxm5_3comp_singleA_1(hprime_xx,m1,dummyy_loc,tempy1,m2)
-!DIR$ FORCEINLINE
-    call mxm5_3comp_3dmat_singleB_1(dummyy_loc,m1,hprime_xxT,m1,tempy2,NGLLX)
-!DIR$ FORCEINLINE
-    call mxm5_3comp_singleB_1(dummyy_loc,m2,hprime_xxT,tempy3,m1)
-    ! z-comp
-!DIR$ FORCEINLINE
-    call mxm5_3comp_singleA_1(hprime_xx,m1,dummyz_loc,tempz1,m2)
-!DIR$ FORCEINLINE
-    call mxm5_3comp_3dmat_singleB_1(dummyz_loc,m1,hprime_xxT,m1,tempz2,NGLLX)
-!DIR$ FORCEINLINE
-    call mxm5_3comp_singleB_1(dummyz_loc,m2,hprime_xxT,tempz3,m1)
-#else
     ! computes 1. matrix multiplication for tempx1,..
     call mxm5_3comp_singleA(hprime_xx,m1,dummyx_loc,dummyy_loc,dummyz_loc,tempx1,tempy1,tempz1,m2)
     ! computes 2. matrix multiplication for tempx2,..
     call mxm5_3comp_3dmat_singleB(dummyx_loc,dummyy_loc,dummyz_loc,m1,hprime_xxT,m1,tempx2,tempy2,tempz2,NGLLX)
     ! computes 3. matrix multiplication for tempx3,..
     call mxm5_3comp_singleB(dummyx_loc,dummyy_loc,dummyz_loc,m2,hprime_xxT,tempx3,tempy3,tempz3,m1)
-#endif
 
     !
     ! compute either isotropic, transverse isotropic or anisotropic elements
@@ -334,37 +309,12 @@
     ! for incompressible fluid flow, Cambridge University Press (2002),
     ! pages 386 and 389 and Figure 8.3.1
 
-#ifdef DANIEL_TEST_LOOP
-    ! loop over single x/y/z-component, to test if cache utilization is better
-    ! x-comp
-!DIR$ FORCEINLINE
-    call mxm5_3comp_singleA_1(hprimewgll_xxT,m1,tempx1,newtempx1,m2)
-!DIR$ FORCEINLINE
-    call mxm5_3comp_3dmat_singleB_1(tempx2,m1,hprimewgll_xx,m1,newtempx2,NGLLX)
-!DIR$ FORCEINLINE
-    call mxm5_3comp_singleB_1(tempx3,m2,hprimewgll_xx,newtempx3,m1)
-    ! y-comp
-!DIR$ FORCEINLINE
-    call mxm5_3comp_singleA_1(hprimewgll_xxT,m1,tempy1,newtempy1,m2)
-!DIR$ FORCEINLINE
-    call mxm5_3comp_3dmat_singleB_1(tempy2,m1,hprimewgll_xx,m1,newtempy2,NGLLX)
-!DIR$ FORCEINLINE
-    call mxm5_3comp_singleB_1(tempy3,m2,hprimewgll_xx,newtempy3,m1)
-    ! z-comp
-!DIR$ FORCEINLINE
-    call mxm5_3comp_singleA_1(hprimewgll_xxT,m1,tempz1,newtempz1,m2)
-!DIR$ FORCEINLINE
-    call mxm5_3comp_3dmat_singleB_1(tempz2,m1,hprimewgll_xx,m1,newtempz2,NGLLX)
-!DIR$ FORCEINLINE
-    call mxm5_3comp_singleB_1(tempz3,m2,hprimewgll_xx,newtempz3,m1)
-#else
     ! computes 1. matrix multiplication for newtempx1,..
     call mxm5_3comp_singleA(hprimewgll_xxT,m1,tempx1,tempy1,tempz1,newtempx1,newtempy1,newtempz1,m2)
     ! computes 2. matrix multiplication for tempx2,..
     call mxm5_3comp_3dmat_singleB(tempx2,tempy2,tempz2,m1,hprimewgll_xx,m1,newtempx2,newtempy2,newtempz2,NGLLX)
     ! computes 3. matrix multiplication for newtempx3,..
     call mxm5_3comp_singleB(tempx3,tempy3,tempz3,m2,hprimewgll_xx,newtempx3,newtempy3,newtempz3,m1)
-#endif
 
     ! sums contributions
     DO_LOOP_IJK
@@ -839,124 +789,6 @@
   enddo
 
   end subroutine mxm5_3comp_3dmat_singleB
-
-
-!--------------------------------------------------------------------------------------------
-
-#ifdef DANIEL_TEST_LOOP
-
-! loops over single x/y/z-component
-! test if cache utilization is better
-
-  subroutine mxm5_3comp_singleA_1(A,n1,B,C,n3)
-  use constants_solver, only: CUSTOM_REAL
-#ifdef USE_XSMM
-  use my_libxsmm, only: libxsmm_smm_5_25_5
-#endif
-  implicit none
-  integer,intent(in) :: n1,n3
-  real(kind=CUSTOM_REAL),dimension(n1,5),intent(in) :: A
-  real(kind=CUSTOM_REAL),dimension(5,n3),intent(in) :: B
-  real(kind=CUSTOM_REAL),dimension(n1,n3),intent(out) :: C
-  ! local parameters
-  integer :: i,j
-#ifdef USE_XSMM
-  ! matrix-matrix multiplication C = alpha A * B + beta C
-  ! with A(n1,n2) 5x5-matrix, B(n2,n3) 5x25-matrix and C(n1,n3) 5x25-matrix
-  ! static version using MNK="5 25, 5" ALPHA=1 BETA=0
-  call libxsmm_smm_5_25_5(a=A, b=B, c=C)
-  return
-#endif
-  ! matrix-matrix multiplication
-  do j = 1,n3
-!dir$ ivdep
-    do i = 1,n1
-      C(i,j) =  A(i,1) * B(1,j) &
-              + A(i,2) * B(2,j) &
-              + A(i,3) * B(3,j) &
-              + A(i,4) * B(4,j) &
-              + A(i,5) * B(5,j)
-    enddo
-  enddo
-
-  end subroutine mxm5_3comp_singleA_1
-
-
-  subroutine mxm5_3comp_singleB_1(A,n1,B,C,n3)
-  use constants_solver, only: CUSTOM_REAL
-#ifdef USE_XSMM
-  use my_libxsmm, only: libxsmm_smm_25_5_5
-#endif
-  implicit none
-  integer,intent(in) :: n1,n3
-  real(kind=CUSTOM_REAL),dimension(n1,5),intent(in) :: A
-  real(kind=CUSTOM_REAL),dimension(5,n3),intent(in) :: B
-  real(kind=CUSTOM_REAL),dimension(n1,n3),intent(out) :: C
-  ! local parameters
-  integer :: i,j
-#ifdef USE_XSMM
-  ! matrix-matrix multiplication C = alpha A * B + beta C
-  ! with A(n1,n2) 25x5-matrix, B(n2,n3) 5x5-matrix and C(n1,n3) 25x5-matrix
-  ! static version
-  call libxsmm_smm_25_5_5(a=A, b=B, c=C)
-  return
-#endif
-  ! matrix-matrix multiplication
-  do j = 1,n3
-!dir$ ivdep
-    do i = 1,n1
-      C(i,j) =  A(i,1) * B(1,j) &
-              + A(i,2) * B(2,j) &
-              + A(i,3) * B(3,j) &
-              + A(i,4) * B(4,j) &
-              + A(i,5) * B(5,j)
-    enddo
-  enddo
-  end subroutine mxm5_3comp_singleB_1
-
-
-  subroutine mxm5_3comp_3dmat_singleB_1(A,n1,B,n2,C,n3)
-  use constants_solver, only: CUSTOM_REAL
-#if defined(XSMM_FORCE_EVEN_IF_SLOWER) || ( defined(XSMM) && defined(__MIC__) )
-  use my_libxsmm, only: libxsmm_smm_5_5_5
-#endif
-  implicit none
-  integer,intent(in) :: n1,n2,n3
-  real(kind=CUSTOM_REAL),dimension(n1,5,n3),intent(in) :: A
-  real(kind=CUSTOM_REAL),dimension(5,n2),intent(in) :: B
-  real(kind=CUSTOM_REAL),dimension(n1,n2,n3),intent(out) :: C
-  ! local parameters
-  integer :: i,j,k
-#if defined(XSMM_FORCE_EVEN_IF_SLOWER) || ( defined(XSMM) && defined(__MIC__) )
-  ! matrix-matrix multiplication C = alpha A * B + beta C
-  ! with A(n1,n2,n4) 5x5x5-matrix, B(n2,n3) 5x5-matrix and C(n1,n3,n4) 5x5x5-matrix
-  call libxsmm_smm_5_5_5(a=A(1,1,1), b=B, c=C(1,1,1))
-  call libxsmm_smm_5_5_5(a=A(1,1,2), b=B, c=C(1,1,2))
-  call libxsmm_smm_5_5_5(a=A(1,1,3), b=B, c=C(1,1,3))
-  call libxsmm_smm_5_5_5(a=A(1,1,4), b=B, c=C(1,1,4))
-  call libxsmm_smm_5_5_5(a=A(1,1,5), b=B, c=C(1,1,5))
-  return
-#endif
-  ! matrix-matrix multiplication
-  do k = 1,n3
-    do j = 1,n2
-!dir$ ivdep
-      do i = 1,n1
-        C(i,j,k) =  A(i,1,k) * B(1,j) &
-                  + A(i,2,k) * B(2,j) &
-                  + A(i,3,k) * B(3,j) &
-                  + A(i,4,k) * B(4,j) &
-                  + A(i,5,k) * B(5,j)
-      enddo
-    enddo
-  enddo
-  end subroutine mxm5_3comp_3dmat_singleB_1
-#endif
-
-
-!--------------------------------------------------------------------------------------------
-
-
 
   end subroutine compute_forces_crust_mantle_Dev
 
