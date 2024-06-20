@@ -29,7 +29,20 @@
 ! and macros INDEX_IJK, DO_LOOP_IJK, ENDDO_LOOP_IJK defined in config.fh
 #include "config.fh"
 
+module mod_element
 
+  implicit none
+
+  private
+
+  public :: compute_element_iso
+  public :: compute_element_iso_ic
+  public :: compute_element_tiso
+  public :: compute_element_aniso
+  public :: compute_element_aniso_ic
+  public :: compute_element_add_full_gravity
+
+contains
 
 !--------------------------------------------------------------------------------------------
 !
@@ -37,7 +50,7 @@
 !
 !--------------------------------------------------------------------------------------------
 
-  subroutine compute_element_iso(ispec, &
+  pure subroutine compute_element_iso(ispec, &
                                  gravity_pre_store,gravity_H, &
                                  deriv, &
                                  wgll_cube, &
@@ -133,7 +146,7 @@
 
   ! precomputes factors
   call compute_element_precompute_factors(tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-                                          deriv(:,:,:,:,ispec),jacobianl, &
+                                          deriv(1,1,1,1,ispec),jacobianl, &
                                           duxdxl,duydyl,duzdzl, &
                                           duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl, &
                                           duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl)
@@ -193,7 +206,7 @@
   endif
 
   ! dot product of stress tensor with test vector, non-symmetric form
-  call compute_element_dot_product_stress(deriv(:,:,:,:,ispec),jacobianl, &
+  call compute_element_dot_product_stress(deriv(1,1,1,1,ispec),jacobianl, &
                                                 sigma_xx,sigma_yy,sigma_zz, &
                                                 sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy, &
                                                 tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3)
@@ -201,9 +214,311 @@
   end subroutine compute_element_iso
 
 
+! left for reference: original routine...
+!
+!  subroutine compute_element_iso(ispec, &
+!                                 gravity_pre_store,gravity_H, &
+!                                 deriv, &
+!                                 wgll_cube, &
+!                                 kappavstore,muvstore, &
+!                                 ibool, &
+!                                 R_xx,R_yy,R_xy,R_xz,R_yz, &
+!                                 epsilon_trace_over_3, &
+!                                 tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
+!                                 dummyx_loc,dummyy_loc,dummyz_loc, &
+!                                 epsilondev_loc,rho_s_H)
+!
+!! isotropic element in crust/mantle region
+!
+!  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,N_SLS,FOUR_THIRDS,ONE_THIRD
+!
+!  use constants_solver, only: &
+!    NSPEC => NSPEC_CRUST_MANTLE, &
+!    NGLOB => NGLOB_CRUST_MANTLE, &
+!    NSPEC_ATTENUATION => NSPEC_CRUST_MANTLE_ATTENUATION, &
+!    NSPEC_STRAIN_ONLY => NSPEC_CRUST_MANTLE_STRAIN_ONLY, &
+!    ATTENUATION_VAL, &
+!    PARTIAL_PHYS_DISPERSION_ONLY_VAL,GRAVITY_VAL
+!
+!  use specfem_par, only: COMPUTE_AND_STORE_STRAIN
+!
+!#ifdef FORCE_VECTORIZATION
+!  use constants, only: NGLLCUBE
+!#endif
+!
+!  implicit none
+!
+!  ! element id
+!  integer,intent(in) :: ispec
+!
+!  ! arrays with mesh parameters per slice
+!  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: ibool
+!
+!  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: deriv
+!
+!  ! array with derivatives of Lagrange polynomials and precalculated products
+!  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: wgll_cube
+!
+!  ! store anisotropic properties only where needed to save memory
+!  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: kappavstore,muvstore
+!
+!  ! attenuation
+!  ! memory variables for attenuation
+!  ! memory variables R_ij are stored at the local rather than global level
+!  ! to allow for optimization of cache access by compiler
+!  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATTENUATION),intent(in) :: &
+!    R_xx,R_yy,R_xy,R_xz,R_yz
+!
+!  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY),intent(inout) :: epsilon_trace_over_3
+!
+!  ! gravity
+!  real(kind=CUSTOM_REAL),dimension(NDIM,NGLOB),intent(in) :: gravity_pre_store
+!  real(kind=CUSTOM_REAL),dimension(6,NGLOB),intent(in) :: gravity_H
+!
+!  ! element info
+!  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(inout) :: &
+!    tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3
+!
+!  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: dummyx_loc,dummyy_loc,dummyz_loc
+!
+!  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ),intent(inout) :: rho_s_H
+!  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(inout) :: epsilondev_loc
+!
+!  ! local parameters
+!  !real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: jacobianl
+!
+!  !real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdxl, duydyl, duzdzl
+!  !real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
+!  !real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
+!
+!  !real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: sigma_xx,sigma_yy,sigma_zz
+!  !real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy
+!
+!  real(kind=CUSTOM_REAL) :: jacobianl
+!  real(kind=CUSTOM_REAL) :: duxdxl,duxdyl,duxdzl,duydxl,duydyl,duydzl,duzdxl,duzdyl,duzdzl
+!  real(kind=CUSTOM_REAL) :: duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
+!  real(kind=CUSTOM_REAL) :: duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
+!  real(kind=CUSTOM_REAL) :: sigma_xx,sigma_yy,sigma_zz
+!  real(kind=CUSTOM_REAL) :: sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy
+!
+!  real(kind=CUSTOM_REAL) :: lambdal,mul,lambdalplus2mul
+!  real(kind=CUSTOM_REAL) :: kappal
+!
+!  real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl
+!  real(kind=CUSTOM_REAL) :: templ
+!  ! attenuation
+!  real(kind=CUSTOM_REAL) :: R_xx_val,R_yy_val
+!  ! gravity
+!  real(kind=CUSTOM_REAL) :: factor,sx_l,sy_l,sz_l,gxl,gyl,gzl
+!  real(kind=CUSTOM_REAL) :: Hxxl,Hyyl,Hzzl,Hxyl,Hxzl,Hyzl
+!  integer :: iglob
+!
+!#ifdef FORCE_VECTORIZATION
+!! in this vectorized version we have to assume that N_SLS == 3 in order to be able to unroll and thus suppress
+!! an inner loop that would otherwise prevent vectorization; this is safe in practice in all cases because N_SLS == 3
+!! in all known applications, and in the main program we check that N_SLS == 3 if FORCE_VECTORIZATION is used and we stop
+!  integer :: ijk
+!#else
+!  integer :: i,j,k
+!#endif
+!! note: profiling shows that this routine takes about 60% of the total time, another 30% is spend in the tiso routine below..
+!
+!  ! isotropic element
+!  DO_LOOP_IJK
+!
+!    ! precomputes factors
+!    ! get derivatives of ux, uy and uz with respect to x, y and z
+!    xixl = deriv(1,INDEX_IJK,ispec)
+!    xiyl = deriv(2,INDEX_IJK,ispec)
+!    xizl = deriv(3,INDEX_IJK,ispec)
+!    etaxl = deriv(4,INDEX_IJK,ispec)
+!    etayl = deriv(5,INDEX_IJK,ispec)
+!    etazl = deriv(6,INDEX_IJK,ispec)
+!    gammaxl = deriv(7,INDEX_IJK,ispec)
+!    gammayl = deriv(8,INDEX_IJK,ispec)
+!    gammazl = deriv(9,INDEX_IJK,ispec)
+!
+!    ! compute the Jacobian
+!    jacobianl = 1.0_CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
+!                                 - xiyl*(etaxl*gammazl-etazl*gammaxl) &
+!                                 + xizl*(etaxl*gammayl-etayl*gammaxl))
+!
+!    duxdxl = xixl*tempx1(INDEX_IJK) + etaxl*tempx2(INDEX_IJK) + gammaxl*tempx3(INDEX_IJK)
+!    duxdyl = xiyl*tempx1(INDEX_IJK) + etayl*tempx2(INDEX_IJK) + gammayl*tempx3(INDEX_IJK)
+!    duxdzl = xizl*tempx1(INDEX_IJK) + etazl*tempx2(INDEX_IJK) + gammazl*tempx3(INDEX_IJK)
+!
+!    duydxl = xixl*tempy1(INDEX_IJK) + etaxl*tempy2(INDEX_IJK) + gammaxl*tempy3(INDEX_IJK)
+!    duydyl = xiyl*tempy1(INDEX_IJK) + etayl*tempy2(INDEX_IJK) + gammayl*tempy3(INDEX_IJK)
+!    duydzl = xizl*tempy1(INDEX_IJK) + etazl*tempy2(INDEX_IJK) + gammazl*tempy3(INDEX_IJK)
+!
+!    duzdxl = xixl*tempz1(INDEX_IJK) + etaxl*tempz2(INDEX_IJK) + gammaxl*tempz3(INDEX_IJK)
+!    duzdyl = xiyl*tempz1(INDEX_IJK) + etayl*tempz2(INDEX_IJK) + gammayl*tempz3(INDEX_IJK)
+!    duzdzl = xizl*tempz1(INDEX_IJK) + etazl*tempz2(INDEX_IJK) + gammazl*tempz3(INDEX_IJK)
+!
+!    ! precompute some sums to save CPU time
+!    duxdxl_plus_duydyl = duxdxl + duydyl
+!    duxdxl_plus_duzdzl = duxdxl + duzdzl
+!    duydyl_plus_duzdzl = duydyl + duzdzl
+!    duxdyl_plus_duydxl = duxdyl + duydxl
+!    duzdxl_plus_duxdzl = duzdxl + duxdzl
+!    duzdyl_plus_duydzl = duzdyl + duydzl
+!
+!    ! compute deviatoric strain
+!    if (COMPUTE_AND_STORE_STRAIN) then
+!      templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
+!      epsilondev_loc(INDEX_IJK,1) = duxdxl - templ
+!      epsilondev_loc(INDEX_IJK,2) = duydyl - templ
+!      epsilondev_loc(INDEX_IJK,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
+!      epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
+!      epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
+!      if (NSPEC_STRAIN_ONLY > 1) then
+!        epsilon_trace_over_3(INDEX_IJK,ispec) = templ
+!      endif
+!    endif
+!
+!    !
+!    ! compute  isotropic  elements
+!    !
+!    ! layer with no transverse isotropy, use kappav and muv
+!    kappal = kappavstore(INDEX_IJK,ispec)
+!    mul = muvstore(INDEX_IJK,ispec)
+!
+!    lambdalplus2mul = kappal + FOUR_THIRDS * mul
+!    lambdal = lambdalplus2mul - 2.0_CUSTOM_REAL*mul
+!
+!    ! compute stress sigma
+!    sigma_xx = lambdalplus2mul*duxdxl + lambdal*duydyl_plus_duzdzl
+!    sigma_yy = lambdalplus2mul*duydyl + lambdal*duxdxl_plus_duzdzl
+!    sigma_zz = lambdalplus2mul*duzdzl + lambdal*duxdxl_plus_duydyl
+!
+!    sigma_xy = mul*duxdyl_plus_duydxl
+!    sigma_xz = mul*duzdxl_plus_duxdzl
+!    sigma_yz = mul*duzdyl_plus_duydzl
+!
+!    ! attenuation contribution to stress
+!    ! subtract memory variables if attenuation
+!    if (ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
+!#ifdef FORCE_VECTORIZATION
+!      ! here we assume that N_SLS == 3 in order to be able to unroll and suppress the loop
+!      ! in order to vectorize the outer loop
+!      R_xx_val = R_xx(INDEX_IJK,1,ispec)
+!      R_yy_val = R_yy(INDEX_IJK,1,ispec)
+!      sigma_xx = sigma_xx - R_xx_val
+!      sigma_yy = sigma_yy - R_yy_val
+!      sigma_zz = sigma_zz + R_xx_val + R_yy_val
+!      sigma_xy = sigma_xy - R_xy(INDEX_IJK,1,ispec)
+!      sigma_xz = sigma_xz - R_xz(INDEX_IJK,1,ispec)
+!      sigma_yz = sigma_yz - R_yz(INDEX_IJK,1,ispec)
+!
+!      R_xx_val = R_xx(INDEX_IJK,2,ispec)
+!      R_yy_val = R_yy(INDEX_IJK,2,ispec)
+!      sigma_xx = sigma_xx - R_xx_val
+!      sigma_yy = sigma_yy - R_yy_val
+!      sigma_zz = sigma_zz + R_xx_val + R_yy_val
+!      sigma_xy = sigma_xy - R_xy(INDEX_IJK,2,ispec)
+!      sigma_xz = sigma_xz - R_xz(INDEX_IJK,2,ispec)
+!      sigma_yz = sigma_yz - R_yz(INDEX_IJK,2,ispec)
+!
+!      R_xx_val = R_xx(INDEX_IJK,3,ispec)
+!      R_yy_val = R_yy(INDEX_IJK,3,ispec)
+!      sigma_xx = sigma_xx - R_xx_val
+!      sigma_yy = sigma_yy - R_yy_val
+!      sigma_zz = sigma_zz + R_xx_val + R_yy_val
+!      sigma_xy = sigma_xy - R_xy(INDEX_IJK,3,ispec)
+!      sigma_xz = sigma_xz - R_xz(INDEX_IJK,3,ispec)
+!      sigma_yz = sigma_yz - R_yz(INDEX_IJK,3,ispec)
+!#else
+!      ! loops over standard linear solids
+!      do i_SLS = 1,N_SLS
+!        R_xx_val = R_xx(INDEX_IJK,i_SLS,ispec)
+!        R_yy_val = R_yy(INDEX_IJK,i_SLS,ispec)
+!        sigma_xx = sigma_xx - R_xx_val
+!        sigma_yy = sigma_yy - R_yy_val
+!        sigma_zz = sigma_zz + R_xx_val + R_yy_val
+!        sigma_xy = sigma_xy - R_xy(INDEX_IJK,i_SLS,ispec)
+!        sigma_xz = sigma_xz - R_xz(INDEX_IJK,i_SLS,ispec)
+!        sigma_yz = sigma_yz - R_yz(INDEX_IJK,i_SLS,ispec)
+!      enddo
+!#endif
+!    endif
+!
+!    ! define symmetric components of sigma (to be general in case of gravity)
+!    sigma_yx = sigma_xy
+!    sigma_zx = sigma_xz
+!    sigma_zy = sigma_yz
+!
+!    ! compute non-symmetric terms for gravity
+!    if (GRAVITY_VAL) then
+!      ! use mesh coordinates to get theta and phi
+!      ! x y and z contain r theta and phi
+!      iglob = ibool(INDEX_IJK,ispec)
+!
+!      ! Cartesian components of the gravitational acceleration
+!      gxl = gravity_pre_store(1,iglob) ! minus_g*sin_theta*cos_phi * rho
+!      gyl = gravity_pre_store(2,iglob) ! minus_g*sin_theta*sin_phi * rho
+!      gzl = gravity_pre_store(3,iglob) ! minus_g*cos_theta * rho
+!
+!      ! Cartesian components of gradient of gravitational acceleration
+!      ! get displacement and multiply by density to compute G tensor
+!      sx_l = dummyx_loc(INDEX_IJK)
+!      sy_l = dummyy_loc(INDEX_IJK)
+!      sz_l = dummyz_loc(INDEX_IJK)
+!
+!      ! compute G tensor from s . g and add to sigma (not symmetric)
+!      sigma_xx = sigma_xx + sy_l * gyl + sz_l * gzl
+!      sigma_yy = sigma_yy + sx_l * gxl + sz_l * gzl
+!      sigma_zz = sigma_zz + sx_l * gxl + sy_l * gyl
+!
+!      sigma_xy = sigma_xy - sx_l * gyl
+!      sigma_yx = sigma_yx - sy_l * gxl
+!
+!      sigma_xz = sigma_xz - sx_l * gzl
+!      sigma_zx = sigma_zx - sz_l * gxl
+!
+!      sigma_yz = sigma_yz - sy_l * gzl
+!      sigma_zy = sigma_zy - sz_l * gyl
+!
+!      Hxxl = gravity_H(1,iglob)
+!      Hyyl = gravity_H(2,iglob)
+!      Hzzl = gravity_H(3,iglob)
+!      Hxyl = gravity_H(4,iglob)
+!      Hxzl = gravity_H(5,iglob)
+!      Hyzl = gravity_H(6,iglob)
+!
+!      ! precompute vector
+!      factor = jacobianl * wgll_cube(INDEX_IJK)
+!
+!      rho_s_H(1,INDEX_IJK) = factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl)
+!      rho_s_H(2,INDEX_IJK) = factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl)
+!      rho_s_H(3,INDEX_IJK) = factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl)
+!    endif
+!
+!    ! dot product of stress tensor with test vector, non-symmetric form
+!    !call compute_element_dot_product_stress(deriv(1,1,1,1,ispec),jacobianl, &
+!    !                                              sigma_xx,sigma_yy,sigma_zz, &
+!    !                                              sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy, &
+!    !                                              tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3)
+!
+!    ! form dot product with test vector, non-symmetric form
+!    tempx1(INDEX_IJK) = jacobianl * (sigma_xx*xixl + sigma_yx*xiyl + sigma_zx*xizl) ! this goes to accel_x
+!    tempy1(INDEX_IJK) = jacobianl * (sigma_xy*xixl + sigma_yy*xiyl + sigma_zy*xizl) ! this goes to accel_y
+!    tempz1(INDEX_IJK) = jacobianl * (sigma_xz*xixl + sigma_yz*xiyl + sigma_zz*xizl) ! this goes to accel_z
+!
+!    tempx2(INDEX_IJK) = jacobianl * (sigma_xx*etaxl + sigma_yx*etayl + sigma_zx*etazl) ! this goes to accel_x
+!    tempy2(INDEX_IJK) = jacobianl * (sigma_xy*etaxl + sigma_yy*etayl + sigma_zy*etazl) ! this goes to accel_y
+!    tempz2(INDEX_IJK) = jacobianl * (sigma_xz*etaxl + sigma_yz*etayl + sigma_zz*etazl) ! this goes to accel_z
+!
+!    tempx3(INDEX_IJK) = jacobianl * (sigma_xx*gammaxl + sigma_yx*gammayl + sigma_zx*gammazl) ! this goes to accel_x
+!    tempy3(INDEX_IJK) = jacobianl * (sigma_xy*gammaxl + sigma_yy*gammayl + sigma_zy*gammazl) ! this goes to accel_y
+!    tempz3(INDEX_IJK) = jacobianl * (sigma_xz*gammaxl + sigma_yz*gammayl + sigma_zz*gammazl) ! this goes to accel_z
+!  ENDDO_LOOP_IJK
+!
+!  end subroutine compute_element_iso
+
+
 !--------------------------------------------------------------------------------------------
 
-  subroutine compute_element_iso_ic(ispec, &
+  pure subroutine compute_element_iso_ic(ispec, &
                                     gravity_pre_store,gravity_H, &
                                     deriv, &
                                     wgll_cube, &
@@ -374,7 +689,7 @@
 !
 !--------------------------------------------------------------------------------------------
 
-  subroutine compute_element_tiso(ispec, &
+  pure subroutine compute_element_tiso(ispec, &
                                   gravity_pre_store,gravity_H, &
                                   deriv, &
                                   wgll_cube, &
@@ -977,7 +1292,7 @@
 !
 !--------------------------------------------------------------------------------------------
 
-  subroutine compute_element_aniso(ispec, &
+  pure subroutine compute_element_aniso(ispec, &
                                    gravity_pre_store,gravity_H, &
                                    deriv, &
                                    wgll_cube, &
@@ -1174,7 +1489,7 @@
 !
 !--------------------------------------------------------------------------------------------
 
-  subroutine compute_element_aniso_ic(ispec, &
+  pure subroutine compute_element_aniso_ic(ispec, &
                                       gravity_pre_store,gravity_H, &
                                       deriv, &
                                       wgll_cube, &
@@ -1389,7 +1704,7 @@
 ! please leave this routine in this file, to help compilers inlining this function...
 !
 
-  subroutine compute_element_stress_attenuation_contrib(R_xx_loc,R_yy_loc,R_xy_loc,R_xz_loc,R_yz_loc, &
+  pure subroutine compute_element_stress_attenuation_contrib(R_xx_loc,R_yy_loc,R_xy_loc,R_xz_loc,R_yz_loc, &
                                                         sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
 
 ! we can force inlining (Intel compiler)
@@ -1492,7 +1807,7 @@
 
 ! please leave this routine in this file, to help compilers inlining this function...
 
-  subroutine compute_element_precompute_factors(tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
+  pure subroutine compute_element_precompute_factors(tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                                                 deriv_loc,jacobianl, &
                                                 duxdxl,duydyl,duzdzl, &
                                                 duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl, &
@@ -1605,7 +1920,7 @@
 
 ! please leave this routine in this file, to help compilers inlining this function...
 
-  subroutine compute_element_deviatoric_strain(duxdxl,duydyl,duzdzl, &
+  pure subroutine compute_element_deviatoric_strain(duxdxl,duydyl,duzdzl, &
                                                duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl, &
                                                ispec,NSPEC_STRAIN_ONLY, &
                                                epsilon_trace_over_3,epsilondev_loc)
@@ -1693,7 +2008,7 @@
 
 ! please leave this routine in this file, to help compilers inlining this function...
 
-  subroutine compute_element_dot_product_stress(deriv_loc,jacobianl, &
+  pure subroutine compute_element_dot_product_stress(deriv_loc,jacobianl, &
                                                 sigma_xx,sigma_yy,sigma_zz, &
                                                 sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy, &
                                                 tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3)
@@ -1796,7 +2111,7 @@
 
 ! please leave this routine in this file, to help compilers inlining this function...
 
-  subroutine compute_element_gravity(ispec,NSPEC,NGLOB,ibool,jacobianl,wgll_cube, &
+  pure subroutine compute_element_gravity(ispec,NSPEC,NGLOB,ibool,jacobianl,wgll_cube, &
                                      gravity_pre_store,gravity_H, &
                                      dummyx_loc,dummyy_loc,dummyz_loc, &
                                      sigma_xx,sigma_yy,sigma_zz, &
@@ -2059,3 +2374,101 @@
 !
 !  end subroutine compute_element_gravity
 
+!
+!-------------------------------------------------------------------------------
+!
+
+  pure subroutine compute_element_add_full_gravity(ispec,nspec,nglob,gravity_rho,deriv_loc,ibool,pgrav,rho_s_H)
+
+! routine for crust/mantle and inner core elements to add full gravity contribution to rho_s_H array
+
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM
+
+  use specfem_par, only: &
+    hprime_xx,hprime_yy,hprime_zz,wgll_cube
+
+  implicit none
+
+  ! element id
+  integer,intent(in) :: ispec,nspec,nglob
+
+  real(kind=CUSTOM_REAL),dimension(nglob),intent(in) :: gravity_rho
+
+  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ),intent(in) :: deriv_loc
+  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
+
+  ! pertubation gravity
+  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: pgrav
+
+  ! gravity contribution
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ),intent(inout) :: rho_s_H
+
+  ! local parameters
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: pgrav_loc
+  real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
+  real(kind=CUSTOM_REAL) :: tempx1l_phi,tempx2l_phi,tempx3l_phi
+  real(kind=CUSTOM_REAL) :: gradphi(NDIM)
+  real(kind=CUSTOM_REAL) :: rhol,factor
+  integer :: i,j,k,l,iglob
+
+  ! pre-loads potential for this element
+  do k = 1,NGLLZ
+    do j = 1,NGLLY
+      do i = 1,NGLLX
+        iglob = ibool(i,j,k,ispec)
+        pgrav_loc(i,j,k) = pgrav(iglob)
+      enddo
+    enddo
+  enddo
+
+  ! adds full gravity perturbation contribution to rho_s_H array
+  do k = 1,NGLLZ
+    do j = 1,NGLLY
+      do i = 1,NGLLX
+        xixl = deriv_loc(1,i,j,k)
+        xiyl = deriv_loc(2,i,j,k)
+        xizl = deriv_loc(3,i,j,k)
+        etaxl = deriv_loc(4,i,j,k)
+        etayl = deriv_loc(5,i,j,k)
+        etazl = deriv_loc(6,i,j,k)
+        gammaxl = deriv_loc(7,i,j,k)
+        gammayl = deriv_loc(8,i,j,k)
+        gammazl = deriv_loc(9,i,j,k)
+
+        ! compute the Jacobian
+        jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
+                      - xiyl*(etaxl*gammazl-etazl*gammaxl) &
+                      + xizl*(etaxl*gammayl-etayl*gammaxl))
+
+        ! for \grad\phi
+        tempx1l_phi = 0._CUSTOM_REAL
+        tempx2l_phi = 0._CUSTOM_REAL
+        tempx3l_phi = 0._CUSTOM_REAL
+        do l = 1,NGLLX
+          tempx1l_phi = tempx1l_phi + pgrav_loc(l,j,k)*hprime_xx(i,l)
+          tempx2l_phi = tempx2l_phi + pgrav_loc(i,l,k)*hprime_yy(j,l)
+          tempx3l_phi = tempx3l_phi + pgrav_loc(i,j,l)*hprime_zz(k,l)
+        enddo
+
+        ! \grad\phi
+        gradphi(1) = xixl*tempx1l_phi + etaxl*tempx2l_phi + gammaxl*tempx3l_phi
+        gradphi(2) = xiyl*tempx1l_phi + etayl*tempx2l_phi + gammayl*tempx3l_phi
+        gradphi(3) = xizl*tempx1l_phi + etazl*tempx2l_phi + gammazl*tempx3l_phi
+
+        ! get rho
+        iglob = ibool(i,j,k,ispec)
+        rhol = gravity_rho(iglob)
+
+        factor = jacobianl * wgll_cube(i,j,k)
+
+        ! adds full gravity contribution
+        rho_s_H(1,i,j,k) = rho_s_H(1,i,j,k) - factor * rhol * gradphi(1)
+        rho_s_H(2,i,j,k) = rho_s_H(2,i,j,k) - factor * rhol * gradphi(2)
+        rho_s_H(3,i,j,k) = rho_s_H(3,i,j,k) - factor * rhol * gradphi(3)
+      enddo
+    enddo
+  enddo
+
+  end subroutine compute_element_add_full_gravity
+
+end module mod_element

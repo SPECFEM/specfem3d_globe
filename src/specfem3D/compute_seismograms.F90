@@ -124,6 +124,9 @@
     etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
     gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle
 
+  ! element compute routines
+  use mod_element_strain, only: compute_element_strain_undoatt_noDev
+
   implicit none
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE),intent(in) :: &

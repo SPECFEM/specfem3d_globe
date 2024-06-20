@@ -85,34 +85,40 @@
   use specfem_par_full_gravity, only: &
     gravity_rho => gravity_rho_inner_core
 
+  ! element compute routines
+  use mod_element, only: compute_element_iso_ic,compute_element_aniso_ic, &
+                         compute_element_add_full_gravity
+
+  use mod_element_att, only: compute_element_att_memory_ic,compute_element_att_memory_ic_lddrk
+
   implicit none
 
-  integer :: NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT
+  integer,intent(in) :: NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT
 
   ! time step
-  real(kind=CUSTOM_REAL) deltat
+  real(kind=CUSTOM_REAL),intent(in) :: deltat
 
   ! displacement and acceleration
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: displ_inner_core
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: accel_inner_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB),intent(in) :: displ_inner_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB),intent(inout) :: accel_inner_core
 
   ! for attenuation
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
   ! variable lengths for factor_common (and one_minus_sum_beta)
-  integer :: vnspec
-  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,vnspec) :: factor_common
-  real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
+  integer,intent(in) :: vnspec
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,vnspec),intent(in) :: factor_common
+  real(kind=CUSTOM_REAL), dimension(N_SLS),intent(in) :: alphaval,betaval,gammaval
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATT) :: R_xx,R_yy,R_xy,R_xz,R_yz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATT),intent(inout) :: R_xx,R_yy,R_xy,R_xz,R_yz
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATT) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATT),intent(inout) :: &
     R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STR_OR_ATT) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STR_OR_ATT),intent(inout) :: &
     epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN_ONLY) :: epsilon_trace_over_3
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN_ONLY),intent(inout) :: epsilon_trace_over_3
 
   ! work array with contributions
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE),intent(out) :: sum_terms
@@ -293,8 +299,8 @@
     if (GRAVITY_VAL) then
       ! full gravity
       if (FULL_GRAVITY_VAL .and. .not. DISCARD_GCONTRIB) then
-        call SIEM_solve_element_add_full_gravity(ispec,NSPEC_INNER_CORE,NGLOB,gravity_rho,deriv(:,:,:,:,ispec),ibool, &
-                                                 pgrav_inner_core,rho_s_H)
+        call compute_element_add_full_gravity(ispec,NSPEC_INNER_CORE,NGLOB,gravity_rho,deriv(1,1,1,1,ispec),ibool, &
+                                              pgrav_inner_core,rho_s_H)
       endif
 
 #ifdef FORCE_VECTORIZATION
@@ -440,7 +446,7 @@
 !
 ! please leave the routines here to help compilers inlining the code
 
-  subroutine mxm5_3comp_singleA(A,n1,B1,B2,B3,C1,C2,C3,n3)
+  pure subroutine mxm5_3comp_singleA(A,n1,B1,B2,B3,C1,C2,C3,n3)
 
 ! we can force inlining (Intel compiler)
 #if defined __INTEL_COMPILER
@@ -519,7 +525,7 @@
 
 !--------------------------------------------------------------------------------------------
 
-  subroutine mxm5_3comp_singleB(A1,A2,A3,n1,B,C1,C2,C3,n3)
+  pure subroutine mxm5_3comp_singleB(A1,A2,A3,n1,B,C1,C2,C3,n3)
 
 ! we can force inlining (Intel compiler)
 #if defined __INTEL_COMPILER
@@ -598,7 +604,7 @@
 
 !--------------------------------------------------------------------------------------------
 
-  subroutine mxm5_3comp_3dmat_singleB(A1,A2,A3,n1,B,n2,C1,C2,C3,n3)
+  pure subroutine mxm5_3comp_3dmat_singleB(A1,A2,A3,n1,B,n2,C1,C2,C3,n3)
 
 ! we can force inlining (Intel compiler)
 #if defined __INTEL_COMPILER

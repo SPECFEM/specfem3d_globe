@@ -527,7 +527,7 @@
 !
 ! please leave the routines here to help compilers inlining the code
 
-  subroutine mxm5_single(A,n1,B,C,n3)
+  pure subroutine mxm5_single(A,n1,B,C,n3)
 
 ! we can force inlining (Intel compiler)
 #if defined __INTEL_COMPILER
@@ -700,7 +700,7 @@
 
 !--------------------------------------------------------------------------------------------
 
-  subroutine mxm5_3dmat_single(A,n1,B,n2,C,n3)
+  pure subroutine mxm5_3dmat_single(A,n1,B,n2,C,n3)
 
 ! we can force inlining (Intel compiler)
 #if defined __INTEL_COMPILER

@@ -94,6 +94,12 @@
   use specfem_par_full_gravity, only: &
     gravity_rho => gravity_rho_crust_mantle
 
+  ! element compute routines
+  use mod_element, only: compute_element_iso,compute_element_tiso,compute_element_aniso, &
+                         compute_element_add_full_gravity
+
+  use mod_element_att, only: compute_element_att_memory_cm,compute_element_att_memory_cm_lddrk
+
   implicit none
 
   integer,intent(in) :: NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT
@@ -374,8 +380,8 @@
     if (GRAVITY_VAL) then
       ! full gravity
       if (FULL_GRAVITY_VAL .and. .not. DISCARD_GCONTRIB) then
-        call SIEM_solve_element_add_full_gravity(ispec,NSPEC_CRUST_MANTLE,NGLOB,gravity_rho,deriv(:,:,:,:,ispec),ibool, &
-                                                 pgrav_crust_mantle,rho_s_H)
+        call compute_element_add_full_gravity(ispec,NSPEC_CRUST_MANTLE,NGLOB,gravity_rho,deriv(1,1,1,1,ispec),ibool, &
+                                              pgrav_crust_mantle,rho_s_H)
       endif
 
 #ifdef FORCE_VECTORIZATION
@@ -574,7 +580,7 @@
 !
 ! please leave the routines here to help compilers inlining the code
 
-  subroutine mxm5_3comp_singleA(A,n1,B1,B2,B3,C1,C2,C3,n3)
+  pure subroutine mxm5_3comp_singleA(A,n1,B1,B2,B3,C1,C2,C3,n3)
 
 ! we can force inlining (Intel compiler)
 #if defined __INTEL_COMPILER
@@ -653,7 +659,7 @@
 
 !--------------------------------------------------------------------------------------------
 
-  subroutine mxm5_3comp_singleB(A1,A2,A3,n1,B,C1,C2,C3,n3)
+  pure subroutine mxm5_3comp_singleB(A1,A2,A3,n1,B,C1,C2,C3,n3)
 
 ! we can force inlining (Intel compiler)
 #if defined __INTEL_COMPILER
@@ -732,7 +738,7 @@
 
 !--------------------------------------------------------------------------------------------
 
-  subroutine mxm5_3comp_3dmat_singleB(A1,A2,A3,n1,B,n2,C1,C2,C3,n3)
+  pure subroutine mxm5_3comp_3dmat_singleB(A1,A2,A3,n1,B,n2,C1,C2,C3,n3)
 
 ! we can force inlining (Intel compiler)
 #if defined __INTEL_COMPILER
