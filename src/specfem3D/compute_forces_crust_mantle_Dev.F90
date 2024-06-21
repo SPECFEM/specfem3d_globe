@@ -151,6 +151,7 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dummyx_loc,dummyy_loc,dummyz_loc
 
+  ! strain
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5) :: epsilondev_loc
   real(kind=CUSTOM_REAL) :: fac1,fac2,fac3
 
@@ -246,7 +247,12 @@
     ! pages 386 and 389 and Figure 8.3.1
 
     ! computes 1. matrix multiplication for tempx1,..
+#ifdef USE_HANDOPT
     call mxm5_3comp_singleA(hprime_xx,m1,dummyx_loc,dummyy_loc,dummyz_loc,tempx1,tempy1,tempz1,m2)
+    !call mxm5_3comp_singleA(hprime_xxT,m1,dummyx_loc,dummyy_loc,dummyz_loc,tempx1,tempy1,tempz1,m2) ! A transposed
+#else
+    call mxm5_3comp_singleA(hprime_xx,m1,dummyx_loc,dummyy_loc,dummyz_loc,tempx1,tempy1,tempz1,m2)
+#endif
     ! computes 2. matrix multiplication for tempx2,..
     call mxm5_3comp_3dmat_singleB(dummyx_loc,dummyy_loc,dummyz_loc,m1,hprime_xxT,m1,tempx2,tempy2,tempz2,NGLLX)
     ! computes 3. matrix multiplication for tempx3,..
@@ -310,7 +316,12 @@
     ! pages 386 and 389 and Figure 8.3.1
 
     ! computes 1. matrix multiplication for newtempx1,..
+#ifdef USE_HANDOPT
     call mxm5_3comp_singleA(hprimewgll_xxT,m1,tempx1,tempy1,tempz1,newtempx1,newtempy1,newtempz1,m2)
+    !call mxm5_3comp_singleA(hprimewgll_xx,m1,tempx1,tempy1,tempz1,newtempx1,newtempy1,newtempz1,m2)  ! A transposed
+#else
+    call mxm5_3comp_singleA(hprimewgll_xxT,m1,tempx1,tempy1,tempz1,newtempx1,newtempy1,newtempz1,m2)
+#endif
     ! computes 2. matrix multiplication for tempx2,..
     call mxm5_3comp_3dmat_singleB(tempx2,tempy2,tempz2,m1,hprimewgll_xx,m1,newtempx2,newtempy2,newtempz2,NGLLX)
     ! computes 3. matrix multiplication for newtempx3,..
@@ -556,7 +567,12 @@
   implicit none
 
   integer,intent(in) :: n1,n3
+#ifdef USE_HANDOPT
   real(kind=CUSTOM_REAL),dimension(n1,5),intent(in) :: A
+  !real(kind=CUSTOM_REAL),dimension(5,n1),intent(in) :: A   ! transposed
+#else
+  real(kind=CUSTOM_REAL),dimension(n1,5),intent(in) :: A
+#endif
   real(kind=CUSTOM_REAL),dimension(5,n3),intent(in) :: B1,B2,B3
   real(kind=CUSTOM_REAL),dimension(n1,n3),intent(out) :: C1,C2,C3
 
@@ -579,6 +595,41 @@
 
   ! matrix-matrix multiplication
   do j = 1,n3
+
+#ifdef USE_HANDOPT
+
+!DIR$ IVDEP
+#if defined __INTEL_COMPILER
+!DIR$ SIMD
+#endif
+    do i = 1,n1
+      C1(i,j) = A(i,1) * B1(1,j) + A(i,2) * B1(2,j) + A(i,3) * B1(3,j) + A(i,4) * B1(4,j) + A(i,5) * B1(5,j)
+      ! transposed
+      !C1(i,j) = A(1,i) * B1(1,j) + A(2,i) * B1(2,j) + A(3,i) * B1(3,j) + A(4,i) * B1(4,j) + A(5,i) * B1(5,j)
+    enddo
+
+!DIR$ IVDEP
+#if defined __INTEL_COMPILER
+!DIR$ SIMD
+#endif
+    do i = 1,n1
+      C2(i,j) = A(i,1) * B2(1,j) + A(i,2) * B2(2,j) + A(i,3) * B2(3,j) + A(i,4) * B2(4,j) + A(i,5) * B2(5,j)
+      ! transposed
+      !C2(i,j) = A(1,i) * B2(1,j) + A(2,i) * B2(2,j) + A(3,i) * B2(3,j) + A(4,i) * B2(4,j) + A(5,i) * B2(5,j)
+    enddo
+
+!DIR$ IVDEP
+#if defined __INTEL_COMPILER
+!DIR$ SIMD
+#endif
+    do i = 1,n1
+      C3(i,j) = A(i,1) * B3(1,j) + A(i,2) * B3(2,j) + A(i,3) * B3(3,j) + A(i,4) * B3(4,j) + A(i,5) * B3(5,j)
+      ! transposed
+      !C3(i,j) = A(1,i) * B3(1,j) + A(2,i) * B3(2,j) + A(3,i) * B3(3,j) + A(4,i) * B3(4,j) + A(5,i) * B3(5,j)
+    enddo
+
+#else
+
 !DIR$ IVDEP
 #if defined __INTEL_COMPILER
 !DIR$ SIMD
@@ -602,6 +653,9 @@
                + A(i,4) * B3(4,j) &
                + A(i,5) * B3(5,j)
     enddo
+
+#endif
+
   enddo
 
   end subroutine mxm5_3comp_singleA
@@ -658,6 +712,35 @@
 
   ! matrix-matrix multiplication
   do j = 1,n3
+
+#ifdef USE_HANDOPT
+
+!DIR$ IVDEP
+#if defined __INTEL_COMPILER
+!DIR$ SIMD
+#endif
+    do i = 1,n1
+      C1(i,j) = A1(i,1) * B(1,j) + A1(i,2) * B(2,j) + A1(i,3) * B(3,j) + A1(i,4) * B(4,j) + A1(i,5) * B(5,j)
+    enddo
+
+!DIR$ IVDEP
+#if defined __INTEL_COMPILER
+!DIR$ SIMD
+#endif
+    do i = 1,n1
+      C2(i,j) = A2(i,1) * B(1,j) + A2(i,2) * B(2,j) + A2(i,3) * B(3,j) + A2(i,4) * B(4,j) + A2(i,5) * B(5,j)
+    enddo
+
+!DIR$ IVDEP
+#if defined __INTEL_COMPILER
+!DIR$ SIMD
+#endif
+    do i = 1,n1
+      C3(i,j) = A3(i,1) * B(1,j) + A3(i,2) * B(2,j) + A3(i,3) * B(3,j) + A3(i,4) * B(4,j) + A3(i,5) * B(5,j)
+    enddo
+
+#else
+
 !DIR$ IVDEP
 #if defined __INTEL_COMPILER
 !DIR$ SIMD
@@ -681,6 +764,9 @@
                + A3(i,4) * B(4,j) &
                + A3(i,5) * B(5,j)
     enddo
+
+#endif
+
   enddo
 
   end subroutine mxm5_3comp_singleB
@@ -762,6 +848,47 @@
   ! matrix-matrix multiplication
   do k = 1,n3
     do j = 1,n2
+
+#ifdef USE_HANDOPT
+
+!DIR$ IVDEP
+#if defined __INTEL_COMPILER
+!DIR$ SIMD
+#endif
+      do i = 1,n1
+        C1(i,j,k) =  A1(i,1,k) * B(1,j) &
+                   + A1(i,2,k) * B(2,j) &
+                   + A1(i,3,k) * B(3,j) &
+                   + A1(i,4,k) * B(4,j) &
+                   + A1(i,5,k) * B(5,j)
+      enddo
+
+!DIR$ IVDEP
+#if defined __INTEL_COMPILER
+!DIR$ SIMD
+#endif
+      do i = 1,n1
+        C2(i,j,k) =  A2(i,1,k) * B(1,j) &
+                   + A2(i,2,k) * B(2,j) &
+                   + A2(i,3,k) * B(3,j) &
+                   + A2(i,4,k) * B(4,j) &
+                   + A2(i,5,k) * B(5,j)
+      enddo
+
+!DIR$ IVDEP
+#if defined __INTEL_COMPILER
+!DIR$ SIMD
+#endif
+      do i = 1,n1
+        C3(i,j,k) =  A3(i,1,k) * B(1,j) &
+                   + A3(i,2,k) * B(2,j) &
+                   + A3(i,3,k) * B(3,j) &
+                   + A3(i,4,k) * B(4,j) &
+                   + A3(i,5,k) * B(5,j)
+      enddo
+
+#else
+
 !DIR$ IVDEP
 #if defined __INTEL_COMPILER
 !DIR$ SIMD
@@ -785,6 +912,9 @@
                    + A3(i,4,k) * B(4,j) &
                    + A3(i,5,k) * B(5,j)
       enddo
+
+#endif
+
     enddo
   enddo
 
