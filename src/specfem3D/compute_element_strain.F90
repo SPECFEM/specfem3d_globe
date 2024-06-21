@@ -62,7 +62,7 @@ contains
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX),intent(in) :: hprime_xx,hprime_xxT
 
-  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: deriv
+  real(kind=CUSTOM_REAL), dimension(10,NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: deriv
 
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ),intent(out) :: epsilondev_loc
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(out) :: eps_trace_over_3_loc
@@ -473,7 +473,7 @@ contains
 
   integer, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX),intent(in) :: hprime_xx,hprime_xxT
-  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: deriv
+  real(kind=CUSTOM_REAL), dimension(10,NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: deriv
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(out) :: epsilondev_xx_loc_nplus1
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(out) :: epsilondev_yy_loc_nplus1

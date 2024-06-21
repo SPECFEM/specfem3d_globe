@@ -472,7 +472,8 @@
 
     ! crust/mantle
     ! allocates fused array
-    allocate(deriv_mapping_crust_mantle(9,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
+    ! (using padding w/ size 16)
+    allocate(deriv_mapping_crust_mantle(10,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
     if (ier /= 0) stop 'Error allocating array deriv_mapping_crust_mantle'
     deriv_mapping_crust_mantle(:,:,:,:,:) = 0.0_CUSTOM_REAL
 
@@ -509,6 +510,7 @@
         deriv_mapping_crust_mantle(7,INDEX_IJK,ispec) = gammaxl
         deriv_mapping_crust_mantle(8,INDEX_IJK,ispec) = gammayl
         deriv_mapping_crust_mantle(9,INDEX_IJK,ispec) = gammazl
+        deriv_mapping_crust_mantle(10,INDEX_IJK,ispec) = 1.0_CUSTOM_REAL / jacobianl
 
       ENDDO_LOOP_IJK
 
@@ -516,7 +518,7 @@
 
     ! inner core
     ! allocates fused array
-    allocate(deriv_mapping_inner_core(9,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE),stat=ier)
+    allocate(deriv_mapping_inner_core(10,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE),stat=ier)
     if (ier /= 0) stop 'Error allocating array deriv_mapping_inner_core'
     deriv_mapping_inner_core(:,:,:,:,:) = 0.0_CUSTOM_REAL
 
@@ -546,6 +548,8 @@
 
           ! checks Jacobian
           if (jacobianl <= 0.0_CUSTOM_REAL) stop 'Error invalid Jacobian in inner core element'
+        else
+          jacobianl = 1.0_CUSTOM_REAL
         endif
 
         deriv_mapping_inner_core(1,INDEX_IJK,ispec) = xixl
@@ -557,6 +561,7 @@
         deriv_mapping_inner_core(7,INDEX_IJK,ispec) = gammaxl
         deriv_mapping_inner_core(8,INDEX_IJK,ispec) = gammayl
         deriv_mapping_inner_core(9,INDEX_IJK,ispec) = gammazl
+        deriv_mapping_inner_core(10,INDEX_IJK,ispec) = 1.0_CUSTOM_REAL / jacobianl
 
       ENDDO_LOOP_IJK
 
@@ -564,7 +569,7 @@
 
     ! outer core
     ! allocates fused array
-    allocate(deriv_mapping_outer_core(9,NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE),stat=ier)
+    allocate(deriv_mapping_outer_core(10,NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE),stat=ier)
     if (ier /= 0) stop 'Error allocating array deriv_mapping_outer_core'
     deriv_mapping_outer_core(:,:,:,:,:) = 0.0_CUSTOM_REAL
 
@@ -601,6 +606,7 @@
         deriv_mapping_outer_core(7,INDEX_IJK,ispec) = gammaxl
         deriv_mapping_outer_core(8,INDEX_IJK,ispec) = gammayl
         deriv_mapping_outer_core(9,INDEX_IJK,ispec) = gammazl
+        deriv_mapping_outer_core(10,INDEX_IJK,ispec) = 1.0_CUSTOM_REAL / jacobianl
 
       ENDDO_LOOP_IJK
 

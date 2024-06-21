@@ -88,7 +88,7 @@ contains
   ! arrays with mesh parameters per slice
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: ibool
 
-  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: deriv
+  real(kind=CUSTOM_REAL), dimension(10,NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: deriv
 
   ! array with derivatives of Lagrange polynomials and precalculated products
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: wgll_cube
@@ -119,8 +119,6 @@ contains
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(inout) :: epsilondev_loc
 
   ! local parameters
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: jacobianl
-
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdxl, duydyl, duzdzl
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
@@ -146,7 +144,7 @@ contains
 
   ! precomputes factors
   call compute_element_precompute_factors(tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-                                          deriv(1,1,1,1,ispec),jacobianl, &
+                                          deriv(1,1,1,1,ispec), &
                                           duxdxl,duydyl,duzdzl, &
                                           duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl, &
                                           duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl)
@@ -197,7 +195,7 @@ contains
 
   ! compute non-symmetric terms for gravity
   if (GRAVITY_VAL) then
-    call compute_element_gravity(ispec,NSPEC,NGLOB,ibool,jacobianl,wgll_cube, &
+    call compute_element_gravity(ispec,NSPEC,NGLOB,ibool,deriv(1,1,1,1,ispec),wgll_cube, &
                                  gravity_pre_store,gravity_H, &
                                  dummyx_loc,dummyy_loc,dummyz_loc, &
                                  sigma_xx,sigma_yy,sigma_zz, &
@@ -206,7 +204,7 @@ contains
   endif
 
   ! dot product of stress tensor with test vector, non-symmetric form
-  call compute_element_dot_product_stress(deriv(1,1,1,1,ispec),jacobianl, &
+  call compute_element_dot_product_stress(deriv(1,1,1,1,ispec), &
                                                 sigma_xx,sigma_yy,sigma_zz, &
                                                 sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy, &
                                                 tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3)
@@ -285,8 +283,6 @@ contains
 !  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(inout) :: epsilondev_loc
 !
 !  ! local parameters
-!  !real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: jacobianl
-!
 !  !real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdxl, duydyl, duzdzl
 !  !real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
 !  !real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
@@ -494,7 +490,7 @@ contains
 !    endif
 !
 !    ! dot product of stress tensor with test vector, non-symmetric form
-!    !call compute_element_dot_product_stress(deriv(1,1,1,1,ispec),jacobianl, &
+!    !call compute_element_dot_product_stress(deriv(1,1,1,1,ispec), &
 !    !                                              sigma_xx,sigma_yy,sigma_zz, &
 !    !                                              sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy, &
 !    !                                              tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3)
@@ -556,7 +552,7 @@ contains
   ! arrays with mesh parameters per slice
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: ibool
 
-  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: deriv
+  real(kind=CUSTOM_REAL), dimension(10,NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: deriv
 
   ! array with derivatives of Lagrange polynomials and precalculated products
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: wgll_cube
@@ -587,8 +583,6 @@ contains
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(inout) :: epsilondev_loc
 
   ! local parameters
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: jacobianl
-
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdxl, duydyl, duzdzl
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
@@ -614,7 +608,7 @@ contains
 
   ! precomputes factors
   call compute_element_precompute_factors(tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-                                          deriv(:,:,:,:,ispec),jacobianl, &
+                                          deriv(1,1,1,1,ispec), &
                                           duxdxl,duydyl,duzdzl, &
                                           duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl, &
                                           duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl)
@@ -666,7 +660,7 @@ contains
 
   ! compute non-symmetric terms for gravity
   if (GRAVITY_VAL) then
-    call compute_element_gravity(ispec,NSPEC,NGLOB,ibool,jacobianl,wgll_cube, &
+    call compute_element_gravity(ispec,NSPEC,NGLOB,ibool,deriv(1,1,1,1,ispec),wgll_cube, &
                                  gravity_pre_store,gravity_H, &
                                  dummyx_loc,dummyy_loc,dummyz_loc, &
                                  sigma_xx,sigma_yy,sigma_zz, &
@@ -675,7 +669,7 @@ contains
   endif
 
   ! dot product of stress tensor with test vector, non-symmetric form
-  call compute_element_dot_product_stress(deriv(:,:,:,:,ispec),jacobianl, &
+  call compute_element_dot_product_stress(deriv(1,1,1,1,ispec), &
                                                 sigma_xx,sigma_yy,sigma_zz, &
                                                 sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy, &
                                                 tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3)
@@ -730,7 +724,7 @@ contains
   ! arrays with mesh parameters per slice
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: ibool
 
-  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: deriv
+  real(kind=CUSTOM_REAL), dimension(10,NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: deriv
 
   ! array with derivatives of Lagrange polynomials and precalculated products
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: wgll_cube
@@ -768,8 +762,6 @@ contains
   real(kind=CUSTOM_REAL) :: c11,c22,c33,c44,c55,c66,c12,c13,c23,c14,c24,c34,c15,c25,c35,c45,c16,c26,c36,c46,c56
 
   ! local element arrays
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: jacobianl
-
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdxl, duydyl, duzdzl
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
@@ -791,7 +783,7 @@ contains
 
   ! precomputes factors
   call compute_element_precompute_factors(tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-                                          deriv(:,:,:,:,ispec),jacobianl, &
+                                          deriv(1,1,1,1,ispec), &
                                           duxdxl,duydyl,duzdzl, &
                                           duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl, &
                                           duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl)
@@ -870,7 +862,7 @@ contains
 
   ! compute non-symmetric terms for gravity
   if (GRAVITY_VAL) then
-    call compute_element_gravity(ispec,NSPEC,NGLOB,ibool,jacobianl,wgll_cube, &
+    call compute_element_gravity(ispec,NSPEC,NGLOB,ibool,deriv(1,1,1,1,ispec),wgll_cube, &
                                  gravity_pre_store,gravity_H, &
                                  dummyx_loc,dummyy_loc,dummyz_loc, &
                                  sigma_xx,sigma_yy,sigma_zz, &
@@ -879,7 +871,7 @@ contains
   endif
 
   ! dot product of stress tensor with test vector, non-symmetric form
-  call compute_element_dot_product_stress(deriv(:,:,:,:,ispec),jacobianl, &
+  call compute_element_dot_product_stress(deriv(1,1,1,1,ispec), &
                                                 sigma_xx,sigma_yy,sigma_zz, &
                                                 sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy, &
                                                 tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3)
@@ -988,8 +980,6 @@ contains
 !  real(kind=CUSTOM_REAL) :: two_eta_aniso,four_eta_aniso,six_eta_aniso
 !
 !  ! local element arrays
-!  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: jacobianl
-!
 !  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdxl, duydyl, duzdzl
 !  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
 !  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
@@ -1016,7 +1006,7 @@ contains
 !
 !  ! precomputes factors
 !  call compute_element_precompute_factors(tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-!                                          deriv(:,:,:,:,ispec),jacobianl, &
+!                                          deriv(1,1,1,1,ispec), &
 !                                          duxdxl,duydyl,duzdzl, &
 !                                          duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl, &
 !                                          duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl)
@@ -1268,7 +1258,7 @@ contains
 !
 !  ! compute non-symmetric terms for gravity
 !  if (GRAVITY_VAL) then
-!    call compute_element_gravity(ispec,NSPEC,NGLOB,ibool,rstore,jacobianl,wgll_cube, &
+!    call compute_element_gravity(ispec,NSPEC,NGLOB,ibool,rstore,deriv(:,:,:,:,ispec),wgll_cube, &
 !                                 minus_gravity_table,minus_deriv_gravity_table,density_table, &
 !                                 dummyx_loc,dummyy_loc,dummyz_loc, &
 !                                 sigma_xx,sigma_yy,sigma_zz, &
@@ -1277,7 +1267,7 @@ contains
 !  endif
 !
 !  ! dot product of stress tensor with test vector, non-symmetric form
-!  call compute_element_dot_product_stress(deriv(:,:,:,:,ispec),jacobianl, &
+!  call compute_element_dot_product_stress(deriv(:,:,:,:,ispec), &
 !                                                sigma_xx,sigma_yy,sigma_zz, &
 !                                                sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy, &
 !                                                tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3)
@@ -1333,7 +1323,7 @@ contains
   ! arrays with mesh parameters per slice
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: ibool
 
-  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: deriv
+  real(kind=CUSTOM_REAL), dimension(10,NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: deriv
 
   ! array with derivatives of Lagrange polynomials and precalculated products
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: wgll_cube
@@ -1371,8 +1361,6 @@ contains
   real(kind=CUSTOM_REAL) :: c11,c22,c33,c44,c55,c66,c12,c13,c23,c14,c24,c34,c15,c25,c35,c45,c16,c26,c36,c46,c56
 
   ! local element arrays
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: jacobianl
-
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdxl, duydyl, duzdzl
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
@@ -1393,7 +1381,7 @@ contains
 
   ! precomputes factors
   call compute_element_precompute_factors(tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-                                          deriv(:,:,:,:,ispec),jacobianl, &
+                                          deriv(1,1,1,1,ispec), &
                                           duxdxl,duydyl,duzdzl, &
                                           duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl, &
                                           duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl)
@@ -1468,7 +1456,7 @@ contains
 
   ! compute non-symmetric terms for gravity
   if (GRAVITY_VAL) then
-    call compute_element_gravity(ispec,NSPEC,NGLOB,ibool,jacobianl,wgll_cube, &
+    call compute_element_gravity(ispec,NSPEC,NGLOB,ibool,deriv(1,1,1,1,ispec),wgll_cube, &
                                  gravity_pre_store,gravity_H, &
                                  dummyx_loc,dummyy_loc,dummyz_loc, &
                                  sigma_xx,sigma_yy,sigma_zz, &
@@ -1477,7 +1465,7 @@ contains
   endif
 
   ! dot product of stress tensor with test vector, non-symmetric form
-  call compute_element_dot_product_stress(deriv(:,:,:,:,ispec),jacobianl, &
+  call compute_element_dot_product_stress(deriv(1,1,1,1,ispec), &
                                                 sigma_xx,sigma_yy,sigma_zz, &
                                                 sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy, &
                                                 tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3)
@@ -1528,7 +1516,7 @@ contains
   ! arrays with mesh parameters per slice
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: ibool
 
-  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: deriv
+  real(kind=CUSTOM_REAL), dimension(10,NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: deriv
 
   ! array with derivatives of Lagrange polynomials and precalculated products
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: wgll_cube
@@ -1565,8 +1553,6 @@ contains
   real(kind=CUSTOM_REAL) :: c11,c12,c13,c22,c23,c33,c44,c55,c66
 
   ! local element arrays
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: jacobianl
-
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdxl, duydyl, duzdzl
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
@@ -1587,7 +1573,7 @@ contains
 
   ! precomputes factors
   call compute_element_precompute_factors(tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-                                          deriv(:,:,:,:,ispec),jacobianl, &
+                                          deriv(1,1,1,1,ispec), &
                                           duxdxl,duydyl,duzdzl, &
                                           duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl, &
                                           duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl)
@@ -1676,7 +1662,7 @@ contains
 
   ! compute non-symmetric terms for gravity
   if (GRAVITY_VAL) then
-    call compute_element_gravity(ispec,NSPEC,NGLOB,ibool,jacobianl,wgll_cube, &
+    call compute_element_gravity(ispec,NSPEC,NGLOB,ibool,deriv(1,1,1,1,ispec),wgll_cube, &
                                  gravity_pre_store,gravity_H, &
                                  dummyx_loc,dummyy_loc,dummyz_loc, &
                                  sigma_xx,sigma_yy,sigma_zz, &
@@ -1685,7 +1671,7 @@ contains
   endif
 
   ! dot product of stress tensor with test vector, non-symmetric form
-  call compute_element_dot_product_stress(deriv(:,:,:,:,ispec),jacobianl, &
+  call compute_element_dot_product_stress(deriv(1,1,1,1,ispec), &
                                                 sigma_xx,sigma_yy,sigma_zz, &
                                                 sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy, &
                                                 tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3)
@@ -1808,7 +1794,7 @@ contains
 ! please leave this routine in this file, to help compilers inlining this function...
 
   pure subroutine compute_element_precompute_factors(tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-                                                deriv_loc,jacobianl, &
+                                                deriv_loc, &
                                                 duxdxl,duydyl,duzdzl, &
                                                 duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl, &
                                                 duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl)
@@ -1835,15 +1821,14 @@ contains
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: tempy1,tempy2,tempy3
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: tempz1,tempz2,tempz3
 
-  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ),intent(in) :: deriv_loc
+  real(kind=CUSTOM_REAL), dimension(10,NGLLX,NGLLY,NGLLZ),intent(in) :: deriv_loc
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(out) :: jacobianl
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(out) :: duxdxl,duydyl,duzdzl
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(out) :: duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl, &
     duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
 
   ! local parameters
-  real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobian
+  real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl
   real(kind=CUSTOM_REAL) :: duxdyl,duxdzl,duydxl,duydzl,duzdxl,duzdyl
   real(kind=CUSTOM_REAL) :: x1,x2,x3,y1,y2,y3,z1,z2,z3
 
@@ -1866,18 +1851,19 @@ contains
     gammayl = deriv_loc(8,INDEX_IJK)
     gammazl = deriv_loc(9,INDEX_IJK)
 
+    ! Jacobian already stored in deriv_loc(10,INDEX_IJK)
     ! compute the Jacobian
-    jacobian = (xixl*(etayl*gammazl-etazl*gammayl) &
-              - xiyl*(etaxl*gammazl-etazl*gammaxl) &
-              + xizl*(etaxl*gammayl-etayl*gammaxl))
-
+    !jacobian = (xixl*(etayl*gammazl-etazl*gammayl) &
+    !          - xiyl*(etaxl*gammazl-etazl*gammaxl) &
+    !          + xizl*(etaxl*gammayl-etayl*gammaxl))
+    !
     ! checks Jacobian
     ! note: try to avoid this if-statement as it hinders the compiler to tune and vectorize this inner loop.
     !       an if-statement would slow this loop down significantly...
     ! already checked before in prepare optimized arrays:
     !   if (jacobian <= 0.0_CUSTOM_REAL) stop 'Error invalid jacobian in compute_element_precompute_factors()'
-
-    jacobianl(INDEX_IJK) = 1.0_CUSTOM_REAL / jacobian
+    !
+    !jacobianl(INDEX_IJK) = 1.0_CUSTOM_REAL / jacobian
 
     x1 = tempx1(INDEX_IJK)
     x2 = tempx2(INDEX_IJK)
@@ -2008,7 +1994,7 @@ contains
 
 ! please leave this routine in this file, to help compilers inlining this function...
 
-  pure subroutine compute_element_dot_product_stress(deriv_loc,jacobianl, &
+  pure subroutine compute_element_dot_product_stress(deriv_loc, &
                                                 sigma_xx,sigma_yy,sigma_zz, &
                                                 sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy, &
                                                 tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3)
@@ -2031,8 +2017,7 @@ contains
 
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ),intent(in) :: deriv_loc
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: jacobianl
+  real(kind=CUSTOM_REAL), dimension(10,NGLLX,NGLLY,NGLLZ),intent(in) :: deriv_loc
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: sigma_xx,sigma_yy,sigma_zz
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy
@@ -2042,11 +2027,8 @@ contains
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(out) :: tempz1,tempz2,tempz3
 
   ! local parameters
-  real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl
+  real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
   real(kind=CUSTOM_REAL) :: sxx,syy,szz,sxy,sxz,syz,syx,szx,szy
-
-  real(kind=CUSTOM_REAL) :: fac
-
 #ifdef FORCE_VECTORIZATION
   integer :: ijk
 #else
@@ -2067,7 +2049,7 @@ contains
     gammazl = deriv_loc(9,INDEX_IJK)
 
     ! common factor
-    fac = jacobianl(INDEX_IJK)
+    jacobianl = deriv_loc(10,INDEX_IJK)
 
     sxx = sigma_xx(INDEX_IJK)
     syy = sigma_yy(INDEX_IJK)
@@ -2082,25 +2064,25 @@ contains
     ! form dot product with test vector, non-symmetric form
 
     ! this goes to accel_x
-    tempx1(INDEX_IJK) = fac * (sxx*xixl + syx*xiyl + szx*xizl)
+    tempx1(INDEX_IJK) = jacobianl * (sxx*xixl + syx*xiyl + szx*xizl)
     ! this goes to accel_y
-    tempy1(INDEX_IJK) = fac * (sxy*xixl + syy*xiyl + szy*xizl)
+    tempy1(INDEX_IJK) = jacobianl * (sxy*xixl + syy*xiyl + szy*xizl)
     ! this goes to accel_z
-    tempz1(INDEX_IJK) = fac * (sxz*xixl + syz*xiyl + szz*xizl)
+    tempz1(INDEX_IJK) = jacobianl * (sxz*xixl + syz*xiyl + szz*xizl)
 
     ! this goes to accel_x
-    tempx2(INDEX_IJK) = fac * (sxx*etaxl + syx*etayl + szx*etazl)
+    tempx2(INDEX_IJK) = jacobianl * (sxx*etaxl + syx*etayl + szx*etazl)
     ! this goes to accel_y
-    tempy2(INDEX_IJK) = fac * (sxy*etaxl + syy*etayl + szy*etazl)
+    tempy2(INDEX_IJK) = jacobianl * (sxy*etaxl + syy*etayl + szy*etazl)
     ! this goes to accel_z
-    tempz2(INDEX_IJK) = fac * (sxz*etaxl + syz*etayl + szz*etazl)
+    tempz2(INDEX_IJK) = jacobianl * (sxz*etaxl + syz*etayl + szz*etazl)
 
     ! this goes to accel_x
-    tempx3(INDEX_IJK) = fac * (sxx*gammaxl + syx*gammayl + szx*gammazl)
+    tempx3(INDEX_IJK) = jacobianl * (sxx*gammaxl + syx*gammayl + szx*gammazl)
     ! this goes to accel_y
-    tempy3(INDEX_IJK) = fac * (sxy*gammaxl + syy*gammayl + szy*gammazl)
+    tempy3(INDEX_IJK) = jacobianl * (sxy*gammaxl + syy*gammayl + szy*gammazl)
     ! this goes to accel_z
-    tempz3(INDEX_IJK) = fac * (sxz*gammaxl + syz*gammayl + szz*gammazl)
+    tempz3(INDEX_IJK) = jacobianl * (sxz*gammaxl + syz*gammayl + szz*gammazl)
   ENDDO_LOOP_IJK
 
   end subroutine compute_element_dot_product_stress
@@ -2111,7 +2093,7 @@ contains
 
 ! please leave this routine in this file, to help compilers inlining this function...
 
-  pure subroutine compute_element_gravity(ispec,NSPEC,NGLOB,ibool,jacobianl,wgll_cube, &
+  pure subroutine compute_element_gravity(ispec,NSPEC,NGLOB,ibool,deriv_loc,wgll_cube, &
                                      gravity_pre_store,gravity_H, &
                                      dummyx_loc,dummyy_loc,dummyz_loc, &
                                      sigma_xx,sigma_yy,sigma_zz, &
@@ -2142,7 +2124,7 @@ contains
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: ibool
 !  real(kind=CUSTOM_REAL), dimension(3,NGLOB),intent(in) :: rstore
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: jacobianl
+  real(kind=CUSTOM_REAL), dimension(10,NGLLX,NGLLY,NGLLZ),intent(in) :: deriv_loc
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: wgll_cube
 
   ! gravity
@@ -2165,7 +2147,7 @@ contains
 !  double precision :: minus_g_over_radius,minus_dg_plus_g_over_radius
 !  double precision :: cos_theta,sin_theta,cos_phi,sin_phi
 !  double precision :: cos_theta_sq,sin_theta_sq,cos_phi_sq,sin_phi_sq
-  real(kind=CUSTOM_REAL) :: factor,sx_l,sy_l,sz_l,gxl,gyl,gzl
+  real(kind=CUSTOM_REAL) :: factor,sx_l,sy_l,sz_l,gxl,gyl,gzl,jacobianl
   real(kind=CUSTOM_REAL) :: Hxxl,Hyyl,Hzzl,Hxyl,Hxzl,Hyzl
 
 !  integer :: int_radius
@@ -2219,7 +2201,8 @@ contains
     Hyzl = gravity_H(6,iglob) ! cos_theta*minus_dg_plus_g_over_radius*sin_phi*sin_theta * rho
 
     ! precompute vector
-    factor = jacobianl(INDEX_IJK) * wgll_cube(INDEX_IJK)
+    jacobianl = deriv_loc(10,INDEX_IJK)
+    factor = jacobianl * wgll_cube(INDEX_IJK)
 
     rho_s_H(1,INDEX_IJK) = factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl)
     rho_s_H(2,INDEX_IJK) = factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl)
@@ -2394,7 +2377,7 @@ contains
 
   real(kind=CUSTOM_REAL),dimension(nglob),intent(in) :: gravity_rho
 
-  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ),intent(in) :: deriv_loc
+  real(kind=CUSTOM_REAL), dimension(10,NGLLX,NGLLY,NGLLZ),intent(in) :: deriv_loc
   integer, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
 
   ! pertubation gravity
@@ -2436,9 +2419,11 @@ contains
         gammazl = deriv_loc(9,i,j,k)
 
         ! compute the Jacobian
-        jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
-                      - xiyl*(etaxl*gammazl-etazl*gammaxl) &
-                      + xizl*(etaxl*gammayl-etayl*gammaxl))
+        !jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
+        !              - xiyl*(etaxl*gammazl-etazl*gammaxl) &
+        !              + xizl*(etaxl*gammayl-etayl*gammaxl))
+        ! from store
+        jacobianl = deriv_loc(10,i,j,k)
 
         ! for \grad\phi
         tempx1l_phi = 0._CUSTOM_REAL

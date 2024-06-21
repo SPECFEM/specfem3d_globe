@@ -148,7 +148,7 @@
   real(kind=CUSTOM_REAL) sigma_yx,sigma_zx,sigma_zy
 
   ! full gravity
-  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ) :: deriv_loc
+  real(kind=CUSTOM_REAL), dimension(10,NGLLX,NGLLY,NGLLZ) :: deriv_loc
 
 !  integer :: computed_elements
   integer :: num_elements,ispec_p
@@ -226,6 +226,11 @@
             gammayl = gammay(i,j,k,ispec)
             gammazl = gammaz(i,j,k,ispec)
 
+            ! compute the Jacobian
+            jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
+                          - xiyl*(etaxl*gammazl-etazl*gammaxl) &
+                          + xizl*(etaxl*gammayl-etayl*gammaxl))
+
             ! full gravity
             if (FULL_GRAVITY_VAL .and. .not. DISCARD_GCONTRIB) then
               ! note: deriv_mapping_inner_core is only available when chosen to use Deville routines
@@ -239,12 +244,8 @@
               deriv_loc(7,i,j,k) = gammaxl
               deriv_loc(8,i,j,k) = gammayl
               deriv_loc(9,i,j,k) = gammazl
+              deriv_loc(10,i,j,k) = jacobianl
             endif
-
-            ! compute the Jacobian
-            jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
-                          - xiyl*(etaxl*gammazl-etazl*gammaxl) &
-                          + xizl*(etaxl*gammayl-etayl*gammaxl))
 
             duxdxl = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
             duxdyl = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
