@@ -247,8 +247,10 @@
     else
       write(IMAIN,*) '  no general mantle anisotropy'
     endif
-
     write(IMAIN,*)
+    if (ASSUME_PERFECT_SPHERE) then
+      write(IMAIN,*) '  assuming perfect sphere'
+    endif
     write(IMAIN,*)
     if (REGIONAL_MESH_CUTOFF) then
       write(IMAIN,*) 'Regional mesh cutoff:'

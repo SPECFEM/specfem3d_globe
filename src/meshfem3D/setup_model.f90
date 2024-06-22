@@ -130,7 +130,7 @@
 
   subroutine sm_output_info()
 
-  use constants, only: IMAIN,NGLLX,NGLLY,NGLLZ,NGNOD,NGNOD2D,N_SLS
+  use constants, only: IMAIN,NGLLX,NGLLY,NGLLZ,NGNOD,NGNOD2D,N_SLS,ASSUME_PERFECT_SPHERE
   use shared_parameters, only: R_PLANET_KM
 
   use meshfem_models_par
@@ -248,7 +248,10 @@
     write(IMAIN,*) '  no general mantle anisotropy'
   endif
   write(IMAIN,*)
-
+  if (ASSUME_PERFECT_SPHERE) then
+    write(IMAIN,*) '  assuming perfect sphere'
+  endif
+  write(IMAIN,*)
   write(IMAIN,*) 'Reference radius of the globe used is ',R_PLANET_KM,' km'
   write(IMAIN,*)
   write(IMAIN,*) 'Central cube is at a radius of ',R_CENTRAL_CUBE/1000.d0,' km'
