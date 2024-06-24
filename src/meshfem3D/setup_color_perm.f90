@@ -53,6 +53,13 @@
   integer :: nspec,nglob
   integer :: idomain
 
+  ! for testing effect of element permutations on code performance
+  ! note: re-ordering might affect the efficiency of cache fetches.
+  !       with the inner/outer loop re-ordering here, elements get ordered consecutively for each phase.
+  !       this seems to have only a minimal performance benefit of ~3-4 % on the CPU.
+  ! permutes inner/outer loop elements
+  logical, parameter :: USE_MESH_LOOP_PERMUTATION = .false.
+
   ! user output
   if (myrank == 0) then
     write(IMAIN,*) '     mesh coloring: ',USE_MESH_COLORING_GPU
@@ -93,7 +100,7 @@
       if (maxval(perm) /= num_phase_ispec_crust_mantle) &
         call exit_MPI(myrank, 'maxval(perm) should be num_phase_ispec_crust_mantle')
 
-      ! sorts array according to permutation
+      ! sorts array according to color permutation
       call synchronize_all()
       if (myrank == 0) then
         write(IMAIN,*) '     mesh permutation:'
@@ -112,6 +119,22 @@
       ! dummy array
       allocate(num_elem_colors_crust_mantle(num_colors_outer_crust_mantle+num_colors_inner_crust_mantle),stat=ier)
       if (ier /= 0 ) call exit_mpi(myrank,'Error allocating num_elem_colors_crust_mantle array')
+    endif
+
+    ! setup inner/outer loop permutation for crust/mantle
+    if (USE_MESH_LOOP_PERMUTATION) then
+      ! user output
+      if (myrank == 0) then
+        write(IMAIN,*) '     mesh permutation for inner/outer loops: ',USE_MESH_LOOP_PERMUTATION
+        call flush_IMAIN()
+      endif
+
+      call setup_loop_permutation(NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,ibool, &
+                                  iregion_code, &
+                                  num_phase_ispec_crust_mantle,phase_ispec_inner_crust_mantle, &
+                                  nspec_outer_crust_mantle,nspec_inner_crust_mantle, &
+                                  num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
+                                  nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle)
     endif
 
   case (IREGION_OUTER_CORE)
@@ -377,19 +400,19 @@
 
   implicit none
 
-  integer :: nspec,nglob
-  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
+  integer, intent(in) :: nspec,nglob
+  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec), intent(in) :: ibool
 
-  integer, dimension(nspec) :: perm
+  integer, dimension(nspec), intent(inout) :: perm
 
   ! wrapper array for ispec is in domain:
   ! idomain: 1 == crust/mantle, 2 == outer core, 3 == inner core
-  integer :: idomain
-  logical, dimension(nspec) :: is_on_a_slice_edge
-  integer :: num_phase_ispec_d
-  integer, dimension(num_phase_ispec_d,2) :: phase_ispec_inner_d
+  integer, intent(in) :: idomain
+  logical, dimension(nspec), intent(in) :: is_on_a_slice_edge
+  integer, intent(inout) :: num_phase_ispec_d
+  integer, dimension(num_phase_ispec_d,2), intent(inout) :: phase_ispec_inner_d
 
-  logical :: SAVE_MESH_FILES
+  logical, intent(in) :: SAVE_MESH_FILES
 
   ! local parameters
   ! added for color permutation
@@ -747,66 +770,32 @@
   use constants
 
   use meshfem_models_par, only: &
-    TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE, &
-    ANISOTROPIC_INNER_CORE,ATTENUATION, &
-    ATTENUATION_3D,ATTENUATION_1D_WITH_3D_STORAGE
+    ATTENUATION_1D_WITH_3D_STORAGE
 
   use meshfem_par, only: &
-    ABSORBING_CONDITIONS, &
-    LOCAL_PATH, &
-    NCHUNKS,NSPEC2D_TOP,NSPEC2D_BOTTOM, &
-    xstore,ystore,zstore,idoubling,xstore_glob,ystore_glob,zstore_glob
-
-  use regions_mesh_par2, only: &
-    xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
-    gammaxstore,gammaystore,gammazstore, &
-    rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-    c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-    ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
-    rho_vp,rho_vs, &
-    nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
-    ispec_is_tiso,tau_e_store,Qmu_store, &
-    NSPEC2D_MOHO, NSPEC2D_400, NSPEC2D_670, &
-    ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot, &
-    ibelm_670_top,ibelm_670_bot
-
-  use MPI_crust_mantle_par, only: NSPEC_CRUST_MANTLE
-  use MPI_outer_core_par, only: NSPEC_OUTER_CORE
-  use MPI_inner_core_par, only: NSPEC_INNER_CORE
-
-  use MPI_trinfinite_par, only: NSPEC_TRINFINITE
-  use MPI_infinite_par, only: NSPEC_INFINITE
+    LOCAL_PATH,xstore_glob,ystore_glob,zstore_glob
 
   implicit none
 
-  integer,intent(in) :: nspec,nglob
-  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
+  integer, intent(in) :: nspec,nglob
+  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec), intent(inout) :: ibool
 
-  integer,intent(in) :: idomain
+  integer, intent(in) :: idomain
   integer, dimension(nspec),intent(inout) :: perm
 
-  integer :: num_colors_outer,num_colors_inner
-  integer, dimension(num_colors_outer + num_colors_inner) :: num_elem_colors
-  integer :: num_phase_ispec_d
-  integer, dimension(num_phase_ispec_d,2) :: phase_ispec_inner_d
+  integer, intent(in) :: num_colors_outer,num_colors_inner
+  integer, dimension(num_colors_outer + num_colors_inner),intent(in) :: num_elem_colors
+  integer, intent(in) :: num_phase_ispec_d
+  integer, dimension(num_phase_ispec_d,2),intent(inout) :: phase_ispec_inner_d
 
-  logical :: SAVE_MESH_FILES
+  logical, intent(in) :: SAVE_MESH_FILES
 
   ! local parameters
-  ! added for sorting
-  double precision, dimension(:,:,:,:), allocatable :: temp_array_dble
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: temp_array_real
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: temp_array_real_sls
-  integer, dimension(:,:,:,:), allocatable :: temp_array_int
-  integer, dimension(:), allocatable :: temp_array_int_1D
   integer, dimension(:), allocatable :: temp_perm_global
-  logical, dimension(:), allocatable :: temp_array_logical_1D
   logical, dimension(:), allocatable :: mask_global
 
   integer :: icolor,icounter,ispec,ielem,ier,i
-  integer :: iface,old_ispec,new_ispec
+  integer :: new_ispec
 
   character(len=MAX_STRING_LEN) :: filename
   character(len=MAX_STRING_LEN) :: prname
@@ -923,6 +912,566 @@
   deallocate(temp_perm_global)
 
   ! permutes all required mesh arrays according to new ordering
+  call permute_all_mesh_element_arrays(nspec,idomain,perm,ibool)
+
+  end subroutine setup_permutation
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine setup_loop_permutation(nspec,nglob,ibool,idomain, &
+                                    num_phase_ispec_d,phase_ispec_inner_d,nspec_outer_d,nspec_inner_d, &
+                                    num_interfaces,max_nibool_interfaces, &
+                                    nibool_interfaces,ibool_interfaces)
+
+  ! sorts element arrays according to inner/outer loop order
+
+  use constants, only: NGLLX,NGLLY,NGLLZ,IMAIN,myrank, &
+    IREGION_CRUST_MANTLE,IREGION_INNER_CORE,IREGION_OUTER_CORE
+
+  implicit none
+
+  integer, intent(in) :: nspec,nglob
+  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec), intent(inout) :: ibool
+
+  ! wrapper array for ispec is in domain:
+  ! idomain: 1 == crust/mantle, 2 == outer core, 3 == inner core
+  integer, intent(in) :: idomain
+  integer, intent(in) :: num_phase_ispec_d
+  integer, dimension(num_phase_ispec_d,2), intent(inout) :: phase_ispec_inner_d
+  integer, intent(in) :: nspec_outer_d,nspec_inner_d
+
+  integer,intent(in) :: num_interfaces,max_nibool_interfaces
+  integer,dimension(num_interfaces),intent(in) :: nibool_interfaces
+  integer,dimension(max_nibool_interfaces,num_interfaces),intent(inout):: ibool_interfaces
+
+  ! local parameters
+  integer :: iphase,num_elements,ier,num_reordered
+  ! ispec re-ordering
+  integer :: ispec,ispec_loop,ispec_p,old_ispec,new_ispec
+  integer, dimension(:), allocatable :: perm_ispec_ordered
+  ! iglob re-ordering
+  integer :: i,j,k,iglob,iglob_ordered,iglob_new,iglob_old
+  integer, dimension(:), allocatable :: perm_iglob_ordered
+
+  ! permutes iglob entries
+  logical, parameter :: USE_GLOBAL_NODE_PERMUTATION = .true.
+
+  ! user output
+  if (myrank == 0) then
+    select case (idomain)
+    case (IREGION_CRUST_MANTLE)
+      write(IMAIN,*) '       permuting crust/mantle element order'
+    case (IREGION_INNER_CORE)
+      write(IMAIN,*) '       permuting inner core element order'
+    case (IREGION_OUTER_CORE)
+      write(IMAIN,*) '       permuting outer core element order'
+    end select
+    call flush_IMAIN()
+  endif
+
+  ! re-orders elements in ibool - aims for better cache fetches
+  allocate(perm_ispec_ordered(nspec),stat=ier)
+  if (ier /= 0) stop 'Error allocating ispec_ordered array'
+  perm_ispec_ordered(:) = 0
+
+  ! loops over outer/inner elements as in compute_forces_crust_mantle_* routine
+  ispec_loop = 0
+  do iphase = 1,2
+    if (iphase == 1) then
+      num_elements = nspec_outer_d
+    else
+      num_elements = nspec_inner_d
+    endif
+
+    do ispec_p = 1,num_elements
+      ispec = phase_ispec_inner_d(ispec_p,iphase)
+
+      ! checks range of ispec
+      if (ispec < 1 .or. ispec > nspec) then
+        print *,'Error: rank ',myrank,' has invalid ispec ',ispec,' - should be between 1 and ',nspec
+        print *,'       domain: ',idomain,' phase: ',iphase,' elements: ',num_elements,' ispec_p: ',ispec_p
+        stop 'Invalid ispec in phase re-ordering'
+      endif
+
+      ! adds element in newly ordered list
+      ispec_loop = ispec_loop + 1
+
+      ! checks range of ispec_loop
+      if (ispec_loop > nspec) then
+        print *,'Error: rank ',myrank,' has invalid ispec_loop ',ispec_loop,' - should be <= ',nspec
+        stop 'Error ispec_loop exceeds element count for region'
+      endif
+
+      ! stores ordering
+      perm_ispec_ordered(ispec) = ispec_loop
+
+      ! debug
+      !if (myrank == 0 .and. iphase == 1 .and. ispec_p < 10) print *,'debug: ispec order ',ispec_loop,ispec
+    enddo
+  enddo
+
+  ! debug
+  !if (myrank == 0) print *,'debug: entries ispec_ordered: ',perm_ispec_ordered(1:10)
+
+  ! check
+  if (ispec_loop /= nspec) then
+    print *,'Error: rank ',myrank,' has invalid number of total looped elements: ',ispec_loop
+    print *,'       should be ',nspec
+    call exit_MPI(myrank,'Invalid number of looped elements for region')
+  endif
+
+  ! re-orders phase_ispec array
+  num_reordered = 0
+  ispec_loop = 0
+  do iphase = 1,2
+    if (iphase == 1) then
+      num_elements = nspec_outer_d
+    else
+      num_elements = nspec_inner_d
+    endif
+    do ispec_p = 1,num_elements
+      ispec_loop = ispec_loop + 1
+
+      old_ispec = phase_ispec_inner_d(ispec_p,iphase)
+      new_ispec = perm_ispec_ordered(old_ispec)
+
+      ! checks ordering
+      if (new_ispec /= ispec_loop) then
+        print *,'Error: rank ',myrank,' has invalid ispec ordering: ',new_ispec,' should be ',ispec_loop
+        call exit_MPI(myrank,'Invalid ispec ordering for phase_ispec_inner_d')
+      endif
+
+      ! sets new element entry
+      if (old_ispec /= new_ispec) then
+        num_reordered = num_reordered + 1
+        ! sets new ordering
+        phase_ispec_inner_d(ispec_p,iphase) = new_ispec
+      endif
+    enddo
+  enddo
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '       total number of re-ordered entries: ',num_reordered,' out of ',nspec_outer_d + nspec_inner_d
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  ! re-order ibool & all arrays depending on new element order
+  ! permutes all required mesh arrays according to new ordering
+  call permute_all_mesh_element_arrays(nspec,idomain,perm_ispec_ordered,ibool)
+
+  ! free temporary array
+  deallocate(perm_ispec_ordered)
+
+  ! global node re-ordering
+  if (USE_GLOBAL_NODE_PERMUTATION) then
+    ! note: re-orders iglob to have an somewhat increasing order according the new ibool array
+    !       global node indices are mostly retrieved by:
+    !
+    !       do k = 1,NGLLZ
+    !         do j = 1,NGLLY
+    !           do i = 1,NGLLX
+    !             iglob = ibool(i,j,k,ispec)
+    !             ..
+    !
+    !       we try to have iglob increasing consecutively in this loop order.
+    !       nevertheless, since global nodes are shared, some of the incrementing is not +1 for neighboring elements.
+    !       to avoid many jumps, a mesh coloring might help at least for the first color, where the next looped element
+    !       won't have shared global nodes.
+    !       there might be more sophisticated ways to re-order iglobs, like using space-filling curves.
+    !       here, we just try to simply re-order (without colors) - to see if this has any code performance effect.
+
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '       permuting global node entries'
+      call flush_IMAIN()
+    endif
+
+    allocate(perm_iglob_ordered(nglob),stat=ier)
+    if (ier /= 0) stop 'Error allocating iglob_ordered array'
+    perm_iglob_ordered(:) = 0
+
+    ! orders iglob according to new ibool element ordering
+    iglob_ordered = 0
+    do ispec = 1,nspec
+      do k = 1,NGLLZ
+        do j = 1,NGLLY
+          do i = 1,NGLLX
+            iglob = ibool(i,j,k,ispec)
+            ! adds iglob entry
+            if (perm_iglob_ordered(iglob) == 0) then
+              iglob_ordered = iglob_ordered + 1
+              perm_iglob_ordered(iglob) = iglob_ordered
+            endif
+          enddo
+        enddo
+      enddo
+    enddo
+
+    ! checks
+    if (iglob_ordered /= nglob) then
+      print *,'Error: rank ',myrank,' has invalid iglob_ordered: ',iglob_ordered,' - should be ',nglob
+      call exit_MPI(myrank,'Invalid iglob ordering')
+    endif
+
+    ! re-orders ibool entries
+    num_reordered = 0
+    do ispec = 1,nspec
+      do k = 1,NGLLZ
+        do j = 1,NGLLY
+          do i = 1,NGLLX
+            iglob_old = ibool(i,j,k,ispec)
+            iglob_new = perm_iglob_ordered(iglob_old)
+
+            ! checks range
+            if (iglob_new < 1 .or. iglob_new > nglob) then
+              print *,'Error: rank ',myrank,' has invalid iglob ',iglob_new,' - should be between 1 and ',nglob
+              print *,'       ispec: ',ispec,' i/j/k: ',i,j,k,' iglob_old: ',iglob_old,' iglob_new: ',iglob_new
+              stop 'Invalid iglob in ibool re-ordering'
+            endif
+
+            ! updates entry
+            if (iglob_old /= iglob_new) then
+              num_reordered = num_reordered + 1
+              ibool(i,j,k,ispec) = iglob_new
+            endif
+          enddo
+        enddo
+      enddo
+    enddo
+
+    ! debug
+    !if (myrank == 0) print *,'debug: ibool A',ibool(:,:,:,1)
+    !if (myrank == 0) print *,'debug: ibool B',ibool(:,:,:,2)
+
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '       total number of re-ordered entries: ',num_reordered,' out of ',NGLLX*NGLLY*NGLLZ*nspec
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
+
+    ! re-orders MPI interface ibool array
+    do i = 1,num_interfaces
+      ! ibool entries
+      do j = 1,nibool_interfaces(i)
+        iglob_old = ibool_interfaces(j,i)
+        iglob_new = perm_iglob_ordered(iglob_old)
+
+        ! checks range
+        if (iglob_new < 1 .or. iglob_new > nglob) then
+          print *,'Error: rank ',myrank,' has invalid iglob ',iglob_new,' - should be between 1 and ',nglob
+          print *,'       interface: ',i,' point: ',j,' iglob_old: ',iglob_old,' iglob_new: ',iglob_new
+          stop 'Invalid iglob in MPI interface re-ordering'
+        endif
+
+        ! updates entry
+        if (iglob_old /= iglob_new) then
+          ibool_interfaces(j,i) = iglob_new
+        endif
+      enddo
+    enddo
+
+    ! free array
+    deallocate(perm_iglob_ordered)
+  endif
+
+  end subroutine setup_loop_permutation
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+! deprecated ...
+!
+!  subroutine setup_color_perm(iregion_code,nspec,nglob, &
+!                              ibool,is_on_a_slice_edge,prname, &
+!                              npoin2D_xi,npoin2D_eta)
+!
+!  use constants
+!  use meshfem_par, only: NSTEP,DT,NPROC_XI,NPROC_ETA
+!  implicit none
+!
+!  integer :: iregion_code
+!
+!  integer :: nspec,nglob
+!  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
+!
+!  ! this for non blocking MPI
+!  logical, dimension(nspec) :: is_on_a_slice_edge
+!
+!  ! name of the database file
+!  character(len=MAX_STRING_LEN) :: prname
+!
+!  integer :: npoin2D_xi,npoin2D_eta
+!
+!  ! local parameters
+!  integer :: nb_colors_outer_elements,nb_colors_inner_elements,nspec_outer
+!  integer, dimension(:), allocatable :: perm
+!  integer, dimension(:), allocatable :: first_elem_number_in_this_color
+!  integer, dimension(:), allocatable :: num_of_elems_in_this_color
+!
+!  integer :: icolor,ispec_counter
+!  integer :: nspec_outer_min_global,nspec_outer_max_global
+!  integer :: ispec,ier
+!
+!  !!!! David Michea: detection of the edges, coloring and permutation separately
+!  allocate(perm(nspec))
+!
+!  ! implement mesh coloring for GPUs if needed, to create subsets of disconnected elements
+!  ! to remove dependencies and the need for atomic operations in the sum of elemental contributions in the solver
+!  if (USE_MESH_COLORING_GPU) then
+!
+!    ! user output
+!    if (myrank == 0 ) write(IMAIN,*) '  creating mesh coloring'
+!
+!    allocate(first_elem_number_in_this_color(MAX_NUMBER_OF_COLORS + 1))
+!
+!    call get_perm_color_faster(is_on_a_slice_edge,ibool,perm,nspec,nglob, &
+!                              nb_colors_outer_elements,nb_colors_inner_elements,nspec_outer, &
+!                              first_elem_number_in_this_color)
+!
+!    ! for the last color, the next color is fictitious and its first (fictitious) element number is nspec + 1
+!    first_elem_number_in_this_color(nb_colors_outer_elements + nb_colors_inner_elements + 1) = nspec + 1
+!
+!    allocate(num_of_elems_in_this_color(nb_colors_outer_elements + nb_colors_inner_elements))
+!
+!    ! save mesh coloring
+!    open(unit=IOUT,file=prname(1:len_trim(prname))//'num_of_elems_in_this_color.dat', &
+!         status='unknown',iostat=ier)
+!    if (ier /= 0 ) call exit_mpi(myrank,'Error opening num_of_elems_in_this_color file')
+!
+!    ! number of colors for outer elements
+!    write(IOUT,*) nb_colors_outer_elements
+!
+!    ! number of colors for inner elements
+!    write(IOUT,*) nb_colors_inner_elements
+!
+!    ! number of elements in each color
+!    do icolor = 1, nb_colors_outer_elements + nb_colors_inner_elements
+!      num_of_elems_in_this_color(icolor) = first_elem_number_in_this_color(icolor+1) &
+!                                          - first_elem_number_in_this_color(icolor)
+!      write(IOUT,*) num_of_elems_in_this_color(icolor)
+!    enddo
+!    close(IOUT)
+!
+!    ! check that the sum of all the numbers of elements found in each color is equal
+!    ! to the total number of elements in the mesh
+!    if (sum(num_of_elems_in_this_color) /= nspec) then
+!      print *,'nspec = ',nspec
+!      print *,'total number of elements in all the colors of the mesh = ',sum(num_of_elems_in_this_color)
+!      call exit_mpi(myrank,'incorrect total number of elements in all the colors of the mesh')
+!    endif
+!
+!    ! check that the sum of all the numbers of elements found in each color for the outer elements is equal
+!    ! to the total number of outer elements found in the mesh
+!    if (sum(num_of_elems_in_this_color(1:nb_colors_outer_elements)) /= nspec_outer) then
+!      print *,'nspec_outer = ',nspec_outer
+!      print *,'total number of elements in all the colors of the mesh for outer elements = ', &
+!        sum(num_of_elems_in_this_color)
+!      call exit_mpi(myrank,'incorrect total number of elements in all the colors of the mesh for outer elements')
+!    endif
+!
+!    call MPI_ALLREDUCE(nspec_outer,nspec_outer_min_global,1,MPI_INTEGER,MPI_MIN,MPI_COMM_WORLD,ier)
+!    call MPI_ALLREDUCE(nspec_outer,nspec_outer_max_global,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+!
+!    deallocate(first_elem_number_in_this_color)
+!    deallocate(num_of_elems_in_this_color)
+!
+!  else
+!
+!    ! for regular C + MPI version for CPUs: do not use colors but nonetheless put all the outer elements
+!    ! first in order to be able to overlap non-blocking MPI communications with calculations
+!
+!    ! nov 2010, for Rosa Badia / StarSs:
+!    ! no need for mesh coloring, but need to implement inner/outer subsets for non blocking MPI for StarSs
+!    ispec_counter = 0
+!    perm(:) = 0
+!
+!    ! first generate all the outer elements
+!    do ispec = 1,nspec
+!      if (is_on_a_slice_edge(ispec)) then
+!        ispec_counter = ispec_counter + 1
+!        perm(ispec) = ispec_counter
+!      endif
+!    enddo
+!
+!    ! make sure we have detected some outer elements
+!    if (ispec_counter <= 0) stop 'fatal error: no outer elements detected!'
+!
+!    ! store total number of outer elements
+!    nspec_outer = ispec_counter
+!
+!    ! then generate all the inner elements
+!    do ispec = 1,nspec
+!      if (.not. is_on_a_slice_edge(ispec)) then
+!        ispec_counter = ispec_counter + 1
+!        perm(ispec) = ispec_counter
+!      endif
+!    enddo
+!
+!    ! test that all the elements have been used once and only once
+!    if (ispec_counter /= nspec) stop 'fatal error: ispec_counter not equal to nspec'
+!
+!    ! do basic checks
+!    if (minval(perm) /= 1) stop 'minval(perm) should be 1'
+!    if (maxval(perm) /= nspec) stop 'maxval(perm) should be nspec'
+!
+!    call MPI_ALLREDUCE(nspec_outer,nspec_outer_min_global,1,MPI_INTEGER,MPI_MIN,MPI_COMM_WORLD,ier)
+!    call MPI_ALLREDUCE(nspec_outer,nspec_outer_max_global,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+!
+!  endif ! USE_MESH_COLORING_GPU
+!
+!  !! DK DK and Manh Ha, Nov 2011: added this to use the new mesher in the CUDA or C / StarSs test codes
+!
+!  if (myrank == 0 .and. iregion_code == IREGION_CRUST_MANTLE) then
+!    ! write a header file for the Fortran version of the solver
+!    open(unit=IOUT,file=prname(1:len_trim(prname))//'values_from_mesher_f90.h', &
+!          status='unknown',iostat=ier)
+!    if (ier /= 0 ) call exit_mpi(myrank,'Error opening file values_from_mesher_f90.h')
+!
+!    write(IOUT,*) 'integer, parameter :: NSPEC = ',nspec
+!    write(IOUT,*) 'integer, parameter :: NGLOB = ',nglob
+!    ! use 1000 time steps only for the scaling tests
+!    write(IOUT,*) 'integer, parameter :: NSTEP = 1000 !!!!!!!!!!! ',nstep
+!    write(IOUT,*) 'real(kind=4), parameter :: deltat = ',DT
+!    write(IOUT,*)
+!    write(IOUT,*) 'integer, parameter ::  NGLOB2DMAX_XMIN_XMAX = ',npoin2D_xi
+!    write(IOUT,*) 'integer, parameter ::  NGLOB2DMAX_YMIN_YMAX = ',npoin2D_eta
+!    write(IOUT,*) 'integer, parameter ::  NGLOB2DMAX_ALL = ',max(npoin2D_xi,npoin2D_eta)
+!    write(IOUT,*) 'integer, parameter ::  NPROC_XI = ',NPROC_XI
+!    write(IOUT,*) 'integer, parameter ::  NPROC_ETA = ',NPROC_ETA
+!    write(IOUT,*)
+!    write(IOUT,*) '! element number of the source and of the station'
+!    write(IOUT,*) '! after permutation of the elements by mesh coloring'
+!    write(IOUT,*) '! and inner/outer set splitting in the mesher'
+!    write(IOUT,*) 'integer, parameter :: NSPEC_SOURCE = ',perm(NSPEC/3)
+!    write(IOUT,*) 'integer, parameter :: RANK_SOURCE = 0'
+!    write(IOUT,*)
+!    write(IOUT,*) 'integer, parameter :: RANK_STATION = (NPROC_XI*NPROC_ETA - 1)'
+!    write(IOUT,*) 'integer, parameter :: NSPEC_STATION = ',perm(2*NSPEC/3)
+!
+!    ! save coordinates of the seismic source
+!    !   write(IOUT,*) xstore(2,2,2,10);
+!    !   write(IOUT,*) ystore(2,2,2,10);
+!    !   write(IOUT,*) zstore(2,2,2,10);
+!
+!    ! save coordinates of the seismic station
+!    !   write(IOUT,*) xstore(2,2,2,nspec-10);
+!    !   write(IOUT,*) ystore(2,2,2,nspec-10);
+!    !   write(IOUT,*) zstore(2,2,2,nspec-10);
+!    close(IOUT)
+!
+!    !! write a header file for the C version of the solver
+!    open(unit=IOUT,file=prname(1:len_trim(prname))//'values_from_mesher_C.h', &
+!          status='unknown',iostat=ier)
+!    if (ier /= 0 ) call exit_mpi(myrank,'Error opening file values_from_mesher_C.h')
+!
+!    write(IOUT,*) '#define NSPEC ',nspec
+!    write(IOUT,*) '#define NGLOB ',nglob
+!    !!    write(IOUT,*) '#define NSTEP ',nstep
+!    ! use 1000 time steps only for the scaling tests
+!    write(IOUT,*) '// #define NSTEP ',nstep
+!    write(IOUT,*) '#define NSTEP 1000'
+!    ! put an "f" at the end to force single precision
+!    write(IOUT,"('#define deltat ',e18.10,'f')") DT
+!    write(IOUT,*) '#define NGLOB2DMAX_XMIN_XMAX ',npoin2D_xi
+!    write(IOUT,*) '#define NGLOB2DMAX_YMIN_YMAX ',npoin2D_eta
+!    write(IOUT,*) '#define NGLOB2DMAX_ALL ',max(npoin2D_xi,npoin2D_eta)
+!    write(IOUT,*) '#define NPROC_XI ',NPROC_XI
+!    write(IOUT,*) '#define NPROC_ETA ',NPROC_ETA
+!    write(IOUT,*)
+!    write(IOUT,*) '// element and MPI slice number of the source and the station'
+!    write(IOUT,*) '// after permutation of the elements by mesh coloring'
+!    write(IOUT,*) '// and inner/outer set splitting in the mesher'
+!    write(IOUT,*) '#define RANK_SOURCE 0'
+!    write(IOUT,*) '#define NSPEC_SOURCE ',perm(NSPEC/3)
+!    write(IOUT,*)
+!    write(IOUT,*) '#define RANK_STATION (NPROC_XI*NPROC_ETA - 1)'
+!    write(IOUT,*) '#define NSPEC_STATION ',perm(2*NSPEC/3)
+!    close(IOUT)
+!
+!    open(unit=IOUT,file=prname(1:len_trim(prname))//'values_from_mesher_nspec_outer.h', &
+!          status='unknown',iostat=ier)
+!    if (ier /= 0 ) call exit_mpi(myrank,'Error opening values_from_mesher_nspec_outer.h file')
+!
+!    write(IOUT,*) '#define NSPEC_OUTER ',nspec_outer_max_global
+!    write(IOUT,*) '// NSPEC_OUTER_min = ',nspec_outer_min_global
+!    write(IOUT,*) '// NSPEC_OUTER_max = ',nspec_outer_max_global
+!    close(IOUT)
+!
+!  endif
+!
+!  !! DK DK and Manh Ha, Nov 2011: added this to use the new mesher in the CUDA or C / StarSs test codes
+!
+!  deallocate(perm)
+!
+!
+!  end subroutine setup_color_perm
+
+!-------------------------------------------------------------------------------------------------
+!
+! PERMUTATIONS
+!
+!-------------------------------------------------------------------------------------------------
+
+  subroutine permute_all_mesh_element_arrays(nspec,idomain,perm,ibool)
+
+  use constants
+
+  use meshfem_models_par, only: &
+    TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE, &
+    ANISOTROPIC_INNER_CORE,ATTENUATION, &
+    ATTENUATION_3D,ATTENUATION_1D_WITH_3D_STORAGE
+
+  use meshfem_par, only: &
+    ABSORBING_CONDITIONS,NCHUNKS,NSPEC2D_TOP,NSPEC2D_BOTTOM
+
+  use meshfem_par, only: &
+    xstore,ystore,zstore,idoubling
+
+  use regions_mesh_par2, only: &
+    xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
+    gammaxstore,gammaystore,gammazstore, &
+    rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
+    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+    c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+    ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
+    rho_vp,rho_vs, &
+    nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
+    ispec_is_tiso,tau_e_store,Qmu_store, &
+    NSPEC2D_MOHO, NSPEC2D_400, NSPEC2D_670, &
+    ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot, &
+    ibelm_670_top,ibelm_670_bot
+
+  use MPI_crust_mantle_par, only: NSPEC_CRUST_MANTLE
+  use MPI_outer_core_par, only: NSPEC_OUTER_CORE
+  use MPI_inner_core_par, only: NSPEC_INNER_CORE
+  use MPI_trinfinite_par, only: NSPEC_TRINFINITE
+  use MPI_infinite_par, only: NSPEC_INFINITE
+
+  implicit none
+
+  integer, intent(in) :: nspec
+  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(inout) :: ibool
+
+  integer, intent(in) :: idomain
+  integer, dimension(nspec),intent(in) :: perm
+
+  ! local parameters
+  ! added for sorting
+  double precision, dimension(:,:,:,:), allocatable :: temp_array_dble
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: temp_array_real
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: temp_array_real_sls
+  integer, dimension(:,:,:,:), allocatable :: temp_array_int
+  integer, dimension(:), allocatable :: temp_array_int_1D
+  logical, dimension(:), allocatable :: temp_array_logical_1D
+  integer :: iface,old_ispec,new_ispec
 
   ! permutation of ibool
   allocate(temp_array_int(NGLLX,NGLLY,NGLLZ,nspec))
@@ -1163,235 +1712,337 @@
     stop 'Error idomain in setup_permutation'
   end select
 
-  end subroutine setup_permutation
+  end subroutine permute_all_mesh_element_arrays
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-! deprecated ...
+! implement permutation of elements for arrays of real (CUSTOM_REAL) type
+
+  subroutine permute_elements_real(array_to_permute,temp_array,perm,nspec)
+
+  use constants
+
+  implicit none
+
+  integer, intent(in) :: nspec
+  integer, intent(in), dimension(nspec) :: perm
+
+  real(kind=CUSTOM_REAL), intent(inout), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
+    array_to_permute,temp_array
+
+  integer :: old_ispec,new_ispec
+
+  ! copy the original array
+  temp_array(:,:,:,:) = array_to_permute(:,:,:,:)
+
+  do old_ispec = 1,nspec
+    new_ispec = perm(old_ispec)
+    array_to_permute(:,:,:,new_ispec) = temp_array(:,:,:,old_ispec)
+  enddo
+
+  end subroutine permute_elements_real
+
 !
-!  subroutine setup_color_perm(iregion_code,nspec,nglob, &
-!                              ibool,is_on_a_slice_edge,prname, &
-!                              npoin2D_xi,npoin2D_eta)
+!-------------------------------------------------------------------------------------------------
 !
-!  use constants
-!  use meshfem_par, only: NSTEP,DT,NPROC_XI,NPROC_ETA
-!  implicit none
+
+! implement permutation of elements for arrays of real (CUSTOM_REAL) type
+
+  subroutine permute_elements_real1(array_to_permute,temp_array,perm,nspec)
+
+  use constants
+
+  implicit none
+
+  integer, intent(in) :: nspec
+  integer, intent(in), dimension(nspec) :: perm
+
+  real(kind=CUSTOM_REAL), intent(inout), dimension(1,1,1,nspec) :: &
+    array_to_permute,temp_array
+
+  integer :: old_ispec,new_ispec
+
+  ! copy the original array
+  temp_array(:,:,:,:) = array_to_permute(:,:,:,:)
+
+  do old_ispec = 1,nspec
+    new_ispec = perm(old_ispec)
+    array_to_permute(:,:,:,new_ispec) = temp_array(:,:,:,old_ispec)
+  enddo
+
+  end subroutine permute_elements_real1
+
 !
-!  integer :: iregion_code
+!-------------------------------------------------------------------------------------------------
 !
-!  integer :: nspec,nglob
-!  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
+
+! implement permutation of elements for arrays of real (CUSTOM_REAL) type
+
+  subroutine permute_elements_real_sls(array_to_permute,temp_array,perm,nspec)
+
+  use constants
+
+  implicit none
+
+  integer, intent(in) :: nspec
+  integer, intent(in), dimension(nspec) :: perm
+
+  real(kind=CUSTOM_REAL), intent(inout), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,nspec) :: &
+    array_to_permute,temp_array
+
+  integer :: old_ispec,new_ispec
+
+  ! copy the original array
+  temp_array(:,:,:,:,:) = array_to_permute(:,:,:,:,:)
+
+  do old_ispec = 1,nspec
+    new_ispec = perm(old_ispec)
+    array_to_permute(:,:,:,:,new_ispec) = temp_array(:,:,:,:,old_ispec)
+  enddo
+
+  end subroutine permute_elements_real_sls
+
 !
-!  ! this for non blocking MPI
-!  logical, dimension(nspec) :: is_on_a_slice_edge
+!-------------------------------------------------------------------------------------------------
 !
-!  ! name of the database file
-!  character(len=MAX_STRING_LEN) :: prname
+
+! implement permutation of elements for arrays of real (CUSTOM_REAL) type
+
+  subroutine permute_elements_real_sls1(array_to_permute,temp_array,perm,nspec)
+
+  use constants
+
+  implicit none
+
+  integer, intent(in) :: nspec
+  integer, intent(in), dimension(nspec) :: perm
+
+  real(kind=CUSTOM_REAL), intent(inout), dimension(1,1,1,N_SLS,nspec) :: &
+    array_to_permute,temp_array
+
+  integer :: old_ispec,new_ispec
+
+  ! copy the original array
+  temp_array(:,:,:,:,:) = array_to_permute(:,:,:,:,:)
+
+  do old_ispec = 1,nspec
+    new_ispec = perm(old_ispec)
+    array_to_permute(:,:,:,:,new_ispec) = temp_array(:,:,:,:,old_ispec)
+  enddo
+
+  end subroutine permute_elements_real_sls1
+
+
+
 !
-!  integer :: npoin2D_xi,npoin2D_eta
+!-------------------------------------------------------------------------------------------------
 !
-!  ! local parameters
-!  integer :: nb_colors_outer_elements,nb_colors_inner_elements,nspec_outer
-!  integer, dimension(:), allocatable :: perm
-!  integer, dimension(:), allocatable :: first_elem_number_in_this_color
-!  integer, dimension(:), allocatable :: num_of_elems_in_this_color
+
+! implement permutation of elements for arrays of integer type
+
+  subroutine permute_elements_integer(array_to_permute,temp_array,perm,nspec)
+
+  use constants
+
+  implicit none
+
+  integer, intent(in) :: nspec
+  integer, intent(in), dimension(nspec) :: perm
+
+  integer, intent(inout), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
+    array_to_permute,temp_array
+
+  integer :: old_ispec,new_ispec
+
+  ! copy the original array
+  temp_array(:,:,:,:) = array_to_permute(:,:,:,:)
+
+  do old_ispec = 1,nspec
+    new_ispec = perm(old_ispec)
+    array_to_permute(:,:,:,new_ispec) = temp_array(:,:,:,old_ispec)
+  enddo
+
+  end subroutine permute_elements_integer
+
 !
-!  integer :: icolor,ispec_counter
-!  integer :: nspec_outer_min_global,nspec_outer_max_global
-!  integer :: ispec,ier
+!-------------------------------------------------------------------------------------------------
 !
-!  !!!! David Michea: detection of the edges, coloring and permutation separately
-!  allocate(perm(nspec))
+
+! implement permutation of elements for arrays of double precision type
+
+  subroutine permute_elements_dble(array_to_permute,temp_array,perm,nspec)
+
+  use constants
+
+  implicit none
+
+  integer, intent(in) :: nspec
+  integer, intent(in), dimension(nspec) :: perm
+
+  double precision, intent(inout), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
+    array_to_permute,temp_array
+
+  integer :: old_ispec,new_ispec
+
+  ! copy the original array
+  temp_array(:,:,:,:) = array_to_permute(:,:,:,:)
+
+  do old_ispec = 1,nspec
+    new_ispec = perm(old_ispec)
+    array_to_permute(:,:,:,new_ispec) = temp_array(:,:,:,old_ispec)
+  enddo
+
+  end subroutine permute_elements_dble
+
 !
-!  ! implement mesh coloring for GPUs if needed, to create subsets of disconnected elements
-!  ! to remove dependencies and the need for atomic operations in the sum of elemental contributions in the solver
-!  if (USE_MESH_COLORING_GPU) then
+!-------------------------------------------------------------------------------------------------
 !
-!    ! user output
-!    if (myrank == 0 ) write(IMAIN,*) '  creating mesh coloring'
+
+! implement permutation of elements for arrays of double precision type
+
+  subroutine permute_elements_logical1D(array_to_permute,temp_array,perm,nspec)
+
+  use constants
+
+  implicit none
+
+  integer, intent(in) :: nspec
+  integer, intent(in), dimension(nspec) :: perm
+
+  logical, intent(inout), dimension(nspec) :: array_to_permute,temp_array
+
+  integer :: old_ispec,new_ispec
+
+  ! copy the original array
+  temp_array(:) = array_to_permute(:)
+
+  do old_ispec = 1,nspec
+    new_ispec = perm(old_ispec)
+    array_to_permute(new_ispec) = temp_array(old_ispec)
+  enddo
+
+  end subroutine permute_elements_logical1D
+
 !
-!    allocate(first_elem_number_in_this_color(MAX_NUMBER_OF_COLORS + 1))
+!-------------------------------------------------------------------------------------------------
 !
-!    call get_perm_color_faster(is_on_a_slice_edge,ibool,perm,nspec,nglob, &
-!                              nb_colors_outer_elements,nb_colors_inner_elements,nspec_outer, &
-!                              first_elem_number_in_this_color)
+
+! implement permutation of elements for arrays of integer type
+
+  subroutine permute_elements_integer1D(array_to_permute,temp_array,perm,nspec)
+
+  use constants
+
+  implicit none
+
+  integer, intent(in) :: nspec
+  integer, intent(in), dimension(nspec) :: perm
+
+  integer, intent(inout), dimension(nspec) :: &
+    array_to_permute,temp_array
+
+  integer :: old_ispec,new_ispec
+
+  ! copy the original array
+  temp_array(:) = array_to_permute(:)
+
+  do old_ispec = 1,nspec
+    new_ispec = perm(old_ispec)
+    array_to_permute(new_ispec) = temp_array(old_ispec)
+  enddo
+
+  end subroutine permute_elements_integer1D
+
 !
-!    ! for the last color, the next color is fictitious and its first (fictitious) element number is nspec + 1
-!    first_elem_number_in_this_color(nb_colors_outer_elements + nb_colors_inner_elements + 1) = nspec + 1
+!-------------------------------------------------------------------------------------------------
 !
-!    allocate(num_of_elems_in_this_color(nb_colors_outer_elements + nb_colors_inner_elements))
+
+! implement permutation of elements for arrays of real (CUSTOM_REAL) type
+
+  subroutine permute_elements_dble1(array_to_permute,temp_array,perm,nspec)
+
+  use constants
+
+  implicit none
+
+  integer, intent(in) :: nspec
+  integer, intent(in), dimension(nspec) :: perm
+
+  double precision, intent(inout), dimension(1,1,1,nspec) :: &
+    array_to_permute,temp_array
+
+  integer :: old_ispec,new_ispec
+
+  ! copy the original array
+  temp_array(:,:,:,:) = array_to_permute(:,:,:,:)
+
+  do old_ispec = 1,nspec
+    new_ispec = perm(old_ispec)
+    array_to_permute(:,:,:,new_ispec) = temp_array(:,:,:,old_ispec)
+  enddo
+
+  end subroutine permute_elements_dble1
+
 !
-!    ! save mesh coloring
-!    open(unit=IOUT,file=prname(1:len_trim(prname))//'num_of_elems_in_this_color.dat', &
-!         status='unknown',iostat=ier)
-!    if (ier /= 0 ) call exit_mpi(myrank,'Error opening num_of_elems_in_this_color file')
+!-------------------------------------------------------------------------------------------------
 !
-!    ! number of colors for outer elements
-!    write(IOUT,*) nb_colors_outer_elements
+
+! implement permutation of elements for arrays of real (CUSTOM_REAL) type
+
+  subroutine permute_elements_dble_sls(array_to_permute,temp_array,perm,nspec)
+
+  use constants
+
+  implicit none
+
+  integer, intent(in) :: nspec
+  integer, intent(in), dimension(nspec) :: perm
+
+  double precision, intent(inout), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,nspec) :: &
+    array_to_permute,temp_array
+
+  integer :: old_ispec,new_ispec
+
+  ! copy the original array
+  temp_array(:,:,:,:,:) = array_to_permute(:,:,:,:,:)
+
+  do old_ispec = 1,nspec
+    new_ispec = perm(old_ispec)
+    array_to_permute(:,:,:,:,new_ispec) = temp_array(:,:,:,:,old_ispec)
+  enddo
+
+  end subroutine permute_elements_dble_sls
+
 !
-!    ! number of colors for inner elements
-!    write(IOUT,*) nb_colors_inner_elements
+!-------------------------------------------------------------------------------------------------
 !
-!    ! number of elements in each color
-!    do icolor = 1, nb_colors_outer_elements + nb_colors_inner_elements
-!      num_of_elems_in_this_color(icolor) = first_elem_number_in_this_color(icolor+1) &
-!                                          - first_elem_number_in_this_color(icolor)
-!      write(IOUT,*) num_of_elems_in_this_color(icolor)
-!    enddo
-!    close(IOUT)
-!
-!    ! check that the sum of all the numbers of elements found in each color is equal
-!    ! to the total number of elements in the mesh
-!    if (sum(num_of_elems_in_this_color) /= nspec) then
-!      print *,'nspec = ',nspec
-!      print *,'total number of elements in all the colors of the mesh = ',sum(num_of_elems_in_this_color)
-!      call exit_mpi(myrank,'incorrect total number of elements in all the colors of the mesh')
-!    endif
-!
-!    ! check that the sum of all the numbers of elements found in each color for the outer elements is equal
-!    ! to the total number of outer elements found in the mesh
-!    if (sum(num_of_elems_in_this_color(1:nb_colors_outer_elements)) /= nspec_outer) then
-!      print *,'nspec_outer = ',nspec_outer
-!      print *,'total number of elements in all the colors of the mesh for outer elements = ', &
-!        sum(num_of_elems_in_this_color)
-!      call exit_mpi(myrank,'incorrect total number of elements in all the colors of the mesh for outer elements')
-!    endif
-!
-!    call MPI_ALLREDUCE(nspec_outer,nspec_outer_min_global,1,MPI_INTEGER,MPI_MIN,MPI_COMM_WORLD,ier)
-!    call MPI_ALLREDUCE(nspec_outer,nspec_outer_max_global,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-!
-!    deallocate(first_elem_number_in_this_color)
-!    deallocate(num_of_elems_in_this_color)
-!
-!  else
-!
-!    ! for regular C + MPI version for CPUs: do not use colors but nonetheless put all the outer elements
-!    ! first in order to be able to overlap non-blocking MPI communications with calculations
-!
-!    ! nov 2010, for Rosa Badia / StarSs:
-!    ! no need for mesh coloring, but need to implement inner/outer subsets for non blocking MPI for StarSs
-!    ispec_counter = 0
-!    perm(:) = 0
-!
-!    ! first generate all the outer elements
-!    do ispec = 1,nspec
-!      if (is_on_a_slice_edge(ispec)) then
-!        ispec_counter = ispec_counter + 1
-!        perm(ispec) = ispec_counter
-!      endif
-!    enddo
-!
-!    ! make sure we have detected some outer elements
-!    if (ispec_counter <= 0) stop 'fatal error: no outer elements detected!'
-!
-!    ! store total number of outer elements
-!    nspec_outer = ispec_counter
-!
-!    ! then generate all the inner elements
-!    do ispec = 1,nspec
-!      if (.not. is_on_a_slice_edge(ispec)) then
-!        ispec_counter = ispec_counter + 1
-!        perm(ispec) = ispec_counter
-!      endif
-!    enddo
-!
-!    ! test that all the elements have been used once and only once
-!    if (ispec_counter /= nspec) stop 'fatal error: ispec_counter not equal to nspec'
-!
-!    ! do basic checks
-!    if (minval(perm) /= 1) stop 'minval(perm) should be 1'
-!    if (maxval(perm) /= nspec) stop 'maxval(perm) should be nspec'
-!
-!    call MPI_ALLREDUCE(nspec_outer,nspec_outer_min_global,1,MPI_INTEGER,MPI_MIN,MPI_COMM_WORLD,ier)
-!    call MPI_ALLREDUCE(nspec_outer,nspec_outer_max_global,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-!
-!  endif ! USE_MESH_COLORING_GPU
-!
-!  !! DK DK and Manh Ha, Nov 2011: added this to use the new mesher in the CUDA or C / StarSs test codes
-!
-!  if (myrank == 0 .and. iregion_code == IREGION_CRUST_MANTLE) then
-!    ! write a header file for the Fortran version of the solver
-!    open(unit=IOUT,file=prname(1:len_trim(prname))//'values_from_mesher_f90.h', &
-!          status='unknown',iostat=ier)
-!    if (ier /= 0 ) call exit_mpi(myrank,'Error opening file values_from_mesher_f90.h')
-!
-!    write(IOUT,*) 'integer, parameter :: NSPEC = ',nspec
-!    write(IOUT,*) 'integer, parameter :: NGLOB = ',nglob
-!    ! use 1000 time steps only for the scaling tests
-!    write(IOUT,*) 'integer, parameter :: NSTEP = 1000 !!!!!!!!!!! ',nstep
-!    write(IOUT,*) 'real(kind=4), parameter :: deltat = ',DT
-!    write(IOUT,*)
-!    write(IOUT,*) 'integer, parameter ::  NGLOB2DMAX_XMIN_XMAX = ',npoin2D_xi
-!    write(IOUT,*) 'integer, parameter ::  NGLOB2DMAX_YMIN_YMAX = ',npoin2D_eta
-!    write(IOUT,*) 'integer, parameter ::  NGLOB2DMAX_ALL = ',max(npoin2D_xi,npoin2D_eta)
-!    write(IOUT,*) 'integer, parameter ::  NPROC_XI = ',NPROC_XI
-!    write(IOUT,*) 'integer, parameter ::  NPROC_ETA = ',NPROC_ETA
-!    write(IOUT,*)
-!    write(IOUT,*) '! element number of the source and of the station'
-!    write(IOUT,*) '! after permutation of the elements by mesh coloring'
-!    write(IOUT,*) '! and inner/outer set splitting in the mesher'
-!    write(IOUT,*) 'integer, parameter :: NSPEC_SOURCE = ',perm(NSPEC/3)
-!    write(IOUT,*) 'integer, parameter :: RANK_SOURCE = 0'
-!    write(IOUT,*)
-!    write(IOUT,*) 'integer, parameter :: RANK_STATION = (NPROC_XI*NPROC_ETA - 1)'
-!    write(IOUT,*) 'integer, parameter :: NSPEC_STATION = ',perm(2*NSPEC/3)
-!
-!    ! save coordinates of the seismic source
-!    !   write(IOUT,*) xstore(2,2,2,10);
-!    !   write(IOUT,*) ystore(2,2,2,10);
-!    !   write(IOUT,*) zstore(2,2,2,10);
-!
-!    ! save coordinates of the seismic station
-!    !   write(IOUT,*) xstore(2,2,2,nspec-10);
-!    !   write(IOUT,*) ystore(2,2,2,nspec-10);
-!    !   write(IOUT,*) zstore(2,2,2,nspec-10);
-!    close(IOUT)
-!
-!    !! write a header file for the C version of the solver
-!    open(unit=IOUT,file=prname(1:len_trim(prname))//'values_from_mesher_C.h', &
-!          status='unknown',iostat=ier)
-!    if (ier /= 0 ) call exit_mpi(myrank,'Error opening file values_from_mesher_C.h')
-!
-!    write(IOUT,*) '#define NSPEC ',nspec
-!    write(IOUT,*) '#define NGLOB ',nglob
-!    !!    write(IOUT,*) '#define NSTEP ',nstep
-!    ! use 1000 time steps only for the scaling tests
-!    write(IOUT,*) '// #define NSTEP ',nstep
-!    write(IOUT,*) '#define NSTEP 1000'
-!    ! put an "f" at the end to force single precision
-!    write(IOUT,"('#define deltat ',e18.10,'f')") DT
-!    write(IOUT,*) '#define NGLOB2DMAX_XMIN_XMAX ',npoin2D_xi
-!    write(IOUT,*) '#define NGLOB2DMAX_YMIN_YMAX ',npoin2D_eta
-!    write(IOUT,*) '#define NGLOB2DMAX_ALL ',max(npoin2D_xi,npoin2D_eta)
-!    write(IOUT,*) '#define NPROC_XI ',NPROC_XI
-!    write(IOUT,*) '#define NPROC_ETA ',NPROC_ETA
-!    write(IOUT,*)
-!    write(IOUT,*) '// element and MPI slice number of the source and the station'
-!    write(IOUT,*) '// after permutation of the elements by mesh coloring'
-!    write(IOUT,*) '// and inner/outer set splitting in the mesher'
-!    write(IOUT,*) '#define RANK_SOURCE 0'
-!    write(IOUT,*) '#define NSPEC_SOURCE ',perm(NSPEC/3)
-!    write(IOUT,*)
-!    write(IOUT,*) '#define RANK_STATION (NPROC_XI*NPROC_ETA - 1)'
-!    write(IOUT,*) '#define NSPEC_STATION ',perm(2*NSPEC/3)
-!    close(IOUT)
-!
-!    open(unit=IOUT,file=prname(1:len_trim(prname))//'values_from_mesher_nspec_outer.h', &
-!          status='unknown',iostat=ier)
-!    if (ier /= 0 ) call exit_mpi(myrank,'Error opening values_from_mesher_nspec_outer.h file')
-!
-!    write(IOUT,*) '#define NSPEC_OUTER ',nspec_outer_max_global
-!    write(IOUT,*) '// NSPEC_OUTER_min = ',nspec_outer_min_global
-!    write(IOUT,*) '// NSPEC_OUTER_max = ',nspec_outer_max_global
-!    close(IOUT)
-!
-!  endif
-!
-!  !! DK DK and Manh Ha, Nov 2011: added this to use the new mesher in the CUDA or C / StarSs test codes
-!
-!  deallocate(perm)
-!
-!
-!  end subroutine setup_color_perm
+
+! implement permutation of elements for arrays of real (CUSTOM_REAL) type
+
+  subroutine permute_elements_dble_sls1(array_to_permute,temp_array,perm,nspec)
+
+  use constants
+
+  implicit none
+
+  integer, intent(in) :: nspec
+  integer, intent(in), dimension(nspec) :: perm
+
+  double precision, intent(inout), dimension(N_SLS,1,1,1,nspec) :: &
+    array_to_permute,temp_array
+
+  integer :: old_ispec,new_ispec
+
+  ! copy the original array
+  temp_array(:,:,:,:,:) = array_to_permute(:,:,:,:,:)
+
+  do old_ispec = 1,nspec
+    new_ispec = perm(old_ispec)
+    array_to_permute(:,:,:,:,new_ispec) = temp_array(:,:,:,:,old_ispec)
+  enddo
+
+  end subroutine permute_elements_dble_sls1
+
+
