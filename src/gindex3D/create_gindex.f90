@@ -89,9 +89,9 @@
   integer :: j_proc
   integer :: i,j,k,i_elmt,i_node,ier
   integer :: ispec_ic,ispec_oc,ispec_cm,ispec_trinf,ispec_inf
-  integer :: ibool_ic,ibool_oc,ibool_cm,ibool_trinf,ibool_inf
+  integer :: iglob_ic,iglob_oc,iglob_cm,iglob_trinf,iglob_inf
   integer :: k_ic,k_oc,k_cm,k_trinf,k_inf
-  integer :: ibool,inode,ignode,ispec,nnode_icb,nnode_cmb,nnode_trinfb,nnode_infb
+  integer :: iglob,inode,ignode,ispec,nnode_icb,nnode_cmb,nnode_trinfb,nnode_infb
 
   ! local
   integer,dimension(:),allocatable :: inode_ic,inode_oc,inode_cm,inode_trinf,inode_inf
@@ -435,10 +435,10 @@
     k_ic = NGLLZ ! top face
     do j = 1,NGLLY
       do i = 1,NGLLX
-        ibool_oc = ibool_outer_core(i,j,k_oc,ispec_oc)
-        ibool_ic = ibool_inner_core(i,j,k_ic,ispec_ic)
-        inode_oc(ibool_oc)=inode_ic(ibool_ic)
-        isnode_oc(ibool_oc) = .true.
+        iglob_oc = ibool_outer_core(i,j,k_oc,ispec_oc)
+        iglob_ic = ibool_inner_core(i,j,k_ic,ispec_ic)
+        inode_oc(iglob_oc)=inode_ic(iglob_ic)
+        isnode_oc(iglob_oc) = .true.
       enddo
     enddo
   enddo
@@ -447,11 +447,11 @@
     do k = 1,NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
-          ibool_oc = ibool_outer_core(i,j,k,i_elmt)
-           if (.not. isnode_oc(ibool_oc)) then
-              isnode_oc(ibool_oc) = .true.
+          iglob_oc = ibool_outer_core(i,j,k,i_elmt)
+           if (.not. isnode_oc(iglob_oc)) then
+              isnode_oc(iglob_oc) = .true.
               inode = inode+1
-              inode_oc(ibool_oc)=inode
+              inode_oc(iglob_oc)=inode
            endif
         enddo
       enddo
@@ -468,10 +468,10 @@
     k_cm = 1; k_oc = NGLLZ
     do j = 1,NGLLY
       do i = 1,NGLLX
-        ibool_cm = ibool_crust_mantle(i,j,k_cm,ispec_cm)
-        ibool_oc = ibool_outer_core(i,j,k_oc,ispec_oc)
-        inode_cm(ibool_cm)=inode_oc(ibool_oc)
-        isnode_cm(ibool_cm) = .true.
+        iglob_cm = ibool_crust_mantle(i,j,k_cm,ispec_cm)
+        iglob_oc = ibool_outer_core(i,j,k_oc,ispec_oc)
+        inode_cm(iglob_cm)=inode_oc(iglob_oc)
+        isnode_cm(iglob_cm) = .true.
       enddo
     enddo
   enddo
@@ -480,11 +480,11 @@
     do k = 1,NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
-          ibool_cm = ibool_crust_mantle(i,j,k,i_elmt)
-          if (.not. isnode_cm(ibool_cm)) then
-            isnode_cm(ibool_cm) = .true.
+          iglob_cm = ibool_crust_mantle(i,j,k,i_elmt)
+          if (.not. isnode_cm(iglob_cm)) then
+            isnode_cm(iglob_cm) = .true.
             inode = inode+1
-            inode_cm(ibool_cm)=inode
+            inode_cm(iglob_cm)=inode
           endif
         enddo
       enddo
@@ -502,10 +502,10 @@
       k_trinf = 1; k_cm = NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
-          ibool_trinf = ibool_trinfinite(i,j,k_trinf,ispec_trinf)
-          ibool_cm = ibool_crust_mantle(i,j,k_cm,ispec_cm)
-          inode_trinf(ibool_trinf)=inode_cm(ibool_cm)
-          isnode_trinf(ibool_trinf) = .true.
+          iglob_trinf = ibool_trinfinite(i,j,k_trinf,ispec_trinf)
+          iglob_cm = ibool_crust_mantle(i,j,k_cm,ispec_cm)
+          inode_trinf(iglob_trinf)=inode_cm(iglob_cm)
+          isnode_trinf(iglob_trinf) = .true.
         enddo
       enddo
     enddo
@@ -514,11 +514,11 @@
       do k = 1,NGLLZ
         do j = 1,NGLLY
           do i = 1,NGLLX
-            ibool_trinf = ibool_trinfinite(i,j,k,i_elmt)
-            if (.not. isnode_trinf(ibool_trinf)) then
-              isnode_trinf(ibool_trinf) = .true.
+            iglob_trinf = ibool_trinfinite(i,j,k,i_elmt)
+            if (.not. isnode_trinf(iglob_trinf)) then
+              isnode_trinf(iglob_trinf) = .true.
               inode = inode+1
-              inode_trinf(ibool_trinf)=inode
+              inode_trinf(iglob_trinf)=inode
             endif
           enddo
         enddo
@@ -535,10 +535,10 @@
       k_inf = 1; k_trinf = NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
-          ibool_inf = ibool_infinite(i,j,k_inf,ispec_inf)
-          ibool_trinf = ibool_trinfinite(i,j,k_trinf,ispec_trinf)
-          inode_inf(ibool_inf)=inode_trinf(ibool_trinf)
-          isnode_inf(ibool_inf) = .true.
+          iglob_inf = ibool_infinite(i,j,k_inf,ispec_inf)
+          iglob_trinf = ibool_trinfinite(i,j,k_trinf,ispec_trinf)
+          inode_inf(iglob_inf)=inode_trinf(iglob_trinf)
+          isnode_inf(iglob_inf) = .true.
         enddo
       enddo
     enddo
@@ -547,11 +547,11 @@
       do k = 1,NGLLZ
         do j = 1,NGLLY
           do i = 1,NGLLX
-            ibool_inf = ibool_infinite(i,j,k,i_elmt)
-            if (.not. isnode_inf(ibool_inf)) then
-              isnode_inf(ibool_inf) = .true.
+            iglob_inf = ibool_infinite(i,j,k,i_elmt)
+            if (.not. isnode_inf(iglob_inf)) then
+              isnode_inf(iglob_inf) = .true.
               inode = inode+1
-              inode_inf(ibool_inf)=inode
+              inode_inf(iglob_inf)=inode
             endif
           enddo
         enddo
@@ -568,10 +568,10 @@
       k_inf = 1; k_cm = NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
-          ibool_inf = ibool_infinite(i,j,k_inf,ispec_inf)
-          ibool_cm = ibool_crust_mantle(i,j,k_cm,ispec_cm)
-          inode_inf(ibool_inf)=inode_cm(ibool_cm)
-          isnode_inf(ibool_inf) = .true.
+          iglob_inf = ibool_infinite(i,j,k_inf,ispec_inf)
+          iglob_cm = ibool_crust_mantle(i,j,k_cm,ispec_cm)
+          inode_inf(iglob_inf)=inode_cm(iglob_cm)
+          isnode_inf(iglob_inf) = .true.
         enddo
       enddo
     enddo
@@ -580,11 +580,11 @@
       do k = 1,NGLLZ
         do j = 1,NGLLY
           do i = 1,NGLLX
-            ibool_inf = ibool_infinite(i,j,k,i_elmt)
-            if (.not. isnode_inf(ibool_inf)) then
-              isnode_inf(ibool_inf) = .true.
+            iglob_inf = ibool_infinite(i,j,k,i_elmt)
+            if (.not. isnode_inf(iglob_inf)) then
+              isnode_inf(iglob_inf) = .true.
               inode = inode+1
-              inode_inf(ibool_inf)=inode
+              inode_inf(iglob_inf)=inode
             endif
           enddo
         enddo
@@ -746,10 +746,10 @@
     k_ic = NGLLZ ! top face
     do j = 1,NGLLY
       do i = 1,NGLLX
-        ibool_oc = ibool_outer_core(i,j,k_oc,ispec_oc)
-        ibool_ic = ibool_inner_core(i,j,k_ic,ispec_ic)
-        ignode_oc(ibool_oc) = ignode_ic(ibool_ic)
-        isgnode_oc(ibool_oc) = .true.
+        iglob_oc = ibool_outer_core(i,j,k_oc,ispec_oc)
+        iglob_ic = ibool_inner_core(i,j,k_ic,ispec_ic)
+        ignode_oc(iglob_oc) = ignode_ic(iglob_ic)
+        isgnode_oc(iglob_oc) = .true.
       enddo
     enddo
   enddo
@@ -758,11 +758,11 @@
     do k = 1,NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
-          ibool_oc = ibool_outer_core(i,j,k,i_elmt)
-           if (.not. isgnode_oc(ibool_oc)) then
-              isgnode_oc(ibool_oc) = .true.
+          iglob_oc = ibool_outer_core(i,j,k,i_elmt)
+           if (.not. isgnode_oc(iglob_oc)) then
+              isgnode_oc(iglob_oc) = .true.
               ignode = ignode+1
-              ignode_oc(ibool_oc)=ignode
+              ignode_oc(iglob_oc)=ignode
            endif
         enddo
       enddo
@@ -780,10 +780,10 @@
     k_cm = 1; k_oc = NGLLZ
     do j = 1,NGLLY
       do i = 1,NGLLX
-        ibool_cm = ibool_crust_mantle(i,j,k_cm,ispec_cm)
-        ibool_oc = ibool_outer_core(i,j,k_oc,ispec_oc)
-        ignode_cm(ibool_cm) = ignode_oc(ibool_oc)
-        isgnode_cm(ibool_cm) = .true.
+        iglob_cm = ibool_crust_mantle(i,j,k_cm,ispec_cm)
+        iglob_oc = ibool_outer_core(i,j,k_oc,ispec_oc)
+        ignode_cm(iglob_cm) = ignode_oc(iglob_oc)
+        isgnode_cm(iglob_cm) = .true.
       enddo
     enddo
   enddo
@@ -792,11 +792,11 @@
     do k = 1,NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
-          ibool_cm = ibool_crust_mantle(i,j,k,i_elmt)
-          if (.not. isgnode_cm(ibool_cm)) then
-            isgnode_cm(ibool_cm) = .true.
+          iglob_cm = ibool_crust_mantle(i,j,k,i_elmt)
+          if (.not. isgnode_cm(iglob_cm)) then
+            isgnode_cm(iglob_cm) = .true.
             ignode = ignode+1
-            ignode_cm(ibool_cm)=ignode
+            ignode_cm(iglob_cm)=ignode
           endif
         enddo
       enddo
@@ -815,10 +815,10 @@
       k_trinf = 1; k_cm = NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
-          ibool_trinf = ibool_trinfinite(i,j,k_trinf,ispec_trinf)
-          ibool_cm = ibool_crust_mantle(i,j,k_cm,ispec_cm)
-          ignode_trinf(ibool_trinf) = ignode_cm(ibool_cm)
-          isgnode_trinf(ibool_trinf) = .true.
+          iglob_trinf = ibool_trinfinite(i,j,k_trinf,ispec_trinf)
+          iglob_cm = ibool_crust_mantle(i,j,k_cm,ispec_cm)
+          ignode_trinf(iglob_trinf) = ignode_cm(iglob_cm)
+          isgnode_trinf(iglob_trinf) = .true.
         enddo
       enddo
     enddo
@@ -827,11 +827,11 @@
       do k = 1,NGLLZ
         do j = 1,NGLLY
           do i = 1,NGLLX
-            ibool_trinf = ibool_trinfinite(i,j,k,i_elmt)
-            if (.not. isgnode_trinf(ibool_trinf)) then
-              isgnode_trinf(ibool_trinf) = .true.
+            iglob_trinf = ibool_trinfinite(i,j,k,i_elmt)
+            if (.not. isgnode_trinf(iglob_trinf)) then
+              isgnode_trinf(iglob_trinf) = .true.
               ignode = ignode+1
-              ignode_trinf(ibool_trinf) = ignode
+              ignode_trinf(iglob_trinf) = ignode
             endif
           enddo
         enddo
@@ -848,10 +848,10 @@
       k_inf = 1; k_trinf = NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
-          ibool_inf = ibool_infinite(i,j,k_inf,ispec_inf)
-          ibool_trinf = ibool_trinfinite(i,j,k_trinf,ispec_trinf)
-          ignode_inf(ibool_inf) = ignode_trinf(ibool_trinf)
-          isgnode_inf(ibool_inf) = .true.
+          iglob_inf = ibool_infinite(i,j,k_inf,ispec_inf)
+          iglob_trinf = ibool_trinfinite(i,j,k_trinf,ispec_trinf)
+          ignode_inf(iglob_inf) = ignode_trinf(iglob_trinf)
+          isgnode_inf(iglob_inf) = .true.
         enddo
       enddo
     enddo
@@ -860,11 +860,11 @@
       do k = 1,NGLLZ
         do j = 1,NGLLY
           do i = 1,NGLLX
-            ibool_inf = ibool_infinite(i,j,k,i_elmt)
-            if (.not. isgnode_inf(ibool_inf)) then
-              isgnode_inf(ibool_inf) = .true.
+            iglob_inf = ibool_infinite(i,j,k,i_elmt)
+            if (.not. isgnode_inf(iglob_inf)) then
+              isgnode_inf(iglob_inf) = .true.
               ignode = ignode+1
-              ignode_inf(ibool_inf) = ignode
+              ignode_inf(iglob_inf) = ignode
             endif
           enddo
         enddo
@@ -881,10 +881,10 @@
       k_inf = 1; k_cm = NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
-          ibool_inf = ibool_infinite(i,j,k_inf,ispec_inf)
-          ibool_cm = ibool_crust_mantle(i,j,k_cm,ispec_cm)
-          ignode_inf(ibool_inf) = ignode_cm(ibool_cm)
-          isgnode_inf(ibool_inf) = .true.
+          iglob_inf = ibool_infinite(i,j,k_inf,ispec_inf)
+          iglob_cm = ibool_crust_mantle(i,j,k_cm,ispec_cm)
+          ignode_inf(iglob_inf) = ignode_cm(iglob_cm)
+          isgnode_inf(iglob_inf) = .true.
         enddo
       enddo
     enddo
@@ -893,11 +893,11 @@
       do k = 1,NGLLZ
         do j = 1,NGLLY
           do i = 1,NGLLX
-            ibool_inf = ibool_infinite(i,j,k,i_elmt)
-            if (.not. isgnode_inf(ibool_inf)) then
-              isgnode_inf(ibool_inf) = .true.
+            iglob_inf = ibool_infinite(i,j,k,i_elmt)
+            if (.not. isgnode_inf(iglob_inf)) then
+              isgnode_inf(iglob_inf) = .true.
               ignode = ignode+1
-              ignode_inf(ibool_inf) = ignode
+              ignode_inf(iglob_inf) = ignode
             endif
           enddo
         enddo
@@ -1044,8 +1044,8 @@
     do k = 1,NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
-          ibool = ibool_inner_core(i,j,k,i_elmt)
-          gnf(1,inode_ic(ibool)) = 1
+          iglob = ibool_inner_core(i,j,k,i_elmt)
+          gnf(1,inode_ic(iglob)) = 1
         enddo
       enddo
     enddo
@@ -1071,8 +1071,8 @@
     do k = 1,NGLLZ-1
       do j = 1,NGLLY
         do i = 1,NGLLX
-          ibool = ibool_infinite(i,j,k,i_elmt)
-          gnf(1,inode_inf(ibool)) = 1
+          iglob = ibool_infinite(i,j,k,i_elmt)
+          gnf(1,inode_inf(iglob)) = 1
         enddo
       enddo
     enddo
@@ -1392,9 +1392,9 @@
     do k = 1,NGLLZ,2
       do j = 1,NGLLY,2
         do i = 1,NGLLX,2
-          ibool = ibool_inner_core(i,j,k,i_elmt)
-          isnode_ic(ibool) = .true.
-          isnode(inode_ic(ibool)) = .true.
+          iglob = ibool_inner_core(i,j,k,i_elmt)
+          isnode_ic(iglob) = .true.
+          isnode(inode_ic(iglob)) = .true.
         enddo
       enddo
     enddo
@@ -1405,9 +1405,9 @@
     do k = 1,NGLLZ,2
       do j = 1,NGLLY,2
         do i = 1,NGLLX,2
-          ibool = ibool_outer_core(i,j,k,i_elmt)
-          isnode_oc(ibool) = .true.
-          isnode(inode_oc(ibool)) = .true.
+          iglob = ibool_outer_core(i,j,k,i_elmt)
+          isnode_oc(iglob) = .true.
+          isnode(inode_oc(iglob)) = .true.
         enddo
       enddo
     enddo
@@ -1418,9 +1418,9 @@
     do k = 1,NGLLZ,2
       do j = 1,NGLLY,2
         do i = 1,NGLLX,2
-          ibool = ibool_crust_mantle(i,j,k,i_elmt)
-          isnode_cm(ibool) = .true.
-          isnode(inode_cm(ibool)) = .true.
+          iglob = ibool_crust_mantle(i,j,k,i_elmt)
+          isnode_cm(iglob) = .true.
+          isnode(inode_cm(iglob)) = .true.
         enddo
       enddo
     enddo
@@ -1432,9 +1432,9 @@
       do k = 1,NGLLZ,2
         do j = 1,NGLLY,2
           do i = 1,NGLLX,2
-            ibool = ibool_trinfinite(i,j,k,i_elmt)
-            isnode_trinf(ibool) = .true.
-            isnode(inode_trinf(ibool)) = .true.
+            iglob = ibool_trinfinite(i,j,k,i_elmt)
+            isnode_trinf(iglob) = .true.
+            isnode(inode_trinf(iglob)) = .true.
           enddo
         enddo
       enddo
@@ -1446,9 +1446,9 @@
     do k = 1,NGLLZ,2
       do j = 1,NGLLY,2
         do i = 1,NGLLX,2
-          ibool = ibool_infinite(i,j,k,i_elmt)
-          isnode_inf(ibool) = .true.
-          isnode(inode_inf(ibool)) = .true.
+          iglob = ibool_infinite(i,j,k,i_elmt)
+          isnode_inf(iglob) = .true.
+          isnode(inode_inf(iglob)) = .true.
         enddo
       enddo
     enddo
@@ -1821,8 +1821,8 @@
     if (idoubling_inner_core(i_elmt) == IFLAG_IN_FICTITIOUS_CUBE) cycle
 
     do i = 1,NGLLCUBE_INF
-      ibool = inode_elmt_ic1(i,i_elmt)
-      gnf1(1,inode_ic1(ibool)) = 1
+      iglob = inode_elmt_ic1(i,i_elmt)
+      gnf1(1,inode_ic1(iglob)) = 1
     enddo
   enddo
 
@@ -1847,8 +1847,8 @@
       do j = 1,NGLLY_INF
         do i = 1,NGLLX_INF
           igll = NGLLX_INF * NGLLY_INF * (k-1) + NGLLX_INF * (j-1) + i
-          ibool = inode_elmt_inf1(igll,i_elmt)
-          gnf1(1,inode_inf1(ibool)) = 1
+          iglob = inode_elmt_inf1(igll,i_elmt)
+          gnf1(1,inode_inf1(iglob)) = 1
         enddo
       enddo
     enddo
