@@ -152,7 +152,7 @@
   call synchronize_all()
   if (myrank == 0) then
     write(IMAIN,*)
-    write(IMAIN,*) '  ...allocating arrays '
+    write(IMAIN,*) '  ...allocating arrays'
     call flush_IMAIN()
   endif
   call crm_allocate_arrays(ipass, &
@@ -164,7 +164,7 @@
   call synchronize_all()
   if (myrank == 0) then
     write(IMAIN,*)
-    write(IMAIN,*) '  ...setting up layers '
+    write(IMAIN,*) '  ...setting up layers'
     call flush_IMAIN()
   endif
   call crm_setup_layers(ipass,NEX_PER_PROC_ETA)
@@ -173,7 +173,7 @@
   call synchronize_all()
   if (myrank == 0) then
     write(IMAIN,*)
-    write(IMAIN,*) '  ...creating mesh elements '
+    write(IMAIN,*) '  ...creating mesh elements'
     call flush_IMAIN()
   endif
   call create_regions_elements(ipass, &
@@ -248,7 +248,7 @@
     call synchronize_all()
     if (myrank == 0) then
       write(IMAIN,*)
-      write(IMAIN,*) '  ...fills global mesh points '
+      write(IMAIN,*) '  ...fills global mesh points'
       call flush_IMAIN()
     endif
     call crm_fill_global_meshes()
@@ -329,7 +329,7 @@
     call synchronize_all()
     if (myrank == 0) then
       write(IMAIN,*)
-      write(IMAIN,*) '  ...element inner/outer separation '
+      write(IMAIN,*) '  ...element inner/outer separation'
       call flush_IMAIN()
     endif
     call setup_inner_outer(iregion_code)
@@ -338,10 +338,10 @@
     call synchronize_all()
     if (myrank == 0) then
       write(IMAIN,*)
-      write(IMAIN,*) '  ...element mesh coloring '
+      write(IMAIN,*) '  ...element mesh permutation'
       call flush_IMAIN()
     endif
-    call setup_color_perm(iregion_code)
+    call setup_mesh_permutation(iregion_code)
 
     !uncomment: adds model smoothing for point profile models
     !    if (THREE_D_MODEL == THREE_D_MODEL_PPM) then

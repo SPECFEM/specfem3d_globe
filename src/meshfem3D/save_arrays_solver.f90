@@ -493,8 +493,7 @@
 
   ! mesh coloring
   integer,intent(in) :: num_colors_outer,num_colors_inner
-  integer, dimension(num_colors_outer + num_colors_inner),intent(in) :: &
-    num_elem_colors
+  integer, dimension(num_colors_outer + num_colors_inner),intent(in) :: num_elem_colors
 
   ! local parameters
   character(len=MAX_STRING_LEN) :: prname
