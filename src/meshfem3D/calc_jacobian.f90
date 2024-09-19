@@ -131,7 +131,6 @@
             do j1 = 1,NGLLY
               do i1 = 1,NGLLX
 
-                hlagrange = hxir(i1) * hetar(j1) * hgammar(k1)
                 hlagrange_xi = hpxir(i1) * hetar(j1) * hgammar(k1)
                 hlagrange_eta = hxir(i1) * hpetar(j1) * hgammar(k1)
                 hlagrange_gamma = hxir(i1) * hetar(j1) * hpgammar(k1)
@@ -154,6 +153,8 @@
 
                 ! DEBUG
                 ! test the Lagrange polynomial and its derivative
+                hlagrange = hxir(i1) * hetar(j1) * hgammar(k1)
+
                 xmesh = xmesh + x * hlagrange
                 ymesh = ymesh + y * hlagrange
                 zmesh = zmesh + z * hlagrange
@@ -248,7 +249,6 @@
           do j1 = 1,NGLLY
             do i1 = 1,NGLLX
 
-              hlagrange = hxir(i1) * hetar(j1) * hgammar(k1)
               hlagrange_xi = hpxir(i1) * hetar(j1) * hgammar(k1)
               hlagrange_eta = hxir(i1) * hpetar(j1) * hgammar(k1)
               hlagrange_gamma = hxir(i1) * hetar(j1) * hpgammar(k1)

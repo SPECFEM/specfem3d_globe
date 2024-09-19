@@ -215,7 +215,7 @@
           ! crustal elements are stretched to be thinner in the upper crust than in lower crust in the 3D case
           ! max ratio between size of upper crust elements and
           ! lower crust elements is given by the param MAX_RATIO_STRETCHING
-          ! to avoid stretching, set MAX_RATIO_STRETCHING = 1.0d  in constants.h
+          ! to avoid stretching, set EARTH_MAX_RATIO_CRUST_STRETCHING = 1.0d  in constants.h
           call compute_coord_main_mesh(offset_x,offset_y,offset_z,xelm,yelm,zelm, &
                                        ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
                                        NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
