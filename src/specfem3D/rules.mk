@@ -144,6 +144,9 @@ specfem3D_MODULES = \
 	$(FC_MODDIR)/asdf_data.$(FC_MODEXT) \
 	$(FC_MODDIR)/constants_solver.$(FC_MODEXT) \
 	$(FC_MODDIR)/manager_adios.$(FC_MODEXT) \
+	$(FC_MODDIR)/mod_element.$(FC_MODEXT) \
+	$(FC_MODDIR)/mod_element_att.$(FC_MODEXT) \
+	$(FC_MODDIR)/mod_element_strain.$(FC_MODEXT) \
 	$(FC_MODDIR)/specfem_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/specfem_par_crustmantle.$(FC_MODEXT) \
 	$(FC_MODDIR)/specfem_par_innercore.$(FC_MODEXT) \
@@ -400,6 +403,15 @@ $O/setup_sources_receivers.solverstatic.o: $O/search_kdtree.shared.o
 $O/locate_point.solverstatic.o: $O/search_kdtree.shared.o
 
 $O/make_gravity.solver.o: $O/model_prem.shared.o $O/model_Sohl.shared.o $O/model_vpremoon.shared.o
+
+$O/compute_forces_crust_mantle_Dev.solverstatic.o: $O/compute_element.solverstatic.o $O/compute_element_att_memory.solverstatic.o
+$O/compute_forces_crust_mantle_noDev.solverstatic.o: $O/compute_element.solverstatic.o $O/compute_element_att_memory.solverstatic.o
+$O/compute_forces_inner_core_Dev.solverstatic.o: $O/compute_element.solverstatic.o $O/compute_element_att_memory.solverstatic.o
+$O/compute_forces_inner_core_noDev.solverstatic.o: $O/compute_element.solverstatic.o $O/compute_element_att_memory.solverstatic.o
+
+$O/compute_kernels.solverstatic.o: $O/compute_element_strain.solverstatic.o
+$O/compute_seismograms.solverstatic.o: $O/compute_element_strain.solverstatic.o
+$O/compute_strain_att.solverstatic.o: $O/compute_element_strain.solverstatic.o
 
 # Version file
 $O/initialize_simulation.solverstatic.o: ${SETUP}/version.fh

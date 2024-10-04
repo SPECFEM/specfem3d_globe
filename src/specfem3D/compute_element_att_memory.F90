@@ -30,6 +30,18 @@
 #include "config.fh"
 
 
+module mod_element_att
+
+  implicit none
+
+  private
+
+  public :: compute_element_att_memory_cm
+  public :: compute_element_att_memory_ic
+  public :: compute_element_att_memory_cm_lddrk
+  public :: compute_element_att_memory_ic_lddrk
+
+contains
 
 !--------------------------------------------------------------------------------------------
 !
@@ -38,7 +50,7 @@
 !--------------------------------------------------------------------------------------------
 
 
-  subroutine compute_element_att_memory_cm(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
+  pure subroutine compute_element_att_memory_cm(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
                                            vx,vy,vz,vnspec,factor_common, &
                                            alphaval,betaval,gammaval, &
                                            muvstore, &
@@ -146,7 +158,7 @@
 !--------------------------------------------------------------------------------------------
 !
 
-  subroutine compute_element_att_memory_cm_lddrk(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
+  pure subroutine compute_element_att_memory_cm_lddrk(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
                                                  R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
                                                  vx,vy,vz,vnspec,factor_common, &
                                                  muvstore, &
@@ -271,7 +283,7 @@
 !--------------------------------------------------------------------------------------------
 
 
-  subroutine compute_element_att_memory_ic(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
+  pure subroutine compute_element_att_memory_ic(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
                                            vx,vy,vz,vnspec,factor_common, &
                                            alphaval,betaval,gammaval, &
                                            muvstore, &
@@ -380,7 +392,7 @@
 !--------------------------------------------------------------------------------------------
 !
 
-  subroutine compute_element_att_memory_ic_lddrk(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
+  pure subroutine compute_element_att_memory_ic_lddrk(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
                                                  R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
                                                  vx,vy,vz,vnspec,factor_common, &
                                                  muvstore, &
@@ -598,3 +610,4 @@
 !  end subroutine compute_element_att_mem_up_cm
 !
 
+end module mod_element_att

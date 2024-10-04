@@ -477,39 +477,29 @@
         write(IMAIN,*) '  source located in slice ',islice_selected_source(isource_in_this_subset)
         write(IMAIN,*) '                 in element ',ispec_selected_source(isource_in_this_subset)
         write(IMAIN,*)
+        write(IMAIN,*) '  at xi,eta,gamma coordinates = ', &
+                       sngl(xi_source(isource)),sngl(eta_source(isource)),sngl(gamma_source(isource))
+        write(IMAIN,*) '  at (x,y,z)                  = ', sngl(xyz_found_subset(1,isource_in_this_subset)), &
+                       sngl(xyz_found_subset(2,isource_in_this_subset)),sngl(xyz_found_subset(3,isource_in_this_subset))
+        write(IMAIN,*)
         ! different output for force point sources
         if (USE_FORCE_POINT_SOURCE) then
           write(IMAIN,*) '  using force point source:'
-          write(IMAIN,*) '    xi coordinate of source in that element: ',xi_source(isource)
-          write(IMAIN,*) '    eta coordinate of source in that element: ',eta_source(isource)
-          write(IMAIN,*) '    gamma coordinate of source in that element: ',gamma_source(isource)
-
-          write(IMAIN,*)
-          write(IMAIN,*) '    component of direction vector in East direction: ',comp_dir_vect_source_E(isource)
-          write(IMAIN,*) '    component of direction vector in North direction: ',comp_dir_vect_source_N(isource)
-          write(IMAIN,*) '    component of direction vector in Vertical direction: ',comp_dir_vect_source_Z_UP(isource)
-
+          write(IMAIN,*) '    component of direction vector in East direction: ',sngl(comp_dir_vect_source_E(isource))
+          write(IMAIN,*) '    component of direction vector in North direction: ',sngl(comp_dir_vect_source_N(isource))
+          write(IMAIN,*) '    component of direction vector in Vertical direction: ',sngl(comp_dir_vect_source_Z_UP(isource))
           !write(IMAIN,*) '  i index of source in that element: ',nint(xi_source(isource))
           !write(IMAIN,*) '  j index of source in that element: ',nint(eta_source(isource))
           !write(IMAIN,*) '  k index of source in that element: ',nint(gamma_source(isource))
           !write(IMAIN,*)
           !write(IMAIN,*) '  component direction: ',COMPONENT_FORCE_SOURCE
           write(IMAIN,*)
-          write(IMAIN,*) '    nu1 = ',nu_source(1,:,isource),'North'
-          write(IMAIN,*) '    nu2 = ',nu_source(2,:,isource),'East'
-          write(IMAIN,*) '    nu3 = ',nu_source(3,:,isource),'Vertical'
-          write(IMAIN,*)
-          write(IMAIN,*) '    at (x,y,z) coordinates = ',xyz_found_subset(1,isource_in_this_subset), &
-            xyz_found_subset(2,isource_in_this_subset),xyz_found_subset(3,isource_in_this_subset)
+          write(IMAIN,*) '    nu1 = ',sngl(nu_source(1,:,isource)),'North'
+          write(IMAIN,*) '    nu2 = ',sngl(nu_source(2,:,isource)),'East'
+          write(IMAIN,*) '    nu3 = ',sngl(nu_source(3,:,isource)),'Vertical'
         else
           ! moment tensor
-          write(IMAIN,*) '  using moment tensor source:'
-          write(IMAIN,*) '    xi coordinate of source in that element: ',xi_source(isource)
-          write(IMAIN,*) '    eta coordinate of source in that element: ',eta_source(isource)
-          write(IMAIN,*) '    gamma coordinate of source in that element: ',gamma_source(isource)
-          write(IMAIN,*)
-          write(IMAIN,*) '    at (x,y,z) coordinates = ',xyz_found_subset(1,isource_in_this_subset), &
-            xyz_found_subset(2,isource_in_this_subset),xyz_found_subset(3,isource_in_this_subset)
+          write(IMAIN,*) '  using moment tensor source'
         endif
         write(IMAIN,*)
 
@@ -575,9 +565,9 @@
             write(IMAIN,*) '    using (quasi) Heaviside source time function'
             ! add message if source is a Heaviside
             if (hdur(isource) <= 5.0*DT) then
-              write(IMAIN,*)
-              write(IMAIN,*) '    Source time function is a Heaviside, convolve later'
-              write(IMAIN,*)
+              write(IMAIN,*) '    ***'
+              write(IMAIN,*) '    *** Source time function is a Heaviside, convolve later'
+              write(IMAIN,*) '    ***'
             endif
             write(IMAIN,*)
             write(IMAIN,*) '    half duration: ',hdur(isource),' seconds'

@@ -70,6 +70,11 @@
   use specfem_par_full_gravity, only: &
     gravity_rho => gravity_rho_crust_mantle
 
+  ! element compute routines
+  use mod_element, only: compute_element_add_full_gravity
+
+  use mod_element_att, only: compute_element_att_memory_cm,compute_element_att_memory_cm_lddrk
+
   implicit none
 
   integer,intent(in) :: NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT
@@ -109,46 +114,46 @@
   ! local parameters
 
   ! for attenuation
-  real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
+  real(kind=CUSTOM_REAL) :: R_xx_val,R_yy_val
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5) :: epsilondev_loc
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: &
     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3
 
-  integer ispec,iglob
-  integer i,j,k,l
-  integer i_SLS
+  integer :: ispec,iglob
+  integer :: i,j,k,l
+  integer :: i_SLS
 
   ! the 21 coefficients for an anisotropic medium in reduced notation
-  real(kind=CUSTOM_REAL) c11,c22,c33,c44,c55,c66,c12,c13,c23,c14,c24,c34,c15,c25,c35,c45,c16,c26,c36,c46,c56
+  real(kind=CUSTOM_REAL) :: c11,c22,c33,c44,c55,c66,c12,c13,c23,c14,c24,c34,c15,c25,c35,c45,c16,c26,c36,c46,c56
 
-  real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
-  real(kind=CUSTOM_REAL) duxdxl,duxdyl,duxdzl,duydxl,duydyl,duydzl,duzdxl,duzdyl,duzdzl
+  real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
+  real(kind=CUSTOM_REAL) :: duxdxl,duxdyl,duxdzl,duydxl,duydyl,duydzl,duzdxl,duzdyl,duzdzl
 
-  real(kind=CUSTOM_REAL) duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
-  real(kind=CUSTOM_REAL) duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
+  real(kind=CUSTOM_REAL) :: duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
+  real(kind=CUSTOM_REAL) :: duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
 
-  real(kind=CUSTOM_REAL) sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz
+  real(kind=CUSTOM_REAL) :: sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz
 
-  real(kind=CUSTOM_REAL) hp1,hp2,hp3
-  real(kind=CUSTOM_REAL) fac1,fac2,fac3
-  real(kind=CUSTOM_REAL) lambdal,mul,lambdalplus2mul
-  real(kind=CUSTOM_REAL) kappal
+  real(kind=CUSTOM_REAL) :: hp1,hp2,hp3
+  real(kind=CUSTOM_REAL) :: fac1,fac2,fac3
+  real(kind=CUSTOM_REAL) :: lambdal,mul,lambdalplus2mul
+  real(kind=CUSTOM_REAL) :: kappal
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sum_terms
 
-  real(kind=CUSTOM_REAL) tempx1l,tempx2l,tempx3l
-  real(kind=CUSTOM_REAL) tempy1l,tempy2l,tempy3l
-  real(kind=CUSTOM_REAL) tempz1l,tempz2l,tempz3l
-  real(kind=CUSTOM_REAL) templ
+  real(kind=CUSTOM_REAL) :: tempx1l,tempx2l,tempx3l
+  real(kind=CUSTOM_REAL) :: tempy1l,tempy2l,tempy3l
+  real(kind=CUSTOM_REAL) :: tempz1l,tempz2l,tempz3l
+  real(kind=CUSTOM_REAL) :: templ
 
   ! for gravity
-  real(kind=CUSTOM_REAL) sigma_yx,sigma_zx,sigma_zy
-  real(kind=CUSTOM_REAL) factor,sx_l,sy_l,sz_l,gxl,gyl,gzl
-  real(kind=CUSTOM_REAL) Hxxl,Hyyl,Hzzl,Hxyl,Hxzl,Hyzl
+  real(kind=CUSTOM_REAL) :: sigma_yx,sigma_zx,sigma_zy
+  real(kind=CUSTOM_REAL) :: factor,sx_l,sy_l,sz_l,gxl,gyl,gzl
+  real(kind=CUSTOM_REAL) :: Hxxl,Hyyl,Hzzl,Hxyl,Hxzl,Hyzl
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
 
   ! full gravity
-  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ) :: deriv_loc
+  real(kind=CUSTOM_REAL), dimension(10,NGLLX,NGLLY,NGLLZ) :: deriv_loc
 
 !  integer :: computed_elements
   integer :: num_elements,ispec_p
@@ -224,6 +229,11 @@
           gammayl = gammay(i,j,k,ispec)
           gammazl = gammaz(i,j,k,ispec)
 
+! compute the Jacobian
+          jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
+                        - xiyl*(etaxl*gammazl-etazl*gammaxl) &
+                        + xizl*(etaxl*gammayl-etayl*gammaxl))
+
           ! full gravity
           if (FULL_GRAVITY_VAL .and. .not. DISCARD_GCONTRIB) then
             ! note: deriv_mapping_crust_mantle is only available when chosen to use Deville routines
@@ -237,12 +247,8 @@
             deriv_loc(7,i,j,k) = gammaxl
             deriv_loc(8,i,j,k) = gammayl
             deriv_loc(9,i,j,k) = gammazl
+            deriv_loc(10,i,j,k) = jacobianl
           endif
-
-! compute the Jacobian
-          jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
-                        - xiyl*(etaxl*gammazl-etazl*gammaxl) &
-                        + xizl*(etaxl*gammayl-etayl*gammaxl))
 
           duxdxl = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
           duxdyl = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
@@ -508,8 +514,8 @@
 
     ! full gravity
     if (FULL_GRAVITY_VAL .and. .not. DISCARD_GCONTRIB) then
-      call SIEM_solve_element_add_full_gravity(ispec,NSPEC_CRUST_MANTLE,NGLOB,gravity_rho,deriv_loc,ibool, &
-                                               pgrav_crust_mantle,rho_s_H)
+      call compute_element_add_full_gravity(ispec,NSPEC_CRUST_MANTLE,NGLOB,gravity_rho,deriv_loc,ibool, &
+                                            pgrav_crust_mantle,rho_s_H)
     endif
 
     do k = 1,NGLLZ

@@ -513,16 +513,18 @@
         write(IMAIN,*) '      original longitude: ',sngl(stlon(irec))
         write(IMAIN,*) '     epicentral distance: ',sngl(epidist(irec))
         write(IMAIN,*) '  closest estimate found: ',sngl(final_distance(irec)),' km away'
-        write(IMAIN,*) '   in slice ',islice_selected_rec(irec),' in element ',ispec_selected_rec(irec)
-        write(IMAIN,*) '   at xi,eta,gamma coordinates = ',xi_receiver(irec),eta_receiver(irec),gamma_receiver(irec)
-        write(IMAIN,*) '   at (x,y,z)                  = ',xyz_found(1,irec),xyz_found(2,irec),xyz_found(3,irec)
+        write(IMAIN,*) '  in slice ',islice_selected_rec(irec),' in element ',ispec_selected_rec(irec)
+        write(IMAIN,*) '  at xi,eta,gamma coordinates = ', &
+                       sngl(xi_receiver(irec)),sngl(eta_receiver(irec)),sngl(gamma_receiver(irec))
+        write(IMAIN,*) '  at (x,y,z)                  = ', &
+                       sngl(xyz_found(1,irec)),sngl(xyz_found(2,irec)),sngl(xyz_found(3,irec))
 
         ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
         call xyz_2_rlatlon_dble(xyz_found(1,irec),xyz_found(2,irec),xyz_found(3,irec),radius,lat,lon,ELLIPTICITY_VAL)
 
         ! output same longitude range ([0,360] by default) as input range from stations file stlon(..)
         if (stlon(irec) < 0.d0) lon = lon - 360.d0
-        write(IMAIN,*) '   at lat/lon                  = ',sngl(lat),sngl(lon)
+        write(IMAIN,*) '  at lat/lon                  = ',sngl(lat),sngl(lon)
       endif
 
       ! add warning if estimate is poor

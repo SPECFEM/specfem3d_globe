@@ -114,10 +114,9 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: A_rotation,B_rotation
 
   integer :: ispec,iglob
-  real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl
+  real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dpotentialdxl,dpotentialdyl,dpotentialdzl
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: jacobianl
 
   ! Deville
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: chi_elem
@@ -259,11 +258,6 @@
       gammayl = deriv(8,INDEX_IJK,ispec)
       gammazl = deriv(9,INDEX_IJK,ispec)
 
-      ! compute the Jacobian
-      jacobianl(INDEX_IJK) = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
-                                             - xiyl*(etaxl*gammazl-etazl*gammaxl) &
-                                             + xizl*(etaxl*gammayl-etayl*gammaxl))
-
       dpotentialdxl(INDEX_IJK) = xixl*temp1(INDEX_IJK) + etaxl*temp2(INDEX_IJK) + gammaxl*temp3(INDEX_IJK)
       dpotentialdyl(INDEX_IJK) = xiyl*temp1(INDEX_IJK) + etayl*temp2(INDEX_IJK) + gammayl*temp3(INDEX_IJK)
       dpotentialdzl(INDEX_IJK) = xizl*temp1(INDEX_IJK) + etazl*temp2(INDEX_IJK) + gammazl*temp3(INDEX_IJK)
@@ -388,12 +382,13 @@
       gammaxl = deriv(7,INDEX_IJK,ispec)
       gammayl = deriv(8,INDEX_IJK,ispec)
       gammazl = deriv(9,INDEX_IJK,ispec)
+      jacobianl  = deriv(10,INDEX_IJK,ispec)
 
-      temp1(INDEX_IJK) = jacobianl(INDEX_IJK) * &
+      temp1(INDEX_IJK) = jacobianl * &
                          (xixl*dpotentialdxl(INDEX_IJK) + xiyl*dpotentialdyl(INDEX_IJK) + xizl*dpotentialdzl(INDEX_IJK))
-      temp2(INDEX_IJK) = jacobianl(INDEX_IJK) * &
+      temp2(INDEX_IJK) = jacobianl * &
                          (etaxl*dpotentialdxl(INDEX_IJK) + etayl*dpotentialdyl(INDEX_IJK) + etazl*dpotentialdzl(INDEX_IJK))
-      temp3(INDEX_IJK) = jacobianl(INDEX_IJK) * &
+      temp3(INDEX_IJK) = jacobianl * &
                          (gammaxl*dpotentialdxl(INDEX_IJK) + gammayl*dpotentialdyl(INDEX_IJK) + gammazl*dpotentialdzl(INDEX_IJK))
     ENDDO_LOOP_IJK
 
@@ -453,8 +448,9 @@
         vec_z = gravity_pre_store(3,iglob)
 
         ! compute divergence of displacement
-        ! distinguish between single and double precision for reals
-        gravity_term = jacobianl(INDEX_IJK) * wgll_cube(INDEX_IJK) &
+        jacobianl  = deriv(10,INDEX_IJK,ispec)
+
+        gravity_term = jacobianl * wgll_cube(INDEX_IJK) &
                             * (dpotentialdxl(INDEX_IJK) * vec_x &
                              + dpotentialdyl(INDEX_IJK) * vec_y &
                              + dpotentialdzl(INDEX_IJK) * vec_z)
@@ -462,7 +458,7 @@
         ! full gravity contribution
         if (FULL_GRAVITY_VAL .and. .not. DISCARD_GCONTRIB) then
           gravity_term = gravity_term &
-              - gravity_rho_g_over_kappa(iglob) * jacobianl(INDEX_IJK) * wgll_cube(INDEX_IJK) * pgrav_outer_core(iglob)
+              - gravity_rho_g_over_kappa(iglob) * jacobianl * wgll_cube(INDEX_IJK) * pgrav_outer_core(iglob)
         endif
 
         ! divergence of displacement field with gravity on
@@ -527,7 +523,7 @@
 !
 ! please leave the routines here to help compilers inlining the code
 
-  subroutine mxm5_single(A,n1,B,C,n3)
+  pure subroutine mxm5_single(A,n1,B,C,n3)
 
 ! we can force inlining (Intel compiler)
 #if defined __INTEL_COMPILER
@@ -700,7 +696,7 @@
 
 !--------------------------------------------------------------------------------------------
 
-  subroutine mxm5_3dmat_single(A,n1,B,n2,C,n3)
+  pure subroutine mxm5_3dmat_single(A,n1,B,n2,C,n3)
 
 ! we can force inlining (Intel compiler)
 #if defined __INTEL_COMPILER

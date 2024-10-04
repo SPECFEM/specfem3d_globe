@@ -29,9 +29,21 @@
 ! and macros INDEX_IJK, DO_LOOP_IJK, ENDDO_LOOP_IJK defined in config.fh
 #include "config.fh"
 
+module mod_element_strain
 
+  implicit none
 
-  subroutine compute_element_strain_undoatt_Dev(ispec,nglob,nspec, &
+  private
+
+  public :: compute_element_strain_att_Dev
+  public :: compute_element_strain_att_noDev
+
+  public :: compute_element_strain_undoatt_Dev
+  public :: compute_element_strain_undoatt_noDev
+
+contains
+
+  pure subroutine compute_element_strain_undoatt_Dev(ispec,nglob,nspec, &
                                                 displ,ibool, &
                                                 hprime_xx,hprime_xxT, &
                                                 deriv, &
@@ -50,7 +62,7 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX),intent(in) :: hprime_xx,hprime_xxT
 
-  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: deriv
+  real(kind=CUSTOM_REAL), dimension(10,NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: deriv
 
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ),intent(out) :: epsilondev_loc
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(out) :: eps_trace_over_3_loc
@@ -153,7 +165,7 @@
 !
 ! please leave the routines here to help compilers inlining the code
 
-  subroutine mxm5_3comp_singleA(A,n1,B1,B2,B3,C1,C2,C3,n3)
+  pure subroutine mxm5_3comp_singleA(A,n1,B1,B2,B3,C1,C2,C3,n3)
 
 ! 3 different arrays for x/y/z-components, 2-dimensional arrays (25,5)/(5,25), same B matrix for all 3 component arrays
 
@@ -162,9 +174,9 @@
   implicit none
 
   integer,intent(in) :: n1,n3
-  real(kind=CUSTOM_REAL),dimension(n1,5) :: A
-  real(kind=CUSTOM_REAL),dimension(5,n3) :: B1,B2,B3
-  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
+  real(kind=CUSTOM_REAL),dimension(n1,5),intent(in) :: A
+  real(kind=CUSTOM_REAL),dimension(5,n3),intent(in) :: B1,B2,B3
+  real(kind=CUSTOM_REAL),dimension(n1,n3),intent(out) :: C1,C2,C3
 
   ! local parameters
   integer :: i,j
@@ -197,7 +209,7 @@
 
 !--------------------------------------------------------------------------------------------
 
-  subroutine mxm5_3comp_singleB(A1,A2,A3,n1,B,C1,C2,C3,n3)
+  pure subroutine mxm5_3comp_singleB(A1,A2,A3,n1,B,C1,C2,C3,n3)
 
 ! 3 different arrays for x/y/z-components, 2-dimensional arrays (25,5)/(5,25), same B matrix for all 3 component arrays
 
@@ -206,9 +218,9 @@
   implicit none
 
   integer,intent(in) :: n1,n3
-  real(kind=CUSTOM_REAL),dimension(n1,5) :: A1,A2,A3
-  real(kind=CUSTOM_REAL),dimension(5,n3) :: B
-  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
+  real(kind=CUSTOM_REAL),dimension(n1,5),intent(in) :: A1,A2,A3
+  real(kind=CUSTOM_REAL),dimension(5,n3),intent(in) :: B
+  real(kind=CUSTOM_REAL),dimension(n1,n3),intent(out) :: C1,C2,C3
 
   ! local parameters
   integer :: i,j
@@ -241,7 +253,7 @@
 
 !--------------------------------------------------------------------------------------------
 
-  subroutine mxm5_3comp_3dmat_singleB(A1,A2,A3,n1,B,n2,C1,C2,C3,n3)
+  pure subroutine mxm5_3comp_3dmat_singleB(A1,A2,A3,n1,B,n2,C1,C2,C3,n3)
 
 ! 3 different arrays for x/y/z-components, 3-dimensional arrays (5,5,5), same B matrix for all 3 component arrays
 
@@ -250,9 +262,9 @@
   implicit none
 
   integer,intent(in) :: n1,n2,n3
-  real(kind=CUSTOM_REAL),dimension(n1,5,n3) :: A1,A2,A3
-  real(kind=CUSTOM_REAL),dimension(5,n2) :: B
-  real(kind=CUSTOM_REAL),dimension(n1,n2,n3) :: C1,C2,C3
+  real(kind=CUSTOM_REAL),dimension(n1,5,n3),intent(in) :: A1,A2,A3
+  real(kind=CUSTOM_REAL),dimension(5,n2),intent(in) :: B
+  real(kind=CUSTOM_REAL),dimension(n1,n2,n3),intent(out) :: C1,C2,C3
 
   ! local parameters
   integer :: i,j,k
@@ -293,7 +305,7 @@
 !--------------------------------------------------------------------------------------------
 !
 
-  subroutine compute_element_strain_undoatt_noDev(ispec,nglob,nspec, &
+  pure subroutine compute_element_strain_undoatt_noDev(ispec,nglob,nspec, &
                                                   displ, &
                                                   hprime_xx,hprime_yy,hprime_zz, &
                                                   ibool, &
@@ -438,7 +450,7 @@
 !--------------------------------------------------------------------------------------------
 
 
-  subroutine compute_element_strain_att_Dev(ispec,nglob,nspec, &
+  pure subroutine compute_element_strain_att_Dev(ispec,nglob,nspec, &
                                             displ,veloc,deltat, &
                                             ibool, &
                                             hprime_xx,hprime_xxT, &
@@ -461,7 +473,7 @@
 
   integer, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX),intent(in) :: hprime_xx,hprime_xxT
-  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: deriv
+  real(kind=CUSTOM_REAL), dimension(10,NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: deriv
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(out) :: epsilondev_xx_loc_nplus1
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(out) :: epsilondev_yy_loc_nplus1
@@ -570,7 +582,7 @@
 !
 ! please leave the routines here to help compilers inlining the code
 
-  subroutine mxm5_3comp_singleA(A,n1,B1,B2,B3,C1,C2,C3,n3)
+  pure subroutine mxm5_3comp_singleA(A,n1,B1,B2,B3,C1,C2,C3,n3)
 
 ! 3 different arrays for x/y/z-components, 2-dimensional arrays (25,5)/(5,25), same B matrix for all 3 component arrays
 
@@ -579,9 +591,9 @@
   implicit none
 
   integer,intent(in) :: n1,n3
-  real(kind=CUSTOM_REAL),dimension(n1,5) :: A
-  real(kind=CUSTOM_REAL),dimension(5,n3) :: B1,B2,B3
-  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
+  real(kind=CUSTOM_REAL),dimension(n1,5),intent(in) :: A
+  real(kind=CUSTOM_REAL),dimension(5,n3),intent(in) :: B1,B2,B3
+  real(kind=CUSTOM_REAL),dimension(n1,n3),intent(out) :: C1,C2,C3
 
   ! local parameters
   integer :: i,j
@@ -614,7 +626,7 @@
 
 !--------------------------------------------------------------------------------------------
 
-  subroutine mxm5_3comp_singleB(A1,A2,A3,n1,B,C1,C2,C3,n3)
+  pure subroutine mxm5_3comp_singleB(A1,A2,A3,n1,B,C1,C2,C3,n3)
 
 ! 3 different arrays for x/y/z-components, 2-dimensional arrays (25,5)/(5,25), same B matrix for all 3 component arrays
 
@@ -623,9 +635,9 @@
   implicit none
 
   integer,intent(in) :: n1,n3
-  real(kind=CUSTOM_REAL),dimension(n1,5) :: A1,A2,A3
-  real(kind=CUSTOM_REAL),dimension(5,n3) :: B
-  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
+  real(kind=CUSTOM_REAL),dimension(n1,5),intent(in) :: A1,A2,A3
+  real(kind=CUSTOM_REAL),dimension(5,n3),intent(in) :: B
+  real(kind=CUSTOM_REAL),dimension(n1,n3),intent(out) :: C1,C2,C3
 
   ! local parameters
   integer :: i,j
@@ -658,7 +670,7 @@
 
 !--------------------------------------------------------------------------------------------
 
-  subroutine mxm5_3comp_3dmat_singleB(A1,A2,A3,n1,B,n2,C1,C2,C3,n3)
+  pure subroutine mxm5_3comp_3dmat_singleB(A1,A2,A3,n1,B,n2,C1,C2,C3,n3)
 
 ! 3 different arrays for x/y/z-components, 3-dimensional arrays (5,5,5), same B matrix for all 3 component arrays
 
@@ -667,9 +679,9 @@
   implicit none
 
   integer,intent(in) :: n1,n2,n3
-  real(kind=CUSTOM_REAL),dimension(n1,5,n3) :: A1,A2,A3
-  real(kind=CUSTOM_REAL),dimension(5,n2) :: B
-  real(kind=CUSTOM_REAL),dimension(n1,n2,n3) :: C1,C2,C3
+  real(kind=CUSTOM_REAL),dimension(n1,5,n3),intent(in) :: A1,A2,A3
+  real(kind=CUSTOM_REAL),dimension(5,n2),intent(in) :: B
+  real(kind=CUSTOM_REAL),dimension(n1,n2,n3),intent(out) :: C1,C2,C3
 
   ! local parameters
   integer :: i,j,k
@@ -709,7 +721,7 @@
 !--------------------------------------------------------------------------------------------
 !
 
-  subroutine compute_element_strain_att_noDev(ispec,nglob,nspec, &
+  pure subroutine compute_element_strain_att_noDev(ispec,nglob,nspec, &
                                               displ,veloc,deltat, &
                                               ibool, &
                                               hprime_xx,hprime_yy,hprime_zz, &
@@ -725,29 +737,29 @@
 
   implicit none
 
-  integer :: ispec,nglob,nspec
-  real(kind=CUSTOM_REAL) :: deltat
+  integer,intent(in) :: ispec,nglob,nspec
+  real(kind=CUSTOM_REAL),intent(in) :: deltat
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,nglob) :: displ,veloc
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(in) :: displ,veloc
 
-  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
+  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
 
   ! array with derivatives of Lagrange polynomials and precalculated products
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX),intent(in) :: hprime_xx
   real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLY),intent(in) :: hprime_yy
   real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ),intent(in) :: hprime_zz
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: &
         xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: epsilondev_xx_loc_nplus1
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: epsilondev_yy_loc_nplus1
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: epsilondev_xy_loc_nplus1
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: epsilondev_xz_loc_nplus1
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: epsilondev_yz_loc_nplus1
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(inout) :: epsilondev_xx_loc_nplus1
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(inout) :: epsilondev_yy_loc_nplus1
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(inout) :: epsilondev_xy_loc_nplus1
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(inout) :: epsilondev_xz_loc_nplus1
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(inout) :: epsilondev_yz_loc_nplus1
 
-  integer :: NSPEC_STRAIN_ONLY
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY) :: eps_trace_over_3_loc_nplus1
+  integer,intent(in) :: NSPEC_STRAIN_ONLY
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY),intent(inout) :: eps_trace_over_3_loc_nplus1
 
   ! local variable
   integer :: i,j,k,l,iglob
@@ -858,3 +870,4 @@
 
   end subroutine compute_element_strain_att_noDev
 
+end module mod_element_strain

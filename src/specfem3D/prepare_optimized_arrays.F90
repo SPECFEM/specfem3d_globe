@@ -450,6 +450,8 @@
   integer :: i,j,k
 #endif
   double precision :: sizeval
+  ! for jacobian test
+  real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
 
   ! fused array only needed for compute forces in crust/mantle (Deville routine)
   if (USE_DEVILLE_PRODUCTS_VAL) then
@@ -470,7 +472,8 @@
 
     ! crust/mantle
     ! allocates fused array
-    allocate(deriv_mapping_crust_mantle(9,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
+    ! (using padding w/ size 16)
+    allocate(deriv_mapping_crust_mantle(10,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
     if (ier /= 0) stop 'Error allocating array deriv_mapping_crust_mantle'
     deriv_mapping_crust_mantle(:,:,:,:,:) = 0.0_CUSTOM_REAL
 
@@ -479,15 +482,35 @@
 
       DO_LOOP_IJK
 
-        deriv_mapping_crust_mantle(1,INDEX_IJK,ispec) = xix_crust_mantle(INDEX_IJK,ispec)
-        deriv_mapping_crust_mantle(2,INDEX_IJK,ispec) = xiy_crust_mantle(INDEX_IJK,ispec)
-        deriv_mapping_crust_mantle(3,INDEX_IJK,ispec) = xiz_crust_mantle(INDEX_IJK,ispec)
-        deriv_mapping_crust_mantle(4,INDEX_IJK,ispec) = etax_crust_mantle(INDEX_IJK,ispec)
-        deriv_mapping_crust_mantle(5,INDEX_IJK,ispec) = etay_crust_mantle(INDEX_IJK,ispec)
-        deriv_mapping_crust_mantle(6,INDEX_IJK,ispec) = etaz_crust_mantle(INDEX_IJK,ispec)
-        deriv_mapping_crust_mantle(7,INDEX_IJK,ispec) = gammax_crust_mantle(INDEX_IJK,ispec)
-        deriv_mapping_crust_mantle(8,INDEX_IJK,ispec) = gammay_crust_mantle(INDEX_IJK,ispec)
-        deriv_mapping_crust_mantle(9,INDEX_IJK,ispec) = gammaz_crust_mantle(INDEX_IJK,ispec)
+        ! get derivatives of ux, uy and uz with respect to x, y and z
+        xixl = xix_crust_mantle(INDEX_IJK,ispec)
+        xiyl = xiy_crust_mantle(INDEX_IJK,ispec)
+        xizl = xiz_crust_mantle(INDEX_IJK,ispec)
+        etaxl = etax_crust_mantle(INDEX_IJK,ispec)
+        etayl = etay_crust_mantle(INDEX_IJK,ispec)
+        etazl = etaz_crust_mantle(INDEX_IJK,ispec)
+        gammaxl = gammax_crust_mantle(INDEX_IJK,ispec)
+        gammayl = gammay_crust_mantle(INDEX_IJK,ispec)
+        gammazl = gammaz_crust_mantle(INDEX_IJK,ispec)
+
+        ! compute the Jacobian
+        jacobianl = (xixl*(etayl*gammazl-etazl*gammayl) &
+                   - xiyl*(etaxl*gammazl-etazl*gammaxl) &
+                   + xizl*(etaxl*gammayl-etayl*gammaxl))
+
+        ! checks Jacobian
+        if (jacobianl <= 0.0_CUSTOM_REAL) stop 'Error invalid Jacobian in crust/mantle element'
+
+        deriv_mapping_crust_mantle(1,INDEX_IJK,ispec) = xixl
+        deriv_mapping_crust_mantle(2,INDEX_IJK,ispec) = xiyl
+        deriv_mapping_crust_mantle(3,INDEX_IJK,ispec) = xizl
+        deriv_mapping_crust_mantle(4,INDEX_IJK,ispec) = etaxl
+        deriv_mapping_crust_mantle(5,INDEX_IJK,ispec) = etayl
+        deriv_mapping_crust_mantle(6,INDEX_IJK,ispec) = etazl
+        deriv_mapping_crust_mantle(7,INDEX_IJK,ispec) = gammaxl
+        deriv_mapping_crust_mantle(8,INDEX_IJK,ispec) = gammayl
+        deriv_mapping_crust_mantle(9,INDEX_IJK,ispec) = gammazl
+        deriv_mapping_crust_mantle(10,INDEX_IJK,ispec) = 1.0_CUSTOM_REAL / jacobianl
 
       ENDDO_LOOP_IJK
 
@@ -495,7 +518,7 @@
 
     ! inner core
     ! allocates fused array
-    allocate(deriv_mapping_inner_core(9,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE),stat=ier)
+    allocate(deriv_mapping_inner_core(10,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE),stat=ier)
     if (ier /= 0) stop 'Error allocating array deriv_mapping_inner_core'
     deriv_mapping_inner_core(:,:,:,:,:) = 0.0_CUSTOM_REAL
 
@@ -504,15 +527,41 @@
 
       DO_LOOP_IJK
 
-        deriv_mapping_inner_core(1,INDEX_IJK,ispec) = xix_inner_core(INDEX_IJK,ispec)
-        deriv_mapping_inner_core(2,INDEX_IJK,ispec) = xiy_inner_core(INDEX_IJK,ispec)
-        deriv_mapping_inner_core(3,INDEX_IJK,ispec) = xiz_inner_core(INDEX_IJK,ispec)
-        deriv_mapping_inner_core(4,INDEX_IJK,ispec) = etax_inner_core(INDEX_IJK,ispec)
-        deriv_mapping_inner_core(5,INDEX_IJK,ispec) = etay_inner_core(INDEX_IJK,ispec)
-        deriv_mapping_inner_core(6,INDEX_IJK,ispec) = etaz_inner_core(INDEX_IJK,ispec)
-        deriv_mapping_inner_core(7,INDEX_IJK,ispec) = gammax_inner_core(INDEX_IJK,ispec)
-        deriv_mapping_inner_core(8,INDEX_IJK,ispec) = gammay_inner_core(INDEX_IJK,ispec)
-        deriv_mapping_inner_core(9,INDEX_IJK,ispec) = gammaz_inner_core(INDEX_IJK,ispec)
+        ! get derivatives of ux, uy and uz with respect to x, y and z
+        xixl = xix_inner_core(INDEX_IJK,ispec)
+        xiyl = xiy_inner_core(INDEX_IJK,ispec)
+        xizl = xiz_inner_core(INDEX_IJK,ispec)
+        etaxl = etax_inner_core(INDEX_IJK,ispec)
+        etayl = etay_inner_core(INDEX_IJK,ispec)
+        etazl = etaz_inner_core(INDEX_IJK,ispec)
+        gammaxl = gammax_inner_core(INDEX_IJK,ispec)
+        gammayl = gammay_inner_core(INDEX_IJK,ispec)
+        gammazl = gammaz_inner_core(INDEX_IJK,ispec)
+
+        ! checks Jacobian
+        ! (for fictitious elements, the Jacobian is not valid)
+        if (idoubling_inner_core(ispec) /= IFLAG_IN_FICTITIOUS_CUBE) then
+          ! compute the Jacobian
+          jacobianl = (xixl*(etayl*gammazl-etazl*gammayl) &
+                     - xiyl*(etaxl*gammazl-etazl*gammaxl) &
+                     + xizl*(etaxl*gammayl-etayl*gammaxl))
+
+          ! checks Jacobian
+          if (jacobianl <= 0.0_CUSTOM_REAL) stop 'Error invalid Jacobian in inner core element'
+        else
+          jacobianl = 1.0_CUSTOM_REAL
+        endif
+
+        deriv_mapping_inner_core(1,INDEX_IJK,ispec) = xixl
+        deriv_mapping_inner_core(2,INDEX_IJK,ispec) = xiyl
+        deriv_mapping_inner_core(3,INDEX_IJK,ispec) = xizl
+        deriv_mapping_inner_core(4,INDEX_IJK,ispec) = etaxl
+        deriv_mapping_inner_core(5,INDEX_IJK,ispec) = etayl
+        deriv_mapping_inner_core(6,INDEX_IJK,ispec) = etazl
+        deriv_mapping_inner_core(7,INDEX_IJK,ispec) = gammaxl
+        deriv_mapping_inner_core(8,INDEX_IJK,ispec) = gammayl
+        deriv_mapping_inner_core(9,INDEX_IJK,ispec) = gammazl
+        deriv_mapping_inner_core(10,INDEX_IJK,ispec) = 1.0_CUSTOM_REAL / jacobianl
 
       ENDDO_LOOP_IJK
 
@@ -520,7 +569,7 @@
 
     ! outer core
     ! allocates fused array
-    allocate(deriv_mapping_outer_core(9,NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE),stat=ier)
+    allocate(deriv_mapping_outer_core(10,NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE),stat=ier)
     if (ier /= 0) stop 'Error allocating array deriv_mapping_outer_core'
     deriv_mapping_outer_core(:,:,:,:,:) = 0.0_CUSTOM_REAL
 
@@ -529,15 +578,35 @@
 
       DO_LOOP_IJK
 
-        deriv_mapping_outer_core(1,INDEX_IJK,ispec) = xix_outer_core(INDEX_IJK,ispec)
-        deriv_mapping_outer_core(2,INDEX_IJK,ispec) = xiy_outer_core(INDEX_IJK,ispec)
-        deriv_mapping_outer_core(3,INDEX_IJK,ispec) = xiz_outer_core(INDEX_IJK,ispec)
-        deriv_mapping_outer_core(4,INDEX_IJK,ispec) = etax_outer_core(INDEX_IJK,ispec)
-        deriv_mapping_outer_core(5,INDEX_IJK,ispec) = etay_outer_core(INDEX_IJK,ispec)
-        deriv_mapping_outer_core(6,INDEX_IJK,ispec) = etaz_outer_core(INDEX_IJK,ispec)
-        deriv_mapping_outer_core(7,INDEX_IJK,ispec) = gammax_outer_core(INDEX_IJK,ispec)
-        deriv_mapping_outer_core(8,INDEX_IJK,ispec) = gammay_outer_core(INDEX_IJK,ispec)
-        deriv_mapping_outer_core(9,INDEX_IJK,ispec) = gammaz_outer_core(INDEX_IJK,ispec)
+        ! get derivatives of ux, uy and uz with respect to x, y and z
+        xixl = xix_outer_core(INDEX_IJK,ispec)
+        xiyl = xiy_outer_core(INDEX_IJK,ispec)
+        xizl = xiz_outer_core(INDEX_IJK,ispec)
+        etaxl = etax_outer_core(INDEX_IJK,ispec)
+        etayl = etay_outer_core(INDEX_IJK,ispec)
+        etazl = etaz_outer_core(INDEX_IJK,ispec)
+        gammaxl = gammax_outer_core(INDEX_IJK,ispec)
+        gammayl = gammay_outer_core(INDEX_IJK,ispec)
+        gammazl = gammaz_outer_core(INDEX_IJK,ispec)
+
+        ! compute the Jacobian
+        jacobianl = (xixl*(etayl*gammazl-etazl*gammayl) &
+                   - xiyl*(etaxl*gammazl-etazl*gammaxl) &
+                   + xizl*(etaxl*gammayl-etayl*gammaxl))
+
+        ! checks Jacobian
+        if (jacobianl <= 0.0_CUSTOM_REAL) stop 'Error invalid Jacobian in outer core element'
+
+        deriv_mapping_outer_core(1,INDEX_IJK,ispec) = xixl
+        deriv_mapping_outer_core(2,INDEX_IJK,ispec) = xiyl
+        deriv_mapping_outer_core(3,INDEX_IJK,ispec) = xizl
+        deriv_mapping_outer_core(4,INDEX_IJK,ispec) = etaxl
+        deriv_mapping_outer_core(5,INDEX_IJK,ispec) = etayl
+        deriv_mapping_outer_core(6,INDEX_IJK,ispec) = etazl
+        deriv_mapping_outer_core(7,INDEX_IJK,ispec) = gammaxl
+        deriv_mapping_outer_core(8,INDEX_IJK,ispec) = gammayl
+        deriv_mapping_outer_core(9,INDEX_IJK,ispec) = gammazl
+        deriv_mapping_outer_core(10,INDEX_IJK,ispec) = 1.0_CUSTOM_REAL / jacobianl
 
       ENDDO_LOOP_IJK
 

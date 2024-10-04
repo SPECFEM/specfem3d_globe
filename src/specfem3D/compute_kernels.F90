@@ -77,6 +77,9 @@
 
   use specfem_par_crustmantle
 
+  ! element compute routines
+  use mod_element_strain, only: compute_element_strain_undoatt_Dev,compute_element_strain_undoatt_noDev
+
   implicit none
 
   ! local parameters
@@ -704,6 +707,9 @@
     hprime_xx,hprime_xxT,hprime_yy,hprime_zz
 
   use specfem_par_innercore
+
+  ! element compute routines
+  use mod_element_strain, only: compute_element_strain_undoatt_Dev,compute_element_strain_undoatt_noDev
 
   implicit none
 

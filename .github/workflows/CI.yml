@@ -147,7 +147,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-latest,ubuntu-20.04]
+        os: [ubuntu-latest,ubuntu-22.04]
 
     steps:
     - uses: actions/checkout@v4
@@ -164,8 +164,8 @@ jobs:
 
 
   linuxCheck-Intel:
-    name: Test Intel on ubuntu-20.04
-    runs-on: ubuntu-20.04
+    name: Test Intel on ubuntu-22.04
+    runs-on: ubuntu-22.04
     needs: changesCheck
 
     steps:
@@ -173,7 +173,7 @@ jobs:
 
     - name: Cache Intel oneapi packages
       id: cache-intel-oneapi
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: /opt/intel/oneapi
         key: install-${{ runner.os }}-all

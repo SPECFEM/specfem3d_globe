@@ -65,16 +65,21 @@
   use specfem_par_full_gravity, only: &
     gravity_rho => gravity_rho_inner_core
 
+  ! element compute routines
+  use mod_element, only: compute_element_add_full_gravity
+
+  use mod_element_att, only: compute_element_att_memory_ic,compute_element_att_memory_ic_lddrk
+
   implicit none
 
-  integer :: NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT
+  integer,intent(in) :: NSPEC_STR_OR_ATT,NGLOB,NSPEC_ATT
 
   ! time step
-  real(kind=CUSTOM_REAL) deltat
+  real(kind=CUSTOM_REAL),intent(in) :: deltat
 
   ! displacement, velocity and acceleration
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: displ_inner_core
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: accel_inner_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB),intent(in) :: displ_inner_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB),intent(inout) :: accel_inner_core
 
   ! for attenuation
   ! memory variables R_ij are stored at the local rather than global level
@@ -82,19 +87,19 @@
   ! variable lengths for factor_common and one_minus_sum_beta
 
   ! variable sized array variables
-  integer :: vnspec
-  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,vnspec) :: factor_common
-  real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
+  integer,intent(in) :: vnspec
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,vnspec),intent(in) :: factor_common
+  real(kind=CUSTOM_REAL), dimension(N_SLS),intent(in) :: alphaval,betaval,gammaval
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATT) :: R_xx,R_yy,R_xy,R_xz,R_yz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATT),intent(inout) :: R_xx,R_yy,R_xy,R_xz,R_yz
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATT) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATT),intent(inout) :: &
     R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STR_OR_ATT) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STR_OR_ATT),intent(inout) :: &
     epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN_ONLY) :: epsilon_trace_over_3
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN_ONLY),intent(inout) :: epsilon_trace_over_3
 
   ! inner/outer element run flag
   integer,intent(in) :: iphase
@@ -143,7 +148,7 @@
   real(kind=CUSTOM_REAL) sigma_yx,sigma_zx,sigma_zy
 
   ! full gravity
-  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ) :: deriv_loc
+  real(kind=CUSTOM_REAL), dimension(10,NGLLX,NGLLY,NGLLZ) :: deriv_loc
 
 !  integer :: computed_elements
   integer :: num_elements,ispec_p
@@ -221,6 +226,11 @@
             gammayl = gammay(i,j,k,ispec)
             gammazl = gammaz(i,j,k,ispec)
 
+            ! compute the Jacobian
+            jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
+                          - xiyl*(etaxl*gammazl-etazl*gammaxl) &
+                          + xizl*(etaxl*gammayl-etayl*gammaxl))
+
             ! full gravity
             if (FULL_GRAVITY_VAL .and. .not. DISCARD_GCONTRIB) then
               ! note: deriv_mapping_inner_core is only available when chosen to use Deville routines
@@ -234,12 +244,8 @@
               deriv_loc(7,i,j,k) = gammaxl
               deriv_loc(8,i,j,k) = gammayl
               deriv_loc(9,i,j,k) = gammazl
+              deriv_loc(10,i,j,k) = jacobianl
             endif
-
-            ! compute the Jacobian
-            jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
-                          - xiyl*(etaxl*gammazl-etazl*gammaxl) &
-                          + xizl*(etaxl*gammayl-etayl*gammaxl))
 
             duxdxl = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
             duxdyl = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
@@ -434,8 +440,8 @@
 
       ! full gravity
       if (FULL_GRAVITY_VAL .and. .not. DISCARD_GCONTRIB) then
-        call SIEM_solve_element_add_full_gravity(ispec,NSPEC_INNER_CORE,NGLOB,gravity_rho,deriv_loc,ibool, &
-                                                 pgrav_inner_core,rho_s_H)
+        call compute_element_add_full_gravity(ispec,NSPEC_INNER_CORE,NGLOB,gravity_rho,deriv_loc,ibool, &
+                                              pgrav_inner_core,rho_s_H)
       endif
 
       do k = 1,NGLLZ

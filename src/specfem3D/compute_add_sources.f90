@@ -537,7 +537,7 @@
     ! moment-tensor
     ! Heaviside source time function
     if (USE_MONOCHROMATIC_CMT_SOURCE) then
-      f0 = 1.d0 / hdur(isource) ! using half duration as a FREQUENCY just to avoid changing CMTSOLUTION file format
+      f0 = 1.d0 / hdur(isource) ! using half duration as a PERIOD just to avoid changing CMTSOLUTION file format
       stf = comp_source_time_function_mono(time_source_dble,f0)
     else
       stf = comp_source_time_function(time_source_dble,hdur_Gaussian(isource),it_index)

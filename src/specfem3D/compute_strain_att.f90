@@ -37,6 +37,9 @@
   use specfem_par_crustmantle
   use specfem_par_innercore
 
+  ! element compute routines
+  use mod_element_strain, only: compute_element_strain_att_Dev,compute_element_strain_att_noDev
+
   implicit none
   ! local parameters
   integer :: ispec
@@ -133,6 +136,9 @@
   use specfem_par
   use specfem_par_crustmantle
   use specfem_par_innercore
+
+  ! element compute routines
+  use mod_element_strain, only: compute_element_strain_att_Dev,compute_element_strain_att_noDev
 
   implicit none
 
