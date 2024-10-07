@@ -270,33 +270,25 @@
     NDIM,NGLLX,NGLLY,NGLLZ,MIDX,MIDY,MIDZ,IMAIN, &
     USE_DISTANCE_CRITERION
 
-  use shared_parameters, only: R_PLANET_KM
-
   use specfem_par, only: &
     myrank, &
-    nspec => NSPEC_CRUST_MANTLE
+    nspec => NSPEC_CRUST_MANTLE, &
+    nglob => NGLOB_CRUST_MANTLE
 
   use specfem_par_crustmantle, only: &
     ibool => ibool_crust_mantle, &
     xstore => xstore_crust_mantle,ystore => ystore_crust_mantle,zstore => zstore_crust_mantle
 
   ! for point search
-  use specfem_par, only: element_size,typical_size_squared,xyz_midpoints, &
-    xadj,adjncy,num_neighbors_all
-
-  use kdtree_search, only: kdtree_setup,kdtree_delete, &
-    kdtree_nodes_location,kdtree_nodes_index,kdtree_num_nodes, &
-    kdtree_count_nearest_n_neighbors,kdtree_get_nearest_n_neighbors, &
-    kdtree_search_index,kdtree_search_num_nodes
+  use specfem_par, only: xadj,adjncy,num_neighbors_all
 
   implicit none
-  integer :: num_neighbors,num_neighbors_max
 
-  integer,dimension(8) :: iglob_corner,iglob_corner2
-  integer :: ispec_ref,ispec,iglob,icorner,ier !,jj
+  ! local parameters
+  ! maximum number of neighbors
+  integer,parameter :: MAX_NEIGHBORS = 50   ! maximum number of neighbors (around 37 should be sufficient for crust/mantle)
 
   ! temporary
-  integer,parameter :: MAX_NEIGHBORS = 50   ! maximum number of neighbors (around 37 should be sufficient for crust/mantle)
   integer,dimension(:),allocatable :: tmp_adjncy ! temporary adjacency
   integer :: inum_neighbor
 
@@ -304,20 +296,22 @@
   double precision :: time1,tCPU
   double precision, external :: wtime
 
-  ! kd-tree search
-  integer :: ielem,inodes
-  integer :: nsearch_points
-  integer :: num_elements,num_elements_max
-  integer :: ielem_counter,num_elements_actual_max
-  !integer, parameter :: max_search_points = 2000
-
-  double precision :: r_search
-  double precision :: xyz_target(NDIM)
-  double precision :: dist_squared,dist_squared_max
-
+  integer :: num_neighbors,num_neighbors_max
+  integer :: num_elements_max
+  integer :: ispec_ref,ispec,iglob,ier,icorner
+  integer :: ielem,ii,jj
   logical :: is_neighbor
-  logical,parameter :: DO_BRUTE_FORCE_SEARCH = .false.
 
+  ! for all the elements in contact with the reference element
+  integer, dimension(:,:), allocatable :: ibool_corner
+
+  ! Node-to-element reverse lookup
+  integer, dimension(:,:), allocatable :: node_to_elem
+  integer, dimension(:), allocatable :: node_to_elem_count
+  integer :: icount
+  integer, dimension(MAX_NEIGHBORS) :: elem_neighbors            ! direct neighbors
+
+  ! user output
   if (myrank == 0) then
     write(IMAIN,*) 'adjacency:'
     write(IMAIN,*) '  total number of elements in this slice = ',nspec
@@ -339,243 +333,180 @@
   !  enddo
   allocate(xadj(nspec + 1),stat=ier)
   if (ier /= 0) stop 'Error allocating xadj'
+  xadj(:) = 0
+
+  ! temporary helper array
   allocate(tmp_adjncy(MAX_NEIGHBORS*nspec),stat=ier)
   if (ier /= 0) stop 'Error allocating tmp_adjncy'
-  xadj(:) = 0
   tmp_adjncy(:) = 0
 
-  ! kd-tree search
-  if (.not. DO_BRUTE_FORCE_SEARCH) then
-    ! kd-tree search
+  ! since we only need to check corner points for the adjacency,
+  ! we build an extra ibool array with corner points only for faster accessing
+  allocate(ibool_corner(8,nspec),stat=ier)
+  if (ier /= 0) stop 'Error allocating ibool_corner array'
+  ibool_corner(:,:) = 0
+  do ispec = 1,nspec
+    ibool_corner(1,ispec) = ibool(1,1,1,ispec)
+    ibool_corner(2,ispec) = ibool(NGLLX,1,1,ispec)
+    ibool_corner(3,ispec) = ibool(NGLLX,NGLLY,1,ispec)
+    ibool_corner(4,ispec) = ibool(1,NGLLY,1,ispec)
 
-    ! search radius around element midpoints
-    !
-    ! note: typical search size is using 10 times the size of a surface element;
-    !       we take here 6 times the surface element size
-    !       - since at low resolutions NEX < 64 and large element sizes, this search radius needs to be large enough, and,
-    !       - due to doubling layers (elements at depth will become bigger, however radius shrinks)
-    !
-    !       the search radius r_search given as routine argument must be non-squared
-    r_search = 6.0 * element_size
+    ibool_corner(5,ispec) = ibool(1,1,NGLLZ,ispec)
+    ibool_corner(6,ispec) = ibool(NGLLX,1,NGLLZ,ispec)
+    ibool_corner(7,ispec) = ibool(NGLLX,NGLLY,NGLLZ,ispec)
+    ibool_corner(8,ispec) = ibool(1,NGLLY,NGLLZ,ispec)
+  enddo
 
-    ! user output
-    if (myrank == 0) then
-      write(IMAIN,*) '  using kd-tree search radius = ',r_search * R_PLANET_KM,'(km)'
-      write(IMAIN,*)
-      call flush_IMAIN()
-    endif
+  ! setups node-to-element mapping counter
+  allocate(node_to_elem_count(nglob),stat=ier)
+  if (ier /= 0) stop 'Error allocating node_to_elem_count arrays'
+  node_to_elem_count(:) = 0
+  num_elements_max = 0
+  ! determines maximum count per node
+  do ispec = 1,nspec
+    ! only corner nodes used to check for shared nodes (conforming mesh)
+    do icorner = 1,8
+      iglob = ibool_corner(icorner,ispec)
 
-    ! kd-tree setup for adjacency search
-    !
-    ! uses only element midpoint location
-    kdtree_num_nodes = nspec
+      ! add to mapping
+      icount = node_to_elem_count(iglob) + 1
 
-    ! allocates tree arrays
-    allocate(kdtree_nodes_location(NDIM,kdtree_num_nodes),stat=ier)
-    if (ier /= 0) stop 'Error allocating kdtree_nodes_location arrays'
-    allocate(kdtree_nodes_index(kdtree_num_nodes),stat=ier)
-    if (ier /= 0) stop 'Error allocating kdtree_nodes_index arrays'
+      ! gets maximum of elements sharing node
+      if (icount > num_elements_max) num_elements_max = icount
 
-    ! prepares search arrays, each element takes its internal GLL points for tree search
-    kdtree_nodes_index(:) = 0
-    kdtree_nodes_location(:,:) = 0.0
-    ! adds tree nodes
-    inodes = 0
-    do ispec = 1,nspec
-      ! sets up tree nodes
-      iglob = ibool(MIDX,MIDY,MIDZ,ispec)
-
-      ! counts nodes
-      inodes = inodes + 1
-      if (inodes > kdtree_num_nodes ) stop 'Error index inodes bigger than kdtree_num_nodes'
-
-      ! adds node index (index points to same ispec for all internal GLL points)
-      kdtree_nodes_index(inodes) = ispec
-
-      ! adds node location
-      kdtree_nodes_location(1,inodes) = xstore(iglob)
-      kdtree_nodes_location(2,inodes) = ystore(iglob)
-      kdtree_nodes_location(3,inodes) = zstore(iglob)
+      ! updates count
+      node_to_elem_count(iglob) = icount
     enddo
-    if (inodes /= kdtree_num_nodes ) stop 'Error index inodes does not match nnodes_local'
+  enddo
 
-    ! alternative: to avoid allocating/deallocating search index arrays, though there is hardly a speedup
-    !allocate(kdtree_search_index(max_search_points),stat=ier)
-    !if (ier /= 0) stop 'Error allocating array kdtree_search_index'
-
-    ! creates kd-tree for searching
-    call kdtree_setup()
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  maximum number of elements per shared node      = ',num_elements_max
+    write(IMAIN,*) '  node-to-element array memory required per slice = ', &
+                                (num_elements_max * nglob * 4)/1024./1024.,"(MB)"
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
-  ! gets maximum number of neighbors
-  inum_neighbor = 0
-  num_neighbors_max = 0
-  num_neighbors_all = 0
+  ! Node-to-element reverse lookup
+  allocate(node_to_elem(num_elements_max,nglob),stat=ier)
+  if (ier /= 0) stop 'Error allocating node_to_elem arrays'
+  node_to_elem(:,:) = -1
+  node_to_elem_count(:) = 0
 
-  num_elements_max = 0
-  num_elements_actual_max = 0
-  dist_squared_max = 0.d0
+  do ispec = 1,nspec
+    ! only corner nodes used to check for shared nodes (conforming mesh)
+    do icorner = 1,8
+      iglob = ibool_corner(icorner,ispec)
+
+      ! add to mapping
+      icount = node_to_elem_count(iglob) + 1
+
+      ! adds entry to mapping array
+      node_to_elem_count(iglob) = icount
+      node_to_elem(icount,iglob) = ispec
+    enddo
+  enddo
+
+  ! gets maximum number of neighbors
+  inum_neighbor = 0       ! counts total number of neighbors added
+
+  ! stats
+  num_neighbors_max = 0
 
   do ispec_ref = 1,nspec
-    ! the eight corners of the current element
-    iglob_corner(1) = ibool(1,1,1,ispec_ref)
-    iglob_corner(2) = ibool(NGLLX,1,1,ispec_ref)
-    iglob_corner(3) = ibool(NGLLX,NGLLY,1,ispec_ref)
-    iglob_corner(4) = ibool(1,NGLLY,1,ispec_ref)
-    iglob_corner(5) = ibool(1,1,NGLLZ,ispec_ref)
-    iglob_corner(6) = ibool(NGLLX,1,NGLLZ,ispec_ref)
-    iglob_corner(7) = ibool(NGLLX,NGLLY,NGLLZ,ispec_ref)
-    iglob_corner(8) = ibool(1,NGLLY,NGLLZ,ispec_ref)
-
-    ! midpoint for search radius
-    iglob = ibool(MIDX,MIDY,MIDZ,ispec_ref)
-    xyz_target(1) = xstore(iglob)
-    xyz_target(2) = ystore(iglob)
-    xyz_target(3) = zstore(iglob)
-
-    if (DO_BRUTE_FORCE_SEARCH) then
-      ! loops over all other elements to find closest neighbors
-      num_elements = nspec
-    else
-      ! looks only at elements in kd-tree search radius
-
-      ! gets number of tree points within search radius
-      ! (within search sphere)
-      call kdtree_count_nearest_n_neighbors(xyz_target,r_search,nsearch_points)
-
-      ! debug
-      !print *,'  total number of search elements: ',nsearch_points,'ispec',ispec_ref
-
-      ! alternative: limits search results
-      !if (nsearch_points > max_search_points) nsearch_points = max_search_points
-
-      ! sets number of search nodes to get
-      kdtree_search_num_nodes = nsearch_points
-
-      ! allocates search index
-      allocate(kdtree_search_index(kdtree_search_num_nodes),stat=ier)
-      if (ier /= 0) stop 'Error allocating array kdtree_search_index'
-
-      ! gets closest n points around target (within search sphere)
-      call kdtree_get_nearest_n_neighbors(xyz_target,r_search,nsearch_points)
-
-      ! loops over search radius
-      num_elements = nsearch_points
-    endif
-
-    ! statistics
-    if (num_elements > num_elements_max) num_elements_max = num_elements
-    ielem_counter = 0
-
-    ! counts number of neighbors
+    ! counts number of neighbors (for this element)
     num_neighbors = 0
+    elem_neighbors(:) = 0
 
-    do ielem = 1,num_elements
+    ! only corner nodes used to check for shared nodes (conforming mesh)
+    do icorner = 1,8
+      iglob = ibool_corner(icorner,ispec_ref)
 
-      ! gets element index
-      if (DO_BRUTE_FORCE_SEARCH) then
-        ispec = ielem
-      else
-        ! kd-tree search radius
-        ! gets search point/element index
-        ispec = kdtree_search_index(ielem)
-        ! checks index
-        if (ispec < 1 .or. ispec > nspec) stop 'Error element index is invalid'
-      endif
+      ! loops over all other elements to add neighbors
+      do ielem = 1,node_to_elem_count(iglob)
+        ispec = node_to_elem(ielem,iglob)
 
-      ! skip reference element
-      if (ispec == ispec_ref) cycle
+        ! skip reference element
+        if (ispec == ispec_ref) cycle
 
-      ! distance to reference element
-      dist_squared = (xyz_target(1) - xyz_midpoints(1,ispec))*(xyz_target(1) - xyz_midpoints(1,ispec)) &
-                   + (xyz_target(2) - xyz_midpoints(2,ispec))*(xyz_target(2) - xyz_midpoints(2,ispec)) &
-                   + (xyz_target(3) - xyz_midpoints(3,ispec))*(xyz_target(3) - xyz_midpoints(3,ispec))
+        ! checks if it is a new neighbor element
+        is_neighbor = .false.
 
-      ! exclude elements that are too far from target
-      if (USE_DISTANCE_CRITERION) then
-        !  we compare squared distances instead of distances themselves to significantly speed up calculations
-        if (dist_squared > typical_size_squared) cycle
-      endif
-
-      ielem_counter = ielem_counter + 1
-
-      ! checks if element has a corner iglob from reference element
-      is_neighbor = .false.
-
-      iglob_corner2(1) = ibool(1,1,1,ispec)
-      iglob_corner2(2) = ibool(NGLLX,1,1,ispec)
-      iglob_corner2(3) = ibool(NGLLX,NGLLY,1,ispec)
-      iglob_corner2(4) = ibool(1,NGLLY,1,ispec)
-      iglob_corner2(5) = ibool(1,1,NGLLZ,ispec)
-      iglob_corner2(6) = ibool(NGLLX,1,NGLLZ,ispec)
-      iglob_corner2(7) = ibool(NGLLX,NGLLY,NGLLZ,ispec)
-      iglob_corner2(8) = ibool(1,NGLLY,NGLLZ,ispec)
-
-      do icorner = 1,8
-        ! checks if corner also has reference element
-        if (any(iglob_corner(:) == iglob_corner2(icorner))) then
+        ! checks if first element
+        if (num_neighbors == 0) then
           is_neighbor = .true.
-          exit
+        else
+          ! check if not added to list yet
+          if (.not. any(elem_neighbors(1:num_neighbors) == ispec)) then
+            is_neighbor = .true.
+          endif
         endif
-        ! alternative: (slightly slower with 12.4s compared to 11.4s with any() intrinsic function)
-        !do jj = 1,8
-        !  if (iglob == iglob_corner(jj)) then
-        !    is_neighbor = .true.
-        !    exit
-        !  endif
-        !enddo
-        !if (is_neighbor) exit
+
+        ! adds as neighbor
+        if (is_neighbor) then
+          ! store neighbor elements
+          num_neighbors = num_neighbors + 1
+
+          ! check
+          if (num_neighbors > MAX_NEIGHBORS) stop 'Error maximum of neighbors (direct) exceeded'
+
+          ! store element
+          elem_neighbors(num_neighbors) = ispec
+        endif
       enddo
-
-      ! counts neighbors to reference element
-      if (is_neighbor) then
-        ! adds to adjacency
-        inum_neighbor = inum_neighbor + 1
-        ! checks
-        if (inum_neighbor > MAX_NEIGHBORS*nspec) stop 'Error maximum neighbors exceeded'
-        ! adds element
-        tmp_adjncy(inum_neighbor) = ispec
-
-        ! for statistics
-        num_neighbors = num_neighbors + 1
-
-        ! maximum distance to reference element
-        if (dist_squared > dist_squared_max) dist_squared_max = dist_squared
-      endif
-    enddo ! ielem
-
-    ! checks if neighbors were found
-    if (num_neighbors == 0) then
-      print *,'Error: rank ',myrank,' - element ',ispec_ref,'has no neighbors!'
-      print *,'  element midpoint location: ',xyz_target(:)*R_PLANET_KM
-      print *,'  typical element size     : ',element_size*R_PLANET_KM,'(km)'
-      print *,'  brute force search       : ',DO_BRUTE_FORCE_SEARCH
-      print *,'  distance criteria        : ',USE_DISTANCE_CRITERION
-      print *,'  typical search distance  : ',typical_size_squared*R_PLANET_KM,'(km)'
-      print *,'  kd-tree r_search         : ',r_search*R_PLANET_KM,'(km)'
-      print *,'  search elements          : ',num_elements
-      call exit_MPI(myrank,'Error adjacency invalid')
-    endif
+    enddo ! corners
 
     ! statistics
     if (num_neighbors > num_neighbors_max) num_neighbors_max = num_neighbors
-    if (ielem_counter > num_elements_actual_max) num_elements_actual_max = ielem_counter
+
+    ! store to temporary adjacency array
+    if (num_neighbors > 0) then
+      ! updates total count
+      inum_neighbor = inum_neighbor + num_neighbors
+
+      ! checks
+      if (inum_neighbor > MAX_NEIGHBORS * nspec) stop 'Error maximum of total neighbors exceeded'
+
+      ! adds to adjacency
+      tmp_adjncy(inum_neighbor-num_neighbors+1:inum_neighbor) = elem_neighbors(1:num_neighbors)
+    else
+      ! no neighbors
+      ! warning
+      print *,'*** Warning: found mesh element with no neighbors : slice ',myrank,' - element ',ispec_ref,' ***'
+    endif
 
     ! adjacency indexing
     xadj(ispec_ref + 1) = inum_neighbor
     ! how to use:
-    !num_neighbors = xadj(ispec+1)-xadj(ispec)
+    !num_neighbors = xadj(ispec+1) - xadj(ispec)
     !do i = 1,num_neighbors
     !  ! get neighbor
     !  ispec_neighbor = adjncy(xadj(ispec) + i)
     !enddo
 
-    ! frees kdtree search array
-    if (.not. DO_BRUTE_FORCE_SEARCH) then
-      deallocate(kdtree_search_index)
-    endif
-
   enddo ! ispec_ref
+
+  ! frees temporary array
+  deallocate(ibool_corner)
+  deallocate(node_to_elem,node_to_elem_count)
+
+  ! checks if neighbors were found
+  do ispec_ref = 1,nspec
+    ! gets number of neighbors
+    num_neighbors = xadj(ispec_ref+1) - xadj(ispec_ref)
+
+    ! element should have neighbors, otherwise mesh is probably invalid
+    if (num_neighbors == 0 .and. nspec > 1) then
+      ! midpoint
+      iglob = ibool(MIDX,MIDY,MIDZ,ispec_ref)
+      ! error info
+      print *,'Error: rank ',myrank,' - element ',ispec_ref,'has no neighbors!'
+      print *,'  element midpoint location: ',xstore(iglob),ystore(iglob),zstore(iglob)
+      print *,'  maximum search elements  : ',num_elements_max
+      call exit_MPI(myrank,'Error adjacency invalid')
+    endif
+  enddo
 
   ! total number of neighbors
   num_neighbors_all = inum_neighbor
@@ -587,36 +518,47 @@
   adjncy(1:num_neighbors_all) = tmp_adjncy(1:num_neighbors_all)
 
   ! checks
-  if (minval(adjncy(:)) < 1 .or. maxval(adjncy(:)) > nspec) stop 'Invalid adjncy array'
+  if (minval(adjncy(:)) < 1 .or. maxval(adjncy(:)) > nspec) then
+    print *,'Error: adjncy array invalid: slice ',myrank
+    print *,'       number of all neighbors = ',num_neighbors_all
+    print *,'       array min/max           = ',minval(adjncy(:)),'/',maxval(adjncy(:))
+    stop 'Invalid adjncy array'
+  endif
 
   ! frees temporary array
   deallocate(tmp_adjncy)
 
-  if (.not. DO_BRUTE_FORCE_SEARCH) then
-    ! frees current tree memory
-    ! deletes tree arrays
-    deallocate(kdtree_nodes_location)
-    deallocate(kdtree_nodes_index)
-    ! deletes search tree nodes
-    call kdtree_delete()
-  endif
+  ! checks neighbors for out-of-bounds indexing and duplicates
+  do ispec_ref = 1,nspec
+    ! loops over neighbors
+    num_neighbors = xadj(ispec_ref+1) - xadj(ispec_ref)
+    do ii = 1,num_neighbors
+      ! get neighbor entry
+      ielem = xadj(ispec_ref) + ii
+
+      ! checks entry index
+      if (ielem < 1 .or. ielem > num_neighbors_all) &
+        stop 'Invalid element index in neighbors xadj array'
+
+      ! get neighbor element
+      ispec = adjncy(ielem)
+
+      ! checks element index
+      if (ispec < 1 .or. ispec > nspec) &
+        stop 'Invalid ispec index in neighbors adjncy array'
+
+      ! loops over all other neighbors
+      do jj = ii+1,num_neighbors
+        ! checks for duplicate
+        if (adjncy(xadj(ispec_ref) + jj) == ispec) &
+          stop 'Invalid ispec duplicate found in neighbors adjncy array'
+      enddo
+    enddo
+  enddo
 
   if (myrank == 0) then
     ! elapsed time since beginning of neighbor detection
     tCPU = wtime() - time1
-    write(IMAIN,*) '  maximum search elements                                      = ',num_elements_max
-    write(IMAIN,*) '  maximum of actual search elements (after distance criterion) = ',num_elements_actual_max
-    write(IMAIN,*)
-    write(IMAIN,*) '  estimated typical element size at surface = ',element_size*R_PLANET_KM,'(km)'
-    write(IMAIN,*) '  maximum distance between neighbor centers = ',sqrt(dist_squared_max)*R_PLANET_KM,'(km)'
-    if (.not. DO_BRUTE_FORCE_SEARCH) then
-      if (sqrt(dist_squared_max) > r_search - 0.5*element_size) then
-          write(IMAIN,*) '***'
-          write(IMAIN,*) '*** Warning: consider increasing the kd-tree search radius to improve this neighbor setup ***'
-          write(IMAIN,*) '***'
-      endif
-    endif
-    write(IMAIN,*)
     write(IMAIN,*) '  maximum neighbors found per element = ',num_neighbors_max,'(should be 37 for globe meshes)'
     write(IMAIN,*) '  total number of neighbors           = ',num_neighbors_all
     write(IMAIN,*)

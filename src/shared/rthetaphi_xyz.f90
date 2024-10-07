@@ -455,7 +455,7 @@
 !   tan( PI/2 - theta ) = cot( theta ) = 1/tan(theta) = cos(theta)/sin(theta)
 !
 ! we find that the geographic colatitude (theta_prime) and geocentric colatitude (theta) relate as
-!   tan(theta_prime) = ( 1 - e**2 ) tan(theta)
+!   1/tan(theta) = ( 1 - e**2 ) 1/tan(theta_prime)
 !
 ! or using the latitude expressions from above, we have the geographic colatitude (theta_prime) as
 !   theta_prime = PI/2 - atan( 1/(1 - e**2) * 1/tan(theta) )
@@ -590,15 +590,37 @@
   ! (in case the input and output variable is the same, the compiler might do some weird things otherwise)
   double precision :: val
 
+  ! the geocentric latitude (lat) and geographic latitude (lat_prime) relate as
+  !   tan(lat) = (1 - e**2) * tan(lat_prime)
+  !
+  ! the geographic colatitude (theta_prime) and geocentric colatitude (theta) relate as
+  !   1/tan(theta) = ( 1 - e**2 ) 1/tan(theta_prime)
+  !
+  !   or
+  !   tan(theta_prime) = ( 1 - e**2 ) tan(theta)
+  !
+  !   since tan(lat) = tan(PI/2 - theta) = cot(theta) = 1/tan(theta) = cos(theta)/sin(theta)
+  !
+  !   with e**2 == 1 - (1-f)**2
+  !   the factor (1 - e**2) == (1 - (1 - (1-f)**2))
+  !                         == (1-f)**2
+  !
+  ! -> conversion from geocentric theta to geographic theta_prime:
+  !     theta_prime = atan( (1 - e**2) tan(theta) )
+  !                 = atan( (1 - f)**2 tan(theta) )    return range in [-PI/2,PI/2]
+  !
+  !                 = PI/2 - atan( 1/(1 - f)**2 * 1/tan(theta) )
+  !                 = PI/2 - atan( 1/(1 - f)**2 * cos(theta)/sin(theta) )  return range in [0,PI]
+  !                                                                        used here
+  !
+  ! note: instead of 1/tan(theta) we take cos(theta)/sin(theta) and avoid division by zero with max(TINYVAL,sin(theta))
+
   ! factor
   FACTOR_TAN = 1.d0 / ONE_MINUS_F_SQUARED
 
-  ! note: instead of 1/tan(theta) we take cos(theta)/sin(theta) and avoid division by zero
-
   if (.not. ASSUME_PERFECT_SPHERE) then
-    ! mesh is elliptical
     ! converts geocentric colatitude theta to geographic colatitude theta_prime
-    val = PI_OVER_TWO - datan(FACTOR_TAN*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
+    val = PI_OVER_TWO - datan(FACTOR_TAN * dcos(theta)/dmax1(TINYVAL,dsin(theta)))
   else
     ! mesh is spherical, thus geocentric and geographic colatitudes are identical
     val = theta
@@ -609,6 +631,78 @@
   theta_prime = val
 
   end subroutine geocentric_2_geographic_colat_dble
+
+!
+!------------------------------------------------------------------------------
+!
+
+  subroutine geographic_2_geocentric_colat(theta_prime,theta)
+
+! converts geographic colatitude (theta_prime) to geocentric colatitude (theta) (in radians)
+
+! the geocentric latitude (lat) and geographic latitude (lat_prime) relate as
+!   tan(lat) = (1 - e**2) * tan(lat_prime)           (1)
+!
+! the geographic colatitude (theta_prime) and geocentric colatitude (theta) relate as
+!   1/tan(theta) = ( 1 - e**2 ) 1/tan(theta_prime)   (2)
+!
+!   or
+!   tan(theta_prime) = ( 1 - e**2 ) tan(theta)
+!
+! thus,
+!   lat = atan( (1 - e**2) * 1/tan(theta_prime) )
+! and
+!   theta = PI/2 - atan( (1 - e**2) * 1/tan(theta_prime) )
+!
+!   since tan(lat_prime) = tan(PI/2 - theta_prime) = cot(theta_prime) = 1/tan(theta_prime) = cos(theta_prime)/sin(theta_prime)
+!         lat = PI/2 - theta
+!
+!   with e**2 == 1 - (1-f)**2
+!   the factor (1 - e**2) == (1 - (1 - (1-f)**2))
+!                         == (1-f)**2
+!
+! -> conversion from geographic theta_prime to geocentric theta:
+!     theta = atan( 1/(1 - e**2) tan(theta_prime) )
+!           = atan( 1/(1 - f)**2 tan(theta_prime) )
+!           = PI/2 - atan( (1 - f)**2 1/tan(theta_prime) )
+!           = PI/2 - atan( (1 - f)**2 cos(theta_prime)/sin(theta_prime) )
+
+  use constants, only: PI_OVER_TWO,TINYVAL,ASSUME_PERFECT_SPHERE
+  use shared_parameters, only: ONE_MINUS_F_SQUARED
+
+  implicit none
+
+  double precision,intent(in) :: theta_prime  ! geographic colatitude
+  double precision,intent(inout) :: theta     ! geocentric colatitude
+
+  ! note: september, 2014
+  ! factor: 1/(1 - e^2) = 1/(1 - (1 - (1-f)^2)) = 1/( (1-f)^2 )
+  !         with eccentricity e^2 = 1 - (1-f)^2
+  ! see about Earth flattening in constants.h: flattening factor changed to 1/299.8
+  !                                            f = 1/299.8 -> 1/( (1-f)^2 ) = 1.0067046409645724
+
+  ! temporary variable for theta_prime
+  ! (in case the input and output variable is the same, the compiler might do some weird things otherwise)
+  double precision :: val
+
+  if (.not. ASSUME_PERFECT_SPHERE) then
+    ! converts geographic colatitude theta_prime to geocentric colatitude theta
+    !
+    ! note: instead of 1/tan(theta_prime) we take cos(theta)/sin(theta) and avoid division by zero
+    !       range from atan is [-PI/2,PI/2], thus geocentric colatitude theta should always be within [0,PI]
+    val = PI_OVER_TWO - datan(ONE_MINUS_F_SQUARED * dcos(theta_prime)/dmax1(TINYVAL,dsin(theta_prime)))
+    !
+    ! or
+    !val = datan(1.d0/ONE_MINUS_F_SQUARED * tan(theta_prime))
+  else
+    ! mesh is spherical, thus geocentric and geographic colatitudes are identical
+    val = theta_prime
+  endif
+
+  ! return result
+  theta = val
+
+  end subroutine geographic_2_geocentric_colat
 
 !
 !------------------------------------------------------------------------------

@@ -703,7 +703,10 @@
     !
     ! note: in general, models here make use of perturbation values with respect to their
     !          corresponding 1-D reference models
-    if (MODEL_3D_MANTLE_PERTUBATIONS .and. r_prem > RCMB/R_PLANET .and. .not. suppress_mantle_extension) then
+    if (MODEL_3D_MANTLE_PERTUBATIONS &
+        .and. r_prem > RCMB/R_PLANET &
+        .and. .not. suppress_mantle_extension &
+        .and. .not. USE_1D_REFERENCE) then
 
       ! extend 3-D mantle model above the Moho to the surface before adding the crust
       if (r_prem > RCMB/R_PLANET .and. r_prem < RMOHO/R_PLANET) then
@@ -749,6 +752,7 @@
 
         case(THREE_D_MODEL_MANTLE_SH)
           ! full_sh model
+          ! gets lat/lon coordinates from geocentric theta/phi
           lat = (PI/2.0d0-theta)*180.0d0/PI
           lon = phi*180.0d0/PI
           if (lon > 180.0d0) lon = lon - 360.0d0
@@ -794,19 +798,11 @@
         case (THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI, &
               THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA)
           ! 3D Harvard models s362ani, s362wmani, s362ani_prem and s2.9ea
+          ! gets colat/lon coordinates from geocentric theta/phi
           xcolat = sngl(theta*180.0d0/PI)
           xlon = sngl(phi*180.0d0/PI)
           xrad = sngl(r_used*R_PLANET_KM)
           call model_s362ani_subshsv(xcolat,xlon,xrad,xdvsh,xdvsv,xdvph,xdvpv)
-
-          ! to use speed values from the 1D reference model but with 3D mesh variations
-          if (USE_1D_REFERENCE) then
-            ! sets all 3D variations in the mantle to zero
-            xdvpv = 0.d0
-            xdvph = 0.d0
-            xdvsv = 0.d0
-            xdvsh = 0.d0
-          endif
 
           if (TRANSVERSE_ISOTROPY) then
             ! tiso perturbation
@@ -852,7 +848,6 @@
 
         case (THREE_D_MODEL_SGLOBE,THREE_D_MODEL_SGLOBE_ISO)
           ! 3D SGLOBE-rani model (Chang)
-
           ! normally mantle perturbations are taken from 24.4km (R_MOHO) up.
           ! we need to add the if statement for sgloberani_iso or sgloberani_aniso to take from 50km up:
           if (r_prem > RCMB/R_PLANET .and. r_prem < 6321000.d0/R_PLANET) then
@@ -861,7 +856,6 @@
             ! this will then "extend the mantle up to the surface" from 50km depth
             r_used = 6321000.d0/R_PLANET
           endif
-
           call mantle_sglobe(r_used,theta,phi,vsv,vsh,dvsv,dvsh,dvp,drho)
 
           ! updates velocities from reference model
@@ -902,6 +896,7 @@
 
         case (THREE_D_MODEL_SPIRAL)
           ! SPiRaL v1.4 anisotropic model
+          ! gets lat/lon coordinates from geocentric theta/phi
           lat = (PI/2.0d0-theta)*180.0d0/PI
           lon = phi*180.0d0/PI
           ! input: lat in range [-90,90]; lon in range [-180,180]
@@ -938,7 +933,8 @@
     ! (based on density variations) on top of reference 3D model
     if (HETEROGEN_3D_MANTLE &
         .and. .not. suppress_mantle_extension &
-        .and. THREE_D_MODEL /= THREE_D_MODEL_HETEROGEN_PREM) then
+        .and. THREE_D_MODEL /= THREE_D_MODEL_HETEROGEN_PREM &
+        .and. .not. USE_1D_REFERENCE) then
       ! gets spherical coordinates of actual point location
       r_used = r
       ! adds hetergeneous perturbations (isotropic)
@@ -1199,7 +1195,6 @@
 
 ! returns velocities and density for points in 3D crustal region
 
-  use shared_parameters, only: ELLIPTICITY
   use meshfem_models_par
 
   implicit none
@@ -1218,7 +1213,6 @@
   double precision,intent(inout) :: moho,sediment
 
   ! local parameters
-  double precision :: lat,lon
   double precision :: vpvc,vphc,vsvc,vshc,etac
   double precision :: vpc,vsc,rhoc !vpc_eu
   double precision :: c11c,c12c,c13c,c14c,c15c,c16c,c22c,c23c,c24c,c25c,c26c, &
@@ -1230,13 +1224,6 @@
   ! checks if anything to do, that is, there is nothing to do
   ! for point radius smaller than deepest possible crust radius (~80 km depth)
   if (r < R_DEEPEST_CRUST) return
-
-  ! converts geocentric colatitude/lon (theta/phi) to geographic latitude/lon (lat/lon)
-  ! lat/lon in degrees (range lat/lon = [-90,90] / [-180,180]
-  call thetaphi_2_geographic_latlon_dble(theta,phi,lat,lon,ELLIPTICITY)
-
-  ! double-check lon in range [-180,180]
-  if (lon > 180.0d0 ) lon = lon - 360.0d0
 
 !---
 !
@@ -1260,14 +1247,14 @@
 
       if (.not. is_inside_region) then
         ! uses default crust outside of model region
-        call meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,sediment,found_crust,elem_in_crust,moho_only, &
+        call meshfem3D_model_crust(r,theta,phi,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,sediment,found_crust,elem_in_crust,moho_only, &
                                    c11c,c12c,c13c,c14c,c15c,c16c,c22c,c23c,c24c,c25c,c26c, &
                                    c33c,c34c,c35c,c36c,c44c,c45c,c46c,c55c,c56c,c66c)
       endif
 
     case default
       ! default crust
-      call meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,sediment,found_crust,elem_in_crust,moho_only, &
+      call meshfem3D_model_crust(r,theta,phi,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,sediment,found_crust,elem_in_crust,moho_only, &
                                  c11c,c12c,c13c,c14c,c15c,c16c,c22c,c23c,c24c,c25c,c26c, &
                                  c33c,c34c,c35c,c36c,c44c,c45c,c46c,c55c,c56c,c66c)
 
@@ -1358,20 +1345,21 @@
 !
 
 
-  subroutine meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc, &
+  subroutine meshfem3D_model_crust(r,theta,phi,vpvc,vphc,vsvc,vshc,etac,rhoc, &
                                    moho,sediment,found_crust,elem_in_crust,moho_only, &
                                    c11c,c12c,c13c,c14c,c15c,c16c,c22c,c23c,c24c,c25c,c26c, &
                                    c33c,c34c,c35c,c36c,c44c,c45c,c46c,c55c,c56c,c66c)
 
 ! returns velocity/density for default crust
 
+  use constants, only: USE_OLD_VERSION_FORMAT
   use meshfem_models_par
 
   implicit none
 
-  ! lat/lon  - in degrees (range lat/lon = [-90,90] / [-180,180]
   ! radius r - normalized by globe radius [0,1.x]
-  double precision,intent(in) :: lat,lon,r
+  ! theta/phi - geocentric coordinates
+  double precision,intent(in) :: r,theta,phi
 
   double precision,intent(out) :: vpvc,vphc,vsvc,vshc,etac,rhoc
   double precision,intent(out) :: moho,sediment
@@ -1380,6 +1368,7 @@
   double precision,intent(out) :: c11c,c12c,c13c,c14c,c15c,c16c,c22c,c23c,c24c,c25c,c26c, &
                                   c33c,c34c,c35c,c36c,c44c,c45c,c46c,c55c,c56c,c66c
   ! local parameters
+  double precision :: lat,lon
   ! for isotropic crust
   double precision :: vpc,vsc
   double precision :: vpc_area,vsc_area,rhoc_area,moho_area,sediment_area
@@ -1420,7 +1409,56 @@
 ! ADD YOUR MODEL HERE
 !
 !---
-  ! lat/lon range: [-90,90] / [-180,180]
+
+  ! note: Here we assume that the crustal models are defined with respect to geographic lat/lon positions.
+  !       This is different to mantle models, where we assume that those are referenced to a spherical Earth.
+  !
+  !       Geocentric and geographic colatitude (theta) are only identical for a spherical Earth.
+  !       Depending on the Par_file 'ELLIPTICITY' flag however, we will stretch out the spherical mesh after assigining
+  !       the model velocities.
+  !
+  !       Given we want to assign the crustal velocities at point (x/y/z geocentric) which then corresponds to the
+  !       coordinates (lat/lon geographic) in the final, stretched out mesh, we need to calculate the (lat/lon) position
+  !       from (theta/phi) with the ellipticity correction.
+  !
+  !       again, in other words (see comment in moho_stretching.f90):
+  !       "
+  !       the mesh here by default starts as a spherical mesh. the position (x/y/z) is thus a geocentric position
+  !       and we want to assign the velocity & depth of the resulting geographic (lat/lon) position after stretching.
+  !
+  !       we would have two options to achieve this:
+  !       (a) we convert first all the crustal model (lat/lon) positions to the geocentric (lat'/lon') ones
+  !           and then search for the corresponding geocentric (lat'/lon') position here.
+  !       (b) we calculate the geographic (lat/lon) for this geocentric point location (x/y/z) and then
+  !           search for the geographic (lat/lon) position in the original crustal model positions.
+  !       the implementation here follows option (b) to leave the crustal model in its original form.
+  !
+  !       thus, having the geocentric (x/y/z) position and its geocentric (lat'/lon') coordinate, we account here for the
+  !       ellipticity stretching afterwards to find the proper resulting geographic (lat/lon) coordinate
+  !       for which the crustal model is defined.
+  !       in case the mesh stays spherical (no ELLIPTICITY), the geocentric (lat'/lon') coordinates are identical
+  !       to geographic (lat/lon) coordinates and no correction is applied.
+  !
+  !       this assumes that the crustal models are given for geographic (lat/lon) positions and
+  !       not corrected geocentric (lat'/lon') positions.
+  !       "
+  !
+  !       TODO: we might want to re-visit this assumption.
+
+  if (USE_OLD_VERSION_FORMAT) then
+    ! lat/lon from geocentric position w/out geodetic correction
+    lat = (PI_OVER_TWO - theta) * RADIANS_TO_DEGREES
+    lon = phi * RADIANS_TO_DEGREES
+  else
+    ! converts geocentric colatitude/lon (theta/phi) to geographic latitude/lon (lat/lon)
+    ! lat/lon in degrees (range lat/lon = [-90,90] / [-180,180]
+    call thetaphi_2_geographic_latlon_dble(theta,phi,lat,lon,ELLIPTICITY)
+  endif
+
+  ! lat/lon in degrees (range lat/lon = [-90,90] / [-180,180]
+  ! double-check lon in range [-180,180]
+  if (lon >  180.d0) lon = lon - 360.0d0
+  if (lon < -180.d0) lon = lon + 360.0d0
 
   select case (REFERENCE_CRUSTAL_MODEL)
 
