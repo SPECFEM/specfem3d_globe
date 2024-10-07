@@ -703,7 +703,10 @@
     !
     ! note: in general, models here make use of perturbation values with respect to their
     !          corresponding 1-D reference models
-    if (MODEL_3D_MANTLE_PERTUBATIONS .and. r_prem > RCMB/R_PLANET .and. .not. suppress_mantle_extension) then
+    if (MODEL_3D_MANTLE_PERTUBATIONS &
+        .and. r_prem > RCMB/R_PLANET &
+        .and. .not. suppress_mantle_extension &
+        .and. .not. USE_1D_REFERENCE) then
 
       ! extend 3-D mantle model above the Moho to the surface before adding the crust
       if (r_prem > RCMB/R_PLANET .and. r_prem < RMOHO/R_PLANET) then
@@ -801,15 +804,6 @@
           xrad = sngl(r_used*R_PLANET_KM)
           call model_s362ani_subshsv(xcolat,xlon,xrad,xdvsh,xdvsv,xdvph,xdvpv)
 
-          ! to use speed values from the 1D reference model but with 3D mesh variations
-          if (USE_1D_REFERENCE) then
-            ! sets all 3D variations in the mantle to zero
-            xdvpv = 0.d0
-            xdvph = 0.d0
-            xdvsv = 0.d0
-            xdvsh = 0.d0
-          endif
-
           if (TRANSVERSE_ISOTROPY) then
             ! tiso perturbation
             vpv = vpv*(1.0d0+dble(xdvpv))
@@ -854,7 +848,6 @@
 
         case (THREE_D_MODEL_SGLOBE,THREE_D_MODEL_SGLOBE_ISO)
           ! 3D SGLOBE-rani model (Chang)
-
           ! normally mantle perturbations are taken from 24.4km (R_MOHO) up.
           ! we need to add the if statement for sgloberani_iso or sgloberani_aniso to take from 50km up:
           if (r_prem > RCMB/R_PLANET .and. r_prem < 6321000.d0/R_PLANET) then
@@ -863,7 +856,6 @@
             ! this will then "extend the mantle up to the surface" from 50km depth
             r_used = 6321000.d0/R_PLANET
           endif
-
           call mantle_sglobe(r_used,theta,phi,vsv,vsh,dvsv,dvsh,dvp,drho)
 
           ! updates velocities from reference model
@@ -941,7 +933,8 @@
     ! (based on density variations) on top of reference 3D model
     if (HETEROGEN_3D_MANTLE &
         .and. .not. suppress_mantle_extension &
-        .and. THREE_D_MODEL /= THREE_D_MODEL_HETEROGEN_PREM) then
+        .and. THREE_D_MODEL /= THREE_D_MODEL_HETEROGEN_PREM &
+        .and. .not. USE_1D_REFERENCE) then
       ! gets spherical coordinates of actual point location
       r_used = r
       ! adds hetergeneous perturbations (isotropic)

@@ -1035,7 +1035,7 @@
 ! parameters for GLL model (used for iterative model inversions)
   character(len=*), parameter :: PATHNAME_GLL_modeldir = 'DATA/GLL/'
 
-! to create a reference model based on 1D_REF but with 3D crust and 410/660 topography
+! to create a reference model based on the 1D reference model but with 3D crust and 410/660 topography
   logical,parameter :: USE_1D_REFERENCE = .false.
 
 !!-- uncomment for using PREM as reference model (used in CEM inversion)
