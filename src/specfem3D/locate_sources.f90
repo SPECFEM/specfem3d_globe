@@ -125,6 +125,9 @@
   double precision :: time_start,tCPU
   double precision, external :: wtime
 
+  ! compatibility to previous version
+  double precision :: radius_ell,dcost,p20,ell
+
   ! user output
   if (myrank == 0) then
     write(IMAIN,*)
@@ -335,8 +338,18 @@
 
       ! ellipticity
       if (ELLIPTICITY_VAL) then
-        ! adds ellipticity factor to radius
-        call add_ellipticity_rtheta(r0,theta,nspl_ellip,rspl_ellip,ellipicity_spline,ellipicity_spline2)
+       ! adds ellipticity factor to radius
+        if (USE_OLD_VERSION_FORMAT) then
+          ! removes depth from r0 as reference location to determine ellipticity factor (ell)
+          radius_ell = r0 - depth/R_PLANET
+          call spline_evaluation(rspl_ellip,ellipicity_spline,ellipicity_spline2,nspl_ellip,radius_ell,ell)
+          dcost = dcos(theta)
+          p20 = 0.5d0 * (3.0d0 * dcost*dcost - 1.0d0)
+          r0 = r0 * (1.0d0 - (2.0d0/3.0d0) * ell * p20)
+        else
+          ! takes r0 as reference location to determine ellipticity factor
+          call add_ellipticity_rtheta(r0,theta,nspl_ellip,rspl_ellip,ellipicity_spline,ellipicity_spline2)
+        endif
       endif
 
       ! stores surface radius for info output

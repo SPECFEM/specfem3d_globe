@@ -564,6 +564,17 @@
 ! be careful when changing this flag when computing classical kernel
   integer, parameter :: NTSTEP_BETWEEN_COMPUTE_KERNELS = 1
 
+!!-----------------------------------------------------------
+!!
+!! new version compatibility
+!!
+!!-----------------------------------------------------------
+! for comparison against older versions
+! in version 7.0: tiso was constrained to below moho, new version allows also in crust
+! in version 8.0: conversions between geodetic & geocentric latitudes were always applied,
+!                 and additional differences in 1-chunk centering & source positioning
+  logical, parameter :: USE_OLD_VERSION_FORMAT = .false.
+
 
 !!-----------------------------------------------------------
 !!

@@ -67,7 +67,7 @@
   ! user output
   if (myrank == 0) then
     write(IMAIN,*)
-    write(IMAIN,*) 'for overlapping of communications with calculations:'
+    write(IMAIN,*) '  for overlapping of communications with calculations:'
     call flush_IMAIN()
   endif
 

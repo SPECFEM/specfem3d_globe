@@ -29,7 +29,8 @@
 
   subroutine euler_angles(rotation_matrix,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH)
 
-  use constants, only: NDIM,DEGREES_TO_RADIANS
+  use constants, only: NDIM,DEGREES_TO_RADIANS,USE_OLD_VERSION_FORMAT
+
   use shared_parameters, only: ELLIPTICITY
 
   implicit none
@@ -41,11 +42,16 @@
   double precision :: alpha,beta,gamma
   double precision :: sina,cosa,sinb,cosb,sing,cosg
 
-  ! flag to move/correct chunk center position from geographic to geocentric position when ellipticity is on.
-  logical, parameter :: USE_GEOGRAPHIC_CENTER_POSITION = .true.
-
-  ! compute colatitude and longitude and convert to radians
-  if (USE_GEOGRAPHIC_CENTER_POSITION) then
+  ! center positioning
+  if (USE_OLD_VERSION_FORMAT) then
+    ! uses center lon/lat without ellipticity correction,
+    ! assuming a perfect spherical Earth where geocentric and geographic positions are the same
+    alpha = CENTER_LONGITUDE_IN_DEGREES * DEGREES_TO_RADIANS
+    beta = (90.0d0 - CENTER_LATITUDE_IN_DEGREES) * DEGREES_TO_RADIANS
+    gamma = GAMMA_ROTATION_AZIMUTH * DEGREES_TO_RADIANS
+  else
+    ! move/correct chunk center position from geographic to geocentric position when ellipticity is on.
+    ! compute colatitude and longitude and convert to radians
     ! longitude
     alpha = CENTER_LONGITUDE_IN_DEGREES * DEGREES_TO_RADIANS
     ! converts geographic latitude (degrees) to geocentric colatitude theta (radians) used for meshing.
@@ -56,12 +62,6 @@
     !       then the geocentric latitude would become ~44.81 degrees.
     call lat_2_geocentric_colat_dble(CENTER_LATITUDE_IN_DEGREES,beta,ELLIPTICITY)
     ! gamma rotation
-    gamma = GAMMA_ROTATION_AZIMUTH * DEGREES_TO_RADIANS
-  else
-    ! uses center lon/lat without ellipticity correction,
-    ! assuming a perfect spherical Earth where geocentric and geographic positions are the same
-    alpha = CENTER_LONGITUDE_IN_DEGREES * DEGREES_TO_RADIANS
-    beta = (90.0d0 - CENTER_LATITUDE_IN_DEGREES) * DEGREES_TO_RADIANS
     gamma = GAMMA_ROTATION_AZIMUTH * DEGREES_TO_RADIANS
   endif
 
