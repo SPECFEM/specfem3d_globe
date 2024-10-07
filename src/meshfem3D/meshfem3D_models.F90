@@ -1457,7 +1457,7 @@
 
   ! lat/lon in degrees (range lat/lon = [-90,90] / [-180,180]
   ! double-check lon in range [-180,180]
-  if (lon >  180.d0) lon = lon - 360.0d0
+  if (lon > 180.d0) lon = lon - 360.0d0
   if (lon < -180.d0) lon = lon + 360.0d0
 
   select case (REFERENCE_CRUSTAL_MODEL)
