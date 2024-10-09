@@ -285,7 +285,7 @@
     write(IMAIN,*) 'Error opening "', trim(CNtype2), '": ', ier
     call flush_IMAIN()
     ! stop
-    call exit_MPI(0,'Error model crust2.0')
+    call exit_MPI(0,'Error opening file for model crust2.0')
   endif
 
   do ila = 1,CRUST_NLA/2
@@ -296,7 +296,8 @@
   open(unit = IIN,file=CNtype2_key_modif,status='old',action='read',iostat=ier)
   if (ier /= 0) then
     write(IMAIN,*) 'Error opening "', trim(CNtype2_key_modif), '": ', ier
-    call exit_MPI(0,'Error model crust2.0')
+    call flush_IMAIN()
+    call exit_MPI(0,'Error opening file for model crust2.0')
   endif
 
   h_moho_min = HUGEVAL

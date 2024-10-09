@@ -273,12 +273,13 @@
   ! crust mantle
   allocate(test_flag_vector(NDIM,NGLOB_CRUST_MANTLE),stat=ier)
   if (ier /= 0 ) stop 'Error allocating array test_flag crust/mantle'
+  test_flag_vector(:,:) = 0.0
+
   allocate(valence(NGLOB_CRUST_MANTLE),stat=ier)
   if (ier /= 0 ) stop 'Error allocating array valence'
+  valence(:) = 0
 
   ! points defined by interfaces
-  valence(:) = 0
-  test_flag_vector(:,:) = 0.0
   do i = 1,num_interfaces_crust_mantle
     do j = 1,nibool_interfaces_crust_mantle(i)
       iglob = ibool_interfaces_crust_mantle(j,i)
@@ -390,12 +391,13 @@
   ! outer core
   allocate(test_flag(NGLOB_OUTER_CORE),stat=ier)
   if (ier /= 0 ) stop 'Error allocating array test_flag outer core'
+  test_flag(:) = 0.0
+
   allocate(valence(NGLOB_OUTER_CORE),stat=ier)
   if (ier /= 0 ) stop 'Error allocating array valence'
+  valence(:) = 0
 
   ! points defined by interfaces
-  valence(:) = 0
-  test_flag = 0.0
   do i = 1,num_interfaces_outer_core
     do j = 1,nibool_interfaces_outer_core(i)
       iglob = ibool_interfaces_outer_core(j,i)
@@ -501,12 +503,13 @@
   ! inner core
   allocate(test_flag_vector(NDIM,NGLOB_INNER_CORE),stat=ier)
   if (ier /= 0 ) stop 'Error allocating array test_flag inner core'
+  test_flag_vector(:,:) = 0.0
+
   allocate(valence(NGLOB_INNER_CORE),stat=ier)
   if (ier /= 0 ) stop 'Error allocating array valence'
+  valence(:) = 0
 
   ! points defined by interfaces
-  valence(:) = 0
-  test_flag_vector(:,:) = 0.0
   do i = 1,num_interfaces_inner_core
     do j = 1,nibool_interfaces_inner_core(i)
       iglob = ibool_interfaces_inner_core(j,i)
@@ -613,12 +616,13 @@
   ! transition infinite region
   allocate(test_flag(NGLOB_TRINFINITE),stat=ier)
   if (ier /= 0 ) stop 'Error allocating array test_flag transition infinite region'
+  test_flag(:) = 0.0
+
   allocate(valence(NGLOB_TRINFINITE),stat=ier)
   if (ier /= 0 ) stop 'Error allocating array valence'
+  valence(:) = 0
 
   ! points defined by interfaces
-  valence(:) = 0
-  test_flag = 0.0
   do i = 1,num_interfaces_trinfinite
     do j = 1,nibool_interfaces_trinfinite(i)
       iglob = ibool_interfaces_trinfinite(j,i)
@@ -723,12 +727,13 @@
   ! infinite region
   allocate(test_flag(NGLOB_INFINITE),stat=ier)
   if (ier /= 0 ) stop 'Error allocating array test_flag infinite region'
+  test_flag(:) = 0.0
+
   allocate(valence(NGLOB_INFINITE),stat=ier)
   if (ier /= 0 ) stop 'Error allocating array valence'
+  valence(:) = 0
 
   ! points defined by interfaces
-  valence(:) = 0
-  test_flag = 0.0
   do i = 1,num_interfaces_infinite
     do j = 1,nibool_interfaces_infinite(i)
       iglob = ibool_interfaces_infinite(j,i)

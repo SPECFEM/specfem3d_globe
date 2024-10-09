@@ -217,6 +217,9 @@
   use model_ccrem_par, only: &
     NR_CCREM_layers,CCREM_Qmu_original
 
+  use model_1dberkeley_par, only: &
+    NR_REF_BERKELEY,Mref_V_Qmu_berkeley
+
   use model_case65tay_par, only: &
     NR_case65TAY,Mcase65TAY_V_Qmu
 
@@ -279,6 +282,10 @@
     if (myrank == 0) write(IMAIN,*) '  model: SEA_1D attenuation'
     call define_model_sea1d(.false.)
     Qn = NR_SEA1D
+
+  case(REFERENCE_MODEL_SEMUCB)
+    if (myrank == 0) write(IMAIN,*) '  model: Berkeley attenuation'
+    Qn = NR_REF_BERKELEY
 
   case (REFERENCE_MODEL_CCREM)
     ! redefines "pure" 1D model without crustal modification
@@ -348,6 +355,10 @@
   case (REFERENCE_MODEL_SEA1D)
     ! radius = SEA1DM_V_radius_sea1d(:)
     Qmu(:) = SEA1DM_V_Qmu_sea1d(:)
+
+  case(REFERENCE_MODEL_SEMUCB)
+    ! SEMUCB Berkeley 1D reference model
+    Qmu(:) = Mref_V_Qmu_berkeley(:)
 
   case (REFERENCE_MODEL_CCREM)
     ! Moon

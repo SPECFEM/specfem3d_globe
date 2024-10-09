@@ -186,18 +186,16 @@
            iprocto_faces(NUMMSGS_FACES), &
            imsg_type(NUMMSGS_FACES),stat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating iproc faces arrays')
+  ! clear arrays allocated
+  iprocfrom_faces(:) = -1
+  iprocto_faces(:) = -1
+  imsg_type(:) = 0
 
   ! communication pattern for corners between chunks
   allocate(iproc_main_corners(NCORNERSCHUNKS), &
            iproc_worker1_corners(NCORNERSCHUNKS), &
            iproc_worker2_corners(NCORNERSCHUNKS),stat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating iproc corner arrays')
-
-  ! clear arrays allocated
-  iprocfrom_faces(:) = -1
-  iprocto_faces(:) = -1
-  imsg_type(:) = 0
-
   iproc_main_corners(:) = -1
   iproc_worker1_corners(:) = -1
   iproc_worker2_corners(:) = -1
@@ -225,6 +223,8 @@
            npoin2D_receive(NUMMSGS_FACES), &
            stat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating npoin2D arrays')
+  npoin2D_send(:) = 0
+  npoin2D_receive(:) = 0
 
   ! define maximum size for message buffers
   !
@@ -243,10 +243,19 @@
            ifseg(NGLOB2DMAX_XY), &
            stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary arrays in create_chunk_buffers')
+  ibool_selected(:) = 0
+  xstore_selected(:) = 0.d0
+  ystore_selected(:) = 0.d0
+  zstore_selected(:) = 0.d0
+  ninseg(:) = 0
+  iglob(:) = 0
+  locval(:) = 0
+  ifseg(:) = .false.
 
   ! allocate mask for ibool
   allocate(mask_ibool(nglob),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary mask in create_chunk_buffers')
+  mask_ibool(:) = .false.
 
   ! file output
   if (DEBUG) then
@@ -261,9 +270,6 @@
   iboolfaces(:,:) = 0
 
   ! initializes counters
-  npoin2D_send(:) = 0
-  npoin2D_receive(:) = 0
-
   iproc_xi_send = 0
   iproc_xi_receive = 0
   iproc_eta_send = 0
@@ -825,11 +831,11 @@
            itypecorner(3,NCORNERSCHUNKS), &
            stat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating iproccorner arrays')
+  iprocscorners(:,:) = -1
+  itypecorner(:,:) = 0
 
   ! initializes corner arrays
   iboolcorner(:,:) = 0
-  iprocscorners(:,:) = -1
-  itypecorner(:,:) = 0
 
   ! to avoid problem at compile time, use bigger array with fixed dimension
   addressing_big(:,:,:) = 0

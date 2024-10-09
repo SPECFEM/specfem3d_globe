@@ -48,12 +48,47 @@
 
 !*********************************************************************************************************
 
+!!-----------------------------------------------------------
+!!
+!! Gauss-Lobatto-Legendre resolution
+!!
+!!-----------------------------------------------------------
+! number of GLL points in each direction of an element (degree plus one)
+  integer, parameter :: NGLLX = 5
+  integer, parameter :: NGLLY = NGLLX
+  integer, parameter :: NGLLZ = NGLLX
+
+
+!!-----------------------------------------------------------
+!!
+!! Energy
+!!
+!!-----------------------------------------------------------
 !! added this temporarily here to make SPECFEM3D and SPECFEM3D_GLOBE much more similar
 !! in terms of the structure of their main time iteration loop; these are future features
 !! that are missing in this code but implemented in the other and that could thus be cut and pasted one day
   logical, parameter :: OUTPUT_ENERGY = .false.
   integer, parameter :: IOUT_ENERGY = 937  ! file number for the energy file
   logical, parameter :: GRAVITY_SIMULATION = .false.
+
+
+!!-----------------------------------------------------------
+!!
+!! new version compatibility
+!!
+!!-----------------------------------------------------------
+! for comparison against older versions
+! in version 7.0: tiso was constrained to below moho, new version allows also in crust
+! in version 8.0: conversions between geodetic & geocentric latitudes were always applied,
+!                 and additional differences in 1-chunk centering & source positioning
+  logical, parameter :: USE_OLD_VERSION_FORMAT = .false.
+
+
+!!-----------------------------------------------------------
+!!
+!! I/O
+!!
+!!-----------------------------------------------------------
 
 ! if files on a local path on each node are also seen as global with same path
 ! set to .true. typically on a machine with a common (shared) file system, e.g. LUSTRE, GPFS or NFS-mounted /home
@@ -206,6 +241,39 @@
 
 !!-----------------------------------------------------------
 !!
+!! for Berkeley model
+!!
+!!-----------------------------------------------------------
+
+! source-time function is a UCB-style filtered heaviside
+  logical, parameter :: STF_IS_UCB_HEAVISIDE = .false.
+
+! Save mirror files
+  logical, parameter :: SAVE_MIRRORS = .false.
+
+! Path to A3d model
+! Make sure this line ends on "/"
+  character (len=*), parameter :: A3d_folder = "DATA/SEMUCB_A3d/"
+
+! topography model
+!!--- ETOPO1 5 - Berkeley filtered
+! size of topography and bathymetry file
+  integer, parameter :: NX_BATHY_BERKELEY = 360,NY_BATHY_BERKELEY = 180
+! resolution of topography file in minutes
+  integer, parameter :: RESOLUTION_TOPO_FILE_BERKELEY = 2
+! pathname of the topography file (un-smoothed)
+  character (len=*), parameter :: PATHNAME_TOPO_FILE_BERKELEY = trim(A3d_folder)//"ETOPO5_1x1_filtre.dat"
+
+!! uncomment this to use Berkeley topography as default - and comment out corresponding parameters above !!
+!! Topography defaults to Berkeley
+!  integer, parameter :: EARTH_NX_BATHY = NX_BATHY_BERKELEY
+!  integer, parameter :: EARTH_NY_BATHY = NY_BATHY_BERKELEY
+!  double precision, parameter :: EARTH_RESOLUTION_TOPO_FILE = RESOLUTION_TOPO_FILE_BERKELEY
+!  character (len=*), parameter :: EARTH_PATHNAME_TOPO_FILE = PATHNAME_TOPO_FILE_BERKELEY
+
+
+!!-----------------------------------------------------------
+!!
 !! for crustal model
 !!
 !!-----------------------------------------------------------
@@ -225,18 +293,6 @@
   logical, parameter :: INCLUDE_SEDIMENTS_IN_CRUST = .true.
   logical, parameter :: INCLUDE_ICE_IN_CRUST       = .false. ! always set this to false except for gravity integral calculations
   double precision, parameter :: MINIMUM_SEDIMENT_THICKNESS = 2.d0 ! minimim thickness in km
-
-
-!!-----------------------------------------------------------
-!!
-!! Gauss-Lobatto-Legendre resolution
-!!
-!!-----------------------------------------------------------
-
-! number of GLL points in each direction of an element (degree plus one)
-  integer, parameter :: NGLLX = 5
-  integer, parameter :: NGLLY = NGLLX
-  integer, parameter :: NGLLZ = NGLLX
 
 
 !!-----------------------------------------------------------
@@ -564,17 +620,6 @@
 ! be careful when changing this flag when computing classical kernel
   integer, parameter :: NTSTEP_BETWEEN_COMPUTE_KERNELS = 1
 
-!!-----------------------------------------------------------
-!!
-!! new version compatibility
-!!
-!!-----------------------------------------------------------
-! for comparison against older versions
-! in version 7.0: tiso was constrained to below moho, new version allows also in crust
-! in version 8.0: conversions between geodetic & geocentric latitudes were always applied,
-!                 and additional differences in 1-chunk centering & source positioning
-  logical, parameter :: USE_OLD_VERSION_FORMAT = .false.
-
 
 !!-----------------------------------------------------------
 !!
@@ -892,6 +937,7 @@
   integer, parameter :: REFERENCE_MODEL_JP1D       = 7
   integer, parameter :: REFERENCE_MODEL_SEA1D      = 8
   integer, parameter :: REFERENCE_MODEL_CCREM      = 9
+  integer, parameter :: REFERENCE_MODEL_SEMUCB     = 10   ! Berkeley reference model
   ! Mars
   integer, parameter :: REFERENCE_MODEL_SOHL       = 101
   integer, parameter :: REFERENCE_MODEL_SOHL_B     = 102
@@ -913,6 +959,7 @@
   integer, parameter :: ICRUST_BKMNS_GLAD  = 8    ! Block Mantle Spherical-Harmonics model
   integer, parameter :: ICRUST_SPIRAL      = 9    ! SPiRaL
   integer, parameter :: ICRUST_SH_MARS     = 10   ! SH mars models (define crust & mantle values)
+  integer, parameter :: ICRUST_BERKELEY    = 11   ! Berkeley crustal model
 
 ! define flag for 3D Earth model
   integer, parameter :: THREE_D_MODEL_S20RTS        = 101
@@ -935,6 +982,7 @@
   integer, parameter :: THREE_D_MODEL_SPIRAL        = 118
   integer, parameter :: THREE_D_MODEL_HETEROGEN_PREM = 119
   integer, parameter :: THREE_D_MODEL_SH_MARS       = 120
+  integer, parameter :: THREE_D_MODEL_BERKELEY      = 121
   ! inner core model
   integer, parameter :: THREE_D_MODEL_INNER_CORE_ISHII = 201
 

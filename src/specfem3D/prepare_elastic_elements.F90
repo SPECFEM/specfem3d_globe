@@ -512,6 +512,9 @@
   ! since we scale muv and c11,.. stores we must divide with this factor to use the relaxed moduli for the modulus defect
   ! calculation in updating the memory variables
   if (ATTENUATION_VAL) then
+
+    if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
+      ! 3D storage arrays
 ! openmp solver
 !$OMP PARALLEL DEFAULT(SHARED) &
 !$OMP PRIVATE(ispec,i_SLS, &
@@ -522,29 +525,37 @@
 #endif
 !$OMP one_minus_sum_beta_use)
 !$OMP DO
-    do ispec = 1,NSPEC_CRUST_MANTLE
-      DO_LOOP_IJK
-        ! gets factor
-        if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
+      do ispec = 1,NSPEC_CRUST_MANTLE
+        DO_LOOP_IJK
+          ! gets factor
           one_minus_sum_beta_use = one_minus_sum_beta_crust_mantle(INDEX_IJK,ispec)
-        else
-          one_minus_sum_beta_use = one_minus_sum_beta_crust_mantle(1,1,1,ispec)
-        endif
+
+          ! corrects factor_common to obtain relaxed moduli in moduli defect
+          do i_SLS = 1,N_SLS
+            factor_common_crust_mantle(INDEX_IJK,i_SLS,ispec) = &
+                factor_common_crust_mantle(INDEX_IJK,i_SLS,ispec) / one_minus_sum_beta_use
+          enddo
+        ENDDO_LOOP_IJK
+      enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
+
+    else
+      ! 1d storage arrays
+      ! uses dimensions one_minums_sum_beta(1,1,1,NSPEC) and factor_common(1,1,1,N_SLS,NSPEC)
+      do ispec = 1,NSPEC_CRUST_MANTLE
+        ! i == j == k == 1
+        ! gets factor
+        one_minus_sum_beta_use = one_minus_sum_beta_crust_mantle(1,1,1,ispec)
 
         ! corrects factor_common to obtain relaxed moduli in moduli defect
         do i_SLS = 1,N_SLS
-          if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
-            factor_common_crust_mantle(INDEX_IJK,i_SLS,ispec) = &
-                factor_common_crust_mantle(INDEX_IJK,i_SLS,ispec) / one_minus_sum_beta_use
-          else
-            factor_common_crust_mantle(1,1,1,i_SLS,ispec) = &
-                factor_common_crust_mantle(1,1,1,i_SLS,ispec) / one_minus_sum_beta_use
-          endif
+          factor_common_crust_mantle(1,1,1,i_SLS,ispec) = &
+              factor_common_crust_mantle(1,1,1,i_SLS,ispec) / one_minus_sum_beta_use
         enddo
-      ENDDO_LOOP_IJK
-    enddo
-!$OMP ENDDO
-!$OMP END PARALLEL
+      enddo
+    endif
+
   endif ! ATTENUATION_VAL
 
   ! inner core
@@ -717,6 +728,8 @@
     ! since we scale muv and c11,.. stores we must divide with this factor to use the relaxed moduli for the modulus defect
     ! calculation in updating the memory variables
 
+    if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
+      ! 3D storage arrays
 ! openmp solver
 !$OMP PARALLEL DEFAULT(SHARED) &
 !$OMP PRIVATE(ispec,i_SLS, &
@@ -727,32 +740,43 @@
 #endif
 !$OMP one_minus_sum_beta_use)
 !$OMP DO
-    do ispec = 1,NSPEC_INNER_CORE
-      ! exclude fictitious elements in central cube
-      if (idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+      do ispec = 1,NSPEC_INNER_CORE
+        ! exclude fictitious elements in central cube
+        if (idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
 
-      DO_LOOP_IJK
-        ! gets factor
-        if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
+        DO_LOOP_IJK
+          ! gets factor
           one_minus_sum_beta_use = one_minus_sum_beta_inner_core(INDEX_IJK,ispec)
-        else
-          one_minus_sum_beta_use = one_minus_sum_beta_inner_core(1,1,1,ispec)
-        endif
+
+          ! corrects factor_common to obtain relaxed moduli in moduli defect
+          do i_SLS = 1,N_SLS
+            factor_common_inner_core(INDEX_IJK,i_SLS,ispec) = &
+                factor_common_inner_core(INDEX_IJK,i_SLS,ispec) / one_minus_sum_beta_use
+          enddo
+        ENDDO_LOOP_IJK
+      enddo
+!$OMP ENDDO
+!$OMP END PARALLEL
+
+    else
+      ! 1d storage arrays
+      ! uses dimensions one_minums_sum_beta(1,1,1,NSPEC) and factor_common(1,1,1,N_SLS,NSPEC)
+      do ispec = 1,NSPEC_INNER_CORE
+        ! exclude fictitious elements in central cube
+        if (idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+
+        ! i == j == k == 1
+        ! gets factor
+        one_minus_sum_beta_use = one_minus_sum_beta_inner_core(1,1,1,ispec)
 
         ! corrects factor_common to obtain relaxed moduli in moduli defect
         do i_SLS = 1,N_SLS
-          if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
-            factor_common_inner_core(INDEX_IJK,i_SLS,ispec) = &
-                factor_common_inner_core(INDEX_IJK,i_SLS,ispec) / one_minus_sum_beta_use
-          else
-            factor_common_inner_core(1,1,1,i_SLS,ispec) = &
-                factor_common_inner_core(1,1,1,i_SLS,ispec) / one_minus_sum_beta_use
-          endif
+          factor_common_inner_core(1,1,1,i_SLS,ispec) = &
+              factor_common_inner_core(1,1,1,i_SLS,ispec) / one_minus_sum_beta_use
         enddo
-      ENDDO_LOOP_IJK
-    enddo
-!$OMP ENDDO
-!$OMP END PARALLEL
+      enddo
+    endif
+
   endif ! ATTENUATION
 
   ! synchronizes processes

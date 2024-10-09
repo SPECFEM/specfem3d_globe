@@ -83,6 +83,7 @@ shared_OBJECTS = \
 	$O/SIEM_math_library.shared.o \
 	$O/smooth_weights_vec.shared.o \
 	$O/sort_array_coordinates.shared.o \
+	$O/spl_A3d.cc.o \
 	$O/spline_routines.shared.o \
 	$O/write_VTK_file.shared.o \
 	$O/ylm.shared.o \

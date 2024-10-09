@@ -83,6 +83,7 @@ meshfem3D_MESHER_OBJECTS = \
 	$O/lgndr.check.o \
 	$O/meshfem3D_par.check_module.o \
 	$O/meshfem3D_models.check.o \
+	$O/model_1dberkeley.check.o \
 	$O/model_1dref.check.o \
 	$O/model_1066a.check.o \
 	$O/model_ak135.check.o \
@@ -92,11 +93,13 @@ meshfem3D_MESHER_OBJECTS = \
 	$O/model_atten3D_QRFSI12.check.o \
 	$O/model_attenuation_gll.check.o \
 	$O/model_attenuation.check.o \
+	$O/model_berkeley.check.o \
 	$O/model_bkmns.check.o \
 	$O/model_case65TAY.check.o \
 	$O/model_ccrem.check.o \
 	$O/model_crust_1_0.check.o \
 	$O/model_crust_2_0.check.o \
+	$O/model_crust_berkeley.check.o \
 	$O/model_crustmaps.check.o \
 	$O/model_eucrust.check.o \
 	$O/model_epcrust.check.o \
@@ -150,17 +153,20 @@ meshfem3D_MODULES = \
 	$(FC_MODDIR)/mpi_infinite_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/siem_meshfem_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_1066a_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_1dberkeley_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_1dref_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_ak135_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_aniso_mantle_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_atten3d_qrfsi12_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_attenuation_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_berkeley_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_bkmns_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_case65tay_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_sh_mars_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_ccrem_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_crust_1_0_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_crust_2_0_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_crust_berkeley_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_crustmaps_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_epcrust_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_eucrust_par.$(FC_MODEXT) \
@@ -234,6 +240,7 @@ meshfem3D_SHARED_OBJECTS = \
 	$O/SIEM_math_library.shared.o \
 	$O/smooth_weights_vec.shared.o \
 	$O/sort_array_coordinates.shared.o \
+	$O/spl_A3d.cc.o \
 	$O/spline_routines.shared.o \
 	$O/write_VTK_file.shared.o \
 	$O/ylm.shared.o \

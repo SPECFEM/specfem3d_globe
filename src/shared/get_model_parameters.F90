@@ -232,6 +232,13 @@
     ! in case it has an ending for the crust, remove it from the name
     MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL_ROOT)-12)
   endif
+  ! checks with '_crustBrk' option
+  if (len_trim(MODEL_ROOT) > 9 ) ending = MODEL_ROOT(len_trim(MODEL_ROOT)-8:len_trim(MODEL_ROOT))
+  if (trim(ending) == '_crustbrk') then
+    impose_crust = ICRUST_BERKELEY
+    ! in case it has an ending for the crust, remove it from the name
+    MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL_ROOT)-9)
+  endif
 
   ! save main model name (without appended options)
   MODEL_NAME = trim(MODEL_ROOT)
@@ -765,6 +772,17 @@
     REFERENCE_1D_MODEL = REFERENCE_MODEL_PREM
     THREE_D_MODEL = THREE_D_MODEL_GAPP2
     TRANSVERSE_ISOTROPY = .true.
+
+  case('semucb_a3d')
+    ! SEMUCB Berkeley model
+    CASE_3D = .true.                              ! moho stretching
+    CRUSTAL = .true.                              ! berkeley crustal model will be used
+    ONE_CRUST = .true.
+    TRANSVERSE_ISOTROPY = .true.                  ! uses tiso parameterization
+    MODEL_3D_MANTLE_PERTUBATIONS = .true.         ! uses 3d mantle perturbations
+    THREE_D_MODEL = THREE_D_MODEL_BERKELEY
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_SEMUCB   ! uses berkeley 1D reference
+    REFERENCE_CRUSTAL_MODEL = ICRUST_BERKELEY     ! uses berkeley crust
 
   case ('ishii')
     ! Ishii et al. (2002) inner core model
@@ -1416,6 +1434,25 @@
     RHO_TOP_OC = 9.9131d0 * 1000.d0 / RHOAV
     RHO_BOTTOM_OC = 12.1478d0 * 1000.d0 / RHOAV
 
+  case (REFERENCE_MODEL_SEMUCB)
+    ! Berkeley SEMUCB Model - discontinuities
+    ROCEAN = 6368000.d0
+    RMIDDLE_CRUST = 6356000.d0
+    RMOHO = 6341000.d0                        ! moho depth = 30 km
+    R80  = 6291000.d0
+    R120 = -1.d0                              ! no d120 discontinuity, set to fictitious value
+    R220 = 6151000.d0
+    R400 = 5961000.d0
+    R600 = 5771000.d0
+    R670 = 5721000.d0
+    R771 = 5600000.d0
+    RTOPDDOUBLEPRIME = 3630000.d0
+    RCMB = 3480000.d0
+    RICB = 1221500.d0
+
+    RHO_TOP_OC = 9903.4384 / RHOAV
+    RHO_BOTTOM_OC = 12166.5885 / RHOAV
+
   ! Mars models
   case (REFERENCE_MODEL_SOHL_B)
     ! Mars
@@ -1529,7 +1566,9 @@
     case default
       RMOHO_FICTITIOUS_IN_MESHER = RMOHO
     end select
+
     R80_FICTITIOUS_IN_MESHER = R80
+
     if (CRUSTAL .and. CASE_3D) then
       !> Hejun
       ! mesh will honor 3D crustal moho topography
@@ -1537,6 +1576,15 @@
       ! moves R80 down to 120km depth in order to have less squeezing for elements below moho
       RMOHO_FICTITIOUS_IN_MESHER = RMOHO_FICTITIOUS_IN_MESHER + RMOHO_STRETCH_ADJUSTMENT
       R80_FICTITIOUS_IN_MESHER = R80_FICTITIOUS_IN_MESHER + R80_STRETCH_ADJUSTMENT
+    endif
+
+    ! "special" model adjustments
+    if (REFERENCE_1D_MODEL == REFERENCE_MODEL_SEMUCB) then
+      ! SEMUCB Berkeley model
+      ! Berkeley uses a 1d moho depth of 30 km
+      ! moves fictitious moho closer to this 1d moho depth
+      RMOHO_FICTITIOUS_IN_MESHER = R_PLANET - 29000.000     ! down at  29 km depth
+      R80_FICTITIOUS_IN_MESHER = R_PLANET - 130000.000      ! down at 130 km depth
     endif
   endif
 
