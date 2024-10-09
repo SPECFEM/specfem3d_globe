@@ -70,6 +70,9 @@
   logical :: found_crust,moho_only
   logical :: do_mesh_stretching
 
+  ! tolerance for checking points are above 220 discontinuity
+  double precision, parameter :: TOL = 0.1d0
+
   double precision :: MOHO_MAXIMUM_DEFAULT,MOHO_MINIMUM_DEFAULT
   double precision :: MOHO_MAXIMUM,MOHO_MINIMUM
 
@@ -261,6 +264,12 @@
       endif
     endif   ! do_mesh_stretching
 
+    ! small stretch check: stretching should affect only points above R220
+    if (R220 - r * R_PLANET > TOL) then
+      print *,'Error moho stretching: ',r*R_PLANET,R220,moho_radius*R_PLANET
+      call exit_mpi(myrank,'incorrect moho stretching in moho_stretching_honor_crust() routine')
+    endif
+
     ! counts corners above moho
     ! note: uses a small tolerance
     if (r >= 0.9999d0 * moho_radius) then
@@ -271,7 +280,6 @@
     if (r <= 1.0001d0 * moho_radius) then
       count_mantle = count_mantle + 1
     endif
-
   enddo
 
   ! sets flag when all corners are above moho
@@ -281,12 +289,6 @@
   ! sets flag when all corners are below moho
   if (count_mantle == NGNOD) then
     elem_in_mantle = .true.
-  endif
-
-  ! small stretch check: stretching should affect only points above R220
-  if (r*R_PLANET < R220) then
-    print *,'Error moho stretching: ',r*R_PLANET,R220,moho_radius*R_PLANET
-    call exit_mpi(myrank,'incorrect moho stretching in moho_stretching_honor_crust() routine')
   endif
 
   end subroutine moho_stretching_honor_crust
@@ -328,6 +330,9 @@
   double precision :: moho_radius
   logical :: found_crust,moho_only
   double precision :: x,y,z
+
+  ! tolerance for checking points are above 220 discontinuity
+  double precision, parameter :: TOL = 0.1d0
 
   ! note: at this point, the mesh is still perfectly spherical.
 
@@ -379,6 +384,12 @@
       endif
     endif
 
+    ! small stretch check: stretching should affect only points above R220
+    if (R220 - r * R_PLANET > TOL) then
+      print *,'Error moho stretching: ',r*R_PLANET,R220,moho_radius*R_PLANET
+      call exit_mpi(myrank,'incorrect moho stretching in moho_stretching_honor_crust_reg() routine')
+    endif
+
     ! counts corners in above moho
     ! note: uses a small tolerance
     if (r >= 0.9999d0 * moho_radius) then
@@ -389,7 +400,6 @@
     if (r <= 1.0001d0 * moho_radius) then
       count_mantle = count_mantle + 1
     endif
-
   enddo
 
   ! sets flag when all corners are above moho
@@ -399,12 +409,6 @@
   ! sets flag when all corners are below moho
   if (count_mantle == NGNOD) then
     elem_in_mantle = .true.
-  endif
-
-  ! small stretch check: stretching should affect only points above R220
-  if (r*R_PLANET < R220) then
-    print *,'Error moho stretching: ',r*R_PLANET,R220,moho*R_PLANET
-    call exit_mpi(myrank,'incorrect moho stretching in moho_stretching_honor_crust_reg() routine')
   endif
 
   end subroutine moho_stretching_honor_crust_reg

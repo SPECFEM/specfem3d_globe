@@ -141,6 +141,10 @@
     case (REFERENCE_MODEL_VPREMOON)
       call model_vpremoon_broadcast(CRUSTAL)
 
+    case(REFERENCE_MODEL_SEMUCB)
+      ! Berkeley model always has external crust
+      call model_1dberkeley_broadcast()
+
   end select
 
   end subroutine meshfem3D_reference_model_broadcast
@@ -239,6 +243,10 @@
       case (THREE_D_MODEL_SH_MARS)
         ! Mars spherical harmonics model
         call model_SH_mars_broadcast()
+
+     case(THREE_D_MODEL_BERKELEY)
+        ! Berkeley SEMUCB model (should be used along with the berkeley crust)
+        call model_berkeley_broadcast()
 
       case default
         call exit_MPI(myrank,'3D model not defined')
@@ -346,6 +354,10 @@
     case (ICRUST_SH_MARS)
       ! Mars SH model (defines both crust & mantle)
       call model_SH_mars_broadcast()
+
+    case (ICRUST_BERKELEY)
+      ! Berkeley crust
+      call model_berkeley_crust_broadcast()
 
     case default
       stop 'crustal model type not defined'
@@ -552,6 +564,10 @@
       vsv = vs
       vsh = vs
       eta_aniso = 1.d0
+
+    case(REFERENCE_MODEL_SEMUCB)
+      ! BERKELEY model SEMUCB
+      call model_1dberkeley(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu,iregion_code,CRUSTAL)
 
     ! Mars 1D models
     case (REFERENCE_MODEL_SOHL)
@@ -904,6 +920,39 @@
           call model_mantle_spiral(r_used,lat,lon,vpv,vph,vsv,vsh,eta_aniso,rho, &
                                    c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                                    c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
+
+        case (THREE_D_MODEL_BERKELEY)
+          ! 3D Berkeley Model SEMUCB
+          ! note: passes r/theta/phi (geocentric coordinates)
+          call model_berkeley_shsv(r_used,theta,phi,dvsh,dvsv,dvph,dvpv,drho,eta_aniso,iregion_code,CRUSTAL)
+
+          ! updates velocities from reference model
+          if (TRANSVERSE_ISOTROPY) then
+            ! tiso perturbation
+            vpv = vpv*(1.0d0+dvpv)
+            vph = vph*(1.0d0+dvph)
+            vsv = vsv*(1.0d0+dvsv)
+            vsh = vsh*(1.0d0+dvsh)
+            rho = rho*(1.0d0+drho)
+          else
+            ! isotropic model
+            vpv = vpv+dvpv
+            vph = vph+dvph
+            vsv = vsv+dvsv
+            vsh = vsh+dvsh
+            rho = rho*(1.0d0+drho)
+            ! isotropic average (considers anisotropic parameterization eta,vsv,vsh,vpv,vph)
+            vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
+                      + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0)
+            vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
+                      + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
+            vpv = vp
+            vph = vp
+            vsv = vs
+            vsh = vs
+            eta_aniso = 1.0d0
+            rho = rho*(1.0d0+drho)
+          endif
 
         case (THREE_D_MODEL_HETEROGEN_PREM)
           ! chris modif checkers 02/20/21
@@ -1572,6 +1621,19 @@
       vsvc = vsc
       vshc = vsc
 
+    case (ICRUST_BERKELEY)
+      ! Berkeley crustal model
+      ! note: passes r/theta/phi (geocentric coordinates)
+      !       Berkeley crustal model is referencing geocentric positions in a spherical Earth frame
+      call model_berkeley_crust_aniso(r,theta,phi,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,found_crust)
+      ! old version - isotropic crustal velocities
+      !call model_berkeley_crust(r,theta,phi,vpc,vsc,rhoc,moho,found_crust)
+      !vpvc = vpc
+      !vphc = vpc
+      !vsvc = vsc
+      !vshc = vsc
+      if (moho_only) return
+
     case default
       stop 'crustal model type not defined'
 
@@ -1696,6 +1758,16 @@
             ! reference from Sea1D
             Qmu = 300.0d0
             Qkappa = 57822.5d0  ! not used so far...
+          endif
+        endif
+
+      case (REFERENCE_MODEL_SEMUCB)
+        ! SEMUCB Berkeley model
+        ! fixes Q for crust
+        if (CRUSTAL) then
+          if (elem_in_crust) then
+            Qmu = 300.0d0
+            Qkappa = 57822.5d0 !  not used so far...
           endif
         endif
 

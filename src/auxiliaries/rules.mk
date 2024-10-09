@@ -578,6 +578,7 @@ xwrite_profile_OBJECTS += \
 	$O/lgndr.check.o \
 	$O/meshfem3D_models.check.o \
 	$O/meshfem3D_par.check_module.o \
+	$O/model_1dberkeley.check.o \
 	$O/model_1dref.check.o \
 	$O/model_1066a.check.o \
 	$O/model_ak135.check.o \
@@ -587,11 +588,13 @@ xwrite_profile_OBJECTS += \
 	$O/model_atten3D_QRFSI12.check.o \
 	$O/model_attenuation_gll.check.o \
 	$O/model_attenuation.check.o \
+	$O/model_berkeley.check.o \
 	$O/model_bkmns.check.o \
 	$O/model_case65TAY.check.o \
 	$O/model_ccrem.check.o \
 	$O/model_crust_1_0.check.o \
 	$O/model_crust_2_0.check.o \
+	$O/model_crust_berkeley.check.o \
 	$O/model_crustmaps.check.o \
 	$O/model_eucrust.check.o \
 	$O/model_epcrust.check.o \
@@ -651,6 +654,7 @@ xwrite_profile_SHARED_OBJECTS = \
 	$O/rthetaphi_xyz.shared.o \
 	$O/smooth_weights_vec.shared.o \
 	$O/sort_array_coordinates.shared.o \
+	$O/spl_A3d.cc.o \
 	$O/spline_routines.shared.o \
 	$O/write_VTK_file.shared.o \
 	$O/ylm.shared.o \
