@@ -343,8 +343,8 @@
     z = (2.0d0/3.0d0) * integral_radau / (integral_rho*r(i)*r(i))
 
     ! this comes from equation (14.19) in Dahlen and Tromp (1998)
-    eta(i) = (25.0d0/4.0d0)*((1.0d0-(3.0d0/2.0d0)*z)**2.0d0)-1.0d0
-    k(i) = eta(i)/(r(i)**3.0d0)
+    eta(i) = (25.0d0/4.0d0) * ( (1.0d0-(3.0d0/2.0d0)*z)**2 ) - 1.0d0
+    k(i) = eta(i) / ( r(i)**3 )
   enddo
 
   ! day rotation
@@ -355,11 +355,11 @@
 
   g_a = 4.0d0 * integral_rho
   ! this is the equation right above (14.21) in Dahlen and Tromp (1998)
-  epsilonval(NR_DENSITY) = (5.0d0/2.d0)*(bom**2.0d0)*R_UNIT_SPHERE / (g_a * (eta(NR_DENSITY)+2.0d0))
+  epsilonval(NR_DENSITY) = (5.0d0/2.d0) * (bom**2) * R_UNIT_SPHERE / (g_a * (eta(NR_DENSITY) + 2.0d0))
 
   do i = 1,NR_DENSITY-1
     call intgrl(exponentval,r,i,NR_DENSITY,k,s1,s2,s3)
-    epsilonval(i) = epsilonval(NR_DENSITY)*exp(-exponentval)
+    epsilonval(i) = epsilonval(NR_DENSITY) * exp(-exponentval)
   enddo
 
   ! initializes spline coefficients

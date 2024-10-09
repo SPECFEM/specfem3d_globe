@@ -302,9 +302,9 @@ subroutine attenuation_invert_SVD(t1,t2,n,Q_real,omega_not,tau_s,tau_e)
         tau_e(j) = x1(j) + x2(j)
         tau_s(j) = x2(j)
         demon   = 1.0d0 + omega**2 * tau_s(j)**2
-        a       = a + (1.0d0 + omega**2.0d0 * tau_e(j) * tau_s(j)) / demon
+        a       = a + (1.0d0 + omega**2 * tau_e(j) * tau_s(j)) / demon
         b       = b + ( omega * ( tau_e(j) - tau_s(j) ) ) / demon
-        dadp(j) = omega**2.0d0 * tau_s(j) / demon
+        dadp(j) = omega**2 * tau_s(j) / demon
         dbdp(j) = omega / demon
      enddo
 !     write(*,*) 'ab: ', a, b,demon,expo
