@@ -103,6 +103,7 @@ shared_MODULES = \
 	$(FC_MODDIR)/siem_math_library.$(FC_MODEXT) \
 	$(FC_MODDIR)/siem_math_library_mpi.$(FC_MODEXT) \
 	$(FC_MODDIR)/siem_gll_library.$(FC_MODEXT) \
+	$(FC_MODDIR)/smooth_etopo5_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/kdtree_search.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
 

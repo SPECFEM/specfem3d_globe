@@ -481,7 +481,6 @@
     IFLAG_CRUST,IFLAG_220_80,IFLAG_80_MOHO,IFLAG_670_220,IFLAG_MANTLE_NORMAL,IREGION_CRUST_MANTLE, &
     REFERENCE_MODEL_1DREF,REFERENCE_MODEL_1DREF,REFERENCE_MODEL_SEMUCB, &
     THREE_D_MODEL_S362WMANI,THREE_D_MODEL_SGLOBE, &
-    THREE_D_MODEL_BERKELEY, &
     USE_OLD_VERSION_FORMAT
 
   use meshfem_models_par, only: &
@@ -572,17 +571,16 @@
       endif
     endif
 
-  ! TODO: daniel - check if full tiso mantle should be used
-  !case (REFERENCE_MODEL_SEMUCB)
+  case (REFERENCE_MODEL_SEMUCB)
     ! SEMUCB - allows tiso for full mantle & crust
     ! (same as USE_FULL_TISO_MANTLE option)
-    !if (idoubling(ispec) == IFLAG_MANTLE_NORMAL &
-    !    .or. idoubling(ispec) == IFLAG_670_220 &
-    !    .or. idoubling(ispec) == IFLAG_220_80 &
-    !    .or. idoubling(ispec) == IFLAG_80_MOHO &
-    !    .or. idoubling(ispec) == IFLAG_CRUST) then
-    !  elem_is_tiso = .true.
-    !endif
+    if (idoubling(ispec) == IFLAG_MANTLE_NORMAL &
+        .or. idoubling(ispec) == IFLAG_670_220 &
+        .or. idoubling(ispec) == IFLAG_220_80 &
+        .or. idoubling(ispec) == IFLAG_80_MOHO &
+        .or. idoubling(ispec) == IFLAG_CRUST) then
+      elem_is_tiso = .true.
+    endif
 
   case default
     ! default reference models
@@ -640,10 +638,6 @@
 
     ! note: THREE_D_MODEL_SGLOBE_ISO
     !       sgloberani_iso model based on PREM, it will have tiso already set from crust down to 220
-
-  case (THREE_D_MODEL_BERKELEY)
-    ! additionally enables tiso for crust
-    if (idoubling(ispec) == IFLAG_CRUST) elem_is_tiso = .true.
 
   case default
     ! nothing special to add

@@ -25,6 +25,366 @@
 !
 !=====================================================================
 
+
+!-------------------------------------------------------------------------------------------------
+!
+! smooth ETOPO5 topography module
+!
+! used for SEMUCB Berkeley model
+!
+!-------------------------------------------------------------------------------------------------
+
+module smooth_etopo5_par
+
+  use constants, only: PATHNAME_TOPO_FILE_BERKELEY, &
+    NX_BATHY_BERKELEY,NY_BATHY_BERKELEY, &
+    RESOLUTION_TOPO_FILE_BERKELEY
+
+  implicit none
+
+  public :: read_etopo5_filtre
+  public :: get_etopo5_filtre
+
+  private
+
+  !integer, parameter ::  NBT_TOPO5 = 2160, NBP_TOPO5 = 4320, INITR_TOPO5 = 12
+  !integer, dimension(:,:), allocatable :: topo_start
+
+  !integer :: NBT,NBP,INITR
+
+  integer, parameter :: NBT = NY_BATHY_BERKELEY - 1  ! 181 - 1 == 180 to match gauss_filtre
+  integer, parameter :: NBP = NX_BATHY_BERKELEY      ! 360
+  integer, parameter :: INITR = int(1.0 / (RESOLUTION_TOPO_FILE_BERKELEY / 60.0)) ! resolution
+
+contains
+
+  subroutine read_etopo5_filtre(ibathy_topo)
+
+  implicit none
+
+  integer, dimension(NX_BATHY_BERKELEY,NY_BATHY_BERKELEY),intent(inout) :: ibathy_topo
+  ! local parameters
+  real :: dr
+  integer :: i,j,ier
+  integer :: num_phi,num_theta,ires
+
+  open(52,file=trim(PATHNAME_TOPO_FILE_BERKELEY),status='old',action='read',iostat=ier)
+  if (ier /= 0) then
+    print *,'Error opening topography file: ',trim(PATHNAME_TOPO_FILE_BERKELEY)
+    stop 'Error opening topography file for Berkeley smooth etopo5 data'
+  endif
+
+  ! format: #NBP (number of longitudes Phi) #NBT (number of colatitudes Theta) #dr (resolution)
+  read(52,*) num_phi,num_theta,dr
+
+  ! safety checks
+  if (dr > 1.) STOP 'read_topo_filtre: dr must be <= 1'
+
+  ires = int(1./dr)
+
+  if (num_phi /= NBP) then
+    print *,'Error: mismatch in topo file: ',trim(PATHNAME_TOPO_FILE_BERKELEY)
+    print *,'       num_phi = ',num_phi,' should be NX_BATHY ',NBP,'(see constants.h)'
+    stop 'Mismatch NX_BATHY_BERKELEY for Berkeley topo file'
+  endif
+
+  if (num_theta /= NBT + 1) then
+    print *,'Error: mismatch in topo file: ',trim(PATHNAME_TOPO_FILE_BERKELEY)
+    print *,'       num_theta = ',num_theta,' should be NY_BATHY ',NBT + 1,'(see constants.h)'
+    stop 'Mismatch NY_BATHY_BERKELEY for Berkeley topo file'
+  endif
+
+  if (INITR /= ires) then
+    print *,'Error: mismatch in topo file: ',trim(PATHNAME_TOPO_FILE_BERKELEY)
+    print *,'       dr = ',dr,' with ires = ',ires,' should be 1/(RESOLUTION_TOPO_FILE/60) ',INITR,'(see constants.h)'
+    stop 'Mismatch RESOLUTION_TOPO_FILE_BERKELEY for Berkeley topo file'
+  endif
+
+  ! will use ibathy_topo array
+  !allocate(topo_start(NBP,NBT))
+
+  !NBT parameter has already -1 taken into account
+  !NBT = NBT-1 !pour etre coherent avec gauss_filtre & load_etopo5_dos (181-1=180)
+
+  do i = 1,NBT + 1  ! latitudes
+    do j = 1,NBP    ! longitudes
+      read(52,'(i5)') ibathy_topo(j,i) !topo_start(j,i)
+    enddo
+  enddo
+
+  close(52)
+
+  end subroutine read_etopo5_filtre
+
+  !-----------------------------------------------------------------
+
+  double precision function get_etopo5_filtre(xlat,xlon,ibathy_topo)
+
+  implicit none
+  double precision,intent(in):: xlat,xlon  ! location latitude/longitude (in degree)
+  integer, dimension(NX_BATHY_BERKELEY,NY_BATHY_BERKELEY),intent(in) :: ibathy_topo
+
+  ! local parameters
+  real :: value
+  real :: theta,phi
+  !real, parameter :: pi = 3.141592653589793, deg2rad = pi / 180.
+
+  real, parameter :: drfiltre = 2.e0
+
+  ! colatitude/longitude
+  theta = sngl(90.d0 - xlat)
+  phi = sngl(xlon)
+
+  if (phi < -180.0) phi = phi + 360.0
+  if (phi > 180.0) phi = phi - 360.0
+
+  ! in rad
+  !theta = theta * deg2rad
+  !phi = phi * deg2rad
+  ! elevation (in meters)
+  !value = dble(etopo_filtre(theta,phi))
+
+  ! or
+  ! in degrees
+  value = gauss_filtre(ibathy_topo,theta,phi,drfiltre)
+
+  ! return value
+  get_etopo5_filtre = dble(value)
+
+  end function get_etopo5_filtre
+
+  !-----------------------------------------------------------------
+
+  real function gauss_filtre(tin,theta,phi,dr)
+
+  implicit none
+  integer, dimension(:,:),intent(in)  :: tin
+  real,intent(in) :: theta,phi,dr
+
+  ! local parameters
+  real :: tmp,thetar,phir,tmpnorm,int_val
+  integer :: i,ii,j,jj
+
+  real, parameter :: pi = 3.141592653589793, deg2rad = pi / 180.
+  integer, parameter :: LARG = 2
+
+  tmp = 0.
+  tmpnorm = 0.
+
+  do i = 1,int(LARG*dr*INITR + 1)
+    do j = 1,int(LARG*dr*INITR + 1)
+      call get_indexloc(phi,theta,i,j,dr,LARG,ii,jj,phir,thetar)
+
+      int_val = cos_cylindre(theta,phi,dr,thetar,phir) * (1./real(INITR))**2 * sin(thetar * deg2rad)
+
+      tmp = tmp + tin(ii,jj) * int_val
+      tmpnorm = tmpnorm + int_val
+    enddo
+  enddo
+
+  gauss_filtre = tmp / tmpnorm
+
+  end function gauss_filtre
+
+  !----------------------------------------------------------------------
+
+  real function cos_cylindre(t0_,p0_,d0_,theta_,phi_)
+
+  implicit none
+  real :: t0,p0,d0,theta,phi, d_ang
+  real :: t0_,p0_,d0_,theta_,phi_
+  real :: d_arg_clean
+  real, parameter :: pi = 3.141592653589793, deg2rad = pi / 180.
+
+  t0 = t0_ * deg2rad
+  p0 = p0_ * deg2rad
+  theta = theta_ * deg2rad
+  phi = phi_ * deg2rad
+  d0 = d0_ * deg2rad
+
+  !distance angulaire au centre du cylindre:
+  !d_ang=acos(cos(theta)*cos(t0)+sin(theta)*sin(t0)*cos(phi-p0))
+  d_arg_clean = min( 1.0, max( 0.0, real( cos(theta)*cos(t0)+sin(theta)*sin(t0)*cos(phi-p0) ) ) )
+  d_ang       = acos( d_arg_clean )
+
+  if (d_ang > d0) then
+     cos_cylindre = 0.0
+  else
+     cos_cylindre = 0.5 * (1.0 + cos(PI*d_ang/d0))
+  endif
+
+  end function cos_cylindre
+
+  !-----------------------------------------------------------------
+
+  subroutine get_indexloc(phi,theta,i,j,dr,LARG,ii,jj,phir,thetar)
+
+  implicit none
+  real, intent(in) :: theta,phi,dr
+  integer, intent(in) :: i,j,LARG
+  real, intent(out) :: thetar,phir
+  integer, intent(out) :: ii,jj
+  ! local parameters
+  real :: t,p
+  real, parameter :: eps = 1.e-8
+
+  ! longitude (p) / colatitude (t)
+  p = phi + (i - 1 - (LARG * dr * INITR)/2) / real(INITR)
+  t = theta + (j - 1 - (LARG * dr * INITR)/2) / real(INITR)
+
+  ! longitude in range [0,360]
+  if (p < 0.0 - eps) p = p + 360.0
+  if (p >= 360.0 - eps) p = p - 360.0
+
+  ! colatitude in range [0,180]
+  if (t > 180.0 - eps) then
+     t = t - 180.0
+     p = 360.0 - p
+  else if (t < 0.0 - eps) then
+     t = 180.0 + t
+     p = 360.0 - p
+  endif
+
+  if (p < 0.0 - eps) p = p + 360.0
+  if (p >= 360.0 - eps) p = p - 360.0
+
+  ii = nint(p * INITR) + 1
+
+  if (ii < 1) ii = 1
+  if (ii > NBP) ii = NBP
+
+  jj = nint(t * INITR) + 1
+
+  if (jj < 1) jj = 1
+  if (jj > NBT+1) jj = NBT+1
+
+  thetar = t
+  phir = p
+
+  end subroutine get_indexloc
+
+  !-----------------------------------------------------------------
+
+! not used ...
+!
+!  integer function etopo_filtre(theta,phi)
+!
+!  !theta phi en radians
+!  !dr en degre
+!  !reponse en metre
+!
+!  implicit none
+!  double precision :: theta,phi
+!  real::t,p
+!
+!  t = theta / deg2rad
+!  p = phi   / deg2rad
+!
+!  etopo_filtre = gauss_filtre(topo_start,t,p,drfiltre)
+!
+!  end function etopo_filtre
+!
+
+  !-----------------------------------------------------------------
+
+! not used so far...
+
+!  subroutine load_etopo5_dos()
+!
+!  !pour lire etopo5.dos.
+!  !attention doit etre complier en little_endian et
+!  !le recl unit doit etre le byte (et pas 4 bytes)
+!
+!  implicit none
+!  integer(kind=2) :: val  ! 2-bytes / 16-bits
+!  integer :: unit,i,j,k
+!
+!  unit = 11
+!  k = 0
+!  NBT = NBT_TOPO5
+!  NBP = NBP_TOPO5
+!  INITR = INITR_TOPO5
+!  allocate(topo_start(NBP_TOPO5,NBT_TOPO5+1))
+!
+!  open(unit,file='ETOPO5.DOS',status='old',form='unformatted',access='direct',recl=2,iostat=ier)
+!  if (ier /= 0) then
+!    print *,'Error opening topography file: ','ETOPO5.DOS'
+!    stop 'Error opening topography file ETOPO5.DOS'
+!  endif
+!
+!  do i = 1,NBT ! 180*12
+!    if (mod(i,100) == 0) print *,'Reading ETOPO5.DOS for i=',i ,' ...'
+!
+!    do j = 1,NBP ! 360*12
+!      k = k+1
+!      read(unit,rec=k,err=100) val
+!      if (i == 1 .and. j == 1 .and. val /= -4290 ) STOP 'ETOPO5.DOS reading problem: use little_endian!'
+!      topo_start(j,i) = val
+!    enddo
+!  enddo
+!  topo_start(:,NBT+1) = 2810
+!  close(unit)
+!
+!  return
+!
+!100 continue
+!  print *,'premature end of file for ETOPO5.DOS'
+!
+!  end subroutine load_etopo5_dos
+
+  !-----------------------------------------------------------------
+
+! not used so far...
+
+!  subroutine filtre_topo(tout,dr,NBTF,NBPF)
+!
+!  !dr: rayon du filtrage
+!  !NBTF: nombre d'echantillons sur un meridien (de 0 a 180 + 1 echantillon)
+!  !NBPF: nombre d'echantillons sur un parallele (de 0 a 360)
+!
+!  implicit none
+!  integer , intent(in) :: NBTF,NBPF
+!  real, intent(in) :: dr
+!  integer, dimension(:,:), intent(out) :: tout
+!  integer :: i,j
+!  real :: theta,phi
+!
+!  do j = 1,NBTF
+!    print *,'filtering ',j,' ...'
+!
+!    theta = real(j-1)*180/real(NBTF-1)
+!    do i = 1,NBPF
+!      phi = real(i-1)*360/real(NBPF)
+!      tout(i,j) = gauss_filtre(topo_start,theta,phi,dr)
+!    enddo
+!  enddo
+!
+!  end subroutine filtre_topo
+
+  !-----------------------------------------------------------------
+
+! not used so far...
+!
+!  subroutine write_topo_filtre(unit,tin,dr,NBTF,NBPF)
+!
+!  implicit none
+!  integer , intent(in) :: NBTF,NBPF,unit
+!  real, intent(in) :: dr
+!  integer, dimension(:,:), intent(in) :: tin
+!  integer :: i,j
+!
+!  write(unit,*) NBPF,NBTF,dr
+!  do i = 1,NBTF
+!    do j = 1,NBPF
+!      write(unit,'(i5)') tin(j,i)
+!    enddo
+!  enddo
+!
+!  end subroutine write_topo_filtre
+
+end module smooth_etopo5_par
+
+
 !--------------------------------------------------------------------------------------------------
 ! ETOPO
 !
@@ -38,9 +398,13 @@
 ! standard routine to setup model
 
   use constants, only: myrank,MAX_STRING_LEN,IMAIN,GRAVITY_INTEGRALS, &
-                       PLOT_PNM_IMAGE_TOPO_BATHY
+                       PLOT_PNM_IMAGE_TOPO_BATHY, &
+                       PATHNAME_TOPO_FILE_BERKELEY
 
   use shared_parameters, only: NX_BATHY,NY_BATHY,PATHNAME_TOPO_FILE,RESOLUTION_TOPO_FILE
+
+  ! for Berkeley topo
+  use smooth_etopo5_par, only: read_etopo5_filtre
 
   implicit none
 
@@ -71,10 +435,16 @@
     time1 = wtime()
 
     ! read/save topo file on main proc
-    if (ending == '.dat') then
-      call read_topo_bathy_file_dat_text(ibathy_topo)
+    if (PATHNAME_TOPO_FILE == PATHNAME_TOPO_FILE_BERKELEY) then
+      ! Berkeley smooth topography
+      call read_etopo5_filtre(ibathy_topo)
     else
-      call read_topo_bathy_file(ibathy_topo)
+      ! read/save *.dat/*.bin topo file on main proc
+      if (ending == '.dat') then
+        call read_topo_bathy_file_dat_text(ibathy_topo)
+      else
+        call read_topo_bathy_file(ibathy_topo)
+      endif
     endif
 
     ! elapsed time
@@ -372,8 +742,11 @@
 !---- get elevation or ocean depth in meters at a given latitude and longitude
 !
 
-  use constants
-  use shared_parameters, only: NX_BATHY,NY_BATHY,RESOLUTION_TOPO_FILE
+  use constants, only: ZERO,PATHNAME_TOPO_FILE_BERKELEY
+  use shared_parameters, only: NX_BATHY,NY_BATHY,RESOLUTION_TOPO_FILE,PATHNAME_TOPO_FILE
+
+  ! for Berkeley topo
+  use smooth_etopo5_par, only: get_etopo5_filtre
 
   implicit none
 
@@ -395,6 +768,13 @@
 
   ! initializes elevation
   value = ZERO
+
+  ! check if Berkeley smooth topo
+  if (PATHNAME_TOPO_FILE == PATHNAME_TOPO_FILE_BERKELEY) then
+    value = get_etopo5_filtre(xlat,xlon,ibathy_topo)
+    ! all done
+    return
+  endif
 
   ! longitude within range [0,360] degrees
   xlo = xlon
