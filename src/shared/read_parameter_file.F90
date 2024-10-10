@@ -220,6 +220,15 @@
   call read_value_logical(USE_MONOCHROMATIC_CMT_SOURCE, 'USE_MONOCHROMATIC_CMT_SOURCE', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: USE_MONOCHROMATIC_CMT_SOURCE'
 
+  ! (optional) Berkeley UCB STF parameters
+  if (STF_IS_UCB_HEAVISIDE) then
+    call read_value_double_precision(UCB_SOURCE_T1,'SOURCE_T1', ier); ier = 0
+    call read_value_double_precision(UCB_SOURCE_T2,'SOURCE_T2', ier); ier = 0
+    call read_value_double_precision(UCB_SOURCE_T3,'SOURCE_T3', ier); ier = 0
+    call read_value_double_precision(UCB_SOURCE_T4,'SOURCE_T4', ier); ier = 0
+    call read_value_double_precision(UCB_TAU,'TAU', ier); ier = 0
+  endif
+
   ! option to save strain seismograms
   call read_value_logical(SAVE_SEISMOGRAMS_STRAIN, 'SAVE_SEISMOGRAMS_STRAIN', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: SAVE_SEISMOGRAMS_STRAIN'
