@@ -580,6 +580,10 @@
   use specfem_par
   use specfem_par_crustmantle
   use specfem_par_movie
+
+  ! for berkeley ucb stf
+  use ucb_heaviside, only: init_ucb_heaviside
+
   implicit none
 
   ! local parameters
@@ -639,11 +643,16 @@
     comp_dir_vect_source_Z_UP(:) = 0.d0
   endif
 
+  ! initialize Berkeley stf if needed (for ucb heaviside)
+  if (STF_IS_UCB_HEAVISIDE) then
+    call init_ucb_heaviside(NSTEP,DT)
+  endif
+
   ! sources
   ! moved open statement and writing of first lines into sr.vtk before the
   ! call to locate_sources, where further write statements to that file follow
   if (myrank == 0) then
-  ! write source and receiver VTK files for Paraview
+    ! write source and receiver VTK files for Paraview
     filename = trim(OUTPUT_FILES)//'/sr_tmp.vtk'
     open(IOUT_VTK,file=trim(filename),status='unknown',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening temporary file sr_temp.vtk')
@@ -792,6 +801,11 @@
   if (EXTERNAL_SOURCE_TIME_FUNCTION) then
     hdur(:) = 0.d0
     t0      = 0.d0
+  endif
+
+  ! Berkeley stf
+  if (STF_IS_UCB_HEAVISIDE) then
+    t0 = 0.d0
   endif
 
   ! checks if user set USER_T0 to fix simulation start time

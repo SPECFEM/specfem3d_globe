@@ -27,7 +27,7 @@
 
   subroutine broadcast_computed_parameters()
 
-  use constants, only: myrank
+  use constants, only: myrank,STF_IS_UCB_HEAVISIDE
   use shared_parameters
 
   implicit none
@@ -204,6 +204,15 @@
   call bcast_all_singlei(NZ_DOUBLING_3)
   call bcast_all_singlei(NZ_DOUBLING_4)
   call bcast_all_singlei(NZ_DOUBLING_5)
+
+  ! (optional) Berkeley UCB stf
+  if (STF_IS_UCB_HEAVISIDE) then
+    call bcast_all_singledp(UCB_SOURCE_T1)
+    call bcast_all_singledp(UCB_SOURCE_T2)
+    call bcast_all_singledp(UCB_SOURCE_T3)
+    call bcast_all_singledp(UCB_SOURCE_T4)
+    call bcast_all_singledp(UCB_TAU)
+  endif
 
   ! (optional) scattering perturbations
   call bcast_all_singlel(ADD_SCATTERING_PERTURBATIONS)

@@ -208,6 +208,10 @@
   logical :: SHIFT_SIMULTANEOUS_RUNS = .false.
   double precision :: FILESYSTEM_IO_BANDWIDTH = 0.d0
 
+  ! UCB Source time function parameters
+  double precision :: UCB_SOURCE_T1 = 400.d0, UCB_SOURCE_T2 = 250.d0, UCB_SOURCE_T3 = 53.d0, UCB_SOURCE_T4 = 40.d0
+  double precision :: UCB_TAU = 400.d0
+
   end module shared_input_parameters
 
 !

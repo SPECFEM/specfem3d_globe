@@ -59,6 +59,9 @@
 
   use specfem_par_movie, only: vtkdata_source_x,vtkdata_source_y,vtkdata_source_z
 
+  ! for Berkeley stf
+  use shared_parameters, only: UCB_SOURCE_T1,UCB_SOURCE_T2,UCB_SOURCE_T3,UCB_SOURCE_T4,UCB_TAU
+
   implicit none
 
   ! local parameters
@@ -549,8 +552,17 @@
               write(IMAIN,*) '    half duration in frequency: ',hdur(isource),' seconds**(-1)'
             case (2)
               ! Heaviside
-              write(IMAIN,*) '    using (quasi) Heaviside source time function'
-              write(IMAIN,*) '             half duration: ',hdur(isource),' seconds'
+              if (STF_IS_UCB_HEAVISIDE) then
+                ! Berkeley UCB stf
+                write(IMAIN,*) '    using Berkeley UCB (quasi) Heaviside source time function'
+                write(IMAIN,*) '             source T1/T2/T3/T4: ',sngl(UCB_SOURCE_T1),'/',sngl(UCB_SOURCE_T2),'/', &
+                                                                   sngl(UCB_SOURCE_T3),'/',sngl(UCB_SOURCE_T4)
+                write(IMAIN,*) '             source time-shift : ',sngl(UCB_TAU)
+              else
+                ! default Heaviside
+                write(IMAIN,*) '    using (quasi) Heaviside source time function'
+                write(IMAIN,*) '             half duration: ',hdur(isource),' seconds'
+              endif
             case (3)
               ! Monochromatic
               write(IMAIN,*) '    using monochromatic source time function'
@@ -567,6 +579,13 @@
             case default
               stop 'unsupported force_stf value!'
             end select
+          else if (STF_IS_UCB_HEAVISIDE) then
+            ! moment tensor
+            ! Berkeley UCB stf
+            write(IMAIN,*) '    using Berkeley UCB (quasi) Heaviside source time function'
+            write(IMAIN,*) '             source T1/T2/T3/T4: ',sngl(UCB_SOURCE_T1),'/',sngl(UCB_SOURCE_T2),'/', &
+                                                               sngl(UCB_SOURCE_T3),'/',sngl(UCB_SOURCE_T4)
+            write(IMAIN,*) '             source time-shift : ',sngl(UCB_TAU)
           else if (USE_MONOCHROMATIC_CMT_SOURCE) then
             ! moment tensor
             write(IMAIN,*) '    using monochromatic source time function'
@@ -574,7 +593,7 @@
             write(IMAIN,*)
             write(IMAIN,*) '    period: ',hdur(isource),' seconds'
           else
-            ! moment tensor
+            ! default quasi Heaviside
             write(IMAIN,*) '    using (quasi) Heaviside source time function'
             ! add message if source is a Heaviside
             if (hdur(isource) <= 5.0*DT) then
