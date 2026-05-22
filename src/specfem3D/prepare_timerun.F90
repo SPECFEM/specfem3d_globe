@@ -629,6 +629,7 @@
   endif
 
   ! non-dimensionalized rotation rate of the Earth times two
+  ! rotation measured counter-clockwise
   two_omega_earth = 0._CUSTOM_REAL
   b_two_omega_earth = 0._CUSTOM_REAL
 
