@@ -76,7 +76,11 @@ def build_manifest(db_path):
     with open(csv_path, "w") as f:
         f.write("morton_hex,cx,cy,cz\n")
         for _, morton_hex, cx, cy, cz in records:
-            f.write(f"{morton_hex},{cx:.15e},{cy:.15e},{cz:.15e}\n")
+            # 17 significant digits, so that manifest.csv round-trips a float64
+            # exactly. At .15e it does not, and a reader that falls back to the
+            # text manifest gets centroids that differ from centroids.bin in the
+            # last bit.
+            f.write(f"{morton_hex},{cx:.16e},{cy:.16e},{cz:.16e}\n")
     print(f"Written {csv_path}")
 
     return True

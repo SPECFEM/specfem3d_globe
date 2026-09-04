@@ -52,6 +52,11 @@ CPPFLAGS = -I${SETUP} @CPPFLAGS@
 CXX = @CXX@
 CXXFLAGS = -I${SETUP} @CXXFLAGS@
 
+# static library archiver (used by src/gf3d/ for lib/libgf3d.a)
+AR = @AR@
+ARFLAGS = rcs
+RANLIB = @RANLIB@
+
 FCLINK = $(MPIFCCOMPILE_CHECK)
 
 # all linker flags
@@ -574,6 +579,7 @@ OUTPUT = $B/OUTPUT_FILES
 SUBDIRS = \
 	auxiliaries \
 	create_header_file \
+	gf3d \
 	gpu \
 	meshfem3D \
 	shared \
@@ -622,6 +628,12 @@ endif
 #	$(EMPTY_MACRO)
 #endif
 
+# Green function extraction library and tool
+# note: the database format is HDF5-only, so this is off unless configured --with-hdf5
+ifeq ($(HDF5), yes)
+DEFAULT += 	xgf3d
+endif
+
 # full gravity tool
 DEFAULT += 	xgindex3D
 
@@ -649,7 +661,7 @@ clean:
 endif
 
 realclean: clean
-	-rm -rf $E/* $O/*
+	-rm -rf $E/* $O/* $L/*
 
 # unit testing
 # If the first argument is "test"...
@@ -743,6 +755,12 @@ endif
 	@echo "for full-gravity simulations:"
 	@echo "    xgindex3D"
 	@echo ""
+ifeq ($(HDF5), yes)
+	@echo "for Green function database extraction: [make gf3d]"
+	@echo "    xgf3d"
+	@echo "    lib/libgf3d.a"
+	@echo ""
+endif
 
 .PHONY: all default clean realclean help tests
 

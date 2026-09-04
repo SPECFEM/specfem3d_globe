@@ -27,7 +27,7 @@
 
   subroutine get_cmt(yr,jda,mo,da,ho,mi,sec, &
                      tshift_src,hdur,lat,long,depth,moment_tensor, &
-                     DT,NSOURCES,min_tshift_src_original)
+                     DT,NSOURCES,min_tshift_src_original,filename)
 
   use constants, only: IIN,IMAIN,EXTERNAL_SOURCE_TIME_FUNCTION, &
     PI,GRAV,MAX_STRING_LEN,mygroup
@@ -48,6 +48,19 @@
   double precision, dimension(NSOURCES), intent(out) :: tshift_src,hdur,lat,long,depth
   double precision, dimension(6,NSOURCES), intent(out) :: moment_tensor
   double precision, intent(out) :: min_tshift_src_original
+
+  ! path to the CMTSOLUTION file; pass '' for the solver's usual
+  ! DATA/CMTSOLUTION, including the run-group prefix for simultaneous runs
+  !
+  ! The serial Green function library (src/gf3d/) is handed a CMTSOLUTION on
+  ! the command line and has no DATA/ directory of its own.
+  !
+  ! Note this is deliberately a required argument rather than an `optional`
+  ! one. get_cmt() is an external procedure and none of its callers has an
+  ! explicit interface, and omitting an `optional` argument across an
+  ! implicit interface is not standard conforming: present() would be
+  ! deciding on an argument slot the caller never wrote.
+  character(len=*), intent(in) :: filename
 
   ! local variables below
   integer :: julian_day,isource
@@ -74,11 +87,16 @@
 !
 !---- read hypocenter info
 !
-  CMTSOLUTION_FILE = 'DATA/CMTSOLUTION'
+  if (len_trim(filename) > 0) then
+    ! caller-supplied path: used as given, without the run-group prefix
+    CMTSOLUTION_FILE = trim(filename)
+  else
+    CMTSOLUTION_FILE = 'DATA/CMTSOLUTION'
 
-  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-    CMTSOLUTION_FILE = path_to_add(1:len_trim(path_to_add))//CMTSOLUTION_FILE(1:len_trim(CMTSOLUTION_FILE))
+    if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+      write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+      CMTSOLUTION_FILE = path_to_add(1:len_trim(path_to_add))//CMTSOLUTION_FILE(1:len_trim(CMTSOLUTION_FILE))
+    endif
   endif
 
   open(unit=IIN,file=trim(CMTSOLUTION_FILE),status='old',action='read',iostat=ier)

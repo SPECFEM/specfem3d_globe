@@ -22,6 +22,8 @@ arc/
 # Build time
 bin/
 obj/
+lib/
+include/
 OUTPUT_FILES/*
 
 # Documentation

@@ -202,6 +202,100 @@
 !=====================================================================
 !
 
+  subroutine lagrange_any_2nd(xi,NGLL,xigll,h,hprime,hprime2)
+
+! same as lagrange_any(), but also returns the second derivatives
+!
+! Written as a sibling of lagrange_any() rather than as an extra argument to
+! it, on purpose. lagrange_any() has 32 call sites, none of which has an
+! explicit interface, so an `optional` output argument there would not be
+! standard conforming; and it is on the mesher's hot path, where a required
+! one would make every caller pay for a derivative it does not want. This
+! routine is called once per source position, so the plain O(NGLL^3) form
+! below is not worth optimizing the way lagrange_any() is.
+!
+! h(i)       = l_i(xi)
+! hprime(i)  = l_i'(xi)
+! hprime2(i) = l_i''(xi)
+!
+! with l_i(x) = prod_{j/=i} (x - x_j) / prod_{j/=i} (x_i - x_j).
+!
+! Differentiating that product twice gives, over the same denominator,
+!
+!   l_i''(x) = sum_{j/=i} sum_{k/=i,k/=j} prod_{m/=i,m/=j,m/=k} (x - x_m)
+!
+! where each unordered pair {j,k} is visited twice by the ordered double
+! sum, which is exactly the factor of two the product rule asks for.
+
+  implicit none
+
+  double precision,intent(in) :: xi
+
+  integer,intent(in) :: NGLL
+  double precision,dimension(NGLL),intent(in) :: xigll
+  double precision,dimension(NGLL),intent(out) :: h,hprime,hprime2
+
+  ! local parameters
+  integer :: dgr,i,j,k
+  double precision :: prod1,prod2,prod3,prod4
+  double precision :: prod2_inv
+  double precision :: sum1,sum2
+  double precision :: x0,x
+
+  do dgr = 1,NGLL
+
+    prod1 = 1.0d0
+    prod2 = 1.0d0
+
+    ! lagrangian interpolants
+    x0 = xigll(dgr)
+    do i = 1,NGLL
+      if (i /= dgr) then
+        x = xigll(i)
+        prod1 = prod1*(xi-x)
+        prod2 = prod2*(x0-x)
+      endif
+    enddo
+
+    ! takes inverse to avoid additional divisions
+    prod2_inv = 1.d0/prod2
+
+    h(dgr) = prod1 * prod2_inv
+
+    ! first and second derivatives
+    sum1 = 0.0d0
+    sum2 = 0.0d0
+    do i = 1,NGLL
+      if (i /= dgr) then
+        prod3 = 1.0d0
+        do j = 1,NGLL
+          if (j /= dgr .and. j /= i) prod3 = prod3*(xi-xigll(j))
+        enddo
+        sum1 = sum1 + prod3
+
+        do j = 1,NGLL
+          if (j /= dgr .and. j /= i) then
+            prod4 = 1.0d0
+            do k = 1,NGLL
+              if (k /= dgr .and. k /= i .and. k /= j) prod4 = prod4*(xi-xigll(k))
+            enddo
+            sum2 = sum2 + prod4
+          endif
+        enddo
+      endif
+    enddo
+
+    hprime(dgr)  = sum1 * prod2_inv
+    hprime2(dgr) = sum2 * prod2_inv
+
+  enddo
+
+  end subroutine lagrange_any_2nd
+
+!
+!=====================================================================
+!
+
 ! subroutine to compute the derivative of the Lagrange interpolants
 ! at any given GLL point
 

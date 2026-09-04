@@ -156,8 +156,6 @@ rule setup_base:
         nproc=NPROC,
         mpirun=MPIRUN,
     run:
-        import re
-
         basedir = params.basedir
         specfem_dir = os.path.abspath(params.specfem_dir)
 
@@ -179,18 +177,22 @@ rule setup_base:
             if not os.path.exists(link):
                 os.symlink(target, link)
 
-        # Update GF_DATABASE_PATH in Par_file to match the configured path
-        parfile = os.path.join(basedir, "DATA", "Par_file")
-        with open(parfile, "r") as f:
-            content = f.read()
-        content = re.sub(
-            r"^(GF_DATABASE_PATH\s*=\s*).*$",
-            rf"\g<1>{params.gf_database_path}/",
-            content,
-            flags=re.MULTILINE,
-        )
-        with open(parfile, "w") as f:
-            f.write(content)
+        # Note: GF_DATABASE_PATH is deliberately NOT written here.
+        #
+        # db_base/DATA/Par_file is tracked in git, and this rule used to
+        # rewrite it in place with an absolute path. That is a trap on two
+        # counts: it leaves a machine-specific path in a tracked file, and
+        # this rule's "already done" marker (mesher.flag) is independent of
+        # the file's contents -- so a checkout of the Par_file restores the
+        # relative default while mesher.flag stays put, and every station run
+        # afterwards silently writes its Green functions into
+        # simulations/<station>/GFDB/ instead of the shared database, with no
+        # error and with its done flag written as if it had worked.
+        #
+        # Nothing here needs the value anyway: every consumer of
+        # GF_DATABASE_PATH lives in src/specfem3D/, i.e. the solver. The
+        # mesher run below only reads and broadcasts it. setup_station sets it
+        # in the per-station copy of the Par_file, which is where it matters.
 
         # Run the mesher
         shell(
@@ -214,7 +216,10 @@ rule setup_station:
         simdir=lambda wc: os.path.join(SIMDIR, wc.station),
         basedir=BASEDIR,
         stations_file=STATIONS_FILE,
+        gf_database_path=GF_DATABASE_PATH,
     run:
+        import re
+
         simdir = params.simdir
 
         # Create directories
@@ -232,11 +237,34 @@ rule setup_station:
         if not os.path.exists(db_link):
             os.symlink(db_target, db_link)
 
-        # Copy Par_file
-        shutil.copy2(
-            os.path.join(params.basedir, "DATA", "Par_file"),
-            os.path.join(simdir, "DATA", "Par_file"),
+        # Copy Par_file, and pin GF_DATABASE_PATH to the shared database.
+        #
+        # setup_base also rewrites this, but in db_base/DATA/Par_file, which is
+        # a *tracked* file whose "already done" marker (mesher.flag) is
+        # independent of its contents. A git checkout of that Par_file
+        # therefore restores the relative default './GFDB/' while leaving
+        # mesher.flag in place, and every station run after that silently
+        # writes its Green functions into simulations/<station>/GFDB/ instead
+        # of the shared one -- with no error, and with its done flag written as
+        # if it had worked. Setting it here as well makes each run independent
+        # of whatever state db_base happens to be in.
+        parfile = os.path.join(simdir, "DATA", "Par_file")
+        shutil.copy2(os.path.join(params.basedir, "DATA", "Par_file"), parfile)
+
+        with open(parfile) as f:
+            content = f.read()
+        content, nsub = re.subn(
+            r"^(GF_DATABASE_PATH\s*=\s*).*$",
+            rf"\g<1>{params.gf_database_path}/",
+            content,
+            flags=re.MULTILINE,
         )
+        if nsub != 1:
+            raise ValueError(
+                f"expected exactly one GF_DATABASE_PATH line in {parfile}, found {nsub}"
+            )
+        with open(parfile, "w") as f:
+            f.write(content)
 
         # Copy STATIONS file
         shutil.copy2(params.stations_file, os.path.join(simdir, "DATA", "STATIONS"))
@@ -548,6 +576,12 @@ rule run_cross_validation:
     input:
         force_done=os.path.join(VALIDATION_DIR, "done.flag"),
         cmt_done=os.path.join(VALIDATION_CMT_DIR, "done.flag"),
+        # The cross-validation reads the Green function database, so it has to
+        # wait for it. Without this edge snakemake is free to run this rule
+        # before the reciprocal simulations have written anything -- which it
+        # does as soon as there is more than one station, since only the
+        # forward runs were declared here.
+        centroids=os.path.join(GF_DATABASE_PATH, "centroids.bin"),
     output:
         force_svg=os.path.join("validation_output", "xvalidate_force.svg"),
         cmt_svg=os.path.join("validation_output", "xvalidate_cmt.svg"),

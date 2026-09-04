@@ -757,7 +757,8 @@
       call get_force(tshift_src,hdur, &
                      srclat,srclon,srcdepth,DT,NSOURCES, &
                      min_tshift_src_original,force_stf,factor_force_source, &
-                     comp_dir_vect_source_E,comp_dir_vect_source_N,comp_dir_vect_source_Z_UP)
+                     comp_dir_vect_source_E,comp_dir_vect_source_N,comp_dir_vect_source_Z_UP, &
+                     '')
     endif
     ! broadcasts specific point force infos
     call bcast_all_i(force_stf,NSOURCES)
@@ -772,7 +773,7 @@
       call get_cmt(yr,jda,mo,da,ho,mi,sec, &
                    tshift_src,hdur, &
                    srclat,srclon,srcdepth,moment_tensor, &
-                   DT,NSOURCES,min_tshift_src_original)
+                   DT,NSOURCES,min_tshift_src_original,'')
     endif
     ! broadcast ispecific moment tensor infos
     call bcast_all_dp(moment_tensor,6*NSOURCES)

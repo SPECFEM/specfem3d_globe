@@ -28,6 +28,7 @@ tests=( compilations \
         auxiliaries \
         meshfem3D \
         specfem3D \
+        gf3d \
         examples
       )
 

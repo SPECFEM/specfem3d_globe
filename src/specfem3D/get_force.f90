@@ -28,7 +28,7 @@
   subroutine get_force(tshift_src,hdur,lat,long,depth,DT,NSOURCES, &
                        min_tshift_src_original,force_stf,factor_force_source, &
                        comp_dir_vect_source_E,comp_dir_vect_source_N, &
-                       comp_dir_vect_source_Z_UP)
+                       comp_dir_vect_source_Z_UP,filename)
 
   use constants, only: IIN,MAX_STRING_LEN,TINYVAL,mygroup,PI,GRAV
   use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,R_PLANET,RHOAV
@@ -46,6 +46,15 @@
   double precision, dimension(NSOURCES), intent(out) :: comp_dir_vect_source_E
   double precision, dimension(NSOURCES), intent(out) :: comp_dir_vect_source_N
   double precision, dimension(NSOURCES), intent(out) :: comp_dir_vect_source_Z_UP
+
+  ! path to the FORCESOLUTION file; pass '' for the solver's usual
+  ! DATA/FORCESOLUTION, including the run-group prefix for simultaneous runs
+  !
+  ! Required rather than `optional` for the same reason as in get_cmt.f90:
+  ! this is an external procedure with no explicit interface at any call
+  ! site, and omitting an optional argument across an implicit interface is
+  ! not standard conforming.
+  character(len=*), intent(in) :: filename
 
   ! local variables below
   integer :: isource,ier,ipos
@@ -72,14 +81,20 @@
 !
 !---- read info
 !
-  FORCESOLUTION = 'DATA/FORCESOLUTION'
-! see if we are running several independent runs in parallel
-! if so, add the right directory for that run
-! (group numbers start at zero, but directory names start at run0001, thus we add one)
-! a negative value for "mygroup" is a convention that indicates that groups (i.e. sub-communicators, one per run) are off
-  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-    FORCESOLUTION = path_to_add(1:len_trim(path_to_add))//FORCESOLUTION(1:len_trim(FORCESOLUTION))
+  if (len_trim(filename) > 0) then
+    ! caller-supplied path: used as given, without the run-group prefix
+    FORCESOLUTION = trim(filename)
+  else
+    FORCESOLUTION = 'DATA/FORCESOLUTION'
+    ! see if we are running several independent runs in parallel
+    ! if so, add the right directory for that run
+    ! (group numbers start at zero, but directory names start at run0001, thus we add one)
+    ! a negative value for "mygroup" is a convention that indicates that groups
+    ! (i.e. sub-communicators, one per run) are off
+    if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+      write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+      FORCESOLUTION = path_to_add(1:len_trim(path_to_add))//FORCESOLUTION(1:len_trim(FORCESOLUTION))
+    endif
   endif
 
   open(unit=IIN,file=trim(FORCESOLUTION),status='old',action='read',iostat=ier)

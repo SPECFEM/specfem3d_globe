@@ -1,0 +1,16 @@
+# Artifacts of the out-of-source configure that the runners here perform.
+#
+# 0.configure.default_make.sh and 5.configure.hdf5_make.sh run the top-level
+# configure inside this directory, which drops a Makefile, setup/ and DATA/
+# here. bin/, obj/ and lib/ are already covered by the top-level .gitignore.
+Makefile
+config.log
+config.status
+setup/
+DATA/
+OUTPUT_FILES/
+
+# test output
+results.log
+error.log
+info.log

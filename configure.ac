@@ -386,6 +386,11 @@ AC_FC_PP_SRCEXT(F90) dnl Because AC_FC_PP_DEFINE messes with things.
 
 AC_PROG_CC
 
+# archiver, needed to build the static library lib/libgf3d.a
+# note: this project does not use automake, so AM_PROG_AR must not be used here
+AC_CHECK_TOOL([AR],[ar],[:])
+AC_PROG_RANLIB
+
 ############################################################
 # influential environment variables
 
@@ -1077,6 +1082,8 @@ AC_CONFIG_LINKS([
 AC_CONFIG_COMMANDS([bin], [AS_MKDIR_P(bin)])
 AC_CONFIG_COMMANDS([obj], [AS_MKDIR_P(obj)])
 AC_CONFIG_COMMANDS([OUTPUT_FILES], [AS_MKDIR_P(OUTPUT_FILES)])
+AC_CONFIG_COMMANDS([lib], [AS_MKDIR_P(lib)])
+AC_CONFIG_COMMANDS([include], [AS_MKDIR_P(include)])
 
 AC_OUTPUT
 

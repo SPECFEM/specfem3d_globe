@@ -124,8 +124,27 @@
     enddo
 
     ! create HDF5 file
-    call h5fcreate_f(trim(filepath), H5F_ACC_TRUNC_F, fid, hdferr)
-    if (hdferr /= 0) call exit_MPI(myrank, 'Error creating coordinates.h5')
+    !
+    ! H5F_ACC_EXCL_F, not H5F_ACC_TRUNC_F, and a lost race is not an error.
+    !
+    ! coordinates.h5 depends only on the element, not on the station, so
+    ! every station's reciprocal run writes the same set of files. When two
+    ! of those runs are in flight at once (snakemake -j N over the stations)
+    ! the inquire() above is a time-of-check/time-of-use window: both see the
+    ! file missing, both create it, and the loser used to die inside HDF5
+    ! with "unable to lock file, errno = 11" and abort the whole run.
+    !
+    ! H5F_ACC_EXCL_F maps to open(O_CREAT|O_EXCL), which is atomic, so
+    ! exactly one process creates the file. The loser simply skips: the
+    ! contents are a pure function of the element, so whoever won wrote the
+    ! same bytes we would have.
+    call h5fcreate_f(trim(filepath), H5F_ACC_EXCL_F, fid, hdferr)
+    if (hdferr /= 0) then
+      ! another process got there first -> nothing to do for this element
+      inquire(file=trim(filepath), exist=file_exists)
+      if (file_exists) cycle
+      call exit_MPI(myrank, 'Error creating coordinates.h5')
+    endif
 
     ! create dataset xyz (3, 5, 5, 5)
     call h5screate_simple_f(4, dims, dspace_id, hdferr)
@@ -257,6 +276,27 @@
   if (file_exists) then
     ! validate by trying to open and read a known attribute
     call h5fopen_f(trim(filepath), H5F_ACC_RDONLY_F, fid, hdferr)
+
+    ! The file exists but will not open. When several stations' reciprocal
+    ! runs are in flight at once this is the normal case rather than an
+    ! error: another run created mesh_info.h5 moments ago and still holds
+    ! the HDF5 write lock on it, so our read fails with
+    ! "unable to lock file, errno = 11". Falling through to the recreate
+    ! path below would open it H5F_ACC_TRUNC_F, hit the same lock and abort
+    ! the run.
+    !
+    ! Skipping is safe because mesh_info.h5 describes the mesh and the
+    ! simulation parameters, not the station, so the run holding the lock is
+    ! writing exactly what we would have written. A file left corrupt by a
+    ! crashed run is not silently repaired here any more, but it is caught
+    ! when the database is opened for extraction.
+    if (hdferr /= 0) then
+      write(IMAIN,*) 'Green function database: mesh_info.h5 is being written by a concurrent run, skipping'
+      write(IMAIN,*)
+      call flush_IMAIN()
+      return
+    endif
+
     if (hdferr == 0) then
       call h5aopen_f(fid, 'scale_displ', attr_id, hdferr)
       if (hdferr == 0) then
@@ -317,8 +357,29 @@
   endif
 
   ! create file
-  call h5fcreate_f(trim(filepath), H5F_ACC_TRUNC_F, fid, hdferr)
-  if (hdferr /= 0) call exit_MPI(myrank, 'Error creating mesh_info.h5')
+  if (file_exists) then
+    ! recovery path: the file above was found to be corrupt or incomplete, so
+    ! deliberately replace it
+    call h5fcreate_f(trim(filepath), H5F_ACC_TRUNC_F, fid, hdferr)
+    if (hdferr /= 0) call exit_MPI(myrank, 'Error creating mesh_info.h5')
+  else
+    ! mesh_info.h5 is shared by every station's reciprocal run, so when
+    ! several of those run at once the inquire() above is a
+    ! time-of-check/time-of-use window. Create exclusively and let the first
+    ! writer win; the contents do not depend on the station. See the longer
+    ! note in gf_write_coordinates().
+    call h5fcreate_f(trim(filepath), H5F_ACC_EXCL_F, fid, hdferr)
+    if (hdferr /= 0) then
+      inquire(file=trim(filepath), exist=file_exists)
+      if (file_exists) then
+        write(IMAIN,*) 'Green function database: mesh_info.h5 written by a concurrent run, skipping'
+        write(IMAIN,*)
+        call flush_IMAIN()
+        return
+      endif
+      call exit_MPI(myrank, 'Error creating mesh_info.h5')
+    endif
+  endif
 
   adim(1) = 1
 
