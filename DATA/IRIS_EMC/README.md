@@ -1,7 +1,10 @@
 # IRIS Earth Model Collaboration (EMC)
 
-Earth models provided by IRIS
+Earth models provided by IRIS<br>
 http://ds.iris.edu/ds/products/emc-earthmodels/
+
+have been migrated (09/03/2026) to<br>
+https://data.earthscope.org/app/products/portal/emc_model_catalog.html
 
 
 ## Model Download
@@ -9,9 +12,15 @@ http://ds.iris.edu/ds/products/emc-earthmodels/
 To download the netCDF files, check out the following webpages:
 * Alaska model:<br>
   https://ds.iris.edu/ds/products/emc-alaskajointinversion_rfvphhv-1berg2020/
+  
+  now at<br>
+  https://data.earthscope.org/app/products/portal/emc_model_viewer.html?id=EMC-Alaska.JointInversion_RF%2BVph%2BHV-1.Berg.2020
 
 * Southern California model:<br>
   http://ds.iris.edu/ds/products/emc-cvm_h_v15_1/
+  
+  now at<br>
+  https://data.earthscope.org/app/products/portal/emc_model_viewer.html?id=EMC-CVM_H_v15_1
 
 
 ## Code compilation
@@ -38,7 +47,7 @@ Download the EMC model file and put it into this folder `DATA/IRIS_EMC/`.
 Create a symbolic link to the downloaded model file with the name `model.nc`, for example like:
 ```
 cd DATA/IRIS_EMC/
-ln -s Alaska.JointInversion-RF+Vph+HV-1.Berg.2020-nc4.nc model.nc
+ln -s Alaska.JointInversion-RF+Vph+HV-1.Berg.2020.r0.0-nc4.nc model.nc
 ```
 The mesher will look for a file name `DATA/IRIS_EMC/model.nc` to read in the model values.
 
