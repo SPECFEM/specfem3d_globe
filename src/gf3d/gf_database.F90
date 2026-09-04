@@ -84,6 +84,10 @@
   ! geographic chain. Keeping the get_topo_bathy() call in this module means
   ! gf_geometry.F90 stays free of model_topo_bathy.shared.o and its MPI stubs.
   public :: gf_topo_elevation
+  ! exported for gf_seismograms.F90, which must check an output directory
+  ! before writing into it. Fortran's inquire(file=) does not answer
+  ! reliably for directories, so this goes through gf_dirlist.c.
+  public :: gf_dir_exists
 
   ! unit numbers used for the plain-text / stream reads
   integer, parameter :: IIN_GF = 71

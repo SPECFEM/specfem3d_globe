@@ -57,6 +57,8 @@ gf3d_KERNEL_OBJECTS = \
 	$O/gf_dirlist.gf3d_cc.o \
 	$O/gf_shape3D.gf3d.o \
 	$O/gf_geometry.gf3d.o \
+	$O/gf_interp.gf3d.o \
+	$O/gf_source.gf3d.o \
 	$(EMPTY_MACRO)
 
 ## Shared objects the kernels call, which are themselves free of HDF5 and
@@ -81,12 +83,22 @@ gf3d_HDF5_OBJECTS = \
 	$O/gf_database.gf3d.o \
 	$O/gf_element_io.gf3d.o \
 	$O/gf_locate.gf3d.o \
+	$O/gf_seismograms.gf3d.o \
+	$(EMPTY_MACRO)
+
+## From src/specfem3D/: the FORCESOLUTION and CMTSOLUTION readers, reused
+## rather than re-ported so that the non-dimensionalisation (scaleF, and
+## scaleM from Stage 4) comes from the solver's own source and cannot drift.
+## Both are free of MPI and of HDF5.
+gf3d_SOLVER_OBJECTS = \
+	$O/get_force.solver.o \
 	$(EMPTY_MACRO)
 
 ## library contents (everything except the program itself)
 gf3d_OBJECTS = \
 	$(gf3d_KERNEL_OBJECTS) \
 	$(gf3d_HDF5_OBJECTS) \
+	$(gf3d_SOLVER_OBJECTS) \
 	$(EMPTY_MACRO)
 
 ## the driver, linked against the library rather than archived into it
@@ -152,6 +164,9 @@ gf3d_MODULES = \
 	$(FC_MODDIR)/gf_geometry.$(FC_MODEXT) \
 	$(FC_MODDIR)/gf_element_io.$(FC_MODEXT) \
 	$(FC_MODDIR)/gf_locate.$(FC_MODEXT) \
+	$(FC_MODDIR)/gf_interp.$(FC_MODEXT) \
+	$(FC_MODDIR)/gf_source.$(FC_MODEXT) \
+	$(FC_MODDIR)/gf_seismograms.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
 
 #######################################
@@ -227,7 +242,12 @@ $O/gf_geometry.gf3d.o: $O/gf_par.gf3d.o $O/gf_shape3D.gf3d.o
 $O/gf_element_io.gf3d.o: $O/gf_par.gf3d.o $O/gf_hdf5_read.gf3d.o
 $O/gf_locate.gf3d.o: $O/gf_par.gf3d.o $O/gf_database.gf3d.o $O/gf_element_io.gf3d.o \
                      $O/gf_geometry.gf3d.o $O/gf_shape3D.gf3d.o $O/search_kdtree.shared.o
-$O/gf3d_main.gf3d.o: $O/gf_par.gf3d.o $O/gf_database.gf3d.o $O/gf_locate.gf3d.o
+$O/gf_interp.gf3d.o: $O/gf_par.gf3d.o
+$O/gf_source.gf3d.o: $O/gf_par.gf3d.o
+$O/gf_seismograms.gf3d.o: $O/gf_par.gf3d.o $O/gf_database.gf3d.o $O/gf_element_io.gf3d.o \
+                          $O/gf_interp.gf3d.o $O/gf_source.gf3d.o
+$O/gf3d_main.gf3d.o: $O/gf_par.gf3d.o $O/gf_database.gf3d.o $O/gf_locate.gf3d.o \
+                     $O/gf_source.gf3d.o $O/gf_seismograms.gf3d.o
 
 ## unique object suffix: every rules.mk writes into the same $O, so the
 ## pattern rules of different subdirectories must not collide

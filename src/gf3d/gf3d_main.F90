@@ -35,29 +35,36 @@
 !----   xgf3d --info          <GFDB> [--topo] [--no-check]
 !----   xgf3d --locate        <GFDB> <lat> <lon> <depth_km>
 !----   xgf3d --check-anchors <GFDB>
+!----   xgf3d --seis          <GFDB> <FORCESOLUTION> <outdir>
+!----   xgf3d --dump          <GFDB> <FORCESOLUTION> <outdir> [--station NET.STA]
 !----
-!---- Later stages add --seis, --dump and the SAC-writing default mode.
+!---- Later stages add the CMTSOLUTION path and the SAC-writing default mode.
 !----
 
   program xgf3d
 
-  use gf_par, only: t_gfdb,t_gf_location,gf_errmsg,gf_error_string, &
-                    GF_OK,GF3D_VERSION,GF_XI_TOL,GF_ANCHOR_TOL
+  use gf_par, only: t_gfdb,t_gf_location,t_gf_source,gf_errmsg,gf_error_string, &
+                    GF_OK,GF3D_VERSION,GF_XI_TOL,GF_ANCHOR_TOL,GF_NCOMP
   use gf_database, only: gf_open,gf_close,gf_print_info
   use gf_locate, only: gf_locate_source,gf_locate_release,gf_check_anchors_all
+  use gf_source, only: gf_read_force_source,gf_print_source
+  use gf_seismograms, only: gf_seis_force,gf_write_seis,gf_write_dump
 
   use constants, only: MAX_STRING_LEN,NGLLX,NGNOD
 
   implicit none
 
   ! local parameters
-  character(len=MAX_STRING_LEN) :: arg,mode,dbpath
+  character(len=MAX_STRING_LEN) :: arg,mode,dbpath,srcfile,outdir,station
   type(t_gfdb) :: db
   type(t_gf_location) :: loc
+  type(t_gf_source) :: src
   integer :: nargs,iarg,ierr
   logical :: with_topo,do_check
   double precision :: lat,lon,depth_km,worst_err
   integer :: ielem_worst
+  double precision, dimension(:,:,:), allocatable :: seis
+  double precision, dimension(:), allocatable :: tsec
 
   ! standard error, used for anything that is not the requested output
   integer, parameter :: ISTDERR = 0
@@ -158,6 +165,129 @@
     call gf_locate_release()
     call gf_close(db)
 
+  case ('--seis','--dump')
+
+    ! xgf3d --seis <GFDB> <FORCESOLUTION> <outdir>
+    ! xgf3d --dump <GFDB> <FORCESOLUTION> <outdir> [--station NET.STA]
+    !
+    ! Both modes share everything up to the located source; they differ only
+    ! in what they write. --dump exists to localise a Stage 5 disagreement:
+    ! the manufactured-solution tests pin the operators on synthetic input,
+    ! but nothing except a forward comparison can show that the HDF5 layout
+    ! was read in the right index order or that the nu convention is right,
+    ! and those fail non-locally.
+
+    if (nargs < 4) then
+      write(ISTDERR,'(a)') 'Error: '//trim(mode)//' needs a database, a FORCESOLUTION and an output directory'
+      call print_usage(ISTDERR)
+      stop 1
+    endif
+
+    call get_command_argument(2,dbpath)
+    call get_command_argument(3,srcfile)
+    call get_command_argument(4,outdir)
+
+    station = ''
+    iarg = 5
+    do while (iarg <= nargs)
+      call get_command_argument(iarg,arg)
+      select case (trim(arg))
+      case ('--station')
+        if (iarg == nargs) then
+          write(ISTDERR,'(a)') 'Error: --station needs a NET.STA identifier'
+          stop 1
+        endif
+        iarg = iarg + 1
+        call get_command_argument(iarg,station)
+      case default
+        write(ISTDERR,'(a)') 'Error: unknown option for '//trim(mode)//': '//trim(arg)
+        stop 1
+      end select
+      iarg = iarg + 1
+    enddo
+
+    if (trim(mode) == '--seis' .and. len_trim(station) > 0) then
+      write(ISTDERR,'(a)') 'Error: --station applies to --dump only'
+      stop 1
+    endif
+
+    call gf_open(dbpath,db,ierr,check_completion=.false.)
+    if (ierr /= GF_OK) then
+      write(ISTDERR,'(a)') 'Error opening the Green function database'
+      write(ISTDERR,'(a)') '  '//trim(gf_error_string(ierr))//': '//trim(gf_errmsg)
+      stop 1
+    endif
+
+    call gf_read_force_source(srcfile,db%dt,src,ierr)
+    if (ierr /= GF_OK) then
+      write(ISTDERR,'(a)') 'Error reading the source'
+      write(ISTDERR,'(a)') '  '//trim(gf_error_string(ierr))//': '//trim(gf_errmsg)
+      call gf_close(db)
+      stop 1
+    endif
+
+    call gf_locate_source(db,src%latitude,src%longitude,src%depth,loc,ierr)
+    if (ierr /= GF_OK) then
+      write(ISTDERR,'(a)') 'Error locating the source'
+      write(ISTDERR,'(a)') '  '//trim(gf_error_string(ierr))//': '//trim(gf_errmsg)
+      call gf_locate_release()
+      call gf_close(db)
+      stop 1
+    endif
+
+    call gf_print_source(src,6)
+    write(*,'(a)') ''
+    call print_location(db,loc,src%latitude,src%longitude,src%depth,6)
+    write(*,'(a)') ''
+
+    if (trim(mode) == '--dump') then
+
+      call gf_write_dump(db,src,loc,outdir,station,ierr)
+      if (ierr /= GF_OK) then
+        write(ISTDERR,'(a)') 'Error writing the dump'
+        write(ISTDERR,'(a)') '  '//trim(gf_error_string(ierr))//': '//trim(gf_errmsg)
+        call gf_locate_release()
+        call gf_close(db)
+        stop 1
+      endif
+      write(*,'(a,a)') 'wrote interpolated displacement to ',trim(outdir)
+
+    else
+
+      allocate(seis(db%nstations,GF_NCOMP,db%nt_subsampled),tsec(db%nt_subsampled),stat=ierr)
+      if (ierr /= 0) then
+        write(ISTDERR,'(a)') 'Error: could not allocate the seismogram array'
+        call gf_locate_release()
+        call gf_close(db)
+        stop 1
+      endif
+
+      call gf_seis_force(db,src,loc,seis,tsec,ierr)
+      if (ierr /= GF_OK) then
+        write(ISTDERR,'(a)') 'Error computing the seismograms'
+        write(ISTDERR,'(a)') '  '//trim(gf_error_string(ierr))//': '//trim(gf_errmsg)
+        call gf_locate_release()
+        call gf_close(db)
+        stop 1
+      endif
+
+      call gf_write_seis(db,src,loc,seis,tsec,outdir,ierr)
+      if (ierr /= GF_OK) then
+        write(ISTDERR,'(a)') 'Error writing the seismograms'
+        write(ISTDERR,'(a)') '  '//trim(gf_error_string(ierr))//': '//trim(gf_errmsg)
+        call gf_locate_release()
+        call gf_close(db)
+        stop 1
+      endif
+
+      write(*,'(a,i0,a,a)') 'wrote ',db%nstations,' seismogram files to ',trim(outdir)
+      deallocate(seis,tsec)
+
+    endif
+
+    call gf_locate_release()
+    call gf_close(db)
+
   case ('--check-anchors')
 
     if (nargs < 2) then
@@ -228,10 +358,16 @@
   write(iunit,'(a)') '  --locate <GFDB> <lat> <lon> <depth_km>'
   write(iunit,'(a)') '                                  locate a position in the database'
   write(iunit,'(a)') '  --check-anchors <GFDB>          verify the 27-anchor geometry of every element'
+  write(iunit,'(a)') '  --seis <GFDB> <FORCESOLUTION> <outdir>'
+  write(iunit,'(a)') '                                  seismograms at every station, as ASCII'
+  write(iunit,'(a)') '  --dump <GFDB> <FORCESOLUTION> <outdir> [--station NET.STA]'
+  write(iunit,'(a)') '                                  interpolated displacement, before the contraction'
   write(iunit,'(a)') ''
   write(iunit,'(a)') '  options for --info:'
   write(iunit,'(a)') '    --topo       also load the topography grid and probe it at each station'
   write(iunit,'(a)') '    --no-check   skip the per-element completion scan'
+  write(iunit,'(a)') ''
+  write(iunit,'(a)') '  the output directory must exist; xgf3d does not create it'
   write(iunit,'(a)') ''
 
   end subroutine print_usage
