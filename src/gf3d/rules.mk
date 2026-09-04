@@ -55,12 +55,32 @@ gf3d_KERNEL_OBJECTS = \
 	$O/gf_shared_params.gf3d.o \
 	$O/gf_mpi_stubs.gf3d.o \
 	$O/gf_dirlist.gf3d_cc.o \
+	$O/gf_shape3D.gf3d.o \
+	$O/gf_geometry.gf3d.o \
+	$(EMPTY_MACRO)
+
+## Shared objects the kernels call, which are themselves free of HDF5 and
+## MPI. They are listed separately from gf3d_SHARED_OBJECTS so that the
+## `gf3d_kernels` target can build them for tests/gf3d/, which links the
+## manufactured-solution tests from a plain ./configure with no HDF5.
+##
+## Every one of these has no `use` statement beyond `constants`, which is
+## what makes them safe here; recompute_jacobian.shared.o is present because
+## test_gf_shape3D uses it as a bit-for-bit oracle for the fork in
+## gf_shape3D.F90.
+gf3d_KERNEL_SHARED_OBJECTS = \
+	$O/gll_library.shared.o \
+	$O/lagrange_poly.shared.o \
+	$O/hex_nodes.shared.o \
+	$O/recompute_jacobian.shared.o \
 	$(EMPTY_MACRO)
 
 ## the parts that read the database, and therefore need HDF5
 gf3d_HDF5_OBJECTS = \
 	$O/gf_hdf5_read.gf3d.o \
 	$O/gf_database.gf3d.o \
+	$O/gf_element_io.gf3d.o \
+	$O/gf_locate.gf3d.o \
 	$(EMPTY_MACRO)
 
 ## library contents (everything except the program itself)
@@ -84,11 +104,43 @@ gf3d_PROGRAM_OBJECTS = \
 ## object, and a static archive pulls in whole objects — so it arrives
 ## together with model_topo_bathy_broadcast(), whose references to wtime(),
 ## bcast_all_i() and exit_MPI() are satisfied by $O/gf_mpi_stubs.gf3d.o.
+##
+## make_ellipticity.shared.o arrives the same way model_topo_bathy.shared.o
+## does, and it brings the largest tail in this list. All the library calls
+## is add_ellipticity_rtheta(), 35 lines with no dependency beyond
+## spline_evaluation(); but a static archive pulls in whole objects, so it
+## also brings make_ellipticity()/make_ellipticity_r(), which build the
+## spline table from a planet's density profile and therefore reference
+## prem_density(), sohl_density(), model_vpremoon_density(),
+## get_model_sohl_radii() and intgrl() -- hence the four model objects and
+## intgrl.shared.o below. None of it is reachable from library code: the
+## database ships its own spline table in mesh_info.h5, so gf3d only ever
+## *evaluates* the ellipticity, never builds it. The two exit_MPI calls that
+## come with it (make_ellipticity.f90:223,331) are satisfied by
+## $O/gf_mpi_stubs.gf3d.o, exactly as model_topo_bathy's are.
+##
+## The alternative would be to inline those 35 lines into gf_geometry.F90 and
+## drop five objects. That is rejected on purpose: applying ellipticity to
+## the surface radius before subtracting depth, rather than after, is
+## precisely the stale convention GF3DF carries and this port exists to avoid
+## (see the header of gf_geometry.F90). A convention that subtle should have
+## exactly one definition in the tree, and it should be the solver's.
 gf3d_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/binary_c_io.cc.o \
 	$O/flush_system.shared.o \
 	$O/model_topo_bathy.shared.o \
+	$O/rthetaphi_xyz.shared.o \
+	$O/reduce.shared.o \
+	$O/make_ellipticity.shared.o \
+	$O/spline_routines.shared.o \
+	$O/intgrl.shared.o \
+	$O/model_prem.shared.o \
+	$O/model_Sohl.shared.o \
+	$O/model_vpremoon.shared.o \
+	$O/heap_sort.shared.o \
+	$O/search_kdtree.shared.o \
+	$(gf3d_KERNEL_SHARED_OBJECTS) \
 	$(EMPTY_MACRO)
 
 gf3d_MODULES = \
@@ -96,6 +148,10 @@ gf3d_MODULES = \
 	$(FC_MODDIR)/gf_hdf5_read.$(FC_MODEXT) \
 	$(FC_MODDIR)/gf_shared_params.$(FC_MODEXT) \
 	$(FC_MODDIR)/gf_database.$(FC_MODEXT) \
+	$(FC_MODDIR)/gf_shape3d.$(FC_MODEXT) \
+	$(FC_MODDIR)/gf_geometry.$(FC_MODEXT) \
+	$(FC_MODDIR)/gf_element_io.$(FC_MODEXT) \
+	$(FC_MODDIR)/gf_locate.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
 
 #######################################
@@ -131,7 +187,7 @@ gf3d_no_hdf5:
 endif
 
 ## builds only the HDF5-free kernels, for the unit test suite in tests/gf3d/
-gf3d_kernels: $(gf3d_KERNEL_OBJECTS)
+gf3d_kernels: $(gf3d_KERNEL_OBJECTS) $(gf3d_KERNEL_SHARED_OBJECTS)
 
 .PHONY: gf3d_kernels
 
@@ -166,7 +222,12 @@ $(gf3d_PROGRAM_OBJECTS): S = ${S_TOP}/src/gf3d
 $O/gf_hdf5_read.gf3d.o: $O/gf_par.gf3d.o
 $O/gf_shared_params.gf3d.o: $O/gf_par.gf3d.o
 $O/gf_database.gf3d.o: $O/gf_par.gf3d.o $O/gf_hdf5_read.gf3d.o $O/gf_shared_params.gf3d.o
-$O/gf3d_main.gf3d.o: $O/gf_par.gf3d.o $O/gf_database.gf3d.o
+$O/gf_shape3D.gf3d.o: $O/gf_par.gf3d.o
+$O/gf_geometry.gf3d.o: $O/gf_par.gf3d.o $O/gf_shape3D.gf3d.o
+$O/gf_element_io.gf3d.o: $O/gf_par.gf3d.o $O/gf_hdf5_read.gf3d.o
+$O/gf_locate.gf3d.o: $O/gf_par.gf3d.o $O/gf_database.gf3d.o $O/gf_element_io.gf3d.o \
+                     $O/gf_geometry.gf3d.o $O/gf_shape3D.gf3d.o $O/search_kdtree.shared.o
+$O/gf3d_main.gf3d.o: $O/gf_par.gf3d.o $O/gf_database.gf3d.o $O/gf_locate.gf3d.o
 
 ## unique object suffix: every rules.mk writes into the same $O, so the
 ## pattern rules of different subdirectories must not collide

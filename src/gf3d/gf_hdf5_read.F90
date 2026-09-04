@@ -69,8 +69,11 @@
   public :: gf_h5_read_attr_i
   public :: gf_h5_read_attr_d
   public :: gf_h5_dset_dims
+  public :: gf_h5_dset_type_size
   public :: gf_h5_read_1d_d
   public :: gf_h5_read_2d_i
+  public :: gf_h5_read_4d_d
+  public :: gf_h5_read_6d_r
 
   contains
 
@@ -527,5 +530,201 @@
 #endif
 
   end subroutine gf_h5_read_2d_i
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_h5_dset_type_size(loc_id,name,tsize,ierr)
+
+! returns the storage size in bytes of a dataset's element type
+!
+! Used only for reporting. The writer emits H5T_NATIVE_REAL or
+! H5T_NATIVE_DOUBLE according to the CUSTOM_REAL the *solver* was built with
+! (green_function_metadata.F90:151-154, green_function_io.F90:201-204), which
+! need not be the CUSTOM_REAL this reader was built with. Every read below
+! goes through the HDF5 conversion layer and is therefore correct either
+! way, but a double database read by a single-precision build silently
+! narrows -- so `xgf3d --info` says what is actually on disk.
+
+  implicit none
+
+  integer(kind=GF_HID), intent(in) :: loc_id
+  character(len=*), intent(in) :: name
+  integer, intent(out) :: tsize
+  integer, intent(out) :: ierr
+
+#ifdef USE_HDF5
+  integer(kind=GF_HID) :: dset_id,type_id
+  integer(SIZE_T) :: sz
+  integer :: hdferr
+
+  tsize = 0
+
+  call h5dopen_f(loc_id, trim(name), dset_id, hdferr)
+  if (hdferr /= 0) then
+    call gf_set_error(ierr,GF_ERR_FORMAT,'missing dataset: '//trim(name))
+    return
+  endif
+
+  call h5dget_type_f(dset_id, type_id, hdferr)
+  if (hdferr /= 0) then
+    call h5dclose_f(dset_id, hdferr)
+    call gf_set_error(ierr,GF_ERR_HDF5,'could not get datatype of: '//trim(name))
+    return
+  endif
+
+  call h5tget_size_f(type_id, sz, hdferr)
+  if (hdferr /= 0) then
+    call h5tclose_f(type_id, hdferr)
+    call h5dclose_f(dset_id, hdferr)
+    call gf_set_error(ierr,GF_ERR_HDF5,'could not get datatype size of: '//trim(name))
+    return
+  endif
+
+  call h5tclose_f(type_id, hdferr)
+  call h5dclose_f(dset_id, hdferr)
+
+  tsize = int(sz)
+
+  ierr = GF_OK
+#else
+  tsize = 0
+  call gf_set_error(ierr,GF_ERR_NO_HDF5,'this build has no HDF5 support')
+#endif
+
+  end subroutine gf_h5_dset_type_size
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_h5_read_4d_d(loc_id,name,n1,n2,n3,n4,arr,ierr)
+
+! reads a rank-4 dataset as double precision, in Fortran order
+!
+! This is the element coordinate array, xyz(3,NGLLX,NGLLY,NGLLZ). It is
+! always widened to double on the way in: it is 3 kB per element, the
+! precision policy asks for it, and it means one code path covers both a
+! CUSTOM_REAL = 4 and a CUSTOM_REAL = 8 database.
+!
+! Note that widening does not *recover* anything. With CUSTOM_REAL = 4 the
+! solver had already rounded these coordinates to float32 before the writer
+! saw them, which is why the 27-anchor consistency guard in gf_locate tests
+! against GF_ANCHOR_TOL rather than against round-off. See the comment on
+! GF_ANCHOR_TOL in gf_par.F90.
+
+  implicit none
+
+  integer(kind=GF_HID), intent(in) :: loc_id
+  character(len=*), intent(in) :: name
+  integer, intent(in) :: n1,n2,n3,n4
+  double precision, dimension(n1,n2,n3,n4), intent(out) :: arr
+  integer, intent(out) :: ierr
+
+#ifdef USE_HDF5
+  integer(kind=GF_HID) :: dset_id
+  integer(HSIZE_T), dimension(4) :: dims
+  integer :: hdferr
+
+  arr(:,:,:,:) = 0.d0
+  dims(1) = n1
+  dims(2) = n2
+  dims(3) = n3
+  dims(4) = n4
+
+  call h5dopen_f(loc_id, trim(name), dset_id, hdferr)
+  if (hdferr /= 0) then
+    call gf_set_error(ierr,GF_ERR_FORMAT,'missing dataset: '//trim(name))
+    return
+  endif
+
+  call h5dread_f(dset_id, H5T_NATIVE_DOUBLE, arr, dims, hdferr)
+  if (hdferr /= 0) then
+    call h5dclose_f(dset_id, hdferr)
+    call gf_set_error(ierr,GF_ERR_HDF5,'could not read dataset: '//trim(name))
+    return
+  endif
+
+  call h5dclose_f(dset_id, hdferr)
+
+  ierr = GF_OK
+#else
+  arr(:,:,:,:) = 0.d0
+  call gf_set_error(ierr,GF_ERR_NO_HDF5,'this build has no HDF5 support')
+#endif
+
+  end subroutine gf_h5_read_4d_d
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_h5_read_6d_r(loc_id,name,n1,n2,n3,n4,n5,n6,arr,ierr)
+
+! reads a rank-6 dataset into a real(CUSTOM_REAL) buffer, in Fortran order
+!
+! This is the bulk array: displacement(3_force,3_disp,NGLLX,NGLLY,NGLLZ,nt),
+! 21 MB per element-station file in the shipped global example.
+!
+! It is the one place the library does *not* widen on read. Asking HDF5 for
+! H5T_NATIVE_DOUBLE here would double the resident footprint of the single
+! largest allocation in the whole extraction, for no gain: the interpolator
+! in gf_interp.F90 widens one 225-element time slice at a time, which is
+! where the double-precision core actually begins.
+!
+! The native type requested matches the *buffer*, not the file, so HDF5
+! converts if the writer used the other CUSTOM_REAL. gf_h5_dset_type_size()
+! lets a caller report when that conversion narrows.
+
+  use constants, only: CUSTOM_REAL,SIZE_REAL
+
+  implicit none
+
+  integer(kind=GF_HID), intent(in) :: loc_id
+  character(len=*), intent(in) :: name
+  integer, intent(in) :: n1,n2,n3,n4,n5,n6
+  real(kind=CUSTOM_REAL), dimension(n1,n2,n3,n4,n5,n6), intent(out) :: arr
+  integer, intent(out) :: ierr
+
+#ifdef USE_HDF5
+  integer(kind=GF_HID) :: dset_id
+  integer(HSIZE_T), dimension(6) :: dims
+  integer :: hdferr
+
+  arr(:,:,:,:,:,:) = 0._CUSTOM_REAL
+  dims(1) = n1
+  dims(2) = n2
+  dims(3) = n3
+  dims(4) = n4
+  dims(5) = n5
+  dims(6) = n6
+
+  call h5dopen_f(loc_id, trim(name), dset_id, hdferr)
+  if (hdferr /= 0) then
+    call gf_set_error(ierr,GF_ERR_FORMAT,'missing dataset: '//trim(name))
+    return
+  endif
+
+  if (CUSTOM_REAL == SIZE_REAL) then
+    call h5dread_f(dset_id, H5T_NATIVE_REAL, arr, dims, hdferr)
+  else
+    call h5dread_f(dset_id, H5T_NATIVE_DOUBLE, arr, dims, hdferr)
+  endif
+  if (hdferr /= 0) then
+    call h5dclose_f(dset_id, hdferr)
+    call gf_set_error(ierr,GF_ERR_HDF5,'could not read dataset: '//trim(name))
+    return
+  endif
+
+  call h5dclose_f(dset_id, hdferr)
+
+  ierr = GF_OK
+#else
+  arr(:,:,:,:,:,:) = 0._CUSTOM_REAL
+  call gf_set_error(ierr,GF_ERR_NO_HDF5,'this build has no HDF5 support')
+#endif
+
+  end subroutine gf_h5_read_6d_r
 
   end module gf_hdf5_read

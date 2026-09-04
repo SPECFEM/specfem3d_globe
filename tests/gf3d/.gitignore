@@ -11,6 +11,14 @@ DATA/
 OUTPUT_FILES/
 
 # test output
+#
+# The runners remove their scratch logs on success, so these only appear
+# when something failed -- which is exactly when they must not be committed.
 results.log
 error.log
 info.log
+anchors.log
+loc.log
+
+# module files from compiling gf_manufactured.f90 alongside a test
+*.mod

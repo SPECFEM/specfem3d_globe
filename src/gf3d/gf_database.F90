@@ -80,6 +80,10 @@
   public :: gf_load_topo
   public :: gf_check_completion
   public :: gf_print_info
+  ! exported for gf_locate.F90, which needs the surface elevation on the
+  ! geographic chain. Keeping the get_topo_bathy() call in this module means
+  ! gf_geometry.F90 stays free of model_topo_bathy.shared.o and its MPI stubs.
+  public :: gf_topo_elevation
 
   ! unit numbers used for the plain-text / stream reads
   integer, parameter :: IIN_GF = 71

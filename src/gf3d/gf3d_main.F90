@@ -32,16 +32,19 @@
 !---- binaries, so that every mode survives as a debugging entry point:
 !----
 !----   xgf3d --version
-!----   xgf3d --info <GFDB> [--topo] [--no-check]
+!----   xgf3d --info          <GFDB> [--topo] [--no-check]
+!----   xgf3d --locate        <GFDB> <lat> <lon> <depth_km>
+!----   xgf3d --check-anchors <GFDB>
 !----
-!---- Later stages add --locate, --seis, --dump and the SAC-writing
-!---- default mode.
+!---- Later stages add --seis, --dump and the SAC-writing default mode.
 !----
 
   program xgf3d
 
-  use gf_par, only: t_gfdb,gf_errmsg,gf_error_string,GF_OK,GF3D_VERSION
+  use gf_par, only: t_gfdb,t_gf_location,gf_errmsg,gf_error_string, &
+                    GF_OK,GF3D_VERSION,GF_XI_TOL,GF_ANCHOR_TOL
   use gf_database, only: gf_open,gf_close,gf_print_info
+  use gf_locate, only: gf_locate_source,gf_locate_release,gf_check_anchors_all
 
   use constants, only: MAX_STRING_LEN,NGLLX,NGNOD
 
@@ -50,8 +53,11 @@
   ! local parameters
   character(len=MAX_STRING_LEN) :: arg,mode,dbpath
   type(t_gfdb) :: db
+  type(t_gf_location) :: loc
   integer :: nargs,iarg,ierr
   logical :: with_topo,do_check
+  double precision :: lat,lon,depth_km,worst_err
+  integer :: ielem_worst
 
   ! standard error, used for anything that is not the requested output
   integer, parameter :: ISTDERR = 0
@@ -117,6 +123,84 @@
 
     call gf_close(db)
 
+  case ('--locate')
+
+    if (nargs < 5) then
+      write(ISTDERR,'(a)') 'Error: --locate needs a database directory, a latitude, a longitude and a depth in km'
+      call print_usage(ISTDERR)
+      stop 1
+    endif
+
+    call get_command_argument(2,dbpath)
+
+    call read_double_arg(3,'latitude',lat)
+    call read_double_arg(4,'longitude',lon)
+    call read_double_arg(5,'depth',depth_km)
+
+    call gf_open(dbpath,db,ierr,check_completion=.false.)
+    if (ierr /= GF_OK) then
+      write(ISTDERR,'(a)') 'Error opening the Green function database'
+      write(ISTDERR,'(a)') '  '//trim(gf_error_string(ierr))//': '//trim(gf_errmsg)
+      stop 1
+    endif
+
+    call gf_locate_source(db,lat,lon,depth_km,loc,ierr)
+    if (ierr /= GF_OK) then
+      write(ISTDERR,'(a)') 'Error locating the source'
+      write(ISTDERR,'(a)') '  '//trim(gf_error_string(ierr))//': '//trim(gf_errmsg)
+      call gf_locate_release()
+      call gf_close(db)
+      stop 1
+    endif
+
+    call print_location(db,loc,lat,lon,depth_km,6)
+
+    call gf_locate_release()
+    call gf_close(db)
+
+  case ('--check-anchors')
+
+    if (nargs < 2) then
+      write(ISTDERR,'(a)') 'Error: --check-anchors needs a database directory'
+      call print_usage(ISTDERR)
+      stop 1
+    endif
+
+    call get_command_argument(2,dbpath)
+
+    call gf_open(dbpath,db,ierr,check_completion=.false.)
+    if (ierr /= GF_OK) then
+      write(ISTDERR,'(a)') 'Error opening the Green function database'
+      write(ISTDERR,'(a)') '  '//trim(gf_error_string(ierr))//': '//trim(gf_errmsg)
+      stop 1
+    endif
+
+    call gf_check_anchors_all(db,worst_err,ielem_worst,ierr)
+    if (ierr /= GF_OK) then
+      write(ISTDERR,'(a)') 'Error checking the element anchors'
+      write(ISTDERR,'(a)') '  '//trim(gf_error_string(ierr))//': '//trim(gf_errmsg)
+      call gf_close(db)
+      stop 1
+    endif
+
+    write(*,'(a)')             'anchor consistency check'
+    write(*,'(a,i0)')          '  elements checked     = ',db%nelem
+    write(*,'(a,es22.14)')     '  worst residual       = ',worst_err
+    if (ielem_worst > 0) then
+      write(*,'(a,a)')         '  worst element        = ',db%morton_hex(ielem_worst)
+    endif
+    write(*,'(a,es22.14)')     '  tolerance            = ',GF_ANCHOR_TOL
+    write(*,'(a,es22.14)')     '  worst residual, m    = ',worst_err*db%R_PLANET
+    if (worst_err > GF_ANCHOR_TOL) then
+      write(ISTDERR,'(a)') 'the 27 anchors do not reproduce the stored GLL coordinates'
+      write(ISTDERR,'(a)') '  this database was probably written from a USE_GLL = .true. mesh'
+      call gf_close(db)
+      stop 1
+    endif
+    write(*,'(a)')             '  result               = ok'
+
+    call gf_close(db)
+
   case default
     write(ISTDERR,'(a)') 'Error: unknown mode: '//trim(mode)
     call print_usage(ISTDERR)
@@ -141,6 +225,9 @@
   write(iunit,'(a)') '  --version                       print the version and build settings'
   write(iunit,'(a)') '  --help                          print this message'
   write(iunit,'(a)') '  --info <GFDB> [options]         describe a Green function database'
+  write(iunit,'(a)') '  --locate <GFDB> <lat> <lon> <depth_km>'
+  write(iunit,'(a)') '                                  locate a position in the database'
+  write(iunit,'(a)') '  --check-anchors <GFDB>          verify the 27-anchor geometry of every element'
   write(iunit,'(a)') ''
   write(iunit,'(a)') '  options for --info:'
   write(iunit,'(a)') '    --topo       also load the topography grid and probe it at each station'
@@ -148,5 +235,98 @@
   write(iunit,'(a)') ''
 
   end subroutine print_usage
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine read_double_arg(iarg_in,name,val)
+
+! reads a command-line argument as a double, or exits with a message
+
+  implicit none
+
+  integer, intent(in) :: iarg_in
+  character(len=*), intent(in) :: name
+  double precision, intent(out) :: val
+
+  ! local parameters
+  character(len=MAX_STRING_LEN) :: str
+  integer :: ios
+
+  call get_command_argument(iarg_in,str)
+  read(str,*,iostat=ios) val
+  if (ios /= 0) then
+    write(ISTDERR,'(a)') 'Error: could not read the '//trim(name)//' from "'//trim(str)//'"'
+    stop 1
+  endif
+
+  end subroutine read_double_arg
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine print_location(db,loc,lat,lon,depth_km,iunit)
+
+! reports a located source
+!
+! The layout follows gf_print_info: 'key = value', one per line, es22.14 for
+! doubles, so the output can be diffed against the solver's own
+! OUTPUT_FILES/output_solver.txt -- which is the only oracle this step has.
+! Note the solver prints its position through sngl(), so a comparison there
+! is bounded by float32 (~3e-8 at these magnitudes), not by our precision.
+
+  use gf_par, only: t_gfdb,t_gf_location
+
+  implicit none
+
+  type(t_gfdb), intent(in) :: db
+  type(t_gf_location), intent(in) :: loc
+  double precision, intent(in) :: lat,lon,depth_km
+  integer, intent(in) :: iunit
+
+  ! local parameters
+  integer :: i
+
+  write(iunit,'(a)')         'source location'
+  write(iunit,'(a,a)')       '  database             = ',trim(db%path)
+  write(iunit,'(a,es22.14)') '  latitude             = ',lat
+  write(iunit,'(a,es22.14)') '  longitude            = ',lon
+  write(iunit,'(a,es22.14)') '  depth, km            = ',depth_km
+  write(iunit,'(a)')         ''
+  write(iunit,'(a,a)')       '  morton_hex           = ',loc%morton_hex
+  write(iunit,'(a,i0,a,i0)') '  element              = ',loc%ielem,' of ',db%nelem
+  write(iunit,'(a)')         ''
+  write(iunit,'(a,es22.14)') '  xi                   = ',loc%xi
+  write(iunit,'(a,es22.14)') '  eta                  = ',loc%eta
+  write(iunit,'(a,es22.14)') '  gamma                = ',loc%gamma
+  write(iunit,'(a,es22.14)') '  max|xi,eta,gamma|    = ',max(abs(loc%xi),abs(loc%eta),abs(loc%gamma))
+  write(iunit,'(a,es22.14)') '  containment tolerance= ',GF_XI_TOL
+  write(iunit,'(a)')         ''
+  write(iunit,'(a,es22.14)') '  x                    = ',loc%xyz(1)
+  write(iunit,'(a,es22.14)') '  y                    = ',loc%xyz(2)
+  write(iunit,'(a,es22.14)') '  z                    = ',loc%xyz(3)
+  write(iunit,'(a,es22.14)') '  x_target             = ',loc%xyz_target(1)
+  write(iunit,'(a,es22.14)') '  y_target             = ',loc%xyz_target(2)
+  write(iunit,'(a,es22.14)') '  z_target             = ',loc%xyz_target(3)
+  write(iunit,'(a,es22.14)') '  location error, km   = ',loc%distance_km
+  write(iunit,'(a)')         ''
+  write(iunit,'(a,es22.14)') '  theta                = ',loc%theta
+  write(iunit,'(a,es22.14)') '  phi                  = ',loc%phi
+  write(iunit,'(a,es22.14)') '  surface radius       = ',loc%r_surface
+  write(iunit,'(a)')         ''
+  do i = 1,3
+    select case (i)
+    case (1) ; write(iunit,'(a,3es22.14)') '  nu(N,:)              = ',loc%nu(i,1),loc%nu(i,2),loc%nu(i,3)
+    case (2) ; write(iunit,'(a,3es22.14)') '  nu(E,:)              = ',loc%nu(i,1),loc%nu(i,2),loc%nu(i,3)
+    case (3) ; write(iunit,'(a,3es22.14)') '  nu(Z,:)              = ',loc%nu(i,1),loc%nu(i,2),loc%nu(i,3)
+    end select
+  enddo
+  write(iunit,'(a)')         ''
+  write(iunit,'(a,es22.14)') '  jacobian             = ',loc%jacobian
+  write(iunit,'(a,es22.14)') '  anchor residual      = ',loc%anchor_err
+
+  end subroutine print_location
 
   end program xgf3d

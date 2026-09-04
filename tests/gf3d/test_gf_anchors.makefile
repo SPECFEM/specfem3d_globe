@@ -1,0 +1,22 @@
+# includes default Makefile from previous configuration
+include Makefile
+
+# test target
+default: test_gf_anchors
+
+## compilation directories
+O := ./obj
+L := ./lib
+
+OBJECTS = \
+	$(EMPTY_MACRO)
+
+# Links against the library that 5.configure.hdf5_make.sh just built, rather
+# than recompiling its sources, so the test exercises the same archive a
+# downstream caller would get.
+#
+# Serial link: ${FCCOMPILE_CHECK}, not ${MPIFCCOMPILE_CHECK}, and $(LDFLAGS)
+# directly rather than $(MPILIBS) -- see src/gf3d/rules.mk for why.
+test_gf_anchors:
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -o ./bin/test_gf_anchors \
+		gf_manufactured.f90 test_gf_anchors.f90 $L/libgf3d.a $(LDFLAGS)
