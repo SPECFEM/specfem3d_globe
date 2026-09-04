@@ -288,6 +288,7 @@
 
   ! local parameters
   integer :: i,ier
+  double precision :: stf_val
   character(len=MAX_STRING_LEN) :: external_source_time_function_filename
   character(len=256) :: line
 
@@ -383,7 +384,7 @@
       ! gets STF
       if (i <= NSTEP) then
         ! read the source values
-        read(line,*,iostat=ier) user_source_time_function(i)
+        read(line,*,iostat=ier) stf_val
         if (ier /= 0) then
           print *,'Problem when reading external source time file: ', trim(external_source_time_function_filename)
           print *,'  line   : ',trim(line)
@@ -395,8 +396,13 @@
           print *,'  ..'
           stop 'Error reading external source time file with invalid format'
         endif
+
+        ! stores source time function
+        user_source_time_function(i) = stf_val
       endif
 
+      ! checks if all steps read
+      if (i == NSTEP) exit
     endif
   enddo
 
