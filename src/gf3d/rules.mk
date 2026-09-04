@@ -58,6 +58,9 @@ gf3d_KERNEL_OBJECTS = \
 	$O/gf_shape3D.gf3d.o \
 	$O/gf_geometry.gf3d.o \
 	$O/gf_interp.gf3d.o \
+	$O/gf_strain.gf3d.o \
+	$O/gf_moment.gf3d.o \
+	$O/gf_stf.gf3d.o \
 	$O/gf_source.gf3d.o \
 	$(EMPTY_MACRO)
 
@@ -92,7 +95,12 @@ gf3d_HDF5_OBJECTS = \
 ## Both are free of MPI and of HDF5.
 gf3d_SOLVER_OBJECTS = \
 	$O/get_force.solver.o \
+	$O/get_cmt.solver.o \
 	$(EMPTY_MACRO)
+
+## get_cmt() calls julian_day() to turn the CMTSOLUTION PDE header into a
+## Julian day, so calendar.shared.o comes with it. No `use` statements and
+## no MPI.
 
 ## library contents (everything except the program itself)
 gf3d_OBJECTS = \
@@ -152,6 +160,7 @@ gf3d_SHARED_OBJECTS = \
 	$O/model_vpremoon.shared.o \
 	$O/heap_sort.shared.o \
 	$O/search_kdtree.shared.o \
+	$O/calendar.shared.o \
 	$(gf3d_KERNEL_SHARED_OBJECTS) \
 	$(EMPTY_MACRO)
 
@@ -165,6 +174,9 @@ gf3d_MODULES = \
 	$(FC_MODDIR)/gf_element_io.$(FC_MODEXT) \
 	$(FC_MODDIR)/gf_locate.$(FC_MODEXT) \
 	$(FC_MODDIR)/gf_interp.$(FC_MODEXT) \
+	$(FC_MODDIR)/gf_strain.$(FC_MODEXT) \
+	$(FC_MODDIR)/gf_moment.$(FC_MODEXT) \
+	$(FC_MODDIR)/gf_stf.$(FC_MODEXT) \
 	$(FC_MODDIR)/gf_source.$(FC_MODEXT) \
 	$(FC_MODDIR)/gf_seismograms.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
@@ -243,9 +255,13 @@ $O/gf_element_io.gf3d.o: $O/gf_par.gf3d.o $O/gf_hdf5_read.gf3d.o
 $O/gf_locate.gf3d.o: $O/gf_par.gf3d.o $O/gf_database.gf3d.o $O/gf_element_io.gf3d.o \
                      $O/gf_geometry.gf3d.o $O/gf_shape3D.gf3d.o $O/search_kdtree.shared.o
 $O/gf_interp.gf3d.o: $O/gf_par.gf3d.o
+$O/gf_strain.gf3d.o: $O/gf_par.gf3d.o
+$O/gf_moment.gf3d.o: $O/gf_par.gf3d.o $O/gf_strain.gf3d.o
+$O/gf_stf.gf3d.o: $O/gf_par.gf3d.o
 $O/gf_source.gf3d.o: $O/gf_par.gf3d.o
 $O/gf_seismograms.gf3d.o: $O/gf_par.gf3d.o $O/gf_database.gf3d.o $O/gf_element_io.gf3d.o \
-                          $O/gf_interp.gf3d.o $O/gf_source.gf3d.o
+                          $O/gf_interp.gf3d.o $O/gf_source.gf3d.o $O/gf_strain.gf3d.o \
+                          $O/gf_moment.gf3d.o $O/gf_stf.gf3d.o
 $O/gf3d_main.gf3d.o: $O/gf_par.gf3d.o $O/gf_database.gf3d.o $O/gf_locate.gf3d.o \
                      $O/gf_source.gf3d.o $O/gf_seismograms.gf3d.o
 

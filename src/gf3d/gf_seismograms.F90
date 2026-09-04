@@ -66,6 +66,19 @@
 !---- non-dimensional (get_force divides by scaleF, and the writer stores the
 !---- attribute after the same division), so the ratio is unit-consistent.
 !----
+!---- For a moment-tensor source the same reciprocal normalisation applies,
+!---- but there is no source *force* to multiply back in -- the moment tensor
+!---- carries the magnitude itself:
+!----
+!----   scale = 1 / db%stations(ista)%factor_force_source
+!----
+!---- with M already non-dimensionalised by scaleM inside get_cmt. This is
+!---- the factor gf_cross_validate.py writes as
+!---- mt_scale = 1/(SCALE_M * factor_force_nondim): our M supplies the first
+!---- half, this supplies the second. Unlike the force case the ratio is
+!---- *not* one on the shipped examples -- it is 1.05e10 -- so omitting it is
+!---- not a subtle error but a trace ten orders of magnitude too small.
+!----
 !---- Time axis
 !---- ---------
 !----   t(i) = (i*subsample_step - 1)*dt - t0,   i = 1..nt_subsampled
@@ -95,7 +108,13 @@
 
   use gf_element_io, only: gf_read_element_displ
 
-  use gf_interp, only: gf_interp_weights,gf_interp_trace
+  use gf_interp, only: gf_interp_weights,gf_interp_weights_deriv,gf_interp_trace
+
+  use gf_strain, only: gf_strain_dweights,gf_strain_trace,GF_VOIGT
+
+  use gf_moment, only: gf_rotate_moment_tensor,gf_moment_contract
+
+  use gf_stf, only: gf_cumtrapz
 
   use gf_source, only: gf_force_direction
 
@@ -105,6 +124,8 @@
 
   public :: gf_time_axis
   public :: gf_seis_force
+  public :: gf_seis_cmt
+  public :: gf_seis
   public :: gf_write_seis
   public :: gf_write_dump
 
@@ -241,6 +262,162 @@
 !-------------------------------------------------------------------------------------------------
 !
 
+  subroutine gf_seis_cmt(db,src,loc,seis,t,ierr)
+
+! seismograms at every station for a moment-tensor source
+!
+! `seis` is (nstations, 3 components N/E/Z, nt_subsampled) in metres, as the
+! *Heaviside* response at the database's own half duration. Correcting that
+! half duration to the CMTSOLUTION's -- the hdur/1.628 Gaussian convolution
+! -- is Stage 5's, and until it exists this trace cannot be compared to a
+! forward run.
+!
+! Three steps, in this order:
+!
+!   1. the strain of the reciprocal field at the source, eps(6,3,nt);
+!   2. contraction with the Cartesian moment tensor, giving the response to
+!      a Gaussian source time function;
+!   3. one cumulative trapezoidal integration, turning that into the
+!      response to the Heaviside that a CMT source is.
+!
+! Step 3 is where a left-endpoint cumulative sum would lag by half a sample
+! -- 1.7 s on the regional example's 3.4 s grid. See gf_stf.F90.
+
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM
+
+  implicit none
+
+  type(t_gfdb), intent(in) :: db
+  type(t_gf_source), intent(in) :: src
+  type(t_gf_location), intent(in) :: loc
+  double precision, dimension(db%nstations,GF_NCOMP,db%nt_subsampled), intent(out) :: seis
+  double precision, dimension(db%nt_subsampled), intent(out) :: t
+  integer, intent(out) :: ierr
+
+  ! local parameters
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: displ
+  double precision, dimension(:,:,:), allocatable :: eps
+  double precision, dimension(:), allocatable :: trace,trace_int
+  double precision, dimension(NGLLX) :: hxi,hpxi
+  double precision, dimension(NGLLY) :: heta,hpeta
+  double precision, dimension(NGLLZ) :: hgam,hpgam
+  double precision, dimension(NGLLX,NGLLY,NGLLZ,NDIM) :: dw
+  double precision, dimension(NDIM,NDIM) :: m_cart
+  double precision :: dt_sub,scale_amp
+  integer :: ista,it,icomp,ier,nt
+
+  seis(:,:,:) = 0.d0
+
+  if (.not. db%is_open) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_cmt: database is not open')
+    return
+  endif
+  if (loc%ielem < 1) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_cmt: the source has not been located')
+    return
+  endif
+  if (db%nstations < 1) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_cmt: the database holds no stations')
+    return
+  endif
+
+  nt = db%nt_subsampled
+
+  ! the spacing of the *stored* axis, not the solver step
+  dt_sub = db%dt*dble(db%subsample_step)
+
+  call gf_time_axis(db,nt,t)
+
+  ! basis values and reference derivatives at the source, then the
+  ! physical-space derivatives through the locator's inverse Jacobian
+  call gf_interp_weights_deriv(loc%xi,loc%eta,loc%gamma,hxi,hpxi,heta,hpeta,hgam,hpgam)
+  call gf_strain_dweights(hxi,hpxi,heta,hpeta,hgam,hpgam,loc%jinv,dw)
+
+  ! the moment tensor, rotated once: it does not depend on the station
+  call gf_rotate_moment_tensor(loc%theta,loc%phi,src%moment_tensor,m_cart)
+
+  allocate(displ(GF_NCOMP,GF_NCOMP,NGLLX,NGLLY,NGLLZ,nt),eps(GF_VOIGT,GF_NCOMP,nt), &
+           trace(nt),trace_int(nt),stat=ier)
+  if (ier /= 0) then
+    call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate the element displacement buffer')
+    return
+  endif
+
+  do ista = 1,db%nstations
+
+    call gf_read_element_displ(db,loc%ielem,ista,displ,ierr)
+    if (ierr /= GF_OK) goto 99
+
+    call gf_strain_trace(displ,dw,nt,eps)
+
+    ! per unit reciprocal force at the station; see the module header
+    if (db%stations(ista)%factor_force_source == 0.d0) then
+      call gf_set_error(ierr,GF_ERR_ARG, &
+        'station '//trim(db%stations(ista)%id)//' has factor_force_source = 0')
+      goto 99
+    endif
+    scale_amp = 1.d0 / db%stations(ista)%factor_force_source
+
+    do icomp = 1,GF_NCOMP
+      do it = 1,nt
+        call gf_moment_contract(m_cart,eps(:,icomp,it),trace(it))
+        trace(it) = scale_amp * trace(it)
+      enddo
+
+      ! Gaussian response -> Heaviside response
+      call gf_cumtrapz(trace,nt,dt_sub,trace_int)
+
+      do it = 1,nt
+        seis(ista,icomp,it) = trace_int(it)
+      enddo
+    enddo
+
+  enddo
+
+  ierr = GF_OK
+
+99 continue
+  if (allocated(displ)) deallocate(displ)
+  if (allocated(eps)) deallocate(eps)
+  if (allocated(trace)) deallocate(trace)
+  if (allocated(trace_int)) deallocate(trace_int)
+
+  end subroutine gf_seis_cmt
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_seis(db,src,loc,seis,t,ierr)
+
+! seismograms for either kind of source
+
+  use gf_par, only: GF_SRC_FORCE,GF_SRC_CMT
+
+  implicit none
+
+  type(t_gfdb), intent(in) :: db
+  type(t_gf_source), intent(in) :: src
+  type(t_gf_location), intent(in) :: loc
+  double precision, dimension(db%nstations,GF_NCOMP,db%nt_subsampled), intent(out) :: seis
+  double precision, dimension(db%nt_subsampled), intent(out) :: t
+  integer, intent(out) :: ierr
+
+  select case (src%source_type)
+  case (GF_SRC_FORCE)
+    call gf_seis_force(db,src,loc,seis,t,ierr)
+  case (GF_SRC_CMT)
+    call gf_seis_cmt(db,src,loc,seis,t,ierr)
+  case default
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis: the source has no type set')
+  end select
+
+  end subroutine gf_seis
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   subroutine gf_write_seis(db,src,loc,seis,t,outdir,ierr)
 
 ! writes one ASCII file per station
@@ -314,14 +491,22 @@
 ! answers "which operator is wrong", not "is the answer right" -- a debugging
 ! instrument, not a second implementation.
 !
-! Nine columns after the time: g(a,d) with a the station force component
-! (N,E,Z) and d the Cartesian displacement component (x,y,z), in that nesting.
-! Stage 4 appends strain(nt,6,3) and the pre-STF trace.
+! Writes <NET>.<STA>.dump.txt with nine columns after the time: g(a,d), with
+! a the station force component (N,E,Z) and d the Cartesian displacement
+! component (x,y,z), d varying fastest.
+!
+! For a moment-tensor source it also writes <NET>.<STA>.strain.txt with the
+! Voigt strain (6 slots x 3 force components) and the contracted trace
+! *before* the time integration -- the two intermediates between the raw
+! field and the seismogram, so a disagreement can be attributed to the
+! geometric chain, the contraction, or the integration separately.
 !
 ! `station_filter` of '' dumps every station; 21 MB is read per station, so
 ! naming one is usually what is wanted.
 
-  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLY,NGLLZ
+  use gf_par, only: GF_SRC_CMT
+
+  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLY,NGLLZ,NDIM
 
   implicit none
 
@@ -334,14 +519,17 @@
 
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: displ
-  double precision, dimension(:,:,:), allocatable :: g
+  double precision, dimension(:,:,:), allocatable :: g,eps
+  double precision, dimension(:,:), allocatable :: pre_stf
   double precision, dimension(:), allocatable :: t
-  double precision, dimension(NGLLX) :: hxi
-  double precision, dimension(NGLLY) :: heta
-  double precision, dimension(NGLLZ) :: hgam
+  double precision, dimension(NGLLX) :: hxi,hpxi
+  double precision, dimension(NGLLY) :: heta,hpeta
+  double precision, dimension(NGLLZ) :: hgam,hpgam
+  double precision, dimension(NGLLX,NGLLY,NGLLZ,NDIM) :: dw
+  double precision, dimension(NDIM,NDIM) :: m_cart
   character(len=MAX_STRING_LEN) :: filename
-  integer :: ista,it,ia,id,iout,ios,ier,nt,nwritten
-  logical :: exists
+  integer :: ista,it,ia,id,iv,iout,ios,ier,nt,nwritten
+  logical :: exists,do_strain
 
   if (.not. db%is_open) then
     call gf_set_error(ierr,GF_ERR_ARG,'gf_write_dump: database is not open')
@@ -360,10 +548,17 @@
 
   nt = db%nt_subsampled
 
-  call gf_interp_weights(loc%xi,loc%eta,loc%gamma,hxi,heta,hgam)
+  do_strain = (src%source_type == GF_SRC_CMT)
+
+  call gf_interp_weights_deriv(loc%xi,loc%eta,loc%gamma,hxi,hpxi,heta,hpeta,hgam,hpgam)
+
+  if (do_strain) then
+    call gf_strain_dweights(hxi,hpxi,heta,hpeta,hgam,hpgam,loc%jinv,dw)
+    call gf_rotate_moment_tensor(loc%theta,loc%phi,src%moment_tensor,m_cart)
+  endif
 
   allocate(displ(GF_NCOMP,GF_NCOMP,NGLLX,NGLLY,NGLLZ,nt),g(GF_NCOMP,GF_NCOMP,nt), &
-           t(nt),stat=ier)
+           eps(GF_VOIGT,GF_NCOMP,nt),pre_stf(GF_NCOMP,nt),t(nt),stat=ier)
   if (ier /= 0) then
     call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate the element displacement buffer')
     return
@@ -402,6 +597,47 @@
     enddo
 
     close(iout)
+
+    !--- the moment-tensor intermediates -------------------------------
+
+    if (do_strain) then
+
+      call gf_strain_trace(displ,dw,nt,eps)
+
+      ! scaled exactly as gf_seis_cmt scales it, so the dumped trace is in
+      ! the seismogram's units and differs from it only by the integration
+      do ia = 1,GF_NCOMP
+        do it = 1,nt
+          call gf_moment_contract(m_cart,eps(:,ia,it),pre_stf(ia,it))
+          pre_stf(ia,it) = pre_stf(ia,it) / db%stations(ista)%factor_force_source
+        enddo
+      enddo
+
+      filename = trim(outdir)//'/'//trim(db%stations(ista)%id)//'.strain.txt'
+
+      open(newunit=iout,file=trim(filename),status='replace',action='write',iostat=ios)
+      if (ios /= 0) then
+        call gf_set_error(ierr,GF_ERR_IO,'could not open for writing: '//trim(filename))
+        goto 99
+      endif
+
+      call gf_write_header(db,src,loc,ista,iout)
+      write(iout,'(a)') '# Voigt strain of the reciprocal field, and the moment-tensor'
+      write(iout,'(a)') '# contraction before the time integration'
+      write(iout,'(a)') '# columns: t[s]  then eps(v,a) for a = N,E,Z (force at the station)'
+      write(iout,'(a)') '#          and v = xx,yy,zz,xy,xz,yz, v varying fastest (18 columns)'
+      write(iout,'(a)') '#          then the pre-integration trace for a = N,E,Z (3 columns)'
+
+      do it = 1,nt
+        write(iout,'(22es24.16)') t(it), &
+          ((eps(iv,ia,it),iv = 1,GF_VOIGT),ia = 1,GF_NCOMP), &
+          (pre_stf(ia,it),ia = 1,GF_NCOMP)
+      enddo
+
+      close(iout)
+
+    endif
+
     nwritten = nwritten + 1
 
   enddo
@@ -416,6 +652,8 @@
 99 continue
   if (allocated(displ)) deallocate(displ)
   if (allocated(g)) deallocate(g)
+  if (allocated(eps)) deallocate(eps)
+  if (allocated(pre_stf)) deallocate(pre_stf)
   if (allocated(t)) deallocate(t)
 
   end subroutine gf_write_dump

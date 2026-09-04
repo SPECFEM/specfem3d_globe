@@ -69,13 +69,17 @@
   module gf_source
 
   use gf_par, only: t_gf_source,gf_set_error, &
-                    GF_OK,GF_ERR_ARG,GF_ERR_NO_FILE,GF_SRC_FORCE
+                    GF_OK,GF_ERR_ARG,GF_ERR_NO_FILE,GF_ERR_FORMAT, &
+                    GF_SRC_FORCE,GF_SRC_CMT
 
   implicit none
 
   private
 
   public :: gf_read_force_source
+  public :: gf_read_cmt_source
+  public :: gf_read_source
+  public :: gf_detect_source_type
   public :: gf_force_direction
   public :: gf_print_source
 
@@ -164,6 +168,192 @@
   ierr = GF_OK
 
   end subroutine gf_read_force_source
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_read_cmt_source(filename,dt,src,ierr)
+
+! reads a CMTSOLUTION through the solver's own get_cmt()
+!
+! Three things live *outside* get_cmt and are silent bugs if a caller
+! forgets them; all three are recorded here rather than in a stage document
+! that a future reader may not have:
+!
+!  1. `hdur` comes back as the raw *triangle* half duration. The conversion
+!     to a Gaussian width is hdur/SOURCE_DECAY_MIMIC_TRIANGLE and happens at
+!     setup_sources_receivers.f90:777, in the caller. Miss it and every
+!     trace is wrong by a factor of 1.628 in duration. gf_stf applies it in
+!     Stage 5; nothing here does.
+!  2. `tshift_src` is zeroed when NSOURCES == 1 and the original returned in
+!     min_tshift_src_original (29.0 s for the shipped example), so t = 0 is
+!     the centroid time. Those seconds are origin-time metadata for Stage
+!     10's SAC headers, not part of the trace.
+!  3. EXTERNAL_SOURCE_TIME_FUNCTION (constants.h:337, currently .false.)
+!     zeroes hdur entirely if it is ever flipped.
+
+  use constants, only: MAX_STRING_LEN
+
+  implicit none
+
+  character(len=*), intent(in) :: filename
+  double precision, intent(in) :: dt
+  type(t_gf_source), intent(out) :: src
+  integer, intent(out) :: ierr
+
+  ! one source per file, as for the force case
+  integer, parameter :: NSOURCES = 1
+
+  ! local parameters
+  double precision, dimension(NSOURCES) :: tshift_src,hdur,lat,lon,depth
+  double precision, dimension(6,NSOURCES) :: moment_tensor
+  double precision :: min_tshift_src_original,sec
+  integer :: yr,jda,mo,da,ho,mi
+  logical :: exists
+
+  src = t_gf_source()
+
+  if (len_trim(filename) == 0) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_read_cmt_source: no CMTSOLUTION path given')
+    return
+  endif
+
+  if (dt <= 0.d0) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_read_cmt_source: the database time step must be positive')
+    return
+  endif
+
+  ! get_cmt.f90:103 stops on a missing file
+  inquire(file=trim(filename),exist=exists)
+  if (.not. exists) then
+    call gf_set_error(ierr,GF_ERR_NO_FILE,'no such CMTSOLUTION file: '//trim(filename))
+    return
+  endif
+
+  call get_cmt(yr,jda,mo,da,ho,mi,sec, &
+               tshift_src,hdur,lat,lon,depth,moment_tensor, &
+               dt,NSOURCES,min_tshift_src_original,trim(filename))
+
+  src%source_type = GF_SRC_CMT
+  src%filename = filename
+
+  src%latitude  = lat(1)
+  src%longitude = lon(1)
+  src%depth     = depth(1)
+
+  ! the raw triangle half duration -- see note 1 above
+  src%hdur = hdur(1)
+
+  src%tshift_src = tshift_src(1)
+  src%min_tshift_src_original = min_tshift_src_original
+
+  ! (Mrr,Mtt,Mpp,Mrt,Mrp,Mtp), non-dimensional: get_cmt.f90:426 has already
+  ! divided by scaleM = 1.d7 * RHOAV * R_PLANET**5 * PI*GRAV*RHOAV
+  src%moment_tensor(1:6) = moment_tensor(1:6,1)
+
+  src%yr = yr ; src%jda = jda ; src%mo = mo
+  src%da = da ; src%ho = ho ; src%mi = mi
+  src%sec = sec
+
+  ierr = GF_OK
+
+  end subroutine gf_read_cmt_source
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_detect_source_type(filename,source_type,ierr)
+
+! decides whether a file is a FORCESOLUTION or a CMTSOLUTION
+!
+! The two formats are distinguishable on their first non-blank line: a
+! FORCESOLUTION opens with the literal token FORCE (get_force.f90 skips it as
+! a header label), while a CMTSOLUTION opens with a PDE line whose first
+! token is the data source, e.g. " PDE 1994 6 9 ...". Sniffing for FORCE is
+! therefore both sufficient and stable -- and it beats asking the user to
+! say which they meant, since getting it wrong would otherwise surface as a
+! parse error deep inside a solver reader that answers with `stop`.
+
+  use constants, only: MAX_STRING_LEN
+
+  implicit none
+
+  character(len=*), intent(in) :: filename
+  integer, intent(out) :: source_type
+  integer, intent(out) :: ierr
+
+  ! local parameters
+  character(len=MAX_STRING_LEN) :: line
+  integer :: iin,ios
+  logical :: exists
+
+  source_type = 0
+
+  inquire(file=trim(filename),exist=exists)
+  if (.not. exists) then
+    call gf_set_error(ierr,GF_ERR_NO_FILE,'no such source file: '//trim(filename))
+    return
+  endif
+
+  open(newunit=iin,file=trim(filename),status='old',action='read',iostat=ios)
+  if (ios /= 0) then
+    call gf_set_error(ierr,GF_ERR_NO_FILE,'could not open the source file: '//trim(filename))
+    return
+  endif
+
+  do
+    read(iin,'(a)',iostat=ios) line
+    if (ios /= 0) then
+      close(iin)
+      call gf_set_error(ierr,GF_ERR_FORMAT,'source file is empty: '//trim(filename))
+      return
+    endif
+    if (len_trim(line) > 0) exit
+  enddo
+
+  close(iin)
+
+  line = adjustl(line)
+  if (line(1:5) == 'FORCE' .or. line(1:5) == 'force') then
+    source_type = GF_SRC_FORCE
+  else
+    source_type = GF_SRC_CMT
+  endif
+
+  ierr = GF_OK
+
+  end subroutine gf_detect_source_type
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_read_source(filename,dt,src,ierr)
+
+! reads either kind of source file, deciding which from its contents
+
+  implicit none
+
+  character(len=*), intent(in) :: filename
+  double precision, intent(in) :: dt
+  type(t_gf_source), intent(out) :: src
+  integer, intent(out) :: ierr
+
+  ! local parameters
+  integer :: source_type
+
+  call gf_detect_source_type(filename,source_type,ierr)
+  if (ierr /= GF_OK) return
+
+  if (source_type == GF_SRC_FORCE) then
+    call gf_read_force_source(filename,dt,src,ierr)
+  else
+    call gf_read_cmt_source(filename,dt,src,ierr)
+  endif
+
+  end subroutine gf_read_source
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -264,6 +454,16 @@
     write(iunit,'(a,es22.14)') '  comp dir vect E      = ',src%comp_dir_vect_source_E
     write(iunit,'(a,es22.14)') '  comp dir vect N      = ',src%comp_dir_vect_source_N
     write(iunit,'(a,es22.14)') '  comp dir vect Z_UP   = ',src%comp_dir_vect_source_Z_UP
+  else
+    ! the raw triangle half duration; the /1.628 conversion to a Gaussian
+    ! width is Stage 5's, so both are printed to keep them distinguishable
+    write(iunit,'(a,es22.14)') '  hdur (triangle)      = ',src%hdur
+    write(iunit,'(a,es22.14)') '  Mrr (non-dim)        = ',src%moment_tensor(1)
+    write(iunit,'(a,es22.14)') '  Mtt (non-dim)        = ',src%moment_tensor(2)
+    write(iunit,'(a,es22.14)') '  Mpp (non-dim)        = ',src%moment_tensor(3)
+    write(iunit,'(a,es22.14)') '  Mrt (non-dim)        = ',src%moment_tensor(4)
+    write(iunit,'(a,es22.14)') '  Mrp (non-dim)        = ',src%moment_tensor(5)
+    write(iunit,'(a,es22.14)') '  Mtp (non-dim)        = ',src%moment_tensor(6)
   endif
 
   end subroutine gf_print_source

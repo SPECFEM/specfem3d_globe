@@ -79,6 +79,7 @@
   private
 
   public :: gf_interp_weights
+  public :: gf_interp_weights_deriv
   public :: gf_interp_snapshot
   public :: gf_interp_trace_d
   public :: gf_interp_trace
@@ -89,9 +90,9 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine gf_interp_weights(xi,eta,gamma,hxi,heta,hgam)
+  subroutine gf_interp_weights_deriv(xi,eta,gamma,hxi,hpxi,heta,hpeta,hgam,hpgam)
 
-! the three per-axis Lagrange factors at a point inside an element
+! the three per-axis Lagrange factors and their derivatives at a point
 !
 ! Split out from the interpolation itself because they are the same for
 ! every force component, every displacement component and every time sample:
@@ -102,8 +103,47 @@
 ! define_derivation_matrices.f90:60-62, and the basis from lagrange_any() --
 ! the solver's own routines, so a change of quadrature cannot desynchronise
 ! the extraction from the mesh it is reading.
+!
+! The derivatives are with respect to the *reference* coordinates; turning
+! them into physical-space derivatives is gf_strain's job, and needs the
+! inverse Jacobian the locator already produced.
 
   use constants, only: NGLLX,NGLLY,NGLLZ,GAUSSALPHA,GAUSSBETA
+
+  implicit none
+
+  double precision, intent(in) :: xi,eta,gamma
+  double precision, dimension(NGLLX), intent(out) :: hxi,hpxi
+  double precision, dimension(NGLLY), intent(out) :: heta,hpeta
+  double precision, dimension(NGLLZ), intent(out) :: hgam,hpgam
+
+  ! local parameters
+  double precision, dimension(NGLLX) :: xigll,wxgll
+  double precision, dimension(NGLLY) :: yigll,wygll
+  double precision, dimension(NGLLZ) :: zigll,wzgll
+
+  call zwgljd(xigll,wxgll,NGLLX,GAUSSALPHA,GAUSSBETA)
+  call zwgljd(yigll,wygll,NGLLY,GAUSSALPHA,GAUSSBETA)
+  call zwgljd(zigll,wzgll,NGLLZ,GAUSSALPHA,GAUSSBETA)
+
+  call lagrange_any(xi,NGLLX,xigll,hxi,hpxi)
+  call lagrange_any(eta,NGLLY,yigll,heta,hpeta)
+  call lagrange_any(gamma,NGLLZ,zigll,hgam,hpgam)
+
+  end subroutine gf_interp_weights_deriv
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_interp_weights(xi,eta,gamma,hxi,heta,hgam)
+
+! the three per-axis Lagrange factors at a point inside an element
+!
+! The values only; callers that also need the derivatives (gf_strain) call
+! gf_interp_weights_deriv directly.
+
+  use constants, only: NGLLX,NGLLY,NGLLZ
 
   implicit none
 
@@ -113,19 +153,11 @@
   double precision, dimension(NGLLZ), intent(out) :: hgam
 
   ! local parameters
-  double precision, dimension(NGLLX) :: xigll,wxgll,hpxi
-  double precision, dimension(NGLLY) :: yigll,wygll,hpeta
-  double precision, dimension(NGLLZ) :: zigll,wzgll,hpgam
+  double precision, dimension(NGLLX) :: hpxi
+  double precision, dimension(NGLLY) :: hpeta
+  double precision, dimension(NGLLZ) :: hpgam
 
-  call zwgljd(xigll,wxgll,NGLLX,GAUSSALPHA,GAUSSBETA)
-  call zwgljd(yigll,wygll,NGLLY,GAUSSALPHA,GAUSSBETA)
-  call zwgljd(zigll,wzgll,NGLLZ,GAUSSALPHA,GAUSSBETA)
-
-  ! the derivatives are computed and discarded here; Stage 4's strain is
-  ! where they are wanted, and it needs them alongside the values anyway
-  call lagrange_any(xi,NGLLX,xigll,hxi,hpxi)
-  call lagrange_any(eta,NGLLY,yigll,heta,hpeta)
-  call lagrange_any(gamma,NGLLZ,zigll,hgam,hpgam)
+  call gf_interp_weights_deriv(xi,eta,gamma,hxi,hpxi,heta,hpeta,hgam,hpgam)
 
   end subroutine gf_interp_weights
 

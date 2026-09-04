@@ -35,10 +35,12 @@
 !----   xgf3d --info          <GFDB> [--topo] [--no-check]
 !----   xgf3d --locate        <GFDB> <lat> <lon> <depth_km>
 !----   xgf3d --check-anchors <GFDB>
-!----   xgf3d --seis          <GFDB> <FORCESOLUTION> <outdir>
-!----   xgf3d --dump          <GFDB> <FORCESOLUTION> <outdir> [--station NET.STA]
+!----   xgf3d --seis          <GFDB> <SOURCE> <outdir>
+!----   xgf3d --dump          <GFDB> <SOURCE> <outdir> [--station NET.STA]
 !----
-!---- Later stages add the CMTSOLUTION path and the SAC-writing default mode.
+!---- <SOURCE> is a FORCESOLUTION or a CMTSOLUTION; which one is decided
+!---- from the file's own first non-blank line, so the caller never has to
+!---- say. Later stages add the SAC-writing default mode.
 !----
 
   program xgf3d
@@ -47,8 +49,8 @@
                     GF_OK,GF3D_VERSION,GF_XI_TOL,GF_ANCHOR_TOL,GF_NCOMP
   use gf_database, only: gf_open,gf_close,gf_print_info
   use gf_locate, only: gf_locate_source,gf_locate_release,gf_check_anchors_all
-  use gf_source, only: gf_read_force_source,gf_print_source
-  use gf_seismograms, only: gf_seis_force,gf_write_seis,gf_write_dump
+  use gf_source, only: gf_read_source,gf_print_source
+  use gf_seismograms, only: gf_seis,gf_write_seis,gf_write_dump
 
   use constants, only: MAX_STRING_LEN,NGLLX,NGNOD
 
@@ -178,7 +180,7 @@
     ! and those fail non-locally.
 
     if (nargs < 4) then
-      write(ISTDERR,'(a)') 'Error: '//trim(mode)//' needs a database, a FORCESOLUTION and an output directory'
+      write(ISTDERR,'(a)') 'Error: '//trim(mode)//' needs a database, a source file and an output directory'
       call print_usage(ISTDERR)
       stop 1
     endif
@@ -218,7 +220,8 @@
       stop 1
     endif
 
-    call gf_read_force_source(srcfile,db%dt,src,ierr)
+    ! FORCESOLUTION or CMTSOLUTION, decided from the file's own first line
+    call gf_read_source(srcfile,db%dt,src,ierr)
     if (ierr /= GF_OK) then
       write(ISTDERR,'(a)') 'Error reading the source'
       write(ISTDERR,'(a)') '  '//trim(gf_error_string(ierr))//': '//trim(gf_errmsg)
@@ -262,7 +265,7 @@
         stop 1
       endif
 
-      call gf_seis_force(db,src,loc,seis,tsec,ierr)
+      call gf_seis(db,src,loc,seis,tsec,ierr)
       if (ierr /= GF_OK) then
         write(ISTDERR,'(a)') 'Error computing the seismograms'
         write(ISTDERR,'(a)') '  '//trim(gf_error_string(ierr))//': '//trim(gf_errmsg)
@@ -358,10 +361,13 @@
   write(iunit,'(a)') '  --locate <GFDB> <lat> <lon> <depth_km>'
   write(iunit,'(a)') '                                  locate a position in the database'
   write(iunit,'(a)') '  --check-anchors <GFDB>          verify the 27-anchor geometry of every element'
-  write(iunit,'(a)') '  --seis <GFDB> <FORCESOLUTION> <outdir>'
+  write(iunit,'(a)') '  --seis <GFDB> <SOURCE> <outdir>'
   write(iunit,'(a)') '                                  seismograms at every station, as ASCII'
-  write(iunit,'(a)') '  --dump <GFDB> <FORCESOLUTION> <outdir> [--station NET.STA]'
-  write(iunit,'(a)') '                                  interpolated displacement, before the contraction'
+  write(iunit,'(a)') '  --dump <GFDB> <SOURCE> <outdir> [--station NET.STA]'
+  write(iunit,'(a)') '                                  interpolated displacement, and for a CMT source'
+  write(iunit,'(a)') '                                  the strain and pre-integration trace'
+  write(iunit,'(a)') ''
+  write(iunit,'(a)') '  <SOURCE> is a FORCESOLUTION or a CMTSOLUTION, detected from its contents'
   write(iunit,'(a)') ''
   write(iunit,'(a)') '  options for --info:'
   write(iunit,'(a)') '    --topo       also load the topography grid and probe it at each station'
