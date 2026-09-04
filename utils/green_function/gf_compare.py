@@ -44,15 +44,23 @@ Output
 Per station and component: relative L2 misfit ||g - f|| / ||f||, the best-fit
 amplitude ratio <g,f>/<f,f> and the misfit after applying it, the peak ratio,
 the cross-correlation lag (parabolic sub-sample refinement; positive means
-the GF trace is *later* than the forward one), and the largest residual over
-the forward peak. A rigid time shift and an amplitude error look identical in
-relative L2; the lag and the amplitude ratio tell them apart, which is what
-turns a number into a diagnosis.
+the GF trace is *later* than the forward one), the largest residual over the
+forward peak, and the amplitude-spectrum ratio |G|/|F| over the band where
+the forward trace has energy. A rigid time shift and an amplitude error look
+identical in relative L2; the lag and the amplitude ratio tell them apart,
+and a band-dependent ratio is the signature of a source-time-function width
+mismatch. That is what turns a number into a diagnosis.
+
+Figures: one per station (per component: the overlay, the residual on its
+own axis, and the spectrum ratio), and optionally a record section of every
+station by epicentral distance. gf_summary.py turns several JSONs into one
+overview figure.
 
 Usage
 -----
   gf_compare.py --gf <dir with NET.STA.gf3d.txt> --fwd <forward OUTPUT_FILES>
-                --db <GFDB> [--json out.json] [--png <dir>] [--threshold X]
+                --db <GFDB> [--json out.json] [--png <dir>]
+                [--record-section out.png] [--threshold X]
                 [--stations NET.STA ...] [--trim-seconds S]
 
 Exit status 1 if --threshold is given and the worst relative L2 exceeds it.
@@ -128,6 +136,15 @@ def gf_sosfiltfilt(x, sos):
 # Inputs
 # ---------------------------------------------------------------------------
 
+def great_circle_deg(lat1, lon1, lat2, lon2):
+    """Epicentral distance in degrees on a sphere (haversine); for labels."""
+    p1, p2 = np.radians(lat1), np.radians(lat2)
+    dp = p2 - p1
+    dl = np.radians(lon2 - lon1)
+    a = np.sin(dp / 2) ** 2 + np.cos(p1) * np.cos(p2) * np.sin(dl / 2) ** 2
+    return float(np.degrees(2.0 * np.arcsin(np.sqrt(a))))
+
+
 def read_gf3d(path):
     """Parse one NET.STA.gf3d.txt: the '#' header into a dict, the four
     columns into arrays."""
@@ -148,7 +165,12 @@ def read_gf3d(path):
     kern = header["stf kernel"].split()
     ax = header["axis"].split()
     ax0 = [float(v) for v in header["axis t0"].split()]
+    src = [float(v) for v in header["source lat/lon/depth_km"].split()]
+    sta = [float(v) for v in header["station lat/lon/depth_m"].split()]
     plan = {
+        "source_lat": src[0], "source_lon": src[1], "source_depth_km": src[2],
+        "station_lat": sta[0], "station_lon": sta[1],
+        "distance_deg": great_circle_deg(src[0], src[1], sta[0], sta[1]),
         "kind": header["stf kind"],
         "hdur_src": hd[0], "hdur_target": hd[1], "hdur_db": hd[2], "hdur_corr": hd[3],
         "trunc": float(kern[0]), "khalf": int(kern[1]), "guard": kern[2].upper() == "T",
@@ -279,6 +301,33 @@ def lag_convention_selfcheck():
         raise SystemExit(f"lag convention self-check failed: {lag_s} samples for a +3 shift")
 
 
+def spectrum_ratio(g, f, dt, f_cutoff, floor=1e-2):
+    """|G|/|F| over the comparison window.
+
+    Both traces get the same Hann taper, so the ratio is fair; the mean is
+    kept, so the ratio at the lowest frequencies is the ratio of the static
+    offsets. The ratio is only reported where the forward spectrum is above
+    `floor` of its maximum -- below that it is noise over noise -- and below
+    f_cutoff, beyond which the database holds nothing by construction.
+    Returns the frequencies, the ratio (NaN outside the kept band), and the
+    RMS of ln(ratio) over the band, a single band-mismatch number.
+    """
+    n = len(g)
+    w = np.hanning(n)
+    G = np.abs(np.fft.rfft(g * w))
+    F = np.abs(np.fft.rfft(f * w))
+    freqs = np.fft.rfftfreq(n, d=dt)
+    keep = (freqs > 0.0) & (freqs <= f_cutoff) & (F >= floor * F.max())
+    ratio = np.full_like(F, np.nan)
+    ratio[keep] = G[keep] / F[keep]
+    if keep.sum() >= 2:
+        rms_log = float(np.sqrt(np.mean(np.log(ratio[keep]) ** 2)))
+        band = (float(freqs[keep].min()), float(freqs[keep].max()))
+    else:
+        rms_log, band = float("nan"), (float("nan"), float("nan"))
+    return freqs, ratio, rms_log, band
+
+
 def compare_component(g, f):
     norm_f = np.sqrt(np.sum(f * f))
     if norm_f == 0.0:
@@ -298,7 +347,7 @@ def compare_component(g, f):
     }
 
 
-def compare_station(station, plan, t_gf, gf, t_f, fwd, sos, trim_seconds):
+def compare_station(station, plan, t_gf, gf, t_f, fwd, sos, trim_seconds, f_cutoff):
     dt_sub = plan["dt"] * plan["subsample_step"]
     khalf = plan["khalf"]
 
@@ -332,40 +381,138 @@ def compare_station(station, plan, t_gf, gf, t_f, fwd, sos, trim_seconds):
         lag_s, lag_sec = lag_by_xcorr(g, f_on_gf, dt_sub)
         m["lag_samples"] = float(lag_s)
         m["lag_seconds"] = float(lag_sec)
+        freqs, ratio, rms_log, band = spectrum_ratio(g, f_on_gf, dt_sub, f_cutoff)
+        m["spectrum_ratio_rms_log"] = rms_log
+        m["spectrum_band_hz"] = list(band)
         result[c] = m
-        aligned[c] = (t_gf[idx], g, f_on_gf)
+        aligned[c] = {"t": t_gf[idx], "g": g, "f": f_on_gf, "freqs": freqs, "ratio": ratio}
     return result, aligned
 
 
-def plot_station(station, result, aligned, png_dir, source_label):
+def _mpl():
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+    return plt
 
-    fig, axes = plt.subplots(3, 1, figsize=(11, 8), sharex=True)
-    for ax, c in zip(axes, COMPONENTS):
+
+def plot_station(station, result, aligned, png_dir, source_label, f_cutoff):
+    """Per component: the overlay, the residual on its own axis, and the
+    amplitude-spectrum ratio. The residual gets its own scale on purpose --
+    at 1e-3 of the peak it is invisible on the overlay, and scaling it by a
+    fixed factor hides how large it is."""
+    plt = _mpl()
+    p = result["plan"]
+
+    fig = plt.figure(figsize=(14, 10.5))
+    # per component: an overlay row, a residual row, a spacer row; the
+    # spectrum panel spans the first two on the right
+    gs = fig.add_gridspec(nrows=9, ncols=4, height_ratios=[3.0, 1.2, 0.45] * 3,
+                          width_ratios=[1, 1, 1, 0.9], hspace=0.12, wspace=0.35)
+
+    for b, c in enumerate(COMPONENTS):
         if c not in aligned:
             continue
-        t, g, f = aligned[c]
+        a = aligned[c]
         m = result[c]
-        ax.plot(t, f, "k-", lw=0.9, label="forward (writer-filtered)")
-        ax.plot(t, g, "r--", lw=0.9, label="gf3d")
-        ax.plot(t, (g - f) * 10.0, "b-", lw=0.6, alpha=0.6, label="residual x10")
-        ax.set_ylabel(f"{c} [m]")
-        ax.set_title(f"{c}: rel L2 {m['rel_l2']:.3e}   amp {m['amp_ratio']:.5f}   "
-                     f"lag {m['lag_seconds']:+.3f} s   max resid/peak {m['max_resid_over_peak']:.2e}",
-                     fontsize=9)
-        ax.grid(True, alpha=0.3)
-        ax.legend(loc="upper right", fontsize=7)
-    axes[-1].set_xlabel("time after origin [s]")
-    p = result["plan"]
-    fig.suptitle(f"{station}  {source_label}  {p['kind']}  hdur_corr {p['hdur_corr']:.3f} s  "
-                 f"element {p['element']}", fontsize=10)
-    fig.tight_layout()
+        t, g, f = a["t"], a["g"], a["f"]
+
+        ax_o = fig.add_subplot(gs[3 * b, 0:3])
+        ax_r = fig.add_subplot(gs[3 * b + 1, 0:3], sharex=ax_o)
+        ax_s = fig.add_subplot(gs[3 * b:3 * b + 2, 3])
+
+        ax_o.plot(t, f, "k-", lw=1.0, label="forward, writer-filtered")
+        ax_o.plot(t, g, "r--", lw=1.0, label="gf3d")
+        ax_o.set_ylabel(f"{c} [m]")
+        ax_o.set_title(f"{c}   rel L2 {m['rel_l2']:.3e}   amplitude {m['amp_ratio']:.5f}   "
+                       f"lag {m['lag_seconds']:+.3f} s   max resid/peak {m['max_resid_over_peak']:.2e}",
+                       fontsize=9, loc="left")
+        ax_o.grid(True, alpha=0.3)
+        ax_o.legend(loc="upper right", fontsize=7)
+        ax_o.tick_params(labelbottom=False)
+
+        # the residual in units of its own decade, so the scale sits in the
+        # label rather than as an offset text colliding with the axis
+        resid = g - f
+        rmax = np.max(np.abs(resid))
+        if rmax > 0:
+            ex = int(np.floor(np.log10(rmax)))
+            ax_r.plot(t, resid / 10.0 ** ex, "b-", lw=0.7)
+            ax_r.set_ylim(-1.15 * rmax / 10.0 ** ex, 1.15 * rmax / 10.0 ** ex)
+            ax_r.set_ylabel(f"gf3d − fwd [1e{ex:d} m]", fontsize=8)
+        else:
+            ax_r.plot(t, resid, "b-", lw=0.7)
+            ax_r.set_ylabel("gf3d − fwd [m]", fontsize=8)
+        ax_r.axhline(0.0, color="0.5", lw=0.5)
+        ax_r.grid(True, alpha=0.3)
+        if b == 2:
+            ax_r.set_xlabel("time after origin [s]")
+        else:
+            ax_r.tick_params(labelbottom=False)
+
+        ok = np.isfinite(a["ratio"])
+        if ok.any():
+            ax_s.semilogx(a["freqs"][ok], a["ratio"][ok], "m-", lw=1.0)
+            lo = min(0.95, float(np.nanmin(a["ratio"][ok])) * 0.99)
+            hi = max(1.05, float(np.nanmax(a["ratio"][ok])) * 1.01)
+            ax_s.set_ylim(max(lo, 0.0), min(hi, 3.0))
+            ax_s.set_xlim(a["freqs"][ok].min() * 0.8, f_cutoff)
+        ax_s.axhline(1.0, color="0.5", lw=0.6)
+        ax_s.axvline(f_cutoff, color="0.6", lw=0.6, ls=":")
+        ax_s.grid(True, which="both", alpha=0.3)
+        ax_s.set_title(f"|G|/|F|   rms ln {m['spectrum_ratio_rms_log']:.2e}", fontsize=8)
+        ax_s.set_ylabel("gf3d / forward", fontsize=8)
+        if b == 2:
+            ax_s.set_xlabel("frequency [Hz]", fontsize=8)
+        ax_s.tick_params(labelsize=7)
+
+    fig.suptitle(f"{station}   {p['distance_deg']:.1f}° from the source   {source_label} "
+                 f"({p['kind']}, hdur_corr {p['hdur_corr']:.3f} s, K = {p['khalf']}, "
+                 f"onset {p['onset']:.1e})   element {p['element']}", fontsize=10)
     out = Path(png_dir) / f"{station}.gf_compare.png"
-    fig.savefig(out, dpi=130)
+    fig.savefig(out, dpi=130, bbox_inches="tight")
     plt.close(fig)
     return out
+
+
+def plot_record_section(cases, png_path, source_label):
+    """Every station by epicentral distance, one column per component, each
+    trace normalised by the forward peak: the view in which a database-wide
+    problem -- or one bad station -- shows at a glance."""
+    plt = _mpl()
+    order = sorted(cases, key=lambda k: k["plan"]["distance_deg"])
+    n = len(order)
+    fig, axes = plt.subplots(1, 3, figsize=(16, max(4.5, 1.1 * n + 2.5)), sharey=True)
+    for ax, c in zip(axes, COMPONENTS):
+        for i, case in enumerate(order):
+            if c not in case["aligned"]:
+                continue
+            a = case["aligned"][c]
+            scale = np.max(np.abs(a["f"]))
+            if scale == 0.0:
+                continue
+            ax.plot(a["t"], i + 0.42 * a["f"] / scale, "k-", lw=0.7)
+            ax.plot(a["t"], i + 0.42 * a["g"] / scale, "r--", lw=0.7)
+            m = case["result"][c]
+            ax.text(a["t"][0], i + 0.47,
+                    f"rel L2 {m['rel_l2']:.1e}   amp {m['amp_ratio']:.4f}   lag {m['lag_seconds']:+.2f} s",
+                    fontsize=7, va="bottom")
+        ax.set_yticks(range(n))
+        ax.set_yticklabels([f"{k['station']}\n{k['plan']['distance_deg']:.1f}°" for k in order], fontsize=8)
+        ax.set_ylim(-0.6, n - 0.4 + 0.3)
+        ax.set_title(f"{c}", fontsize=10)
+        ax.set_xlabel("time after origin [s]")
+        ax.grid(True, axis="x", alpha=0.3)
+    axes[0].plot([], [], "k-", label="forward, writer-filtered")
+    axes[0].plot([], [], "r--", label="gf3d")
+    axes[0].legend(loc="lower right", fontsize=8)
+    p0 = order[0]["plan"]
+    fig.suptitle(f"record section, {source_label} at {p0['source_lat']:.2f}°, {p0['source_lon']:.2f}°, "
+                 f"{p0['source_depth_km']:.1f} km: traces normalised by the forward peak", fontsize=10)
+    fig.tight_layout()
+    fig.savefig(png_path, dpi=130)
+    plt.close(fig)
+    return png_path
 
 
 # ---------------------------------------------------------------------------
@@ -376,7 +523,8 @@ def main():
     ap.add_argument("--fwd", required=True, help="the forward run's OUTPUT_FILES directory")
     ap.add_argument("--db", required=True, help="the Green function database directory")
     ap.add_argument("--json", help="write the results here")
-    ap.add_argument("--png", help="write one overlay plot per station into this directory")
+    ap.add_argument("--png", help="write one figure per station into this directory")
+    ap.add_argument("--record-section", help="write a record section of all stations to this PNG")
     ap.add_argument("--threshold", type=float, help="exit 1 if the worst relative L2 exceeds this")
     ap.add_argument("--stations", nargs="*", help="restrict to these NET.STA")
     ap.add_argument("--trim-seconds", type=float, default=60.0,
@@ -397,6 +545,9 @@ def main():
            "filter": {"order": FILTER_ORDER}, "stations": {}}
     worst = 0.0
     sos = None
+    f_cutoff = None
+    cases = []
+    source_label = None
 
     for gf_path in gf_files:
         station, plan, t_gf, gf = read_gf3d(gf_path)
@@ -420,18 +571,23 @@ def main():
             if err > args.preflight_tol:
                 raise SystemExit("the filter replication does not reproduce the writer's STF; stopping")
             sos = gf_butterworth_sos(FILTER_ORDER, sta["f_cutoff"], 1.0 / mesh["dt"])
+            f_cutoff = sta["f_cutoff"]
+            source_label = "CMT" if plan["kind"] == "heaviside" else "force"
+            out["source_label"] = source_label
 
         t_f, fwd, prefix = read_forward(args.fwd, station, mesh["dt"])
-        result, aligned = compare_station(station, plan, t_gf, gf, t_f, fwd, sos, args.trim_seconds)
+        result, aligned = compare_station(station, plan, t_gf, gf, t_f, fwd, sos,
+                                          args.trim_seconds, f_cutoff)
         result["channel_prefix"] = prefix
         out["stations"][station] = result
+        cases.append({"station": station, "plan": plan, "result": result, "aligned": aligned})
 
         w = result["window"]
-        print(f"\n{station}  ({plan['kind']}, hdur_corr {plan['hdur_corr']:.4f} s, khalf {plan['khalf']}, "
-              f"onset {plan['onset']:.2e}, guard {plan['guard']})")
-        print(f"  window {w['t_start']:.2f} .. {w['t_end']:.2f} s, {w['n']} samples at {w['dt_sub']} s")
+        print(f"\n{station}  {plan['distance_deg']:.1f} deg  ({plan['kind']}, hdur_corr {plan['hdur_corr']:.4f} s, "
+              f"khalf {plan['khalf']}, onset {plan['onset']:.2e}, guard {plan['guard']})")
+        print(f"  window {w['t_start']:.2f} .. {w['t_end']:.2f} s, {w['n']} samples at {w['dt_sub']:.4g} s")
         print(f"  {'comp':4s} {'rel L2':>11s} {'amp ratio':>11s} {'L2 scaled':>11s} {'peak ratio':>11s} "
-              f"{'lag [smp]':>10s} {'lag [s]':>9s} {'maxres/pk':>10s}")
+              f"{'lag [smp]':>10s} {'lag [s]':>9s} {'maxres/pk':>10s} {'spec rms':>9s}")
         for c in COMPONENTS:
             m = result[c]
             if m.get("rel_l2") is None:
@@ -439,14 +595,18 @@ def main():
                 continue
             print(f"  {c:4s} {m['rel_l2']:11.4e} {m['amp_ratio']:11.6f} {m['rel_l2_after_scale']:11.4e} "
                   f"{m['peak_ratio']:11.6f} {m['lag_samples']:+10.3f} {m['lag_seconds']:+9.3f} "
-                  f"{m['max_resid_over_peak']:10.3e}")
+                  f"{m['max_resid_over_peak']:10.3e} {m['spectrum_ratio_rms_log']:9.2e}")
             worst = max(worst, m["rel_l2"])
 
         if args.png:
             Path(args.png).mkdir(parents=True, exist_ok=True)
-            label = "CMT" if plan["kind"] == "heaviside" else "force"
-            p = plot_station(station, result, aligned, args.png, label)
+            p = plot_station(station, result, aligned, args.png, source_label, f_cutoff)
             print(f"  plot: {p}")
+
+    if args.record_section and cases:
+        Path(args.record_section).parent.mkdir(parents=True, exist_ok=True)
+        p = plot_record_section(cases, args.record_section, source_label)
+        print(f"\nrecord section: {p}")
 
     out["worst_rel_l2"] = float(worst)
     print(f"\nworst relative L2 over all stations and components: {worst:.4e}")

@@ -142,10 +142,12 @@ def all_inputs(wildcards):
                      station=STATION_IDS)
     # Manifest built
     inputs.append(os.path.join(GF_DATABASE_PATH, "centroids.bin"))
-    # Optionally run validation forward simulations and cross-validation plots
+    # Optionally run the validation forward simulations and the comparison
+    # gate: extraction with xgf3d, comparison against the forward traces, and
+    # the summary figure. summarize_gf3d pulls the two compare_gf3d rules in.
     if CREATE_VALIDATION:
-        inputs.append(os.path.join("validation_output", "xvalidate_force.svg"))
-        inputs.append(os.path.join("validation_output", "xvalidate_cmt.svg"))
+        inputs.append(os.path.join("validation_output", "gf_compare_summary.png"))
+        inputs.append(os.path.join("validation_output", "gf_compare_summary.md"))
     return inputs
 
 
@@ -580,28 +582,89 @@ rule run_validation_cmt:
             f.write("validation CMT forward complete\n")
 
 
-rule run_cross_validation:
-    """Run cross-validation comparing GF database against forward simulations."""
+# ─── The gate: xgf3d against the forward runs ─────────────────────────────────
+#
+# Three rules per source type. extract_gf3d runs the library on the finished
+# database for the validation source file; compare_gf3d compares its ASCII
+# output with the forward SAC traces (utils/green_function/gf_compare.py:
+# the writer's own filter replicated, coarse-grid comparison, relative L2,
+# amplitude ratio, lag and spectrum ratio per station and component) and
+# fails the workflow above GF_COMPARE_THRESHOLD; summarize_gf3d draws both
+# source types into one figure and one table. Nothing here imports
+# gf_cross_validate.py, which was a check of the storage, not a reference.
+#
+# The gate is what caught the burial-in-metres bug in forcesolution_content()
+# above: two of three stations at 5-37 %, the third at 1e-3.
+
+GF_COMPARE_THRESHOLD = config.get("GF_COMPARE_THRESHOLD", 5e-3)
+XGF3D = os.path.join(os.path.abspath(SPECFEM_DIR), "bin", "xgf3d")
+GF_TOOLS = os.path.join(os.path.abspath(SPECFEM_DIR), "utils", "green_function")
+
+# source type -> (forward run directory, validation source file)
+VALIDATION_CASES = {
+    "force": (VALIDATION_DIR, "FORCESOLUTION"),
+    "cmt": (VALIDATION_CMT_DIR, "CMTSOLUTION"),
+}
+
+# Without this, validation_output/gf_compare_summary.png also matches the
+# directory output gf_compare_{case} with case = "summary.png".
+wildcard_constraints:
+    case="|".join(VALIDATION_CASES),
+
+
+rule extract_gf3d:
+    """Extract seismograms for the validation source from the finished database."""
     input:
-        force_done=os.path.join(VALIDATION_DIR, "done.flag"),
-        cmt_done=os.path.join(VALIDATION_CMT_DIR, "done.flag"),
-        # The cross-validation reads the Green function database, so it has to
-        # wait for it. Without this edge snakemake is free to run this rule
-        # before the reciprocal simulations have written anything -- which it
-        # does as soon as there is more than one station, since only the
-        # forward runs were declared here.
+        # centroids.bin is written by build_manifest after every reciprocal
+        # run; it is the edge that makes this wait for the whole database
         centroids=os.path.join(GF_DATABASE_PATH, "centroids.bin"),
+        source=lambda w: os.path.join(VALIDATION_DATA, VALIDATION_CASES[w.case][1]),
     output:
-        force_svg=os.path.join("validation_output", "xvalidate_force.svg"),
-        cmt_svg=os.path.join("validation_output", "xvalidate_cmt.svg"),
+        traces=expand(os.path.join("validation_output", "gf3d_{{case}}", "{station}.gf3d.txt"),
+                      station=STATION_IDS),
     params:
-        script=os.path.join(
-            os.path.abspath(SPECFEM_DIR),
-            "utils", "green_function", "xvalidate.py",
-        ),
+        outdir=os.path.join("validation_output", "gf3d_{case}"),
     shell:
         """
-        python {params.script} .
+        mkdir -p {params.outdir}
+        {XGF3D} --seis {GF_DATABASE_PATH} {input.source} {params.outdir}
+        """
+
+
+rule compare_gf3d:
+    """Compare the extracted seismograms with the forward run; fail above the threshold."""
+    input:
+        traces=expand(os.path.join("validation_output", "gf3d_{{case}}", "{station}.gf3d.txt"),
+                      station=STATION_IDS),
+        forward_done=lambda w: os.path.join(VALIDATION_CASES[w.case][0], "done.flag"),
+    output:
+        json=os.path.join("validation_output", "gf_compare_{case}.json"),
+        record=os.path.join("validation_output", "gf_compare_{case}_record_section.png"),
+        figdir=directory(os.path.join("validation_output", "gf_compare_{case}")),
+    params:
+        gfdir=os.path.join("validation_output", "gf3d_{case}"),
+        fwd=lambda w: os.path.join(VALIDATION_CASES[w.case][0], "OUTPUT_FILES"),
+        threshold=GF_COMPARE_THRESHOLD,
+    shell:
+        """
+        python {GF_TOOLS}/gf_compare.py --gf {params.gfdir} --fwd {params.fwd} \
+            --db {GF_DATABASE_PATH} --json {output.json} --png {output.figdir} \
+            --record-section {output.record} --threshold {params.threshold}
+        """
+
+
+rule summarize_gf3d:
+    """One figure and one table for both source types."""
+    input:
+        cmt=os.path.join("validation_output", "gf_compare_cmt.json"),
+        force=os.path.join("validation_output", "gf_compare_force.json"),
+    output:
+        png=os.path.join("validation_output", "gf_compare_summary.png"),
+        table=os.path.join("validation_output", "gf_compare_summary.md"),
+    shell:
+        """
+        python {GF_TOOLS}/gf_summary.py --json cmt={input.cmt} force={input.force} \
+            --png {output.png} --table {output.table} --threshold {GF_COMPARE_THRESHOLD}
         """
 
 
