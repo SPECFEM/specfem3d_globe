@@ -624,6 +624,34 @@
     print *,'found a total of ',nglob,' points'
     print *,'initial number of points (with multiples) was ',npointot
 
+    ! try to avoid underflow crashes when reading with Paraview
+    ! for example, AVS format uses `float` as values,
+    ! if sngl(val) drops below the single-precision limit, then force it to 0.0
+    do i = 1,npointot
+      ! field values
+      if (abs(field_display(i)) < tiny(0.0e0)) then
+        field_display(i) = 0.0e0
+      else
+        field_display(i) = sngl(field_display(i))
+      endif
+      ! same for coordinates
+      if (abs(xp_save(i)) < tiny(0.0e0)) then
+        xp_save(i) = 0.0e0
+      else
+        xp_save(i) = sngl(xp_save(i))
+      endif
+      if (abs(yp_save(i)) < tiny(0.0e0)) then
+        yp_save(i) = 0.0e0
+      else
+        yp_save(i) = sngl(yp_save(i))
+      endif
+      if (abs(zp_save(i)) < tiny(0.0e0)) then
+        zp_save(i) = 0.0e0
+      else
+        zp_save(i) = sngl(zp_save(i))
+      endif
+    enddo
+
     !--- ****** create AVS file using sorted list ******
 
     ! create file name and open file
@@ -758,11 +786,11 @@
               if (USE_OPENDX) then
                 ! DX format
                 write(11,"(f10.7,1x,f10.7,1x,f10.7)") &
-                  xp_save(ilocnum+ieoff),yp_save(ilocnum+ieoff),zp_save(ilocnum+ieoff)
+                  sngl(xp_save(ilocnum+ieoff)),sngl(yp_save(ilocnum+ieoff)),sngl(zp_save(ilocnum+ieoff))
               else if (USE_AVS) then
                 ! AVS format
                 write(11,"(i10,1x,f10.7,1x,f10.7,1x,f10.7)") ireorder(ibool_number), &
-                  xp_save(ilocnum+ieoff),yp_save(ilocnum+ieoff),zp_save(ilocnum+ieoff)
+                  sngl(xp_save(ilocnum+ieoff)),sngl(yp_save(ilocnum+ieoff)),sngl(zp_save(ilocnum+ieoff))
               endif
             endif
             mask_point(ibool_number) = .true.
@@ -836,20 +864,20 @@
             if (.not. ALL_THRESHOLD_OFF) then
               if (USE_OPENDX) then
                 ! DX format
-                write(11,"(e18.6)") field_display(ilocnum+ieoff)
+                write(11,"(e18.6)") sngl(field_display(ilocnum+ieoff))
               else if (USE_AVS) then
                 ! AVS format
-                write(11,"(i10,1x,e18.6)") ireorder(ibool_number),field_display(ilocnum+ieoff)
+                write(11,"(i10,1x,e18.6)") ireorder(ibool_number),sngl(field_display(ilocnum+ieoff))
               endif
             else
               if (USE_OPENDX) then
                 ! DX format
-                write(11,"(e18.6)") field_display(ilocnum+ieoff)
+                write(11,"(e18.6)") sngl(field_display(ilocnum+ieoff))
               else if (USE_AVS) then
                 ! AVS format
-                !write(11,*) ireorder(ibool_number),field_display(ilocnum+ieoff)
+                !write(11,*) ireorder(ibool_number),sngl(field_display(ilocnum+ieoff))
                 ! need format specifier (e.g. for Cray): note it might have problems w/ very small values
-                write(11,"(i10,1x,e18.6)") ireorder(ibool_number),field_display(ilocnum+ieoff)
+                write(11,"(i10,1x,e18.6)") ireorder(ibool_number),sngl(field_display(ilocnum+ieoff))
               endif
             endif
           endif
