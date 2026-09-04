@@ -26,7 +26,7 @@
 !=====================================================================
 
 !----
-!---- Seismograms from a force source, and the ASCII output.
+!---- Seismograms from a force or a moment-tensor source, and the ASCII output.
 !----
 !---- Reciprocity, written out once because every index below follows from it
 !---- --------------------------------------------------------------------
@@ -79,30 +79,50 @@
 !---- *not* one on the shipped examples -- it is 1.05e10 -- so omitting it is
 !---- not a subtle error but a trace ten orders of magnitude too small.
 !----
+!---- The source time function, and the order of operations
+!---- ------------------------------------------------------
+!---- The stored field is the response to the reciprocal run's Gaussian.
+!---- The seismogram a caller wants is the response to the source time
+!---- function specfem would use for the source file in hand, and getting
+!---- from one to the other is a single convolution, planned by
+!---- gf_seis_plan and applied by gf_stf (see the header of gf_stf.F90 for
+!---- the derivation and for why there is no time integration).
+!----
+!---- That convolution acts on the *contracted* trace, after the spatial
+!---- derivative for a moment tensor and after the direction contraction for
+!---- a force, never on the raw displacement. For a moment tensor that order
+!---- is required, not preferred: the reciprocal force pulse leaves the
+!---- planet with permanent momentum, so the raw displacement carries a
+!---- rigid translation growing linearly in time, and it is the strain that
+!---- removes it.
+!----
 !---- Time axis
 !---- ---------
+!---- The stored axis is
+!----
 !----   t(i) = (i*subsample_step - 1)*dt - t0,   i = 1..nt_subsampled
 !----
 !---- verified against the writer rather than assumed: green_function_io.F90
 !---- :394 snapshots when mod(it,GF_SUBSAMPLE_STEP) == 0, so snapshot i is
 !---- solver step i*subsample_step, whose simulation time is (it-1)*dt - t0.
 !----
+!---- The output axis is that axis extended to the left by whole samples,
+!---- with zeros, so that a requested start time -- by default 1.5*hdur, the
+!---- forward run's own -- is covered (gf_taxis_plan). Nothing is resampled
+!---- and nothing removed: every stored sample and its time survive bitwise.
+!----
 !---- Use dt_sub = dt*subsample_step for anything that steps along this axis:
 !---- 0.4 s, not 0.1 s, in the shipped global example. GF3DF's GF%dt was
 !---- already the stored spacing, so a literal port silently uses the solver
 !---- step and is wrong by a factor of subsample_step.
 !----
-!---- The output-time-axis question -- a requested t0_out, and the left
-!---- zero-padding it needs before the STF convolution -- belongs to Stage 5.
-!---- For a force source with no STF correction the database's own axis is
-!---- the right one.
-!----
 
   module gf_seismograms
 
-  use gf_par, only: t_gfdb,t_gf_location,t_gf_source,gf_set_error, &
-                    GF_OK,GF_ERR_ARG,GF_ERR_ALLOC,GF_ERR_IO, &
-                    GF_NCOMP,GF3D_VERSION
+  use gf_par, only: t_gfdb,t_gf_location,t_gf_source,t_gf_stf,t_gf_taxis,gf_set_error, &
+                    GF_OK,GF_ERR_ARG,GF_ERR_ALLOC,GF_ERR_IO,GF_ERR_MISMATCH, &
+                    GF_NCOMP,GF3D_VERSION,GF_STF_TRUNC,GF_STF_HEAVI, &
+                    GF_SRC_FORCE,GF_SRC_CMT
 
   use gf_database, only: gf_dir_exists
 
@@ -114,7 +134,8 @@
 
   use gf_moment, only: gf_rotate_moment_tensor,gf_moment_contract
 
-  use gf_stf, only: gf_cumtrapz
+  use gf_stf, only: gf_stf_plan,gf_taxis_plan,gf_taxis_times,gf_pad_left,gf_cumsum, &
+                    gf_stf_kernel,gf_stf_apply,gf_stf_onset,gf_stf_kind_name
 
   use gf_source, only: gf_force_direction
 
@@ -123,6 +144,7 @@
   private
 
   public :: gf_time_axis
+  public :: gf_seis_plan
   public :: gf_seis_force
   public :: gf_seis_cmt
   public :: gf_seis
@@ -141,6 +163,9 @@
   subroutine gf_time_axis(db,nt,t)
 
 ! sample times of the stored traces, in seconds relative to the origin
+!
+! The output axis with no extension: one expression in the tree for the
+! axis, in gf_taxis_times, so the two cannot drift apart.
 
   implicit none
 
@@ -149,11 +174,14 @@
   double precision, dimension(nt), intent(out) :: t
 
   ! local parameters
-  integer :: i
+  type(t_gf_taxis) :: tax
 
-  do i = 1,nt
-    t(i) = (dble(i*db%subsample_step) - 1.d0)*db%dt - db%t0
-  enddo
+  tax%npad = 0
+  tax%subsample_step = db%subsample_step
+  tax%dt = db%dt
+  tax%t0_db = db%t0
+
+  call gf_taxis_times(tax,nt,t)
 
   end subroutine gf_time_axis
 
@@ -161,11 +189,102 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine gf_seis_force(db,src,loc,seis,t,ierr)
+  subroutine gf_seis_plan(db,src,t0_req,tax,stf,ierr)
+
+! decides the source time function conversion and the output axis for a
+! source, before any element is read
+!
+! `t0_req` is the requested start time in seconds before the origin. A
+! negative value asks for specfem's own rule for the forward run
+! (setup_sources_receivers.f90:784-809): 1.5*hdur for a CMT and for the
+! Gaussian and Heaviside force types, 1.2/f0 for a Ricker, 0 for a
+! monochromatic force. tshift_src is zero for a single source, so that is
+! the forward run's t0 exactly (SAC header b = -90 for the shipped
+! CMTSOLUTION, -67.5 for the FORCESOLUTION).
+!
+! The database's half duration is a per-station attribute; it is T_min/10
+! by construction and therefore the same for every station of one mesh,
+! and a database where it is not was assembled from two runs.
+
+  implicit none
+
+  type(t_gfdb), intent(in) :: db
+  type(t_gf_source), intent(in) :: src
+  double precision, intent(in) :: t0_req
+  type(t_gf_taxis), intent(out) :: tax
+  type(t_gf_stf), intent(out) :: stf
+  integer, intent(out) :: ierr
+
+  ! local parameters
+  double precision :: hdur_db,t0,dt_sub
+  integer :: ista
+
+  if (.not. db%is_open) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_plan: database is not open')
+    return
+  endif
+  if (db%nstations < 1) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_plan: the database holds no stations')
+    return
+  endif
+
+  hdur_db = db%stations(1)%hdur
+  do ista = 2,db%nstations
+    if (db%stations(ista)%hdur /= hdur_db) then
+      call gf_set_error(ierr,GF_ERR_MISMATCH, &
+        'stations '//trim(db%stations(1)%id)//' and '//trim(db%stations(ista)%id)// &
+        ' were built with different half durations')
+      return
+    endif
+  enddo
+
+  t0 = t0_req
+  if (t0 < 0.d0) then
+    select case (src%source_type)
+    case (GF_SRC_CMT)
+      t0 = 1.5d0*src%hdur
+    case (GF_SRC_FORCE)
+      select case (src%force_stf)
+      case (1)
+        ! Ricker: hdur holds the dominant frequency
+        if (src%hdur <= 0.d0) then
+          call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_plan: a Ricker force needs a positive f0')
+          return
+        endif
+        t0 = 1.2d0/src%hdur
+      case (3)
+        t0 = 0.d0
+      case default
+        t0 = 1.5d0*src%hdur
+      end select
+    case default
+      call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_plan: the source has no type set')
+      return
+    end select
+  endif
+
+  dt_sub = db%dt*dble(db%subsample_step)
+
+  call gf_stf_plan(src%source_type,src%force_stf,src%hdur,hdur_db,dt_sub,GF_STF_TRUNC,stf,ierr)
+  if (ierr /= GF_OK) return
+
+  call gf_taxis_plan(db%nt_subsampled,db%dt,db%subsample_step,db%t0,t0,tax,ierr)
+
+  end subroutine gf_seis_plan
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_seis_force(db,src,loc,tax,stf,seis,t,onset,ierr)
 
 ! seismograms at every station for a force source
 !
-! `seis` is (nstations, 3 components N/E/Z, nt_subsampled) in metres.
+! `seis` is (nstations, 3 components N/E/Z, tax%nt) in metres, on the
+! output axis `t`, as the response to the source time function specfem
+! would use for this FORCESOLUTION. `onset(ista)` is the worst
+! silence-before-the-record ratio over the station's three components; see
+! gf_stf_onset.
 !
 ! The element is read once and the stations looped inside it, because the
 ! per-(element,station) array is the large object here -- 21 MB in the
@@ -179,21 +298,26 @@
   type(t_gfdb), intent(in) :: db
   type(t_gf_source), intent(in) :: src
   type(t_gf_location), intent(in) :: loc
-  double precision, dimension(db%nstations,GF_NCOMP,db%nt_subsampled), intent(out) :: seis
-  double precision, dimension(db%nt_subsampled), intent(out) :: t
+  type(t_gf_taxis), intent(in) :: tax
+  type(t_gf_stf), intent(in) :: stf
+  double precision, dimension(db%nstations,GF_NCOMP,tax%nt), intent(out) :: seis
+  double precision, dimension(tax%nt), intent(out) :: t
+  double precision, dimension(db%nstations), intent(out) :: onset
   integer, intent(out) :: ierr
 
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: displ
   double precision, dimension(:,:,:), allocatable :: g
+  double precision, dimension(:), allocatable :: trace,tdb,xpad,p,y,w
   double precision, dimension(NGLLX) :: hxi
   double precision, dimension(NGLLY) :: heta
   double precision, dimension(NGLLZ) :: hgam
   double precision, dimension(NDIM) :: fhat
-  double precision :: scale_amp
-  integer :: ista,it,icomp,idisp,ier,nt
+  double precision :: scale_amp,ratio
+  integer :: ista,it,icomp,idisp,ier,nt_db,nt,nbefore
 
   seis(:,:,:) = 0.d0
+  onset(:) = 0.d0
 
   if (.not. db%is_open) then
     call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_force: database is not open')
@@ -207,21 +331,33 @@
     call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_force: the database holds no stations')
     return
   endif
+  if (tax%nt_db /= db%nt_subsampled .or. tax%nt < tax%nt_db) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_force: the time axis was not planned for this database')
+    return
+  endif
 
-  nt = db%nt_subsampled
+  nt_db = db%nt_subsampled
+  nt = tax%nt
 
-  call gf_time_axis(db,nt,t)
+  call gf_taxis_times(tax,nt,t)
 
   call gf_interp_weights(loc%xi,loc%eta,loc%gamma,hxi,heta,hgam)
 
   call gf_force_direction(src,loc%nu,fhat,ierr)
   if (ierr /= GF_OK) return
 
-  allocate(displ(GF_NCOMP,GF_NCOMP,NGLLX,NGLLY,NGLLZ,nt),g(GF_NCOMP,GF_NCOMP,nt),stat=ier)
+  allocate(displ(GF_NCOMP,GF_NCOMP,NGLLX,NGLLY,NGLLZ,nt_db),g(GF_NCOMP,GF_NCOMP,nt_db), &
+           trace(nt_db),tdb(nt_db),xpad(nt),p(0:nt),y(nt),w(-stf%khalf:stf%khalf),stat=ier)
   if (ier /= 0) then
     call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate the element displacement buffer')
     return
   endif
+
+  ! the database's own axis, for the onset check
+  call gf_time_axis(db,nt_db,tdb)
+
+  ! the conversion kernel, once: it does not depend on the station
+  call gf_stf_kernel(stf,tax%dt_sub,w)
 
   do ista = 1,db%nstations
 
@@ -230,7 +366,7 @@
 
     ! g(a,d,t): the interpolated field at the source, still carrying both
     ! the station-force index a and the displacement index d
-    call gf_interp_trace(displ,hxi,heta,hgam,nt,g)
+    call gf_interp_trace(displ,hxi,heta,hgam,nt_db,g)
 
     if (db%stations(ista)%factor_force_source == 0.d0) then
       call gf_set_error(ierr,GF_ERR_ARG, &
@@ -239,13 +375,28 @@
     endif
     scale_amp = src%factor_force_source / db%stations(ista)%factor_force_source
 
-    do it = 1,nt
-      do icomp = 1,GF_NCOMP
+    do icomp = 1,GF_NCOMP
+
+      do it = 1,nt_db
+        trace(it) = 0.d0
         do idisp = 1,GF_NCOMP
-          seis(ista,icomp,it) = seis(ista,icomp,it) + fhat(idisp)*g(icomp,idisp,it)
+          trace(it) = trace(it) + fhat(idisp)*g(icomp,idisp,it)
         enddo
-        seis(ista,icomp,it) = scale_amp * seis(ista,icomp,it)
+        trace(it) = scale_amp * trace(it)
       enddo
+
+      call gf_stf_onset(trace,nt_db,tdb,stf%hdur_db,ratio,nbefore)
+      onset(ista) = max(onset(ista),ratio)
+
+      ! extend, then convert: the kernel reaches into the padded region
+      call gf_pad_left(trace,nt_db,tax%npad,xpad)
+      call gf_cumsum(xpad,nt,p)
+      call gf_stf_apply(stf,tax%dt_sub,w,p,xpad,nt,y)
+
+      do it = 1,nt
+        seis(ista,icomp,it) = y(it)
+      enddo
+
     enddo
 
   enddo
@@ -255,6 +406,12 @@
 99 continue
   if (allocated(displ)) deallocate(displ)
   if (allocated(g)) deallocate(g)
+  if (allocated(trace)) deallocate(trace)
+  if (allocated(tdb)) deallocate(tdb)
+  if (allocated(xpad)) deallocate(xpad)
+  if (allocated(p)) deallocate(p)
+  if (allocated(y)) deallocate(y)
+  if (allocated(w)) deallocate(w)
 
   end subroutine gf_seis_force
 
@@ -262,26 +419,27 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine gf_seis_cmt(db,src,loc,seis,t,ierr)
+  subroutine gf_seis_cmt(db,src,loc,tax,stf,seis,t,onset,ierr)
 
 ! seismograms at every station for a moment-tensor source
 !
-! `seis` is (nstations, 3 components N/E/Z, nt_subsampled) in metres, as the
-! *Heaviside* response at the database's own half duration. Correcting that
-! half duration to the CMTSOLUTION's -- the hdur/1.628 Gaussian convolution
-! -- is Stage 5's, and until it exists this trace cannot be compared to a
-! forward run.
+! `seis` is (nstations, 3 components N/E/Z, tax%nt) in metres, on the
+! output axis `t`, as the response to specfem's quasi-Heaviside at the
+! CMTSOLUTION's half duration -- what the forward run computes, lowpassed
+! by the database's own Butterworth.
 !
 ! Three steps, in this order:
 !
 !   1. the strain of the reciprocal field at the source, eps(6,3,nt);
 !   2. contraction with the Cartesian moment tensor, giving the response to
-!      a Gaussian source time function;
-!   3. one cumulative trapezoidal integration, turning that into the
-!      response to the Heaviside that a CMT source is.
+!      the reciprocal run's Gaussian source time function;
+!   3. one convolution with the quasi-Heaviside of the corrected width
+!      (gf_stf.F90), which is both the Gaussian -> Heaviside conversion and
+!      the change of half duration.
 !
-! Step 3 is where a left-endpoint cumulative sum would lag by half a sample
-! -- 1.7 s on the regional example's 3.4 s grid. See gf_stf.F90.
+! Step 3 replaces Stage 4's cumulative trapezoid, whose integrator error on
+! the 3.4 s regional grid is one percent at a 60 s period. Nothing here
+! integrates.
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM
 
@@ -290,23 +448,27 @@
   type(t_gfdb), intent(in) :: db
   type(t_gf_source), intent(in) :: src
   type(t_gf_location), intent(in) :: loc
-  double precision, dimension(db%nstations,GF_NCOMP,db%nt_subsampled), intent(out) :: seis
-  double precision, dimension(db%nt_subsampled), intent(out) :: t
+  type(t_gf_taxis), intent(in) :: tax
+  type(t_gf_stf), intent(in) :: stf
+  double precision, dimension(db%nstations,GF_NCOMP,tax%nt), intent(out) :: seis
+  double precision, dimension(tax%nt), intent(out) :: t
+  double precision, dimension(db%nstations), intent(out) :: onset
   integer, intent(out) :: ierr
 
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: displ
   double precision, dimension(:,:,:), allocatable :: eps
-  double precision, dimension(:), allocatable :: trace,trace_int
+  double precision, dimension(:), allocatable :: trace,tdb,xpad,p,y,w
   double precision, dimension(NGLLX) :: hxi,hpxi
   double precision, dimension(NGLLY) :: heta,hpeta
   double precision, dimension(NGLLZ) :: hgam,hpgam
   double precision, dimension(NGLLX,NGLLY,NGLLZ,NDIM) :: dw
   double precision, dimension(NDIM,NDIM) :: m_cart
-  double precision :: dt_sub,scale_amp
-  integer :: ista,it,icomp,ier,nt
+  double precision :: scale_amp,ratio
+  integer :: ista,it,icomp,ier,nt_db,nt,nbefore
 
   seis(:,:,:) = 0.d0
+  onset(:) = 0.d0
 
   if (.not. db%is_open) then
     call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_cmt: database is not open')
@@ -320,13 +482,19 @@
     call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_cmt: the database holds no stations')
     return
   endif
+  if (tax%nt_db /= db%nt_subsampled .or. tax%nt < tax%nt_db) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_cmt: the time axis was not planned for this database')
+    return
+  endif
+  if (stf%kind_stf /= GF_STF_HEAVI) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_cmt: the plan is not a Heaviside conversion')
+    return
+  endif
 
-  nt = db%nt_subsampled
+  nt_db = db%nt_subsampled
+  nt = tax%nt
 
-  ! the spacing of the *stored* axis, not the solver step
-  dt_sub = db%dt*dble(db%subsample_step)
-
-  call gf_time_axis(db,nt,t)
+  call gf_taxis_times(tax,nt,t)
 
   ! basis values and reference derivatives at the source, then the
   ! physical-space derivatives through the locator's inverse Jacobian
@@ -336,19 +504,23 @@
   ! the moment tensor, rotated once: it does not depend on the station
   call gf_rotate_moment_tensor(loc%theta,loc%phi,src%moment_tensor,m_cart)
 
-  allocate(displ(GF_NCOMP,GF_NCOMP,NGLLX,NGLLY,NGLLZ,nt),eps(GF_VOIGT,GF_NCOMP,nt), &
-           trace(nt),trace_int(nt),stat=ier)
+  allocate(displ(GF_NCOMP,GF_NCOMP,NGLLX,NGLLY,NGLLZ,nt_db),eps(GF_VOIGT,GF_NCOMP,nt_db), &
+           trace(nt_db),tdb(nt_db),xpad(nt),p(0:nt),y(nt),w(-stf%khalf:stf%khalf),stat=ier)
   if (ier /= 0) then
     call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate the element displacement buffer')
     return
   endif
+
+  call gf_time_axis(db,nt_db,tdb)
+
+  call gf_stf_kernel(stf,tax%dt_sub,w)
 
   do ista = 1,db%nstations
 
     call gf_read_element_displ(db,loc%ielem,ista,displ,ierr)
     if (ierr /= GF_OK) goto 99
 
-    call gf_strain_trace(displ,dw,nt,eps)
+    call gf_strain_trace(displ,dw,nt_db,eps)
 
     ! per unit reciprocal force at the station; see the module header
     if (db%stations(ista)%factor_force_source == 0.d0) then
@@ -359,17 +531,25 @@
     scale_amp = 1.d0 / db%stations(ista)%factor_force_source
 
     do icomp = 1,GF_NCOMP
-      do it = 1,nt
+
+      do it = 1,nt_db
         call gf_moment_contract(m_cart,eps(:,icomp,it),trace(it))
         trace(it) = scale_amp * trace(it)
       enddo
 
-      ! Gaussian response -> Heaviside response
-      call gf_cumtrapz(trace,nt,dt_sub,trace_int)
+      call gf_stf_onset(trace,nt_db,tdb,stf%hdur_db,ratio,nbefore)
+      onset(ista) = max(onset(ista),ratio)
+
+      ! Gaussian response -> Heaviside response at the CMT's half duration,
+      ! in one convolution on the extended axis
+      call gf_pad_left(trace,nt_db,tax%npad,xpad)
+      call gf_cumsum(xpad,nt,p)
+      call gf_stf_apply(stf,tax%dt_sub,w,p,xpad,nt,y)
 
       do it = 1,nt
-        seis(ista,icomp,it) = trace_int(it)
+        seis(ista,icomp,it) = y(it)
       enddo
+
     enddo
 
   enddo
@@ -380,7 +560,11 @@
   if (allocated(displ)) deallocate(displ)
   if (allocated(eps)) deallocate(eps)
   if (allocated(trace)) deallocate(trace)
-  if (allocated(trace_int)) deallocate(trace_int)
+  if (allocated(tdb)) deallocate(tdb)
+  if (allocated(xpad)) deallocate(xpad)
+  if (allocated(p)) deallocate(p)
+  if (allocated(y)) deallocate(y)
+  if (allocated(w)) deallocate(w)
 
   end subroutine gf_seis_cmt
 
@@ -388,26 +572,27 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine gf_seis(db,src,loc,seis,t,ierr)
+  subroutine gf_seis(db,src,loc,tax,stf,seis,t,onset,ierr)
 
-! seismograms for either kind of source
-
-  use gf_par, only: GF_SRC_FORCE,GF_SRC_CMT
+! seismograms for either kind of source, on a planned axis
 
   implicit none
 
   type(t_gfdb), intent(in) :: db
   type(t_gf_source), intent(in) :: src
   type(t_gf_location), intent(in) :: loc
-  double precision, dimension(db%nstations,GF_NCOMP,db%nt_subsampled), intent(out) :: seis
-  double precision, dimension(db%nt_subsampled), intent(out) :: t
+  type(t_gf_taxis), intent(in) :: tax
+  type(t_gf_stf), intent(in) :: stf
+  double precision, dimension(db%nstations,GF_NCOMP,tax%nt), intent(out) :: seis
+  double precision, dimension(tax%nt), intent(out) :: t
+  double precision, dimension(db%nstations), intent(out) :: onset
   integer, intent(out) :: ierr
 
   select case (src%source_type)
   case (GF_SRC_FORCE)
-    call gf_seis_force(db,src,loc,seis,t,ierr)
+    call gf_seis_force(db,src,loc,tax,stf,seis,t,onset,ierr)
   case (GF_SRC_CMT)
-    call gf_seis_cmt(db,src,loc,seis,t,ierr)
+    call gf_seis_cmt(db,src,loc,tax,stf,seis,t,onset,ierr)
   case default
     call gf_set_error(ierr,GF_ERR_ARG,'gf_seis: the source has no type set')
   end select
@@ -418,13 +603,15 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine gf_write_seis(db,src,loc,seis,t,outdir,ierr)
+  subroutine gf_write_seis(db,src,loc,tax,stf,seis,t,onset,outdir,ierr)
 
 ! writes one ASCII file per station
 !
-! The format is a maintained interface, not a debugging convenience: Stages
-! 4, 5 and 9 diff against it, and the Stage 5 comparison harness reads it
-! with numpy.loadtxt. Keep the '#' header block and the four columns.
+! The format is a maintained interface, not a debugging convenience: the
+! comparison harness (utils/green_function/gf_compare.py) reads it, and
+! Stage 9 diffs against it. Keep the '#' header block, the fixed-order
+! `# key : values` lines that describe the conversion and the axis, and the
+! four columns.
 
   use constants, only: MAX_STRING_LEN
 
@@ -433,8 +620,11 @@
   type(t_gfdb), intent(in) :: db
   type(t_gf_source), intent(in) :: src
   type(t_gf_location), intent(in) :: loc
-  double precision, dimension(db%nstations,GF_NCOMP,db%nt_subsampled), intent(in) :: seis
-  double precision, dimension(db%nt_subsampled), intent(in) :: t
+  type(t_gf_taxis), intent(in) :: tax
+  type(t_gf_stf), intent(in) :: stf
+  double precision, dimension(db%nstations,GF_NCOMP,tax%nt), intent(in) :: seis
+  double precision, dimension(tax%nt), intent(in) :: t
+  double precision, dimension(db%nstations), intent(in) :: onset
   character(len=*), intent(in) :: outdir
   integer, intent(out) :: ierr
 
@@ -460,10 +650,21 @@
     endif
 
     call gf_write_header(db,src,loc,ista,iout)
+
+    ! the conversion and the axis, machine-parsable
+    write(iout,'(a,a)')               '# stf kind   : ',trim(gf_stf_kind_name(stf%kind_stf))
+    write(iout,'(a,4es24.16)')        '# stf hdur   : ',stf%hdur_src,stf%hdur_target,stf%hdur_db,stf%hdur_corr
+    write(iout,'(a,es24.16,i12,l4)')  '# stf kernel : ',stf%trunc,stf%khalf,stf%guard
+    write(iout,'(a,es24.16)')         '# stf onset  : ',onset(ista)
+    write(iout,'(a,a)')               '# stf note   : ',trim(stf%note)
+    write(iout,'(a,es24.16,4i12)')    '# axis       : ',tax%dt,tax%subsample_step,tax%nt_db,tax%npad,tax%nt
+    write(iout,'(a,4es24.16)')        '# axis t0    : ',tax%t0_db,tax%t0_req,tax%t0,tax%t_first
+    write(iout,'(a,i0,a)')            '# edge       : trailing ',stf%khalf, &
+                                      ' samples use zero-extended data; leading samples assume silence before the database start'
     write(iout,'(a)') '# columns: t[s]  '//GF_COMP_NAME(1)//'[m]  ' &
                       //GF_COMP_NAME(2)//'[m]  '//GF_COMP_NAME(3)//'[m]'
 
-    do it = 1,db%nt_subsampled
+    do it = 1,tax%nt
       write(iout,'(4es24.16)') t(it),seis(ista,1,it),seis(ista,2,it),seis(ista,3,it)
     enddo
 
@@ -497,9 +698,13 @@
 !
 ! For a moment-tensor source it also writes <NET>.<STA>.strain.txt with the
 ! Voigt strain (6 slots x 3 force components) and the contracted trace
-! *before* the time integration -- the two intermediates between the raw
-! field and the seismogram, so a disagreement can be attributed to the
-! geometric chain, the contraction, or the integration separately.
+! *before* the source time function conversion -- the two intermediates
+! between the raw field and the seismogram, so a disagreement can be
+! attributed to the geometric chain, the contraction, or the conversion
+! separately.
+!
+! Everything here is on the database's own axis: these are the stored
+! quantities, and the output axis is a property of the seismogram.
 !
 ! `station_filter` of '' dumps every station; 21 MB is read per station, so
 ! naming one is usually what is wanted.
@@ -605,7 +810,7 @@
       call gf_strain_trace(displ,dw,nt,eps)
 
       ! scaled exactly as gf_seis_cmt scales it, so the dumped trace is in
-      ! the seismogram's units and differs from it only by the integration
+      ! the seismogram's units and differs from it only by the conversion
       do ia = 1,GF_NCOMP
         do it = 1,nt
           call gf_moment_contract(m_cart,eps(:,ia,it),pre_stf(ia,it))

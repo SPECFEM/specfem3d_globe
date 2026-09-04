@@ -35,7 +35,7 @@
 !----   xgf3d --info          <GFDB> [--topo] [--no-check]
 !----   xgf3d --locate        <GFDB> <lat> <lon> <depth_km>
 !----   xgf3d --check-anchors <GFDB>
-!----   xgf3d --seis          <GFDB> <SOURCE> <outdir>
+!----   xgf3d --seis          <GFDB> <SOURCE> <outdir> [--t0 <seconds>]
 !----   xgf3d --dump          <GFDB> <SOURCE> <outdir> [--station NET.STA]
 !----
 !---- <SOURCE> is a FORCESOLUTION or a CMTSOLUTION; which one is decided
@@ -45,12 +45,14 @@
 
   program xgf3d
 
-  use gf_par, only: t_gfdb,t_gf_location,t_gf_source,gf_errmsg,gf_error_string, &
+  use gf_par, only: t_gfdb,t_gf_location,t_gf_source,t_gf_stf,t_gf_taxis, &
+                    gf_errmsg,gf_error_string, &
                     GF_OK,GF3D_VERSION,GF_XI_TOL,GF_ANCHOR_TOL,GF_NCOMP
   use gf_database, only: gf_open,gf_close,gf_print_info
   use gf_locate, only: gf_locate_source,gf_locate_release,gf_check_anchors_all
   use gf_source, only: gf_read_source,gf_print_source
-  use gf_seismograms, only: gf_seis,gf_write_seis,gf_write_dump
+  use gf_seismograms, only: gf_seis_plan,gf_seis,gf_write_seis,gf_write_dump
+  use gf_stf, only: gf_print_stf
 
   use constants, only: MAX_STRING_LEN,NGLLX,NGNOD
 
@@ -61,12 +63,14 @@
   type(t_gfdb) :: db
   type(t_gf_location) :: loc
   type(t_gf_source) :: src
+  type(t_gf_taxis) :: tax
+  type(t_gf_stf) :: stf
   integer :: nargs,iarg,ierr
-  logical :: with_topo,do_check
-  double precision :: lat,lon,depth_km,worst_err
-  integer :: ielem_worst
+  logical :: with_topo,do_check,have_t0
+  double precision :: lat,lon,depth_km,worst_err,t0_req
+  integer :: ielem_worst,ista,ista_worst
   double precision, dimension(:,:,:), allocatable :: seis
-  double precision, dimension(:), allocatable :: tsec
+  double precision, dimension(:), allocatable :: tsec,onset
 
   ! standard error, used for anything that is not the requested output
   integer, parameter :: ISTDERR = 0
@@ -190,6 +194,9 @@
     call get_command_argument(4,outdir)
 
     station = ''
+    ! a negative request asks gf_seis_plan for specfem's own rule, 1.5*hdur
+    t0_req = -1.d0
+    have_t0 = .false.
     iarg = 5
     do while (iarg <= nargs)
       call get_command_argument(iarg,arg)
@@ -201,6 +208,14 @@
         endif
         iarg = iarg + 1
         call get_command_argument(iarg,station)
+      case ('--t0')
+        if (iarg == nargs) then
+          write(ISTDERR,'(a)') 'Error: --t0 needs a start time in seconds before the origin'
+          stop 1
+        endif
+        iarg = iarg + 1
+        call read_double_arg(iarg,'t0',t0_req)
+        have_t0 = .true.
       case default
         write(ISTDERR,'(a)') 'Error: unknown option for '//trim(mode)//': '//trim(arg)
         stop 1
@@ -210,6 +225,12 @@
 
     if (trim(mode) == '--seis' .and. len_trim(station) > 0) then
       write(ISTDERR,'(a)') 'Error: --station applies to --dump only'
+      stop 1
+    endif
+    ! --dump writes the stored quantities on the database's own axis by
+    ! design; the output axis is a property of the seismogram
+    if (trim(mode) == '--dump' .and. have_t0) then
+      write(ISTDERR,'(a)') 'Error: --t0 applies to --seis only'
       stop 1
     endif
 
@@ -257,7 +278,21 @@
 
     else
 
-      allocate(seis(db%nstations,GF_NCOMP,db%nt_subsampled),tsec(db%nt_subsampled),stat=ierr)
+      ! the conversion and the axis are decided before any element is read,
+      ! so a bad request fails in milliseconds and the plan is on record
+      call gf_seis_plan(db,src,t0_req,tax,stf,ierr)
+      if (ierr /= GF_OK) then
+        write(ISTDERR,'(a)') 'Error planning the seismograms'
+        write(ISTDERR,'(a)') '  '//trim(gf_error_string(ierr))//': '//trim(gf_errmsg)
+        call gf_locate_release()
+        call gf_close(db)
+        stop 1
+      endif
+
+      call gf_print_stf(stf,tax,6)
+      write(*,'(a)') ''
+
+      allocate(seis(db%nstations,GF_NCOMP,tax%nt),tsec(tax%nt),onset(db%nstations),stat=ierr)
       if (ierr /= 0) then
         write(ISTDERR,'(a)') 'Error: could not allocate the seismogram array'
         call gf_locate_release()
@@ -265,7 +300,7 @@
         stop 1
       endif
 
-      call gf_seis(db,src,loc,seis,tsec,ierr)
+      call gf_seis(db,src,loc,tax,stf,seis,tsec,onset,ierr)
       if (ierr /= GF_OK) then
         write(ISTDERR,'(a)') 'Error computing the seismograms'
         write(ISTDERR,'(a)') '  '//trim(gf_error_string(ierr))//': '//trim(gf_errmsg)
@@ -274,7 +309,7 @@
         stop 1
       endif
 
-      call gf_write_seis(db,src,loc,seis,tsec,outdir,ierr)
+      call gf_write_seis(db,src,loc,tax,stf,seis,tsec,onset,outdir,ierr)
       if (ierr /= GF_OK) then
         write(ISTDERR,'(a)') 'Error writing the seismograms'
         write(ISTDERR,'(a)') '  '//trim(gf_error_string(ierr))//': '//trim(gf_errmsg)
@@ -283,8 +318,20 @@
         stop 1
       endif
 
+      ! the silence-before-the-record ratio the conversion rests on
+      ista_worst = 1
+      do ista = 2,db%nstations
+        if (onset(ista) > onset(ista_worst)) ista_worst = ista
+      enddo
+      write(*,'(a,es22.14,a,a)') 'onset ratio (worst)  = ',onset(ista_worst), &
+                                 '  at ',trim(db%stations(ista_worst)%id)
+      if (onset(ista_worst) > 1.d-3) then
+        write(*,'(a)') '  WARNING: the trace is not silent before the reciprocal source switches on;'
+        write(*,'(a)') '           the conversion extends it with zeros there and will be in error'
+      endif
+
       write(*,'(a,i0,a,a)') 'wrote ',db%nstations,' seismogram files to ',trim(outdir)
-      deallocate(seis,tsec)
+      deallocate(seis,tsec,onset)
 
     endif
 
@@ -361,17 +408,23 @@
   write(iunit,'(a)') '  --locate <GFDB> <lat> <lon> <depth_km>'
   write(iunit,'(a)') '                                  locate a position in the database'
   write(iunit,'(a)') '  --check-anchors <GFDB>          verify the 27-anchor geometry of every element'
-  write(iunit,'(a)') '  --seis <GFDB> <SOURCE> <outdir>'
-  write(iunit,'(a)') '                                  seismograms at every station, as ASCII'
+  write(iunit,'(a)') '  --seis <GFDB> <SOURCE> <outdir> [--t0 <seconds>]'
+  write(iunit,'(a)') '                                  seismograms at every station, as ASCII, converted'
+  write(iunit,'(a)') '                                  to the source time function specfem would use'
   write(iunit,'(a)') '  --dump <GFDB> <SOURCE> <outdir> [--station NET.STA]'
   write(iunit,'(a)') '                                  interpolated displacement, and for a CMT source'
-  write(iunit,'(a)') '                                  the strain and pre-integration trace'
+  write(iunit,'(a)') '                                  the strain and the trace before the conversion'
   write(iunit,'(a)') ''
   write(iunit,'(a)') '  <SOURCE> is a FORCESOLUTION or a CMTSOLUTION, detected from its contents'
   write(iunit,'(a)') ''
   write(iunit,'(a)') '  options for --info:'
   write(iunit,'(a)') '    --topo       also load the topography grid and probe it at each station'
   write(iunit,'(a)') '    --no-check   skip the per-element completion scan'
+  write(iunit,'(a)') ''
+  write(iunit,'(a)') '  options for --seis:'
+  write(iunit,'(a)') '    --t0 <s>     start the output axis at or before <s> seconds before the origin,'
+  write(iunit,'(a)') '                 extending the stored axis with zeros (default: 1.5*hdur, the'
+  write(iunit,'(a)') '                 forward run''s own); the stored samples are never resampled'
   write(iunit,'(a)') ''
   write(iunit,'(a)') '  the output directory must exist; xgf3d does not create it'
   write(iunit,'(a)') ''

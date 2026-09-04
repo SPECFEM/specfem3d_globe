@@ -308,6 +308,88 @@
   end type t_gf_source
 
   !-----------------------------------------------------------------
+  ! the source time function conversion (Stage 5)
+  !
+  ! The database holds the response to the *reciprocal* run's source time
+  ! function: a Gaussian of width hdur_db, Butterworth-lowpassed
+  ! (green_function_stf.F90:82). What a caller wants is the response to the
+  ! source time function specfem would use for the source file in hand.
+  ! Both are members of the Gaussian family, so the conversion is one
+  ! convolution, and `kind_stf` says with what. See gf_stf.F90.
+  !-----------------------------------------------------------------
+
+  integer, parameter :: GF_STF_NONE  = 0   ! pass the stored trace through
+  integer, parameter :: GF_STF_GAUSS = 1   ! convolve with a Gaussian of width hdur_corr
+  integer, parameter :: GF_STF_HEAVI = 2   ! convolve with 0.5*(1 + erf(t/hdur_corr))
+
+  ! kernel half length, in units of hdur_corr. erfc(6)/2 = 1e-17, i.e. the
+  ! truncation is below double precision; the loop it lengthens is O(N*K)
+  ! and costs a few million flops per trace.
+  double precision, parameter :: GF_STF_TRUNC = 6.d0
+
+  type :: t_gf_stf
+    integer :: kind_stf = GF_STF_NONE
+
+    ! the source file's own field: 'half duration' of a CMTSOLUTION, 'f0'
+    ! of a FORCESOLUTION. A triangle half duration, not a Gaussian width.
+    double precision :: hdur_src = 0.d0
+
+    ! the Gaussian width that actually appears in the forward run's source
+    ! time function: hdur_src/SOURCE_DECAY_MIMIC_TRIANGLE, specfem's
+    ! hdur_Gaussian (setup_sources_receivers.f90:777); hdur_src/pi for the
+    ! Meschede Gaussian of force_stf = 4
+    double precision :: hdur_target = 0.d0
+
+    ! the database's Gaussian width, straight from the station attribute.
+    ! *Already* a width: green_function_stf.F90:69 sets it to T_min/10 and
+    ! uses it undivided, so 1.628 must not be applied to it a second time.
+    double precision :: hdur_db = 0.d0
+
+    ! sqrt(hdur_target^2 - hdur_db^2), or zero when the guard is set
+    double precision :: hdur_corr = 0.d0
+
+    ! kernel half length in samples of the stored axis, and the truncation
+    ! in units of hdur_corr that produced it
+    double precision :: trunc = GF_STF_TRUNC
+    integer :: khalf = 0
+
+    ! hdur_target <= hdur_db: the requested source is *narrower* than the
+    ! one the database was built with, and no convolution can produce it.
+    ! The Heaviside conversion still happens; the width does not change.
+    logical :: guard = .false.
+
+    character(len=MAX_STRING_LEN) :: note = ''
+  end type t_gf_stf
+
+  !-----------------------------------------------------------------
+  ! the output time axis
+  !
+  ! The stored axis starts at the database's own t0, which is
+  ! T_min_period/2 (setup_sources_receivers.f90:848-852) and has nothing to
+  ! do with any source. A forward run starts at 1.5*hdur, so a caller who
+  ! wants to lay the trace next to a forward one needs the axis extended
+  ! to the left. Extension is by whole samples of the stored grid, with
+  ! zeros: no resampling, so every sample the database supplied survives
+  ! bitwise, and so does its time.
+  !-----------------------------------------------------------------
+
+  type :: t_gf_taxis
+    integer :: nt_db = 0              ! samples the database supplied
+    integer :: npad  = 0              ! samples prepended
+    integer :: nt    = 0              ! = nt_db + npad
+
+    integer :: subsample_step = 0
+    double precision :: dt     = 0.d0 ! the *solver* step
+    double precision :: dt_sub = 0.d0 ! dt*subsample_step: the stored spacing
+
+    double precision :: t0_db   = 0.d0 ! the database's t0
+    double precision :: t0_req  = 0.d0 ! what the caller asked for
+    double precision :: t0      = 0.d0 ! t0_db + npad*dt_sub: what it got, in the
+                                       ! writer's convention t(i) = (i*ss-1)*dt - t0
+    double precision :: t_first = 0.d0 ! t(1); not -t0, see gf_stf.F90
+  end type t_gf_taxis
+
+  !-----------------------------------------------------------------
   ! last error message
   !
   ! Set by gf_set_error() alongside the returned code, so a caller that

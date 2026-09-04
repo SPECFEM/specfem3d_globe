@@ -108,13 +108,22 @@ def forcesolution_content(station_id, comp):
     comp_e = "1.0" if comp == "E" else "0.0"
     comp_z = "1.0" if comp == "Z" else "0.0"
 
+    # STATIONS gives the burial in metres; a FORCESOLUTION takes its depth in
+    # kilometres (get_force.f90, and locate_sources reports it as km). Writing
+    # the metres straight through put the IU.LVC and IU.SDV reciprocal sources
+    # at 30 km and 32 km, which the Stage 5 forward-run comparison caught: those
+    # two stations disagreed with the forward run at the 5-37 % level while
+    # IU.SJG (burial 0) agreed to 1e-3. Found 2026-09-04; the shipped databases
+    # for those stations predate this line and need their reciprocal runs redone.
+    depth_km = float(s['burial']) / 1000.0
+
     return (
         f"FORCE  {station_id}\n"
         f"time shift:     0.0000\n"
         f"f0:             {F0}\n"
         f"latitude:      {s['latitude']}\n"
         f"longitude:     {s['longitude']}\n"
-        f"depth:         {float(s['burial']):.4f}\n"
+        f"depth:         {depth_km:.4f}\n"
         f"source time function: 0\n"
         f"factor force source:  {FACTOR_FORCE}\n"
         f"comp dir vect source E:   {comp_e}\n"
