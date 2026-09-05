@@ -143,11 +143,12 @@ def all_inputs(wildcards):
     # Manifest built
     inputs.append(os.path.join(GF_DATABASE_PATH, "centroids.bin"))
     # Optionally run the validation forward simulations and the comparison
-    # gate: extraction with xgf3d, comparison against the forward traces, and
-    # the summary figure. summarize_gf3d pulls the two compare_gf3d rules in.
+    # gate: extraction with xgf3d, comparison against the forward traces, the
+    # summary figure, and last the pass/fail verdict. gate_gf3d pulls the
+    # summary and the two compare_gf3d rules in.
     if CREATE_VALIDATION:
-        inputs.append(os.path.join("validation_output", "gf_compare_summary.png"))
         inputs.append(os.path.join("validation_output", "gf_compare_summary.md"))
+        inputs.append(os.path.join("validation_output", "gf_compare_gate.json"))
     return inputs
 
 
@@ -396,8 +397,13 @@ rule build_manifest:
 rule setup_validation_forward:
     """Set up a forward simulation directory for validation using data from validation_data/."""
     input:
-        # Only run after the GF database is built
-        os.path.join(GF_DATABASE_PATH, "centroids.bin"),
+        # The forward run depends on the mesh, not on the database: it links
+        # db_base/DATABASES_MPI and runs xspecfem3D with the GF output off.
+        # It used to list GFDB/centroids.bin here to run after the database,
+        # which made every database rebuild (a new station, a new
+        # GF_SUBSAMPLE_STEP) redo both forward simulations for nothing.
+        # Keeping MPI jobs from overlapping is what `resources: mpi=1` is for.
+        os.path.join(BASEDIR, "mesher.flag"),
     output:
         flag=os.path.join(VALIDATION_DIR, "setup.flag"),
     params:
@@ -492,8 +498,8 @@ rule run_validation_forward:
 rule setup_validation_cmt:
     """Set up a CMT forward simulation directory for validation."""
     input:
-        # Only run after the GF database is built
-        os.path.join(GF_DATABASE_PATH, "centroids.bin"),
+        # the mesh, not the database -- see setup_validation_forward
+        os.path.join(BASEDIR, "mesher.flag"),
     output:
         flag=os.path.join(VALIDATION_CMT_DIR, "setup.flag"),
     params:
@@ -584,13 +590,16 @@ rule run_validation_cmt:
 
 # ─── The gate: xgf3d against the forward runs ─────────────────────────────────
 #
-# Three rules per source type. extract_gf3d runs the library on the finished
-# database for the validation source file; compare_gf3d compares its ASCII
-# output with the forward SAC traces (utils/green_function/gf_compare.py:
-# the writer's own filter replicated, coarse-grid comparison, relative L2,
-# amplitude ratio, lag and spectrum ratio per station and component) and
-# fails the workflow above GF_COMPARE_THRESHOLD; summarize_gf3d draws both
-# source types into one figure and one table. Nothing here imports
+# Per source type: extract_gf3d runs the library on the finished database
+# for the validation source file; compare_gf3d compares its ASCII output
+# with the forward SAC traces (utils/green_function/gf_compare.py: the
+# writer's own filter replicated, coarse-grid comparison, relative L2,
+# amplitude ratio, lag and spectrum ratio per station and component).
+# summarize_gf3d draws both source types into one figure and one table, and
+# gate_gf3d, last, fails the workflow above GF_COMPARE_THRESHOLD. The
+# pass/fail decision is a rule of its own on purpose: Snakemake deletes the
+# outputs of a failed job, and a threshold failure is exactly when the
+# figures and the JSON must survive. Nothing here imports
 # gf_cross_validate.py, which was a check of the storage, not a reference.
 #
 # The gate is what caught the burial-in-metres bug in forcesolution_content()
@@ -644,17 +653,16 @@ rule compare_gf3d:
     params:
         gfdir=os.path.join("validation_output", "gf3d_{case}"),
         fwd=lambda w: os.path.join(VALIDATION_CASES[w.case][0], "OUTPUT_FILES"),
-        threshold=GF_COMPARE_THRESHOLD,
     shell:
         """
         python {GF_TOOLS}/gf_compare.py --gf {params.gfdir} --fwd {params.fwd} \
             --db {GF_DATABASE_PATH} --json {output.json} --png {output.figdir} \
-            --record-section {output.record} --threshold {params.threshold}
+            --record-section {output.record}
         """
 
 
 rule summarize_gf3d:
-    """One figure and one table for both source types."""
+    """One figure and one table for both source types; the gate is drawn, not applied."""
     input:
         cmt=os.path.join("validation_output", "gf_compare_cmt.json"),
         force=os.path.join("validation_output", "gf_compare_force.json"),
@@ -665,6 +673,21 @@ rule summarize_gf3d:
         """
         python {GF_TOOLS}/gf_summary.py --json cmt={input.cmt} force={input.force} \
             --png {output.png} --table {output.table} --threshold {GF_COMPARE_THRESHOLD}
+        """
+
+
+rule gate_gf3d:
+    """Fail above GF_COMPARE_THRESHOLD, after every figure and table has been written."""
+    input:
+        cmt=os.path.join("validation_output", "gf_compare_cmt.json"),
+        force=os.path.join("validation_output", "gf_compare_force.json"),
+        summary=os.path.join("validation_output", "gf_compare_summary.png"),
+    output:
+        gate=os.path.join("validation_output", "gf_compare_gate.json"),
+    shell:
+        """
+        python {GF_TOOLS}/gf_summary.py --json cmt={input.cmt} force={input.force} \
+            --threshold {GF_COMPARE_THRESHOLD} --gate {output.gate}
         """
 
 

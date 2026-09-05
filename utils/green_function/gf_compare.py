@@ -386,6 +386,28 @@ def compare_station(station, plan, t_gf, gf, t_f, fwd, sos, trim_seconds, f_cuto
         m["spectrum_band_hz"] = list(band)
         result[c] = m
         aligned[c] = {"t": t_gf[idx], "g": g, "f": f_on_gf, "freqs": freqs, "ratio": ratio}
+
+    # The station as a vector: the error over the three components relative
+    # to the signal over the three. Near a radiation node a component is
+    # small -- on the shipped examples the validation force points East, and
+    # at a station due East the North component, at one due South the
+    # vertical, is several times smaller than its neighbours -- so its
+    # per-component relative error is inflated by the small denominator
+    # while its absolute error is the same as everyone else's. The vector
+    # measure is what the gate uses; the per-component numbers stay for
+    # diagnosis, because a node is also where a wrong radiation pattern
+    # would show first.
+    comps = [c for c in COMPONENTS if c in aligned]
+    den = sum(float(np.sum(aligned[c]["f"] ** 2)) for c in comps)
+    if comps and den > 0.0:
+        num = sum(float(np.sum((aligned[c]["g"] - aligned[c]["f"]) ** 2)) for c in comps)
+        gf = sum(float(np.dot(aligned[c]["g"], aligned[c]["f"])) for c in comps)
+        peak = max(float(np.max(np.abs(aligned[c]["f"]))) for c in comps)
+        rmax = max(float(np.max(np.abs(aligned[c]["g"] - aligned[c]["f"]))) for c in comps)
+        result["vector"] = {"rel_l2": float(np.sqrt(num / den)), "amp_ratio": gf / den,
+                            "max_resid_over_peak": rmax / peak if peak > 0.0 else None}
+    else:
+        result["vector"] = {"rel_l2": None, "amp_ratio": None, "max_resid_over_peak": None}
     return result, aligned
 
 
@@ -466,9 +488,12 @@ def plot_station(station, result, aligned, png_dir, source_label, f_cutoff):
             ax_s.set_xlabel("frequency [Hz]", fontsize=8)
         ax_s.tick_params(labelsize=7)
 
+    v = result.get("vector", {})
+    vtxt = f"   station vector rel L2 {v['rel_l2']:.3e}, amplitude {v['amp_ratio']:.5f}" \
+        if v.get("rel_l2") is not None else ""
     fig.suptitle(f"{station}   {p['distance_deg']:.1f}° from the source   {source_label} "
                  f"({p['kind']}, hdur_corr {p['hdur_corr']:.3f} s, K = {p['khalf']}, "
-                 f"onset {p['onset']:.1e})   element {p['element']}", fontsize=10)
+                 f"onset {p['onset']:.1e})   element {p['element']}{vtxt}", fontsize=10)
     out = Path(png_dir) / f"{station}.gf_compare.png"
     fig.savefig(out, dpi=130, bbox_inches="tight")
     plt.close(fig)
@@ -525,7 +550,8 @@ def main():
     ap.add_argument("--json", help="write the results here")
     ap.add_argument("--png", help="write one figure per station into this directory")
     ap.add_argument("--record-section", help="write a record section of all stations to this PNG")
-    ap.add_argument("--threshold", type=float, help="exit 1 if the worst relative L2 exceeds this")
+    ap.add_argument("--threshold", type=float,
+                    help="exit 1 if the worst station-vector relative L2 exceeds this")
     ap.add_argument("--stations", nargs="*", help="restrict to these NET.STA")
     ap.add_argument("--trim-seconds", type=float, default=60.0,
                     help="exclude at least this much of the forward record's end (filter transient)")
@@ -543,7 +569,8 @@ def main():
 
     out = {"gf": str(args.gf), "fwd": str(args.fwd), "db": str(args.db),
            "filter": {"order": FILTER_ORDER}, "stations": {}}
-    worst = 0.0
+    worst = 0.0            # over station vectors: the gate's measure
+    worst_comp = 0.0       # over single components: diagnostic
     sos = None
     f_cutoff = None
     cases = []
@@ -596,7 +623,12 @@ def main():
             print(f"  {c:4s} {m['rel_l2']:11.4e} {m['amp_ratio']:11.6f} {m['rel_l2_after_scale']:11.4e} "
                   f"{m['peak_ratio']:11.6f} {m['lag_samples']:+10.3f} {m['lag_seconds']:+9.3f} "
                   f"{m['max_resid_over_peak']:10.3e} {m['spectrum_ratio_rms_log']:9.2e}")
-            worst = max(worst, m["rel_l2"])
+            worst_comp = max(worst_comp, m["rel_l2"])
+        v = result["vector"]
+        if v["rel_l2"] is not None:
+            print(f"  {'vec':4s} {v['rel_l2']:11.4e} {v['amp_ratio']:11.6f} {'':11s} {'':11s} "
+                  f"{'':10s} {'':9s} {v['max_resid_over_peak']:10.3e}   (three components together)")
+            worst = max(worst, v["rel_l2"])
 
         if args.png:
             Path(args.png).mkdir(parents=True, exist_ok=True)
@@ -609,7 +641,8 @@ def main():
         print(f"\nrecord section: {p}")
 
     out["worst_rel_l2"] = float(worst)
-    print(f"\nworst relative L2 over all stations and components: {worst:.4e}")
+    out["worst_component_rel_l2"] = float(worst_comp)
+    print(f"\nworst station-vector relative L2: {worst:.4e}   (worst single component: {worst_comp:.4e})")
 
     if args.json:
         Path(args.json).parent.mkdir(parents=True, exist_ok=True)
