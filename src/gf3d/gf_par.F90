@@ -41,7 +41,7 @@
 
   module gf_par
 
-  use constants, only: MAX_STRING_LEN,MAX_LENGTH_STATION_NAME,MAX_LENGTH_NETWORK_NAME
+  use constants, only: MAX_STRING_LEN,MAX_LENGTH_STATION_NAME,MAX_LENGTH_NETWORK_NAME,NDIM
 
   implicit none
 
@@ -58,6 +58,54 @@
 
   ! combined "NET.STA" identifier
   integer, parameter :: GF_STATION_ID_LEN = MAX_LENGTH_NETWORK_NAME + 1 + MAX_LENGTH_STATION_NAME
+
+  !-----------------------------------------------------------------
+  ! source location
+  !-----------------------------------------------------------------
+
+  ! Containment tolerance on the local coordinates.
+  !
+  ! This replicates the solver rather than asking for a mathematically
+  ! containing element, and the value is not arbitrary:
+  ! find_local_coordinates() (locate_point.f90:513-519) clamps each of
+  ! xi/eta/gamma to +-1.10, and locate_point.f90:377 then treats anything
+  ! above 1.099 as "this point probably belongs to a neighbour" and starts
+  ! an adjacency walk. So 1.099 is exactly the solver's own test for "the
+  ! element I have is the element I want", and accepting <= 1.1 instead
+  ! would accept an iterate that merely hit the clamp, i.e. one that failed.
+  !
+  ! The shipped global example needs this: output_solver.txt reports
+  ! gamma = 1.05304706 for its CMTSOLUTION, so the forward run itself used
+  ! an element that does not strictly contain its source. Matching that
+  ! choice matters because the forward source was distributed onto that
+  ! element's GLL points with that basis, and reproducing the forward
+  ! seismogram is what this library is judged on.
+  double precision, parameter :: GF_XI_TOL = 1.099d0
+
+  ! number of candidate elements tried, in centroid-distance order
+  integer, parameter :: GF_NCAND = 10
+
+  ! Tolerance of the 27-anchor consistency guard, non-dimensional.
+  !
+  ! With USE_GLL = .false. (setup/constants.h:USE_GLL) the mesher applies
+  ! topography and ellipticity to the 27 anchors and re-interpolates the GLL
+  ! points with the tri-quadratic shape functions, so the stored xyz(3,5,5,5)
+  ! *is* a tri-quadratic sampled at GLL points and the anchors must reproduce
+  ! it exactly -- in exact arithmetic.
+  !
+  ! In practice the floor is the storage precision, not the arithmetic. The
+  ! solver holds xstore_crust_mantle as real(CUSTOM_REAL) and the writer
+  ! copies it straight through (green_function_metadata.F90:82,119-121), so
+  ! with CUSTOM_REAL = 4 both the anchors and the values they must reproduce
+  ! carry a float32 rounding. Measured over all 82 elements x 125 points of
+  ! the shipped global example the worst residual is 6.2e-8, which is
+  ! float32 epsilon times the O(0.5) magnitude of the coordinates.
+  !
+  ! 1e-6 is therefore a comfortable margin over the float32 floor while still
+  ! failing loudly on the thing this guard exists to catch: a USE_GLL = .true.
+  ! database, where the map is not tri-quadratic at all and the residual is
+  ! 1e-3 to 1e-2.
+  double precision, parameter :: GF_ANCHOR_TOL = 1.d-6
 
   !-----------------------------------------------------------------
   ! error codes
@@ -79,6 +127,8 @@
   integer, parameter :: GF_ERR_INCOMPLETE  =  8   ! element/station data not fully written
   integer, parameter :: GF_ERR_ALLOC       =  9   ! allocation failed
   integer, parameter :: GF_ERR_ARG         = 10   ! invalid argument from the caller
+  integer, parameter :: GF_ERR_NO_ELEMENT  = 11   ! no database element contains the point
+  integer, parameter :: GF_ERR_GEOMETRY    = 12   ! degenerate element geometry
 
   !-----------------------------------------------------------------
   ! per-station metadata, read from {GFDB}/stations/{net}.{sta}.h5
@@ -164,6 +214,182 @@
   end type t_gfdb
 
   !-----------------------------------------------------------------
+  ! a located source
+  !
+  ! Everything the extraction needs about where a source sits, produced
+  ! once by gf_locate_source() and consumed by every later stage. The
+  ! inverse Jacobian is carried here rather than recomputed because the
+  ! strain (Stage 4) needs exactly the values the locator already had.
+  !-----------------------------------------------------------------
+
+  type :: t_gf_location
+    !--- which element ---
+    integer :: ielem = 0                                     ! 1..db%nelem
+    character(len=GF_MORTON_HEXLEN) :: morton_hex = ''
+
+    !--- where in it ---
+    double precision :: xi = 0.d0, eta = 0.d0, gamma = 0.d0
+
+    !--- the mapped position, non-dimensional Cartesian ---
+    double precision, dimension(NDIM) :: xyz = 0.d0
+
+    !--- the target position, before the element map ---
+    double precision, dimension(NDIM) :: xyz_target = 0.d0
+
+    !--- inverse Jacobian d(xi,eta,gamma)/d(x,y,z) at the source ---
+    ! rows are xi/eta/gamma, columns x/y/z, i.e. jinv(1,2) is xiy
+    double precision, dimension(NDIM,NDIM) :: jinv = 0.d0
+    double precision :: jacobian = 0.d0
+
+    !--- source orientation: rows are N, E, Z-up in Cartesian ---
+    double precision, dimension(NDIM,NDIM) :: nu = 0.d0
+
+    !--- geographic intermediates, kept for reporting and for Stage 8 ---
+    double precision :: theta = 0.d0       ! geocentric colatitude, radians
+    double precision :: phi   = 0.d0       ! longitude, radians
+    double precision :: r_surface = 0.d0   ! surface radius above the source
+
+    !--- diagnostics ---
+    ! |mapped - target|, in km: the analogue of the solver's
+    ! "Error in location of the source" (locate_sources.f90:615)
+    double precision :: distance_km = 0.d0
+    ! worst 27-anchor reconstruction residual on the accepted element
+    double precision :: anchor_err = 0.d0
+  end type t_gf_location
+
+  !-----------------------------------------------------------------
+  ! a seismic source
+  !
+  ! Filled by gf_read_force_source() / gf_read_cmt_source(), which wrap
+  ! src/specfem3D/get_force.f90 and get_cmt.f90 rather than re-parsing the
+  ! files here. That is deliberate: those readers also apply the
+  ! non-dimensionalisation (scaleF, scaleM), so the scaling comes from the
+  ! solver's own source and cannot drift away from it.
+  !-----------------------------------------------------------------
+
+  integer, parameter :: GF_SRC_FORCE = 1
+  integer, parameter :: GF_SRC_CMT   = 2
+
+  type :: t_gf_source
+    integer :: source_type = 0                     ! GF_SRC_FORCE or GF_SRC_CMT
+    character(len=MAX_STRING_LEN) :: filename = ''
+
+    double precision :: latitude  = 0.d0
+    double precision :: longitude = 0.d0
+    double precision :: depth     = 0.d0           ! km, as the files give it
+
+    ! get_cmt returns the *triangle* half duration; the conversion to a
+    ! Gaussian width is hdur/SOURCE_DECAY_MIMIC_TRIANGLE and happens in
+    ! setup_sources_receivers.f90:777, not in the reader. For a force
+    ! source get_force stores the dominant frequency f0 here instead.
+    double precision :: hdur = 0.d0
+
+    ! get_cmt/get_force zero this when NSOURCES == 1 and return the original
+    ! in min_tshift_src_original, so t = 0 is the centroid time. Those
+    ! seconds are origin-time metadata (Stage 10's SAC headers), not part
+    ! of the trace.
+    double precision :: tshift_src = 0.d0
+    double precision :: min_tshift_src_original = 0.d0
+
+    !--- force sources ---
+    integer :: force_stf = 0
+    double precision :: factor_force_source = 0.d0     ! non-dimensional, /scaleF
+    double precision :: comp_dir_vect_source_E    = 0.d0
+    double precision :: comp_dir_vect_source_N    = 0.d0
+    double precision :: comp_dir_vect_source_Z_UP = 0.d0
+
+    !--- moment tensor sources (Stage 4) ---
+    ! spherical (Mrr,Mtt,Mpp,Mrt,Mrp,Mtp), non-dimensional, /scaleM
+    double precision, dimension(6) :: moment_tensor = 0.d0
+
+    !--- PDE origin time, from the CMTSOLUTION header (Stage 10) ---
+    integer :: yr = 0, jda = 0, mo = 0, da = 0, ho = 0, mi = 0
+    double precision :: sec = 0.d0
+  end type t_gf_source
+
+  !-----------------------------------------------------------------
+  ! the source time function conversion (Stage 5)
+  !
+  ! The database holds the response to the *reciprocal* run's source time
+  ! function: a Gaussian of width hdur_db, Butterworth-lowpassed
+  ! (green_function_stf.F90:82). What a caller wants is the response to the
+  ! source time function specfem would use for the source file in hand.
+  ! Both are members of the Gaussian family, so the conversion is one
+  ! convolution, and `kind_stf` says with what. See gf_stf.F90.
+  !-----------------------------------------------------------------
+
+  integer, parameter :: GF_STF_NONE  = 0   ! pass the stored trace through
+  integer, parameter :: GF_STF_GAUSS = 1   ! convolve with a Gaussian of width hdur_corr
+  integer, parameter :: GF_STF_HEAVI = 2   ! convolve with 0.5*(1 + erf(t/hdur_corr))
+
+  ! kernel half length, in units of hdur_corr. erfc(6)/2 = 1e-17, i.e. the
+  ! truncation is below double precision; the loop it lengthens is O(N*K)
+  ! and costs a few million flops per trace.
+  double precision, parameter :: GF_STF_TRUNC = 6.d0
+
+  type :: t_gf_stf
+    integer :: kind_stf = GF_STF_NONE
+
+    ! the source file's own field: 'half duration' of a CMTSOLUTION, 'f0'
+    ! of a FORCESOLUTION. A triangle half duration, not a Gaussian width.
+    double precision :: hdur_src = 0.d0
+
+    ! the Gaussian width that actually appears in the forward run's source
+    ! time function: hdur_src/SOURCE_DECAY_MIMIC_TRIANGLE, specfem's
+    ! hdur_Gaussian (setup_sources_receivers.f90:777); hdur_src/pi for the
+    ! Meschede Gaussian of force_stf = 4
+    double precision :: hdur_target = 0.d0
+
+    ! the database's Gaussian width, straight from the station attribute.
+    ! *Already* a width: green_function_stf.F90:69 sets it to T_min/10 and
+    ! uses it undivided, so 1.628 must not be applied to it a second time.
+    double precision :: hdur_db = 0.d0
+
+    ! sqrt(hdur_target^2 - hdur_db^2), or zero when the guard is set
+    double precision :: hdur_corr = 0.d0
+
+    ! kernel half length in samples of the stored axis, and the truncation
+    ! in units of hdur_corr that produced it
+    double precision :: trunc = GF_STF_TRUNC
+    integer :: khalf = 0
+
+    ! hdur_target <= hdur_db: the requested source is *narrower* than the
+    ! one the database was built with, and no convolution can produce it.
+    ! The Heaviside conversion still happens; the width does not change.
+    logical :: guard = .false.
+
+    character(len=MAX_STRING_LEN) :: note = ''
+  end type t_gf_stf
+
+  !-----------------------------------------------------------------
+  ! the output time axis
+  !
+  ! The stored axis starts at the database's own t0, which is
+  ! T_min_period/2 (setup_sources_receivers.f90:848-852) and has nothing to
+  ! do with any source. A forward run starts at 1.5*hdur, so a caller who
+  ! wants to lay the trace next to a forward one needs the axis extended
+  ! to the left. Extension is by whole samples of the stored grid, with
+  ! zeros: no resampling, so every sample the database supplied survives
+  ! bitwise, and so does its time.
+  !-----------------------------------------------------------------
+
+  type :: t_gf_taxis
+    integer :: nt_db = 0              ! samples the database supplied
+    integer :: npad  = 0              ! samples prepended
+    integer :: nt    = 0              ! = nt_db + npad
+
+    integer :: subsample_step = 0
+    double precision :: dt     = 0.d0 ! the *solver* step
+    double precision :: dt_sub = 0.d0 ! dt*subsample_step: the stored spacing
+
+    double precision :: t0_db   = 0.d0 ! the database's t0
+    double precision :: t0_req  = 0.d0 ! what the caller asked for
+    double precision :: t0      = 0.d0 ! t0_db + npad*dt_sub: what it got, in the
+                                       ! writer's convention t(i) = (i*ss-1)*dt - t0
+    double precision :: t_first = 0.d0 ! t(1); not -t0, see gf_stf.F90
+  end type t_gf_taxis
+
+  !-----------------------------------------------------------------
   ! last error message
   !
   ! Set by gf_set_error() alongside the returned code, so a caller that
@@ -219,6 +445,8 @@
   case (GF_ERR_INCOMPLETE) ; str = 'incomplete database'
   case (GF_ERR_ALLOC)      ; str = 'allocation failed'
   case (GF_ERR_ARG)        ; str = 'invalid argument'
+  case (GF_ERR_NO_ELEMENT) ; str = 'point not in database'
+  case (GF_ERR_GEOMETRY)   ; str = 'degenerate geometry'
   case default             ; str = 'unknown error'
   end select
 
