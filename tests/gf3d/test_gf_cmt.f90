@@ -77,7 +77,8 @@
   type(t_gf_location) :: loc
   double precision, dimension(NDIM,NDIM) :: m_cart
   double precision :: m0_ref,mw_ref,hdur_ref,tshift_ref
-  double precision :: m0,mw,m0_cart
+  double precision :: m0,mw,m0_cart,mrr_file
+  character(len=MAX_STRING_LEN) :: field
   integer :: nfail,ierr,nargs
 
   double precision, external :: get_cmt_scalar_moment
@@ -146,6 +147,20 @@
   write(*,'(a,es24.16)') '     min_tshift_src_original = ',src%min_tshift_src_original
   call gf_report_true('origin time shift is non-zero     ', &
                       abs(src%min_tshift_src_original) > 0.d0,nfail)
+
+  ! the two header fields gf_source adds to what get_cmt returns, against
+  ! the file's own text: scale_moment must undo get_cmt's division (the
+  ! partials of Stage 6 are per dyne-cm), and the event name is read past
+  ! by get_cmt altogether (Stage 10's KEVNM)
+  call read_cmt_field(cmtfile,'Mrr:',field)
+  read(field,*,iostat=ierr) mrr_file
+  call gf_report_true('Mrr read from the file text       ',ierr == 0 .and. mrr_file /= 0.d0,nfail)
+  call gf_report('Mrr * scale_moment vs the file    ', &
+                 abs(src%moment_tensor(1)*src%scale_moment - mrr_file)/abs(mrr_file),1.d-14,nfail)
+  call read_cmt_field(cmtfile,'event name:',field)
+  write(*,'(a,a,a)') '     event name = "',trim(src%event_name),'"'
+  call gf_report_true('event name matches the file       ', &
+                      len_trim(field) > 0 .and. trim(src%event_name) == trim(field),nfail)
 
   !--------------------------------------------------------------------
   ! 2. the amplitude, against the solver's own numbers
@@ -248,5 +263,41 @@
   endif
 
   end subroutine read_double_arg
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine read_cmt_field(filename,key,value)
+
+! the text after `key` on the first line of a CMTSOLUTION that starts with it
+!
+! A plain text scan, so that the assertion above compares against the file
+! and not against another reader.
+
+  implicit none
+
+  character(len=*), intent(in) :: filename,key
+  character(len=*), intent(out) :: value
+
+  ! local parameters
+  character(len=MAX_STRING_LEN) :: line
+  integer :: iunit,ios
+
+  value = ''
+  open(newunit=iunit,file=trim(filename),status='old',action='read',iostat=ios)
+  if (ios /= 0) return
+  do
+    read(iunit,'(a)',iostat=ios) line
+    if (ios /= 0) exit
+    line = adjustl(line)
+    if (line(1:len(key)) == key) then
+      value = adjustl(line(len(key)+1:))
+      exit
+    endif
+  enddo
+  close(iunit)
+
+  end subroutine read_cmt_field
 
   end program test_gf_cmt

@@ -154,6 +154,7 @@
   public :: gf_stf_plan
   public :: gf_stf_kernel_gauss
   public :: gf_stf_kernel_heavi
+  public :: gf_stf_kernel_gauss_unit
   public :: gf_stf_kernel
   public :: gf_cumsum
   public :: gf_conv_sym
@@ -415,6 +416,87 @@
   enddo
 
   end subroutine gf_stf_kernel_heavi
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_stf_kernel_gauss_unit(hdur,dt,khalf,w,wsum_raw)
+
+! gf_stf_kernel_gauss divided by its own sum: the sampled unit Gaussian,
+! normalised so that the discrete kernel has unit sum as well
+!
+! It exists for the centroid-time partial of gf_partials.F90, which needs
+! the derivative of the quasi-Heaviside kernel -- and d/dt [0.5 (1 +
+! erf(t/h))] = exp(-(t/h)^2)/(h sqrt(pi)) is the unit Gaussian, nothing
+! else. What this routine adds is only the normalisation, and here is why:
+!
+! The sampled Gaussian sums to 1 only up to aliasing. By Poisson summation
+!
+!   SUM_j dt g_h(j dt) = 1 + 2 SUM_k >= 1 exp(-(pi k h / dt)^2)
+!
+! which is 7e-18 above 1 at h = 2 dt, 1e-4 at h = dt, and 2.3 at h = dt/4.
+! Dividing by the sum is therefore a no-op whenever the kernel is resolved
+! -- there the sampled Gaussian is spectrally exact, and a box-averaged
+! kernel would attenuate by (w dt)^2/24, half a percent at 60 s on the
+! 3.4 s grid -- so above h = 2 dt no division is made at all, and below it
+! the division is what keeps the static limit right when the kernel
+! is not resolved. That regime exists: gf_stf_plan does not guard the
+! Heaviside conversion below one sample (it degrades continuously into the
+! trapezoid), so hdur_corr in (0, dt) is reached by a CMT half duration
+! between 11.3 and 12.6 s on the shipped grids. The normalised kernel is
+! continuous in h down to h = 0, where it is the identity w(0) = 1: the
+! derivative of the trapezoid limit, i.e. the integrand itself.
+!
+! `wsum_raw` is the sum before normalisation, the aliasing measure, so a
+! caller can report it.
+
+  implicit none
+
+  integer, intent(in) :: khalf
+  double precision, intent(in) :: hdur,dt
+  double precision, dimension(-khalf:khalf), intent(out) :: w
+  double precision, intent(out) :: wsum_raw
+
+  ! local parameters
+  integer :: j
+  double precision :: s
+
+  call gf_stf_kernel_gauss(hdur,dt,khalf,w)
+
+  wsum_raw = 1.d0
+  if (khalf == 0) return
+  if (hdur <= 0.d0) then
+    ! the identity, spelled out: gf_stf_kernel_gauss only sets w(0) here
+    w(:) = 0.d0
+    w(0) = 1.d0
+    return
+  endif
+
+  ! positive terms in increasing order of magnitude, so a plain running sum
+  ! is accurate to khalf ulp
+  s = 0.d0
+  do j = khalf,1,-1
+    s = s + w(j)
+  enddo
+  s = 2.d0*s + w(0)
+  wsum_raw = s
+
+  ! Resolved: at h >= 2 dt the aliasing tail 2 exp(-(pi h/dt)^2) is below
+  ! 7e-18, less than half an ulp of 1, so the exact sum *is* 1 and the
+  ! sampled Gaussian is returned untouched. The decision is made from the
+  ! closed form and not from `s`, because `s` itself carries the rounding
+  ! of a few hundred additions and can sit an ulp off 1 when the true sum
+  ! does not; dividing by it would perturb a spectrally exact kernel for
+  ! nothing. tests/gf3d/test_gf_partials.f90 asserts the identity bitwise.
+  if (hdur >= 2.d0*dt) return
+
+  ! the same division for w(j) and w(-j), so the symmetry survives bitwise
+  do j = -khalf,khalf
+    w(j) = w(j)/s
+  enddo
+
+  end subroutine gf_stf_kernel_gauss_unit
 
 !
 !-------------------------------------------------------------------------------------------------

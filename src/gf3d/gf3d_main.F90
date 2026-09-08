@@ -35,23 +35,27 @@
 !----   xgf3d --info          <GFDB> [--topo] [--no-check]
 !----   xgf3d --locate        <GFDB> <lat> <lon> <depth_km>
 !----   xgf3d --check-anchors <GFDB>
-!----   xgf3d --seis          <GFDB> <SOURCE> <outdir> [--t0 <seconds>]
+!----   xgf3d --seis          <GFDB> <SOURCE> <outdir> [--t0 <seconds>] [--partials 1|2]
 !----   xgf3d --dump          <GFDB> <SOURCE> <outdir> [--station NET.STA]
 !----
 !---- <SOURCE> is a FORCESOLUTION or a CMTSOLUTION; which one is decided
 !---- from the file's own first non-blank line, so the caller never has to
-!---- say. Later stages add the SAC-writing default mode.
+!---- say. --seis is *the* extraction mode: Stage 10 adds --format to it,
+!---- and --partials (Stages 6 and 8) adds the derivative products in the
+!---- same format, so there is no separate SAC mode and no --seis-partials.
 !----
 
   program xgf3d
 
   use gf_par, only: t_gfdb,t_gf_location,t_gf_source,t_gf_stf,t_gf_taxis, &
                     gf_errmsg,gf_error_string, &
-                    GF_OK,GF3D_VERSION,GF_XI_TOL,GF_ANCHOR_TOL,GF_NCOMP
+                    GF_OK,GF3D_VERSION,GF_XI_TOL,GF_ANCHOR_TOL,GF_NCOMP,GF_SRC_CMT
   use gf_database, only: gf_open,gf_close,gf_print_info
   use gf_locate, only: gf_locate_source,gf_locate_release,gf_check_anchors_all
   use gf_source, only: gf_read_source,gf_print_source
-  use gf_seismograms, only: gf_seis_plan,gf_seis,gf_write_seis,gf_write_dump
+  use gf_seismograms, only: gf_seis_plan,gf_seis,gf_seis_cmt_partials, &
+                            gf_write_seis,gf_write_partials,gf_write_dump
+  use gf_partials, only: gf_partials_ndp
   use gf_stf, only: gf_print_stf
 
   use constants, only: MAX_STRING_LEN,NGLLX,NGNOD
@@ -65,11 +69,12 @@
   type(t_gf_source) :: src
   type(t_gf_taxis) :: tax
   type(t_gf_stf) :: stf
-  integer :: nargs,iarg,ierr
+  integer :: nargs,iarg,ierr,ios
   logical :: with_topo,do_check,have_t0
   double precision :: lat,lon,depth_km,worst_err,t0_req
-  integer :: ielem_worst,ista,ista_worst
+  integer :: ielem_worst,ista,ista_worst,itypsokern,ndp
   double precision, dimension(:,:,:), allocatable :: seis
+  double precision, dimension(:,:,:,:), allocatable :: dp
   double precision, dimension(:), allocatable :: tsec,onset
 
   ! standard error, used for anything that is not the requested output
@@ -197,6 +202,7 @@
     ! a negative request asks gf_seis_plan for specfem's own rule, 1.5*hdur
     t0_req = -1.d0
     have_t0 = .false.
+    itypsokern = 0
     iarg = 5
     do while (iarg <= nargs)
       call get_command_argument(iarg,arg)
@@ -216,6 +222,18 @@
         iarg = iarg + 1
         call read_double_arg(iarg,'t0',t0_req)
         have_t0 = .true.
+      case ('--partials')
+        if (iarg == nargs) then
+          write(ISTDERR,'(a)') 'Error: --partials needs a kernel type: 1 (moment tensor) or 2 (and centroid)'
+          stop 1
+        endif
+        iarg = iarg + 1
+        call get_command_argument(iarg,arg)
+        read(arg,*,iostat=ios) itypsokern
+        if (ios /= 0 .or. itypsokern < 1 .or. itypsokern > 2) then
+          write(ISTDERR,'(a)') 'Error: --partials takes 1 (moment tensor) or 2 (and centroid), not '//trim(arg)
+          stop 1
+        endif
       case default
         write(ISTDERR,'(a)') 'Error: unknown option for '//trim(mode)//': '//trim(arg)
         stop 1
@@ -231,6 +249,10 @@
     ! design; the output axis is a property of the seismogram
     if (trim(mode) == '--dump' .and. have_t0) then
       write(ISTDERR,'(a)') 'Error: --t0 applies to --seis only'
+      stop 1
+    endif
+    if (trim(mode) == '--dump' .and. itypsokern > 0) then
+      write(ISTDERR,'(a)') 'Error: --partials applies to --seis only'
       stop 1
     endif
 
@@ -300,13 +322,45 @@
         stop 1
       endif
 
-      call gf_seis(db,src,loc,tax,stf,seis,tsec,onset,ierr)
-      if (ierr /= GF_OK) then
-        write(ISTDERR,'(a)') 'Error computing the seismograms'
-        write(ISTDERR,'(a)') '  '//trim(gf_error_string(ierr))//': '//trim(gf_errmsg)
-        call gf_locate_release()
-        call gf_close(db)
-        stop 1
+      if (itypsokern > 0) then
+
+        ! seismograms and partials from one pass over the elements
+        if (src%source_type /= GF_SRC_CMT) then
+          write(ISTDERR,'(a)') 'Error: --partials is defined for a CMTSOLUTION, not a FORCESOLUTION'
+          call gf_locate_release()
+          call gf_close(db)
+          stop 1
+        endif
+
+        call gf_partials_ndp(itypsokern,ndp,ierr)
+        allocate(dp(ndp,db%nstations,GF_NCOMP,tax%nt),stat=ierr)
+        if (ierr /= 0) then
+          write(ISTDERR,'(a)') 'Error: could not allocate the partials array'
+          call gf_locate_release()
+          call gf_close(db)
+          stop 1
+        endif
+
+        call gf_seis_cmt_partials(db,src,loc,tax,stf,itypsokern,ndp,seis,dp,tsec,onset,ierr)
+        if (ierr /= GF_OK) then
+          write(ISTDERR,'(a)') 'Error computing the seismograms and partials'
+          write(ISTDERR,'(a)') '  '//trim(gf_error_string(ierr))//': '//trim(gf_errmsg)
+          call gf_locate_release()
+          call gf_close(db)
+          stop 1
+        endif
+
+      else
+
+        call gf_seis(db,src,loc,tax,stf,seis,tsec,onset,ierr)
+        if (ierr /= GF_OK) then
+          write(ISTDERR,'(a)') 'Error computing the seismograms'
+          write(ISTDERR,'(a)') '  '//trim(gf_error_string(ierr))//': '//trim(gf_errmsg)
+          call gf_locate_release()
+          call gf_close(db)
+          stop 1
+        endif
+
       endif
 
       call gf_write_seis(db,src,loc,tax,stf,seis,tsec,onset,outdir,ierr)
@@ -316,6 +370,20 @@
         call gf_locate_release()
         call gf_close(db)
         stop 1
+      endif
+
+      if (itypsokern > 0) then
+        call gf_write_partials(db,src,loc,tax,stf,ndp,dp,tsec,outdir,ierr)
+        if (ierr /= GF_OK) then
+          write(ISTDERR,'(a)') 'Error writing the partials'
+          write(ISTDERR,'(a)') '  '//trim(gf_error_string(ierr))//': '//trim(gf_errmsg)
+          call gf_locate_release()
+          call gf_close(db)
+          stop 1
+        endif
+        write(*,'(a,i0,a,i0,a,a)') 'wrote ',ndp,' partials per component for ',db%nstations, &
+                                   ' stations to ',trim(outdir)
+        deallocate(dp)
       endif
 
       ! the silence-before-the-record ratio the conversion rests on
@@ -408,7 +476,7 @@
   write(iunit,'(a)') '  --locate <GFDB> <lat> <lon> <depth_km>'
   write(iunit,'(a)') '                                  locate a position in the database'
   write(iunit,'(a)') '  --check-anchors <GFDB>          verify the 27-anchor geometry of every element'
-  write(iunit,'(a)') '  --seis <GFDB> <SOURCE> <outdir> [--t0 <seconds>]'
+  write(iunit,'(a)') '  --seis <GFDB> <SOURCE> <outdir> [--t0 <seconds>] [--partials 1|2]'
   write(iunit,'(a)') '                                  seismograms at every station, as ASCII, converted'
   write(iunit,'(a)') '                                  to the source time function specfem would use'
   write(iunit,'(a)') '  --dump <GFDB> <SOURCE> <outdir> [--station NET.STA]'
@@ -425,6 +493,10 @@
   write(iunit,'(a)') '    --t0 <s>     start the output axis at or before <s> seconds before the origin,'
   write(iunit,'(a)') '                 extending the stored axis with zeros (default: 1.5*hdur, the'
   write(iunit,'(a)') '                 forward run''s own); the stored samples are never resampled'
+  write(iunit,'(a)') '    --partials N also write the partial derivatives of a CMTSOLUTION''s seismograms,'
+  write(iunit,'(a)') '                 NET.STA.partials.txt: N = 1 the six moment-tensor components'
+  write(iunit,'(a)') '                 (m per dyne-cm); N = 2 also latitude, longitude, depth and'
+  write(iunit,'(a)') '                 centroid time (m per degree, degree, km, second)'
   write(iunit,'(a)') ''
   write(iunit,'(a)') '  the output directory must exist; xgf3d does not create it'
   write(iunit,'(a)') ''

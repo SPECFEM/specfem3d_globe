@@ -302,9 +302,16 @@
     ! spherical (Mrr,Mtt,Mpp,Mrt,Mrp,Mtp), non-dimensional, /scaleM
     double precision, dimension(6) :: moment_tensor = 0.d0
 
-    !--- PDE origin time, from the CMTSOLUTION header (Stage 10) ---
+    ! the scaleM get_cmt divided by, so that moment_tensor * scale_moment
+    ! is the CMTSOLUTION's dyne-cm again (Stage 6 returns the moment-tensor
+    ! partials per dyne-cm with it). Recomputed in gf_source with get_cmt's
+    ! own expression from the module variables the database set.
+    double precision :: scale_moment = 0.d0
+
+    !--- PDE origin time and event name, from the CMTSOLUTION header (Stage 10) ---
     integer :: yr = 0, jda = 0, mo = 0, da = 0, ho = 0, mi = 0
     double precision :: sec = 0.d0
+    character(len=16) :: event_name = ''
   end type t_gf_source
 
   !-----------------------------------------------------------------

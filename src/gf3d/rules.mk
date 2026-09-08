@@ -62,6 +62,7 @@ gf3d_KERNEL_OBJECTS = \
 	$O/gf_moment.gf3d.o \
 	$O/gf_stf.gf3d.o \
 	$O/gf_source.gf3d.o \
+	$O/gf_partials.gf3d.o \
 	$(EMPTY_MACRO)
 
 ## Shared objects the kernels call, which are themselves free of HDF5 and
@@ -177,6 +178,7 @@ gf3d_MODULES = \
 	$(FC_MODDIR)/gf_moment.$(FC_MODEXT) \
 	$(FC_MODDIR)/gf_stf.$(FC_MODEXT) \
 	$(FC_MODDIR)/gf_source.$(FC_MODEXT) \
+	$(FC_MODDIR)/gf_partials.$(FC_MODEXT) \
 	$(FC_MODDIR)/gf_seismograms.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
 
@@ -258,11 +260,12 @@ $O/gf_strain.gf3d.o: $O/gf_par.gf3d.o
 $O/gf_moment.gf3d.o: $O/gf_par.gf3d.o $O/gf_strain.gf3d.o
 $O/gf_stf.gf3d.o: $O/gf_par.gf3d.o
 $O/gf_source.gf3d.o: $O/gf_par.gf3d.o
+$O/gf_partials.gf3d.o: $O/gf_par.gf3d.o $O/gf_strain.gf3d.o $O/gf_moment.gf3d.o $O/gf_stf.gf3d.o
 $O/gf_seismograms.gf3d.o: $O/gf_par.gf3d.o $O/gf_database.gf3d.o $O/gf_element_io.gf3d.o \
                           $O/gf_interp.gf3d.o $O/gf_source.gf3d.o $O/gf_strain.gf3d.o \
-                          $O/gf_moment.gf3d.o $O/gf_stf.gf3d.o
+                          $O/gf_moment.gf3d.o $O/gf_stf.gf3d.o $O/gf_partials.gf3d.o
 $O/gf3d_main.gf3d.o: $O/gf_par.gf3d.o $O/gf_database.gf3d.o $O/gf_locate.gf3d.o \
-                     $O/gf_source.gf3d.o $O/gf_seismograms.gf3d.o
+                     $O/gf_source.gf3d.o $O/gf_seismograms.gf3d.o $O/gf_partials.gf3d.o
 
 ## unique object suffix: every rules.mk writes into the same $O, so the
 ## pattern rules of different subdirectories must not collide
