@@ -63,6 +63,7 @@ gf3d_KERNEL_OBJECTS = \
 	$O/gf_stf.gf3d.o \
 	$O/gf_source.gf3d.o \
 	$O/gf_partials.gf3d.o \
+	$O/gf_sac.gf3d.o \
 	$(EMPTY_MACRO)
 
 ## Shared objects the kernels call, which are themselves free of HDF5 and
@@ -73,11 +74,16 @@ gf3d_KERNEL_OBJECTS = \
 ## Every one of these has no `use` statement beyond `constants`, which is
 ## what makes them safe here; recompute_jacobian.shared.o is present because
 ## test_gf_shape3D uses it as the oracle for the fork in gf_shape3D.F90.
+## binary_c_io.cc.o and calendar.shared.o are the SAC writer's (gf_sac.F90):
+## the solver's own byte writer and its leap-year rule, so that
+## test_gf_sac can re-read a header from a plain ./configure.
 gf3d_KERNEL_SHARED_OBJECTS = \
 	$O/gll_library.shared.o \
 	$O/lagrange_poly.shared.o \
 	$O/hex_nodes.shared.o \
 	$O/recompute_jacobian.shared.o \
+	$O/binary_c_io.cc.o \
+	$O/calendar.shared.o \
 	$(EMPTY_MACRO)
 
 ## the parts that read the database, and therefore need HDF5
@@ -147,7 +153,6 @@ gf3d_PROGRAM_OBJECTS = \
 ## exactly one definition in the tree, and it should be the solver's.
 gf3d_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
-	$O/binary_c_io.cc.o \
 	$O/flush_system.shared.o \
 	$O/model_topo_bathy.shared.o \
 	$O/rthetaphi_xyz.shared.o \
@@ -160,7 +165,6 @@ gf3d_SHARED_OBJECTS = \
 	$O/model_vpremoon.shared.o \
 	$O/heap_sort.shared.o \
 	$O/search_kdtree.shared.o \
-	$O/calendar.shared.o \
 	$(gf3d_KERNEL_SHARED_OBJECTS) \
 	$(EMPTY_MACRO)
 
@@ -179,6 +183,7 @@ gf3d_MODULES = \
 	$(FC_MODDIR)/gf_stf.$(FC_MODEXT) \
 	$(FC_MODDIR)/gf_source.$(FC_MODEXT) \
 	$(FC_MODDIR)/gf_partials.$(FC_MODEXT) \
+	$(FC_MODDIR)/gf_sac.$(FC_MODEXT) \
 	$(FC_MODDIR)/gf_seismograms.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
 
@@ -261,11 +266,13 @@ $O/gf_moment.gf3d.o: $O/gf_par.gf3d.o $O/gf_strain.gf3d.o
 $O/gf_stf.gf3d.o: $O/gf_par.gf3d.o
 $O/gf_source.gf3d.o: $O/gf_par.gf3d.o
 $O/gf_partials.gf3d.o: $O/gf_par.gf3d.o $O/gf_strain.gf3d.o $O/gf_moment.gf3d.o $O/gf_stf.gf3d.o
+$O/gf_sac.gf3d.o: $O/gf_par.gf3d.o $O/gf_partials.gf3d.o
 $O/gf_seismograms.gf3d.o: $O/gf_par.gf3d.o $O/gf_database.gf3d.o $O/gf_element_io.gf3d.o \
                           $O/gf_interp.gf3d.o $O/gf_source.gf3d.o $O/gf_strain.gf3d.o \
                           $O/gf_moment.gf3d.o $O/gf_stf.gf3d.o $O/gf_partials.gf3d.o
 $O/gf3d_main.gf3d.o: $O/gf_par.gf3d.o $O/gf_database.gf3d.o $O/gf_locate.gf3d.o \
-                     $O/gf_source.gf3d.o $O/gf_seismograms.gf3d.o $O/gf_partials.gf3d.o
+                     $O/gf_source.gf3d.o $O/gf_seismograms.gf3d.o $O/gf_partials.gf3d.o \
+                     $O/gf_sac.gf3d.o
 
 ## unique object suffix: every rules.mk writes into the same $O, so the
 ## pattern rules of different subdirectories must not collide
