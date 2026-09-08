@@ -71,8 +71,7 @@ gf3d_KERNEL_OBJECTS = \
 ##
 ## Every one of these has no `use` statement beyond `constants`, which is
 ## what makes them safe here; recompute_jacobian.shared.o is present because
-## test_gf_shape3D uses it as a bit-for-bit oracle for the fork in
-## gf_shape3D.F90.
+## test_gf_shape3D uses it as the oracle for the fork in gf_shape3D.F90.
 gf3d_KERNEL_SHARED_OBJECTS = \
 	$O/gll_library.shared.o \
 	$O/lagrange_poly.shared.o \

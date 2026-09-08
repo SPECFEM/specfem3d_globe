@@ -32,14 +32,25 @@
 !---- because the original ends a degenerate element with `stop`, which
 !---- inside a shared object loaded by Python kills the interpreter. This
 !---- test is the payoff for forking rather than reimplementing: the
-!---- original is still in the tree, so it is a free oracle, and the two must
-!---- agree **bit for bit**.
+!---- original is still in the tree, so it is a free oracle.
 !----
-!---- Bit-for-bit is the right bar, not "to 1e-12". The fork transcribes the
-!---- original's expression and accumulation order deliberately; any
-!---- difference at all therefore means someone reassociated an expression
-!---- while editing, which is exactly the drift worth catching early. It also
-!---- makes the test independent of any tolerance argument.
+!---- The fork transcribes the original's expression and accumulation order
+!---- deliberately, so under a value-safe floating-point model the two agree
+!---- bit for bit, and this test used to assert exactly that. It no longer
+!---- does, because the compiler is not obliged to honour that order: ifort
+!---- and ifx at -O3 -xHost (flags.guess sets no -fp-model) contract
+!---- multiply-adds into FMAs and vectorise the 27-term reductions, and they
+!---- do so *differently* for the two compilation units -- a module
+!---- procedure whose shape functions arrive from a call, against an
+!---- external with intent(inout) scalars. CI measured 9849 of 10000 trials
+!---- differing in the last bits under ifort, with every closed-form
+!---- identity intact; a structural error (a transposed jinv packing, a
+!---- wrong cofactor) would have failed all 10000.
+!----
+!---- So the assertion is agreement to a tolerance derived from the
+!---- arithmetic (see section 3), and the bit-for-bit mismatch count is
+!---- still *reported*: it reads zero under gfortran and non-zero under an
+!---- FMA-contracting build, which is useful to know and costs nothing.
 !----
 !---- Ordering matters in the loop below: gf_shape3D_map() is called FIRST
 !---- and the oracle only when it reports success. recompute_jacobian.f90:261
@@ -69,11 +80,12 @@
   double precision, dimension(NGNOD) :: shape3D
   double precision, dimension(NDIM,NGNOD) :: dershape3D
   double precision, dimension(NDIM) :: xyz,x0
-  double precision, dimension(NDIM,NDIM) :: jinv,amat
+  double precision, dimension(NDIM,NDIM) :: jinv,amat,jref
   double precision :: jacobian
   double precision :: xi,eta,gamma
   double precision :: x,y,z,xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
   double precision :: det,worst_shape,worst_der,s,sd
+  double precision :: xscale,worst_xyz,worst_jinv
 
   nfail = 0
 
@@ -145,13 +157,33 @@
   call gf_report('Kronecker delta at the 27 anchors ',worst_shape,1.d-14,nfail)
 
   !--------------------------------------------------------------------
-  ! 3. bit-for-bit against recompute_jacobian
+  ! 3. against recompute_jacobian
+  !
+  ! Two relative errors are asserted, each against a bound derived from
+  ! the arithmetic the two routines share, with two orders of headroom:
+  !
+  !   * the mapped position: a 27-term sum of shape functions times
+  !     anchor coordinates, no cancellation (the shape functions sum to
+  !     one), so the two routines can differ by at most ~27 u times the
+  !     summand magnitude, ~1e-14 relative. Asserted at 1e-12.
+  !
+  !   * the inverse Jacobian: the x_xi-type sums cancel -- sum(dershape3D)
+  !     is zero, so an anchor offset of order 1 against an element
+  !     half-width of 1e-2 loses two to three digits -- and the cofactor
+  !     over determinant division compounds it, ~1e-12 to 1e-11 relative.
+  !     Asserted at 1e-9, relative to the largest entry of the reference
+  !     matrix rather than entry by entry, so that a cofactor that
+  !     happens to be near zero cannot inflate the ratio.
+  !
+  ! The bit-for-bit count is reported after them, for the record.
   !--------------------------------------------------------------------
 
   call gf_lcg_seed(987654321)
 
   nskipped = 0
   nmismatch = 0
+  worst_xyz = 0.d0
+  worst_jinv = 0.d0
 
   do itrial = 1,NTRIAL
 
@@ -205,9 +237,20 @@
     call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z, &
                             xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
-    ! exact equality: see the header on why this is the right bar. It also
-    ! pins the jinv packing -- rows xi/eta/gamma, columns x/y/z -- which is
-    ! the one thing gf_shape3D_map does that the original does not.
+    ! the reference packed the way gf_shape3D_map packs it -- rows
+    ! xi/eta/gamma, columns x/y/z -- which is the one thing the fork does
+    ! that the original does not, and which a transposition would fail at
+    ! order one
+    jref(1,1) = xix ; jref(1,2) = xiy ; jref(1,3) = xiz
+    jref(2,1) = etax ; jref(2,2) = etay ; jref(2,3) = etaz
+    jref(3,1) = gammax ; jref(3,2) = gammay ; jref(3,3) = gammaz
+
+    ! the summand magnitude of the position sums
+    xscale = max(maxval(abs(xelm)),maxval(abs(yelm)),maxval(abs(zelm)))
+
+    worst_xyz = max(worst_xyz,max(abs(xyz(1) - x),abs(xyz(2) - y),abs(xyz(3) - z))/xscale)
+    worst_jinv = max(worst_jinv,maxval(abs(jinv - jref))/maxval(abs(jref)))
+
     if (xyz(1) /= x .or. xyz(2) /= y .or. xyz(3) /= z .or. &
         jinv(1,1) /= xix .or. jinv(1,2) /= xiy .or. jinv(1,3) /= xiz .or. &
         jinv(2,1) /= etax .or. jinv(2,2) /= etay .or. jinv(2,3) /= etaz .or. &
@@ -220,8 +263,13 @@
   write(*,'(a,i0,a,i0,a)') '  compared ',NTRIAL - nskipped,' of ',NTRIAL, &
                            ' trials (the rest were degenerate draws)'
 
-  call gf_report_true('bit-for-bit vs recompute_jacobian ',nmismatch == 0,nfail)
-  if (nmismatch /= 0) write(*,'(a,i0)') '       mismatching trials = ',nmismatch
+  call gf_report('position vs recompute_jacobian    ',worst_xyz,1.d-12,nfail)
+  call gf_report('inverse Jacobian vs recompute_jac.',worst_jinv,1.d-9,nfail)
+
+  ! informational: zero under a value-safe floating-point model, non-zero
+  ! under an FMA-contracting or vectorising build (ifort/ifx -O3 -xHost)
+  write(*,'(a,i0,a,i0,a)') '  bit-for-bit mismatches = ',nmismatch,' of ',NTRIAL - nskipped, &
+                           ' (informational: 0 under a value-safe FP model)'
 
   ! a run in which everything was skipped would report success while
   ! comparing nothing

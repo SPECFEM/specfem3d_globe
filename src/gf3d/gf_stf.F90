@@ -455,6 +455,17 @@
 ! magnitudes, and the quantity this feeds -- the saturated tail of the
 ! Heaviside kernel -- is exactly the static offset that the oscillations
 ! nearly cancel to.
+!
+! The two-sum is written as single-operation statements on `volatile`
+! temporaries, not as the textbook one-liner c = c + ((s - t) + x). The
+! one-liner is only correct if the compiler honours the parentheses, and
+! ifort/ifx at their default -fp-model fast do not: they reassociate
+! (s - t) + x into (s + x) - t, which is t - t = 0, and the correction
+! silently vanishes -- tests/gf3d/test_gf_stf.f90 (test_neumaier) caught
+! exactly that under ifort. A volatile temporary must be stored and
+! re-read at every reference, so no two of these operations can be fused
+! or reordered, whatever the floating-point model. The cost is three
+! memory round trips per sample, on arrays of a few thousand samples.
 
   implicit none
 
@@ -464,7 +475,8 @@
 
   ! local parameters
   integer :: i
-  double precision :: s,c,t
+  double precision :: s,c
+  double precision, volatile :: t,e1,e2
 
   p(0) = 0.d0
   s = 0.d0
@@ -472,10 +484,13 @@
   do i = 1,n
     t = s + x(i)
     if (abs(s) >= abs(x(i))) then
-      c = c + ((s - t) + x(i))
+      e1 = s - t
+      e2 = e1 + x(i)
     else
-      c = c + ((x(i) - t) + s)
+      e1 = x(i) - t
+      e2 = e1 + s
     endif
+    c = c + e2
     s = t
     p(i) = s + c
   enddo
@@ -503,7 +518,12 @@
 
   ! local parameters
   integer :: i,j,jlo,jhi
-  double precision :: s,c,t,v
+  double precision :: s,c
+  ! the compensated two-sum on volatile temporaries, for the reason given
+  ! at gf_cumsum; `v` is volatile as well so that the product cannot be
+  ! fused with the following addition into an FMA, which would make t
+  ! something other than the rounded sum the correction is derived from
+  double precision, volatile :: t,v,e1,e2
 
   do i = 1,n
     jlo = max(-khalf,i-n)
@@ -514,10 +534,13 @@
       v = w(j)*x(i-j)
       t = s + v
       if (abs(s) >= abs(v)) then
-        c = c + ((s - t) + v)
+        e1 = s - t
+        e2 = e1 + v
       else
-        c = c + ((v - t) + s)
+        e1 = v - t
+        e2 = e1 + s
       endif
+      c = c + e2
       s = t
     enddo
     y(i) = s + c
@@ -551,7 +574,9 @@
 
   ! local parameters
   integer :: i,j,jlo,jhi,m
-  double precision :: s,c,t,v
+  double precision :: s,c
+  ! volatile two-sum temporaries, as in gf_conv_sym
+  double precision, volatile :: t,v,e1,e2
 
   do i = 1,n
     jlo = max(-khalf,i-n)
@@ -562,10 +587,13 @@
       v = w(j)*x(i-j)
       t = s + v
       if (abs(s) >= abs(v)) then
-        c = c + ((s - t) + v)
+        e1 = s - t
+        e2 = e1 + v
       else
-        c = c + ((v - t) + s)
+        e1 = v - t
+        e2 = e1 + s
       endif
+      c = c + e2
       s = t
     enddo
     ! the samples the kernel has already saturated over

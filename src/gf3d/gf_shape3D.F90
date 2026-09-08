@@ -38,11 +38,15 @@
 !----
 !---- Forking is cheap here because it buys a free oracle: the original is
 !---- still in the tree and still linked, so tests/gf3d/test_gf_shape3D.f90
-!---- asserts the two agree **bit for bit** over random anchors and random
-!---- (xi,eta,gamma). That is why the arithmetic below is transcribed in
-!---- the original's exact expression and accumulation order rather than
-!---- tidied up -- reassociating even one sum would turn an exact test into
-!---- an approximate one.
+!---- compares the two over random anchors and random (xi,eta,gamma). The
+!---- arithmetic below is transcribed in the original's exact expression
+!---- and accumulation order rather than tidied up, so that under a
+!---- value-safe floating-point model the two agree bit for bit. The test
+!---- asserts a derived tolerance rather than exact equality, because the
+!---- compiler is not bound by that order: ifort/ifx at -O3 -xHost contract
+!---- and vectorise the two compilation units differently and disagree in
+!---- the last bits (see the test's header). The bit-for-bit count is still
+!---- reported there.
 !----
 !---- Two deliberate additions over the original:
 !----

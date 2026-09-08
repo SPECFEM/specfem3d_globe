@@ -925,7 +925,13 @@
 
   integer, parameter :: N = 100001
   double precision, dimension(:), allocatable :: x,p
-  double precision :: naive,exact
+  double precision :: exact
+  ! `volatile` so that the negative control really is a sequential running
+  ! sum: ifort -O3 -xHost otherwise vectorises the loop into several
+  ! partial accumulators, most of which start from zero and keep the
+  ! 1e-17 increments, and the control stops controlling anything. The
+  ! production routine guards its compensation the same way (gf_cumsum).
+  double precision, volatile :: naive
   integer :: i
 
   write(*,'(a)') '14. compensated summation'
