@@ -241,6 +241,11 @@
     double precision, dimension(NDIM,NDIM) :: jinv = 0.d0
     double precision :: jacobian = 0.d0
 
+    !--- its derivative, djinv(:,:,a) = d jinv / d xi_a (Stage 8) ---
+    ! from the 27-anchor second derivatives, exact; carried here because
+    ! the analytic centroid partials need it at exactly this point
+    double precision, dimension(NDIM,NDIM,NDIM) :: djinv = 0.d0
+
     !--- source orientation: rows are N, E, Z-up in Cartesian ---
     double precision, dimension(NDIM,NDIM) :: nu = 0.d0
 

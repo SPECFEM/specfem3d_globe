@@ -57,10 +57,15 @@
 !----     transpose them by mis-ordering nine positional arguments. The
 !----     packing itself is covered by the bit-for-bit test.
 !----
-!---- The second-derivative form that Stage 8 needs will arrive as a
-!---- separate gf_shape3D_functions_2nd beside gf_shape3D_functions, the
-!---- way lagrange_any_2nd sits beside lagrange_any in
-!---- src/shared/lagrange_poly.f90 -- not as an optional argument.
+!---- The second derivatives Stage 8 needs are gf_shape3D_functions_2nd
+!---- and gf_shape3D_map_2nd, siblings of the two above the way
+!---- lagrange_any_2nd sits beside lagrange_any in
+!---- src/shared/lagrange_poly.f90 -- not optional arguments. The
+!---- tri-quadratic shape functions have constant second derivatives per
+!---- axis (l1'' = 1, l2'' = -2, l3'' = 1), so the second derivatives of
+!---- the geometry map are exact and cost nothing in conditioning; the
+!---- derivative of the inverse Jacobian follows from
+!---- d(J^-1)/dxi_a = -J^-1 (dJ/dxi_a) J^-1.
 !----
 !---- No `use hdf5`, no `use specfem_par`: this is a kernel module and
 !---- tests/gf3d/0.configure.default_make.sh enforces that with `nm`.
@@ -75,7 +80,9 @@
   private
 
   public :: gf_shape3D_functions
+  public :: gf_shape3D_functions_2nd
   public :: gf_shape3D_map
+  public :: gf_shape3D_map_2nd
 
   contains
 
@@ -374,5 +381,138 @@
   ierr = GF_OK
 
   end subroutine gf_shape3D_map
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_shape3D_functions_2nd(xi,eta,gamma,d2shape3D)
+
+! second derivatives of the tri-quadratic shape functions at (xi,eta,gamma)
+!
+! d2shape3D(a,b,ia) = d^2 h_ia / (dxi_a dxi_b), symmetric in (a,b), with
+! the same 27-node ordering as gf_shape3D_functions. Each shape function
+! is a product l_i(xi) l_j(eta) l_k(gamma) of one-dimensional quadratics,
+! so the pure second derivatives use l'' = (1, -2, 1) for (l1, l2, l3) and
+! the mixed ones the products of two first derivatives. The one-dimensional
+! factors are evaluated as in gf_shape3D_functions, and the per-node
+! (i,j,k) assignment is read off that routine's table rather than
+! re-derived, so a node reordering there breaks tests/gf3d/test_gf_partials
+! here instead of silently decoupling the two.
+
+  use constants, only: NGNOD,NDIM,HALF,ONE,TWO
+
+  implicit none
+
+  double precision, intent(in) :: xi,eta,gamma
+  double precision, dimension(NDIM,NDIM,NGNOD), intent(out) :: d2shape3D
+
+  ! local parameters
+  ! the one-dimensional factors: value, first and second derivative, for
+  ! l1 (node at -1), l2 (node at 0), l3 (node at +1), per axis
+  double precision, dimension(3) :: lx,lpx,lppx,ly,lpy,lppy,lz,lpz,lppz
+  ! which one-dimensional factor (1, 2 or 3) each of the 27 nodes uses per
+  ! axis, transcribed from the shape3D table of gf_shape3D_functions
+  integer, dimension(NGNOD), parameter :: ix = (/ 1,3,3,1,1,3,3,1, 2,3,2,1,1,3,3,1,2,3,2,1, 2,2,3,2,1,2, 2 /)
+  integer, dimension(NGNOD), parameter :: iy = (/ 1,1,3,3,1,1,3,3, 1,2,3,2,1,1,3,3,1,2,3,2, 2,1,2,3,2,2, 2 /)
+  integer, dimension(NGNOD), parameter :: iz = (/ 1,1,1,1,3,3,3,3, 1,1,1,1,2,2,2,2,3,3,3,3, 1,2,2,2,2,3, 2 /)
+  integer :: ia
+
+  lx(1) = HALF*xi*(xi-ONE) ; lx(2) = ONE-xi**2 ; lx(3) = HALF*xi*(xi+ONE)
+  lpx(1) = xi-HALF ; lpx(2) = -TWO*xi ; lpx(3) = xi+HALF
+  lppx(1) = ONE ; lppx(2) = -TWO ; lppx(3) = ONE
+
+  ly(1) = HALF*eta*(eta-ONE) ; ly(2) = ONE-eta**2 ; ly(3) = HALF*eta*(eta+ONE)
+  lpy(1) = eta-HALF ; lpy(2) = -TWO*eta ; lpy(3) = eta+HALF
+  lppy(1) = ONE ; lppy(2) = -TWO ; lppy(3) = ONE
+
+  lz(1) = HALF*gamma*(gamma-ONE) ; lz(2) = ONE-gamma**2 ; lz(3) = HALF*gamma*(gamma+ONE)
+  lpz(1) = gamma-HALF ; lpz(2) = -TWO*gamma ; lpz(3) = gamma+HALF
+  lppz(1) = ONE ; lppz(2) = -TWO ; lppz(3) = ONE
+
+  do ia = 1,NGNOD
+    d2shape3D(1,1,ia) = lppx(ix(ia)) * ly(iy(ia))   * lz(iz(ia))
+    d2shape3D(2,2,ia) = lx(ix(ia))   * lppy(iy(ia)) * lz(iz(ia))
+    d2shape3D(3,3,ia) = lx(ix(ia))   * ly(iy(ia))   * lppz(iz(ia))
+    d2shape3D(1,2,ia) = lpx(ix(ia))  * lpy(iy(ia))  * lz(iz(ia))
+    d2shape3D(1,3,ia) = lpx(ix(ia))  * ly(iy(ia))   * lpz(iz(ia))
+    d2shape3D(2,3,ia) = lx(ix(ia))   * lpy(iy(ia))  * lpz(iz(ia))
+    d2shape3D(2,1,ia) = d2shape3D(1,2,ia)
+    d2shape3D(3,1,ia) = d2shape3D(1,3,ia)
+    d2shape3D(3,2,ia) = d2shape3D(2,3,ia)
+  enddo
+
+  end subroutine gf_shape3D_functions_2nd
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_shape3D_map_2nd(xelm,yelm,zelm,xi,eta,gamma,xyz,jinv,jacobian,djinv,ierr)
+
+! gf_shape3D_map, plus the derivative of the inverse Jacobian
+!
+! djinv(:,:,a) = d jinv / d xi_a, packed like jinv (rows xi/eta/gamma,
+! columns x/y/z). With J(d,b) = dx_d/dxi_b = SUM_ia dershape3D(b,ia) x_d(ia)
+! and dJ_a(d,b) = SUM_ia d2shape3D(a,b,ia) x_d(ia),
+!
+!   d(J^-1)/dxi_a = -J^-1 (dJ/dxi_a) J^-1
+!
+! The first-order part is gf_shape3D_map itself, so the two cannot drift;
+! on a degenerate element it returns the error and djinv is zero.
+
+  use constants, only: NGNOD,NDIM,ZERO
+
+  implicit none
+
+  double precision, dimension(NGNOD), intent(in) :: xelm,yelm,zelm
+  double precision, intent(in) :: xi,eta,gamma
+  double precision, dimension(NDIM), intent(out) :: xyz
+  double precision, dimension(NDIM,NDIM), intent(out) :: jinv
+  double precision, intent(out) :: jacobian
+  double precision, dimension(NDIM,NDIM,NDIM), intent(out) :: djinv
+  integer, intent(out) :: ierr
+
+  ! local parameters
+  double precision, dimension(NDIM,NDIM,NGNOD) :: d2shape3D
+  double precision, dimension(NDIM,NDIM) :: dj,tmp
+  integer :: ia,a,b,d,m,n
+
+  djinv(:,:,:) = ZERO
+
+  call gf_shape3D_map(xelm,yelm,zelm,xi,eta,gamma,xyz,jinv,jacobian,ierr)
+  if (ierr /= GF_OK) return
+
+  call gf_shape3D_functions_2nd(xi,eta,gamma,d2shape3D)
+
+  do a = 1,NDIM
+    ! dJ_a(d,b) = SUM_ia d2shape3D(a,b,ia) x_d(ia)
+    dj(:,:) = ZERO
+    do ia = 1,NGNOD
+      do b = 1,NDIM
+        dj(1,b) = dj(1,b) + d2shape3D(a,b,ia)*xelm(ia)
+        dj(2,b) = dj(2,b) + d2shape3D(a,b,ia)*yelm(ia)
+        dj(3,b) = dj(3,b) + d2shape3D(a,b,ia)*zelm(ia)
+      enddo
+    enddo
+    ! tmp = dJ_a J^-1  (x by x), then djinv_a = -J^-1 tmp  (xi by x)
+    do n = 1,NDIM
+      do d = 1,NDIM
+        tmp(d,n) = ZERO
+        do b = 1,NDIM
+          tmp(d,n) = tmp(d,n) + dj(d,b)*jinv(b,n)
+        enddo
+      enddo
+    enddo
+    do n = 1,NDIM
+      do m = 1,NDIM
+        do d = 1,NDIM
+          djinv(m,n,a) = djinv(m,n,a) - jinv(m,d)*tmp(d,n)
+        enddo
+      enddo
+    enddo
+  enddo
+
+  end subroutine gf_shape3D_map_2nd
 
   end module gf_shape3D

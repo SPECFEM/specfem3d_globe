@@ -38,8 +38,10 @@
 !----   10      tim                        m per second (centroid time shift)
 !----
 !---- `itypsokern` 1 returns the first six, 2 all ten; GF3DF's 3 (the
-!---- half-duration partial) is dropped. Slots 7..9 are Stage 8's; this
-!---- module is Stage 6, which fills 1..6 and 10.
+!---- half-duration partial) is dropped. Slots 1..6 and 10 are Stage 6's,
+!---- 7..9 Stage 8's (gf_partials_loc, with the strain gradient from
+!---- gf_strain, the rotation's derivative from gf_moment and the
+!---- geographic map's from gf_geo_chain).
 !----
 !---- The moment-tensor partials, and why they are exact
 !---- --------------------------------------------------
@@ -119,6 +121,7 @@
   public :: gf_partials_ndp
   public :: gf_partials_mt
   public :: gf_partials_time
+  public :: gf_partials_loc
 
   contains
 
@@ -304,5 +307,116 @@
   ierr = GF_OK
 
   end subroutine gf_partials_time
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_partials_loc(eps,deps,nt_db,m_cart,dm_dtheta,dm_dphi,dtheta_dlat,dphi_dlon, &
+                             jinv,dxds,scale,tax,stf,w,dp,ierr)
+
+! the three centroid-position partials (Stage 8): lat, lon, depth
+!
+! With the seismogram u = STF[ scale SUM_pq M_pq eps_pq ] and the source
+! position s = (lat, lon, depth),
+!
+!   du/ds_a = STF[ scale ( SUM_pq (dM_pq/ds_a) eps_pq
+!                        + SUM_pq M_pq SUM_m (d eps_pq/dx_m) (dx_m/ds_a) ) ]
+!
+! `deps(6,3,nt_db,NDIM)` holds d eps/d xi_b -- gf_strain's kernel run with
+! the differentiated weight table -- so d eps/dx_m = SUM_b jinv(b,m)
+! d eps/d xi_b; `dxds(NDIM,3)` is d(x,y,z)/d(lat,lon,depth) from
+! gf_geo_chain, `dm_dtheta`/`dm_dphi` the rotation's derivative from
+! gf_moment, and dtheta/dlat, dphi/dlon the chain into them (the moment
+! tensor does not depend on depth). `scale` is the seismogram's own
+! 1/factor_force_source. Per sample the Cartesian gradient traces G_m and
+! the rotation traces R_a are formed first, then combined; the conversion
+! is applied once per partial, because it is linear.
+!
+! Units: m per degree, per degree, per km, i.e. the units of dxds.
+
+  use constants, only: NDIM
+
+  implicit none
+
+  integer, intent(in) :: nt_db
+  double precision, dimension(GF_VOIGT,GF_NCOMP,nt_db), intent(in) :: eps
+  double precision, dimension(GF_VOIGT,GF_NCOMP,nt_db,NDIM), intent(in) :: deps
+  double precision, dimension(NDIM,NDIM), intent(in) :: m_cart,dm_dtheta,dm_dphi,jinv
+  double precision, intent(in) :: dtheta_dlat,dphi_dlon
+  double precision, dimension(NDIM,3), intent(in) :: dxds
+  double precision, intent(in) :: scale
+  type(t_gf_taxis), intent(in) :: tax
+  type(t_gf_stf), intent(in) :: stf
+  double precision, dimension(-stf%khalf:stf%khalf), intent(in) :: w
+  double precision, dimension(3,GF_NCOMP,tax%nt), intent(out) :: dp
+  integer, intent(out) :: ierr
+
+  ! local parameters
+  double precision, dimension(:), allocatable :: trace,xpad,p,y
+  double precision, dimension(NDIM) :: g,gx
+  double precision :: r_lat,r_lon
+  integer :: ia,icomp,it,b,m,nt,ier
+
+  dp(:,:,:) = 0.d0
+
+  if (tax%nt_db /= nt_db .or. tax%nt < nt_db) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_partials_loc: the time axis was not planned for this trace')
+    return
+  endif
+  if (stf%kind_stf /= GF_STF_HEAVI) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_partials_loc: the plan is not a Heaviside conversion')
+    return
+  endif
+
+  nt = tax%nt
+
+  allocate(trace(nt_db),xpad(nt),p(0:nt),y(nt),stat=ier)
+  if (ier /= 0) then
+    call gf_set_error(ierr,GF_ERR_ALLOC,'gf_partials_loc: could not allocate the work arrays')
+    return
+  endif
+
+  do ia = 1,3
+    do icomp = 1,GF_NCOMP
+
+      do it = 1,nt_db
+        ! the reference-coordinate gradient of the contracted strain,
+        ! g(b) = SUM_pq M_pq d eps_pq / d xi_b, then physical, gx(m)
+        do b = 1,NDIM
+          call gf_moment_contract(m_cart,deps(:,icomp,it,b),g(b))
+        enddo
+        do m = 1,NDIM
+          gx(m) = jinv(1,m)*g(1) + jinv(2,m)*g(2) + jinv(3,m)*g(3)
+        enddo
+
+        ! the position term, and the rotation term for lat and lon
+        trace(it) = gx(1)*dxds(1,ia) + gx(2)*dxds(2,ia) + gx(3)*dxds(3,ia)
+        if (ia == 1) then
+          call gf_moment_contract(dm_dtheta,eps(:,icomp,it),r_lat)
+          trace(it) = trace(it) + r_lat*dtheta_dlat
+        else if (ia == 2) then
+          call gf_moment_contract(dm_dphi,eps(:,icomp,it),r_lon)
+          trace(it) = trace(it) + r_lon*dphi_dlon
+        endif
+        trace(it) = scale * trace(it)
+      enddo
+
+      call gf_pad_left(trace,nt_db,tax%npad,xpad)
+      call gf_cumsum(xpad,nt,p)
+      call gf_stf_apply(stf,tax%dt_sub,w,p,xpad,nt,y)
+
+      do it = 1,nt
+        dp(ia,icomp,it) = y(it)
+      enddo
+
+    enddo
+  enddo
+
+  deallocate(trace,xpad,p,y)
+
+  ierr = GF_OK
+
+  end subroutine gf_partials_loc
 
   end module gf_partials

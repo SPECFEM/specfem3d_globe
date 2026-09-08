@@ -57,6 +57,7 @@ gf3d_KERNEL_OBJECTS = \
 	$O/gf_dirlist.gf3d_cc.o \
 	$O/gf_shape3D.gf3d.o \
 	$O/gf_geometry.gf3d.o \
+	$O/gf_geo_chain.gf3d.o \
 	$O/gf_interp.gf3d.o \
 	$O/gf_strain.gf3d.o \
 	$O/gf_moment.gf3d.o \
@@ -175,6 +176,7 @@ gf3d_MODULES = \
 	$(FC_MODDIR)/gf_database.$(FC_MODEXT) \
 	$(FC_MODDIR)/gf_shape3d.$(FC_MODEXT) \
 	$(FC_MODDIR)/gf_geometry.$(FC_MODEXT) \
+	$(FC_MODDIR)/gf_geo_chain.$(FC_MODEXT) \
 	$(FC_MODDIR)/gf_element_io.$(FC_MODEXT) \
 	$(FC_MODDIR)/gf_locate.$(FC_MODEXT) \
 	$(FC_MODDIR)/gf_interp.$(FC_MODEXT) \
@@ -257,6 +259,7 @@ $O/gf_shared_params.gf3d.o: $O/gf_par.gf3d.o
 $O/gf_database.gf3d.o: $O/gf_par.gf3d.o $O/gf_hdf5_read.gf3d.o $O/gf_shared_params.gf3d.o
 $O/gf_shape3D.gf3d.o: $O/gf_par.gf3d.o
 $O/gf_geometry.gf3d.o: $O/gf_par.gf3d.o $O/gf_shape3D.gf3d.o
+$O/gf_geo_chain.gf3d.o: $O/gf_par.gf3d.o $O/gf_geometry.gf3d.o
 $O/gf_element_io.gf3d.o: $O/gf_par.gf3d.o $O/gf_hdf5_read.gf3d.o
 $O/gf_locate.gf3d.o: $O/gf_par.gf3d.o $O/gf_database.gf3d.o $O/gf_element_io.gf3d.o \
                      $O/gf_geometry.gf3d.o $O/gf_shape3D.gf3d.o $O/search_kdtree.shared.o
@@ -269,7 +272,8 @@ $O/gf_partials.gf3d.o: $O/gf_par.gf3d.o $O/gf_strain.gf3d.o $O/gf_moment.gf3d.o 
 $O/gf_sac.gf3d.o: $O/gf_par.gf3d.o $O/gf_partials.gf3d.o
 $O/gf_seismograms.gf3d.o: $O/gf_par.gf3d.o $O/gf_database.gf3d.o $O/gf_element_io.gf3d.o \
                           $O/gf_interp.gf3d.o $O/gf_source.gf3d.o $O/gf_strain.gf3d.o \
-                          $O/gf_moment.gf3d.o $O/gf_stf.gf3d.o $O/gf_partials.gf3d.o
+                          $O/gf_moment.gf3d.o $O/gf_stf.gf3d.o $O/gf_partials.gf3d.o \
+                          $O/gf_geo_chain.gf3d.o
 $O/gf3d_main.gf3d.o: $O/gf_par.gf3d.o $O/gf_database.gf3d.o $O/gf_locate.gf3d.o \
                      $O/gf_source.gf3d.o $O/gf_seismograms.gf3d.o $O/gf_partials.gf3d.o \
                      $O/gf_sac.gf3d.o

@@ -89,6 +89,7 @@
   integer, parameter, public :: GF_XY = 4, GF_XZ = 5, GF_YZ = 6
 
   public :: gf_strain_dweights
+  public :: gf_strain_ddweights
   public :: gf_strain_snapshot
   public :: gf_strain_trace_d
   public :: gf_strain_trace
@@ -140,6 +141,75 @@
   enddo
 
   end subroutine gf_strain_dweights
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_strain_ddweights(hxi,hpxi,hppxi,heta,hpeta,hppeta,hgam,hpgam,hppgam,jinv,djinv,ddw)
+
+! the reference-coordinate derivatives of the weight table above
+!
+! ddw(i,j,k,q,a) = d dw(i,j,k,q) / d xi_a. With dw = SUM_b g_b jinv(b,q),
+! where g_b is the reference derivative of the (i,j,k) basis function
+! along xi_b,
+!
+!   ddw(..,q,a) = SUM_b (d g_b / d xi_a) jinv(b,q) + SUM_b g_b djinv(b,q,a)
+!
+! `djinv(:,:,a)` is d jinv / d xi_a from gf_shape3D_map_2nd, the exact
+! derivative of the 27-anchor geometry. This is the whole of Stage 8's
+! strain gradient: gf_strain_kernel applied with ddw(:,:,:,:,a) in place
+! of dw returns d eps / d xi_a (the symmetrisation is linear), and the
+! physical gradient is d eps/dx_m = SUM_a jinv(a,m) d eps/d xi_a. Nothing
+! else in this module changes, which is what makes the derivative of the
+! strain the derivative of *this* interpolant and not of another one.
+
+  use constants, only: NGLLX,NGLLY,NGLLZ,NDIM
+
+  implicit none
+
+  double precision, dimension(NGLLX), intent(in) :: hxi,hpxi,hppxi
+  double precision, dimension(NGLLY), intent(in) :: heta,hpeta,hppeta
+  double precision, dimension(NGLLZ), intent(in) :: hgam,hpgam,hppgam
+  double precision, dimension(NDIM,NDIM), intent(in) :: jinv
+  double precision, dimension(NDIM,NDIM,NDIM), intent(in) :: djinv
+  double precision, dimension(NGLLX,NGLLY,NGLLZ,NDIM,NDIM), intent(out) :: ddw
+
+  ! local parameters
+  integer :: i,j,k,q,a,b
+  double precision, dimension(NDIM) :: g
+  double precision, dimension(NDIM,NDIM) :: dg   ! dg(b,a) = d g_b / d xi_a
+
+  do k = 1,NGLLZ
+    do j = 1,NGLLY
+      do i = 1,NGLLX
+        g(1) = hpxi(i)*heta(j)*hgam(k)
+        g(2) = hxi(i)*hpeta(j)*hgam(k)
+        g(3) = hxi(i)*heta(j)*hpgam(k)
+
+        dg(1,1) = hppxi(i)*heta(j)*hgam(k)
+        dg(2,2) = hxi(i)*hppeta(j)*hgam(k)
+        dg(3,3) = hxi(i)*heta(j)*hppgam(k)
+        dg(1,2) = hpxi(i)*hpeta(j)*hgam(k)
+        dg(1,3) = hpxi(i)*heta(j)*hpgam(k)
+        dg(2,3) = hxi(i)*hpeta(j)*hpgam(k)
+        dg(2,1) = dg(1,2)
+        dg(3,1) = dg(1,3)
+        dg(3,2) = dg(2,3)
+
+        do a = 1,NDIM
+          do q = 1,NDIM
+            ddw(i,j,k,q,a) = 0.d0
+            do b = 1,NDIM
+              ddw(i,j,k,q,a) = ddw(i,j,k,q,a) + dg(b,a)*jinv(b,q) + g(b)*djinv(b,q,a)
+            enddo
+          enddo
+        enddo
+      enddo
+    enddo
+  enddo
+
+  end subroutine gf_strain_ddweights
 
 !
 !-------------------------------------------------------------------------------------------------

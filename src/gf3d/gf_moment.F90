@@ -84,6 +84,7 @@
   private
 
   public :: gf_rotate_moment_tensor
+  public :: gf_rotate_moment_tensor_deriv
   public :: gf_moment_contract
   public :: gf_moment_contract_full
   public :: gf_moment_unit_tensor
@@ -158,6 +159,82 @@
   m_cart(3,2) = Myz
 
   end subroutine gf_rotate_moment_tensor
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_rotate_moment_tensor_deriv(theta,phi,m_sph,dm_dtheta,dm_dphi)
+
+! the derivative of the Cartesian moment tensor with respect to the
+! source's colatitude and longitude, at fixed spherical components
+!
+! The moment tensor depends on position through the rotation alone --
+! the most easily forgotten term of Stage 8's centroid partials. Rather
+! than differentiate the six expanded expressions above, this uses the
+! basis form M_cart = SUM_ab M_ab e_a e_b^T with (e_1,e_2,e_3) = (e_r,
+! e_theta, e_phi), e_theta pointing south and e_phi east, which is the
+! construction tests/gf3d/test_gf_strain.f90 already pins to the expanded
+! form at 1e-14; then
+!
+!   de_r/dtheta = e_theta        de_r/dphi = sin(theta) e_phi
+!   de_theta/dtheta = -e_r       de_theta/dphi = cos(theta) e_phi
+!   de_phi/dtheta = 0            de_phi/dphi = -sin(theta) e_r - cos(theta) e_theta
+!
+! and dM/ds = SUM_ab M_ab (de_a/ds e_b^T + e_a de_b/ds^T).
+
+  use constants, only: NDIM
+
+  implicit none
+
+  double precision, intent(in) :: theta,phi
+  double precision, dimension(6), intent(in) :: m_sph
+  double precision, dimension(NDIM,NDIM), intent(out) :: dm_dtheta,dm_dphi
+
+  ! local parameters
+  double precision, dimension(NDIM,3) :: e,de_t,de_p
+  double precision, dimension(3,3) :: m
+  double precision :: sint,cost,sinp,cosp
+  integer :: a,b,p,q
+
+  sint = sin(theta)
+  cost = cos(theta)
+  sinp = sin(phi)
+  cosp = cos(phi)
+
+  ! e(:,1) = e_r, e(:,2) = e_theta, e(:,3) = e_phi
+  e(1,1) = sint*cosp ; e(2,1) = sint*sinp ; e(3,1) = cost
+  e(1,2) = cost*cosp ; e(2,2) = cost*sinp ; e(3,2) = -sint
+  e(1,3) = -sinp     ; e(2,3) = cosp      ; e(3,3) = 0.d0
+
+  de_t(:,1) = e(:,2)
+  de_t(:,2) = -e(:,1)
+  de_t(:,3) = 0.d0
+
+  de_p(:,1) = sint*e(:,3)
+  de_p(:,2) = cost*e(:,3)
+  de_p(:,3) = -sint*e(:,1) - cost*e(:,2)
+
+  ! the symmetric (r,theta,phi) tensor from (Mrr,Mtt,Mpp,Mrt,Mrp,Mtp)
+  m(1,1) = m_sph(1) ; m(2,2) = m_sph(2) ; m(3,3) = m_sph(3)
+  m(1,2) = m_sph(4) ; m(2,1) = m_sph(4)
+  m(1,3) = m_sph(5) ; m(3,1) = m_sph(5)
+  m(2,3) = m_sph(6) ; m(3,2) = m_sph(6)
+
+  dm_dtheta(:,:) = 0.d0
+  dm_dphi(:,:) = 0.d0
+  do b = 1,3
+    do a = 1,3
+      do q = 1,NDIM
+        do p = 1,NDIM
+          dm_dtheta(p,q) = dm_dtheta(p,q) + m(a,b)*(de_t(p,a)*e(q,b) + e(p,a)*de_t(q,b))
+          dm_dphi(p,q)   = dm_dphi(p,q)   + m(a,b)*(de_p(p,a)*e(q,b) + e(p,a)*de_p(q,b))
+        enddo
+      enddo
+    enddo
+  enddo
+
+  end subroutine gf_rotate_moment_tensor_deriv
 
 !
 !-------------------------------------------------------------------------------------------------
