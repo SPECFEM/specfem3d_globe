@@ -159,9 +159,13 @@ if [ "${EMC_MODEL}" == "true" ]; then
   echo
   echo "current dir: `pwd`"
   cd DATA/IRIS_EMC/
-  wget --quiet --tries=3 https://ds.iris.edu/files/products/emc/emc-files/Alaska.JointInversion-RF+Vph+HV-1.Berg.2020-nc4.nc
+  # IRIS Data Services moved to EarthScope; the former ds.iris.edu location answers 404 since 2026-09-04.
+  # The file is saved under the name the README and the symbolic link below use.
+  wget --tries=3 -O Alaska.JointInversion-RF+Vph+HV-1.Berg.2020-nc4.nc \
+       "https://data.earthscope.org/archive/seismology/products/emc/netcdf/Alaska.JointInversion-RF%2BVph%2BHV-1.Berg.2020.r0.0-n4c.nc"
   # checks exit code
-  if [[ $? -ne 0 ]]; then exit 1; fi
+  if [[ $? -ne 0 ]]; then echo "EMC model download failed"; exit 1; fi
+  ls -l
   ln -s Alaska.JointInversion-RF+Vph+HV-1.Berg.2020-nc4.nc model.nc
   cd ../../
 fi
