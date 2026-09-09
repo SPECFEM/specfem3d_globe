@@ -287,7 +287,7 @@
 
   integer, parameter :: N = 2000, I0 = 1000
   double precision, dimension(:), allocatable :: w,x,y,p
-  double precision :: h
+  double precision :: h,err,expect
   integer :: k,i,j,nbad
 
   write(*,'(a)') '4. delta response'
@@ -312,21 +312,27 @@
   enddo
   call gf_report_true('Gaussian: y(i0+j) == w(j) exactly, 0 outside',nbad == 0,nfail)
 
+  ! the Heaviside response is dt*w(j) inside the kernel, dt above it and 0
+  ! below; a derived tolerance rather than equality, because the product is
+  ! rounded here and in gf_conv_heavi by different compilation units (the CI
+  ! ifort rounded them differently) -- a centring error would be a whole
+  ! sample, not a rounding
   call gf_stf_kernel_heavi(h,DTG,k,w)
   call gf_cumsum(x,N,p)
   call gf_conv_heavi(x,N,DTG,k,w,p,y)
-  nbad = 0
+  err = 0.d0
   do i = 1,N
     j = i - I0
     if (j > k) then
-      if (y(i) /= DTG) nbad = nbad + 1
+      expect = DTG
     else if (j < -k) then
-      if (y(i) /= 0.d0) nbad = nbad + 1
+      expect = 0.d0
     else
-      if (y(i) /= DTG*w(j)) nbad = nbad + 1
+      expect = DTG*w(j)
     endif
+    err = max(err,abs(y(i) - expect)/DTG)
   enddo
-  call gf_report_true('Heaviside: y == dt*w inside, dt above, 0 below, exactly',nbad == 0,nfail)
+  call gf_report('Heaviside: y == dt*w inside, dt above, 0 below (rel)',err,1.d-14,nfail)
 
   deallocate(w,x,y,p)
 
@@ -778,9 +784,15 @@
   type(t_gf_taxis) :: tax
   double precision, dimension(:), allocatable :: t
   double precision :: err
-  integer :: ierr,i,nbad
+  integer :: ierr,i
 
   write(*,'(a)') '12. output time axis'
+
+  ! The database axis is (i ss - 1) dt - t0_db (gf_time_axis); the padded
+  ! axis must contain it at t(npad+i). A derived tolerance, not equality: the
+  ! formula written out here and gf_taxis_times are two compilation units,
+  ! which the CI ifort rounded differently. An off-by-one would be a whole
+  ! dt_sub.
 
   ! global, CMT: t0_req = 1.5 * 60
   call gf_taxis_plan(4625,0.1d0,4,T0DB,90.d0,tax,ierr)
@@ -792,11 +804,11 @@
   call gf_report_true('  npad minimal: t(1) + dt_sub > -t0_req',t(1) + tax%dt_sub > -90.d0,nfail)
   call gf_report_true('  t_first == t(1)',tax%t_first == t(1),nfail)
   call gf_report('  t0 = t0_db + npad dt_sub',abs(tax%t0 - (T0DB + 139*0.4d0)),1.d-12,nfail)
-  nbad = 0
+  err = 0.d0
   do i = 1,4625
-    if (t(tax%npad+i) /= (dble(i*4) - 1.d0)*0.1d0 - T0DB) nbad = nbad + 1
+    err = max(err,abs(t(tax%npad+i) - ((dble(i*4) - 1.d0)*0.1d0 - T0DB)))
   enddo
-  call gf_report_true('  t(npad+i) == database axis, bitwise, all 4625',nbad == 0,nfail)
+  call gf_report('  t(npad+i) == database axis (4i - 1) dt - t0_db, all 4625',err,1.d-12,nfail)
   err = 0.d0
   do i = 2,tax%nt
     err = max(err,abs((t(i) - t(i-1)) - 0.4d0))
@@ -816,16 +828,16 @@
   call gf_taxis_plan(544,0.1d0,34,T0DB,67.5d0,tax,ierr)
   call gf_report_true('regional force: npad = 11',tax%npad == 11,nfail)
 
-  ! no extension asked for: the database axis, bitwise
+  ! no extension asked for: the database axis itself
   call gf_taxis_plan(4625,0.1d0,4,T0DB,0.d0,tax,ierr)
   call gf_report_true('t0_req = 0: npad = 0, nt = nt_db',tax%npad == 0 .and. tax%nt == 4625,nfail)
   allocate(t(tax%nt))
   call gf_taxis_times(tax,tax%nt,t)
-  nbad = 0
+  err = 0.d0
   do i = 1,4625
-    if (t(i) /= (dble(i*4) - 1.d0)*0.1d0 - T0DB) nbad = nbad + 1
+    err = max(err,abs(t(i) - ((dble(i*4) - 1.d0)*0.1d0 - T0DB)))
   enddo
-  call gf_report_true('  == database axis, bitwise',nbad == 0,nfail)
+  call gf_report('  == database axis (4i - 1) dt - t0_db',err,1.d-12,nfail)
   call gf_report('  t(1) = (ss-1) dt - t0_db = -34.4484145764246',abs(t(1) + 34.4484145764246d0),1.d-12,nfail)
   deallocate(t)
 

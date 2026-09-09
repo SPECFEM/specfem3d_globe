@@ -35,7 +35,7 @@
 !----
 !----   * linearity -- SUM_v M_v dp(v) reproduces the seismogram assembled
 !----     the production way, and each dp(v) *is* the seismogram of the v-th
-!----     unit tensor, bitwise, because it runs the same statements;
+!----     unit tensor, to round-off, because it runs the same routines;
 !----   * the derivative kernel sums to one for every width, with the sum
 !----     before normalisation equal to the Poisson-summation closed form
 !----     1 + 2 SUM_k exp(-(pi k h/dt)^2), which is what pins the claim that
@@ -296,7 +296,7 @@
   type(t_gf_stf) :: stf,stf_g
   type(t_gf_taxis) :: tax
   double precision :: theta,phi,scale_amp,scale_moment,scale_mt,t,worst,ref
-  integer :: v,icomp,it,ierr,nt,nbad
+  integer :: v,icomp,it,ierr,nt
 
   write(*,'(a)') '3. moment-tensor partials: linearity'
 
@@ -372,9 +372,12 @@
   worst = maxval(abs(recon - seis))/ref
   call gf_report('SUM_v M_v dp(v) == seismogram (rel)  ',worst,1.d-12,nfail)
 
-  ! each partial is the seismogram of its unit tensor, bitwise: the same
-  ! statements on the same numbers
-  nbad = 0
+  ! each partial is the seismogram of its unit tensor: the same library
+  ! routines on the same numbers, with the scaling statement between them
+  ! written here and in gf_partials_mt -- two compilation units, so a
+  ! derived tolerance rather than equality
+  worst = 0.d0
+  ref = maxval(abs(dp))
   do v = 1,6
     e_sph(:) = 0.d0
     e_sph(v) = 1.d0
@@ -388,11 +391,11 @@
       call gf_cumsum(xpad,nt,p)
       call gf_stf_apply(stf,tax%dt_sub,w,p,xpad,nt,y)
       do it = 1,nt
-        if (y(it) /= dp(v,icomp,it)) nbad = nbad + 1
+        worst = max(worst,abs(y(it) - dp(v,icomp,it))/ref)
       enddo
     enddo
   enddo
-  call gf_report_true('dp(v) == seismogram of unit tensor v, bitwise',nbad == 0,nfail)
+  call gf_report('dp(v) == seismogram of unit tensor v (rel)',worst,1.d-14,nfail)
 
   ! the partials are not degenerate: no two proportional, none zero
   worst = 1.d0
