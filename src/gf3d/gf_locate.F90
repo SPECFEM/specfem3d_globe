@@ -92,7 +92,7 @@
   use gf_geometry, only: gf_geographic_to_cartesian,gf_source_nu, &
                          gf_gather_anchors,gf_find_local_coords
 
-  use gf_shape3D, only: gf_shape3D_map
+  use gf_shape3D, only: gf_shape3D_map,gf_shape3D_map_2nd
 
   implicit none
 
@@ -496,6 +496,12 @@
       loc%xyz_target(:) = xyz_target(:)
       loc%jinv(:,:) = jinv(:,:)
       loc%jacobian = jacobian
+
+      ! the derivative of the inverse Jacobian, once, on the accepted
+      ! element (Stage 8); its first-order part is the map just made, so
+      ! jinv above and the one inside agree bitwise
+      call gf_shape3D_map_2nd(xelm,yelm,zelm,xi,eta,gamma,xyz,jinv,jacobian,loc%djinv,ierr)
+      if (ierr /= GF_OK) return
       loc%nu(:,:) = nu(:,:)
       loc%theta = theta
       loc%phi = phi

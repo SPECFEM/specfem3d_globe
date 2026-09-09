@@ -193,7 +193,9 @@
 !  3. EXTERNAL_SOURCE_TIME_FUNCTION (constants.h:337, currently .false.)
 !     zeroes hdur entirely if it is ever flipped.
 
-  use constants, only: MAX_STRING_LEN
+  use constants, only: MAX_STRING_LEN,PI,GRAV
+
+  use shared_parameters, only: RHOAV,R_PLANET
 
   implicit none
 
@@ -252,13 +254,67 @@
   ! divided by scaleM = 1.d7 * RHOAV * R_PLANET**5 * PI*GRAV*RHOAV
   src%moment_tensor(1:6) = moment_tensor(1:6,1)
 
+  ! the same scaleM, in get_cmt's own expression (get_cmt.f90:426) from the
+  ! same module variables, which gf_shared_params set from the database
+  ! before the source was read. get_cmt does not return it, and the
+  ! partials of Stage 6 are per dyne-cm, i.e. per unit of what the file
+  ! says, so the factor has to be known.
+  src%scale_moment = 1.d7 * RHOAV * (R_PLANET**5) * PI*GRAV*RHOAV
+
   src%yr = yr ; src%jda = jda ; src%mo = mo
   src%da = da ; src%ho = ho ; src%mi = mi
   src%sec = sec
 
+  ! the one header field get_cmt reads past
+  call gf_cmt_event_name(filename,src%event_name)
+
   ierr = GF_OK
 
   end subroutine gf_read_cmt_source
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_cmt_event_name(filename,event_name)
+
+! the `event name:` line of a CMTSOLUTION, or '' if there is none
+!
+! get_cmt parses everything else in the file but skips this line, and the
+! solver takes the name from get_event_info_serial(), which reads a
+! hard-coded DATA/CMTSOLUTION. The SAC KEVNM header (Stage 10) wants it, so
+! it is scanned here: one line, one field, no numbers.
+
+  use constants, only: MAX_STRING_LEN
+
+  implicit none
+
+  character(len=*), intent(in) :: filename
+  character(len=*), intent(out) :: event_name
+
+  ! local parameters
+  character(len=MAX_STRING_LEN) :: line
+  integer :: iunit,ios,icolon
+
+  event_name = ''
+
+  open(newunit=iunit,file=trim(filename),status='old',action='read',iostat=ios)
+  if (ios /= 0) return
+
+  do
+    read(iunit,'(a)',iostat=ios) line
+    if (ios /= 0) exit
+    line = adjustl(line)
+    if (line(1:11) == 'event name:') then
+      icolon = index(line,':')
+      event_name = adjustl(line(icolon+1:))
+      exit
+    endif
+  enddo
+
+  close(iunit)
+
+  end subroutine gf_cmt_event_name
 
 !
 !-------------------------------------------------------------------------------------------------

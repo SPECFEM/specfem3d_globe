@@ -80,6 +80,7 @@
 
   public :: gf_interp_weights
   public :: gf_interp_weights_deriv
+  public :: gf_interp_weights_deriv2
   public :: gf_interp_snapshot
   public :: gf_interp_trace_d
   public :: gf_interp_trace
@@ -131,6 +132,43 @@
   call lagrange_any(gamma,NGLLZ,zigll,hgam,hpgam)
 
   end subroutine gf_interp_weights_deriv
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_interp_weights_deriv2(xi,eta,gamma,hxi,hpxi,hppxi,heta,hpeta,hppeta,hgam,hpgam,hppgam)
+
+! the per-axis Lagrange factors with their first and second derivatives
+!
+! As gf_interp_weights_deriv, through lagrange_any_2nd
+! (src/shared/lagrange_poly.f90), for the strain gradient of Stage 8. The
+! second derivatives are with respect to the reference coordinates as
+! well; gf_strain_ddweights turns them physical.
+
+  use constants, only: NGLLX,NGLLY,NGLLZ,GAUSSALPHA,GAUSSBETA
+
+  implicit none
+
+  double precision, intent(in) :: xi,eta,gamma
+  double precision, dimension(NGLLX), intent(out) :: hxi,hpxi,hppxi
+  double precision, dimension(NGLLY), intent(out) :: heta,hpeta,hppeta
+  double precision, dimension(NGLLZ), intent(out) :: hgam,hpgam,hppgam
+
+  ! local parameters
+  double precision, dimension(NGLLX) :: xigll,wxgll
+  double precision, dimension(NGLLY) :: yigll,wygll
+  double precision, dimension(NGLLZ) :: zigll,wzgll
+
+  call zwgljd(xigll,wxgll,NGLLX,GAUSSALPHA,GAUSSBETA)
+  call zwgljd(yigll,wygll,NGLLY,GAUSSALPHA,GAUSSBETA)
+  call zwgljd(zigll,wzgll,NGLLZ,GAUSSALPHA,GAUSSBETA)
+
+  call lagrange_any_2nd(xi,NGLLX,xigll,hxi,hpxi,hppxi)
+  call lagrange_any_2nd(eta,NGLLY,yigll,heta,hpeta,hppeta)
+  call lagrange_any_2nd(gamma,NGLLZ,zigll,hgam,hpgam,hppgam)
+
+  end subroutine gf_interp_weights_deriv2
 
 !
 !-------------------------------------------------------------------------------------------------

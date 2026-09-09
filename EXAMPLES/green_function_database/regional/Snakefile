@@ -636,7 +636,9 @@ rule extract_gf3d:
     shell:
         """
         mkdir -p {params.outdir}
-        {XGF3D} --seis {GF_DATABASE_PATH} {input.source} {params.outdir}
+        # --format ascii: xgf3d writes SAC by default since Stage 10; the
+        # comparison harness (gf_compare.py) reads the ASCII form until PR 5
+        {XGF3D} --seis {GF_DATABASE_PATH} {input.source} {params.outdir} --format ascii
         """
 
 

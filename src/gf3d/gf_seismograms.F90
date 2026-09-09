@@ -124,20 +124,26 @@
                     GF_NCOMP,GF3D_VERSION,GF_STF_TRUNC,GF_STF_HEAVI, &
                     GF_SRC_FORCE,GF_SRC_CMT
 
-  use gf_database, only: gf_dir_exists
+  use gf_database, only: gf_dir_exists,gf_topo_elevation,gf_topo_gradient
 
   use gf_element_io, only: gf_read_element_displ
 
-  use gf_interp, only: gf_interp_weights,gf_interp_weights_deriv,gf_interp_trace
+  use gf_interp, only: gf_interp_weights,gf_interp_weights_deriv,gf_interp_weights_deriv2, &
+                       gf_interp_trace
 
-  use gf_strain, only: gf_strain_dweights,gf_strain_trace,GF_VOIGT
+  use gf_strain, only: gf_strain_dweights,gf_strain_ddweights,gf_strain_trace,GF_VOIGT
 
-  use gf_moment, only: gf_rotate_moment_tensor,gf_moment_contract
+  use gf_moment, only: gf_rotate_moment_tensor,gf_rotate_moment_tensor_deriv,gf_moment_contract
 
   use gf_stf, only: gf_stf_plan,gf_taxis_plan,gf_taxis_times,gf_pad_left,gf_cumsum, &
                     gf_stf_kernel,gf_stf_apply,gf_stf_onset,gf_stf_kind_name
 
   use gf_source, only: gf_force_direction
+
+  use gf_partials, only: gf_partials_mt,gf_partials_time,gf_partials_loc, &
+                         GF_NDP_MT,GF_NDP_LOC,GF_DP_NAME,GF_DP_UNIT,GF_DP_LAT,GF_DP_TIM
+
+  use gf_geo_chain, only: gf_geographic_jacobian
 
   implicit none
 
@@ -147,8 +153,10 @@
   public :: gf_seis_plan
   public :: gf_seis_force
   public :: gf_seis_cmt
+  public :: gf_seis_cmt_partials
   public :: gf_seis
   public :: gf_write_seis
+  public :: gf_write_partials
   public :: gf_write_dump
 
   ! component labels, in the stored force order (green_function_io.F90:38)
@@ -572,6 +580,288 @@
 !-------------------------------------------------------------------------------------------------
 !
 
+  subroutine gf_seis_cmt_partials(db,src,loc,tax,stf,itypsokern,ndp,seis,dp,t,onset,ierr)
+
+! seismograms and their partial derivatives at every station, for a
+! moment-tensor source
+!
+! `seis` is what gf_seis_cmt returns, produced by the same statement
+! sequence on the same arrays, and `dp(ndp,nstations,3,tax%nt)` holds the
+! partials in the order of GF_DP_NAME (gf_partials.F90), `ndp` being what
+! gf_partials_ndp returns for `itypsokern`: 6 for the moment tensor, 10
+! with the centroid position and time.
+!
+! gf_seis_cmt is left untouched on purpose. The comparison gate in
+! EXAMPLES/ rests on its output, and identical statements in different
+! contexts can round differently under a fast floating-point model (the
+! lesson of tests/gf3d/test_gf_shape3D.f90), so the two are pinned equal by
+! tests/gf3d/test_gf_partials_db.f90 rather than assumed equal by
+! construction. Per station the partials come from the *same* strain trace
+! the seismogram was contracted from: one element read, as before.
+!
+! Stage 6 fills slots 1..6; Stage 8 fills 7..10 for itypsokern = 2. The
+! centroid partials (gf_partials_loc) need three more strain traces per
+! station -- the strain kernel run with the differentiated weight table
+! for each reference direction -- the derivative of the moment tensor's
+! rotation, and the derivative of the geographic map with the database's
+! ellipticity and topography (gf_geo_chain), all evaluated once at the
+! located source. The centroid-time partial is gf_partials_time on the
+! same padded trace the seismogram was converted from.
+
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM
+
+  implicit none
+
+  type(t_gfdb), intent(in) :: db
+  type(t_gf_source), intent(in) :: src
+  type(t_gf_location), intent(in) :: loc
+  type(t_gf_taxis), intent(in) :: tax
+  type(t_gf_stf), intent(in) :: stf
+  integer, intent(in) :: itypsokern,ndp
+  double precision, dimension(db%nstations,GF_NCOMP,tax%nt), intent(out) :: seis
+  double precision, dimension(ndp,db%nstations,GF_NCOMP,tax%nt), intent(out) :: dp
+  double precision, dimension(tax%nt), intent(out) :: t
+  double precision, dimension(db%nstations), intent(out) :: onset
+  integer, intent(out) :: ierr
+
+  ! local parameters
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: displ
+  double precision, dimension(:,:,:), allocatable :: eps,dpm,dpl
+  double precision, dimension(:,:,:,:), allocatable :: deps
+  double precision, dimension(:), allocatable :: trace,tdb,xpad,p,y,w,dp10
+  double precision, dimension(NGLLX) :: hxi,hpxi,hppxi
+  double precision, dimension(NGLLY) :: heta,hpeta,hppeta
+  double precision, dimension(NGLLZ) :: hgam,hpgam,hppgam
+  double precision, dimension(NGLLX,NGLLY,NGLLZ,NDIM) :: dw
+  double precision, dimension(NGLLX,NGLLY,NGLLZ,NDIM,NDIM) :: ddw
+  double precision, dimension(NDIM,NDIM) :: m_cart,dm_dtheta,dm_dphi
+  double precision, dimension(NDIM,3) :: dxds
+  double precision, dimension(1) :: no_spline
+  double precision :: scale_amp,ratio,elevation,delev_dlat,delev_dlon,dtheta_dlat,dphi_dlon,wsum_raw
+  integer :: ista,it,icomp,ier,nt_db,nt,nbefore,ip,b
+  logical :: want_loc
+
+  seis(:,:,:) = 0.d0
+  dp(:,:,:,:) = 0.d0
+  onset(:) = 0.d0
+
+  if (.not. db%is_open) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_cmt_partials: database is not open')
+    return
+  endif
+  if (loc%ielem < 1) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_cmt_partials: the source has not been located')
+    return
+  endif
+  if (db%nstations < 1) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_cmt_partials: the database holds no stations')
+    return
+  endif
+  if (src%source_type /= GF_SRC_CMT) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_cmt_partials: partials are defined for moment-tensor sources')
+    return
+  endif
+  if (tax%nt_db /= db%nt_subsampled .or. tax%nt < tax%nt_db) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_cmt_partials: the time axis was not planned for this database')
+    return
+  endif
+  if (stf%kind_stf /= GF_STF_HEAVI) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_cmt_partials: the plan is not a Heaviside conversion')
+    return
+  endif
+  select case (itypsokern)
+  case (1)
+    if (ndp /= GF_NDP_MT) then
+      call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_cmt_partials: itypsokern = 1 returns 6 partials')
+      return
+    endif
+    want_loc = .false.
+  case (2)
+    if (ndp /= GF_NDP_LOC) then
+      call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_cmt_partials: itypsokern = 2 returns 10 partials')
+      return
+    endif
+    want_loc = .true.
+  case default
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_cmt_partials: itypsokern must be 1 or 2')
+    return
+  end select
+  if (src%scale_moment <= 0.d0) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_cmt_partials: the source carries no moment scale')
+    return
+  endif
+  if (want_loc .and. db%topography .and. .not. db%topo_loaded) then
+    call gf_set_error(ierr,GF_ERR_ARG, &
+      'gf_seis_cmt_partials: the topography grid is not loaded; locate the source first')
+    return
+  endif
+
+  nt_db = db%nt_subsampled
+  nt = tax%nt
+
+  call gf_taxis_times(tax,nt,t)
+
+  call gf_interp_weights_deriv(loc%xi,loc%eta,loc%gamma,hxi,hpxi,heta,hpeta,hgam,hpgam)
+  call gf_strain_dweights(hxi,hpxi,heta,hpeta,hgam,hpgam,loc%jinv,dw)
+
+  call gf_rotate_moment_tensor(loc%theta,loc%phi,src%moment_tensor,m_cart)
+
+  if (want_loc) then
+    ! the differentiated weight table, the rotation's derivative and the
+    ! geographic map's derivative, once: none depends on the station
+    call gf_interp_weights_deriv2(loc%xi,loc%eta,loc%gamma,hxi,hpxi,hppxi,heta,hpeta,hppeta, &
+                                  hgam,hpgam,hppgam)
+    call gf_strain_ddweights(hxi,hpxi,hppxi,heta,hpeta,hppeta,hgam,hpgam,hppgam,loc%jinv,loc%djinv,ddw)
+
+    call gf_rotate_moment_tensor_deriv(loc%theta,loc%phi,src%moment_tensor,dm_dtheta,dm_dphi)
+
+    ! the elevation and its gradient, as gf_locate evaluated the elevation
+    elevation = 0.d0
+    delev_dlat = 0.d0
+    delev_dlon = 0.d0
+    if (db%topography) then
+      call gf_topo_elevation(db,src%latitude,src%longitude,elevation)
+      call gf_topo_gradient(db,src%latitude,src%longitude,delev_dlat,delev_dlon)
+    endif
+    if (db%ellipticity) then
+      call gf_geographic_jacobian(src%latitude,src%longitude,src%depth,db%ellipticity, &
+                                  elevation,delev_dlat,delev_dlon, &
+                                  db%nspl,db%rspl,db%ellipicity_spline,db%ellipicity_spline2, &
+                                  db%R_PLANET,dxds,dtheta_dlat,dphi_dlon,ierr)
+    else
+      no_spline(1) = 0.d0
+      call gf_geographic_jacobian(src%latitude,src%longitude,src%depth,db%ellipticity, &
+                                  elevation,delev_dlat,delev_dlon, &
+                                  0,no_spline,no_spline,no_spline, &
+                                  db%R_PLANET,dxds,dtheta_dlat,dphi_dlon,ierr)
+    endif
+    if (ierr /= GF_OK) return
+  endif
+
+  allocate(displ(GF_NCOMP,GF_NCOMP,NGLLX,NGLLY,NGLLZ,nt_db),eps(GF_VOIGT,GF_NCOMP,nt_db), &
+           trace(nt_db),tdb(nt_db),xpad(nt),p(0:nt),y(nt),w(-stf%khalf:stf%khalf), &
+           dpm(GF_NDP_MT,GF_NCOMP,nt),stat=ier)
+  if (ier /= 0) then
+    call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate the element displacement buffer')
+    return
+  endif
+  if (want_loc) then
+    allocate(deps(GF_VOIGT,GF_NCOMP,nt_db,NDIM),dpl(3,GF_NCOMP,nt),dp10(nt),stat=ier)
+    if (ier /= 0) then
+      call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate the strain gradient buffer')
+      goto 99
+    endif
+  endif
+
+  call gf_time_axis(db,nt_db,tdb)
+
+  call gf_stf_kernel(stf,tax%dt_sub,w)
+
+  do ista = 1,db%nstations
+
+    call gf_read_element_displ(db,loc%ielem,ista,displ,ierr)
+    if (ierr /= GF_OK) goto 99
+
+    call gf_strain_trace(displ,dw,nt_db,eps)
+
+    if (want_loc) then
+      ! d eps / d xi_b: the same kernel with the differentiated table
+      do b = 1,NDIM
+        call gf_strain_trace(displ,ddw(:,:,:,:,b),nt_db,deps(:,:,:,b))
+      enddo
+    endif
+
+    if (db%stations(ista)%factor_force_source == 0.d0) then
+      call gf_set_error(ierr,GF_ERR_ARG, &
+        'station '//trim(db%stations(ista)%id)//' has factor_force_source = 0')
+      goto 99
+    endif
+    scale_amp = 1.d0 / db%stations(ista)%factor_force_source
+
+    !--- the seismogram: gf_seis_cmt's statements, verbatim ----------------
+    do icomp = 1,GF_NCOMP
+
+      do it = 1,nt_db
+        call gf_moment_contract(m_cart,eps(:,icomp,it),trace(it))
+        trace(it) = scale_amp * trace(it)
+      enddo
+
+      call gf_stf_onset(trace,nt_db,tdb,stf%hdur_db,ratio,nbefore)
+      onset(ista) = max(onset(ista),ratio)
+
+      call gf_pad_left(trace,nt_db,tax%npad,xpad)
+      call gf_cumsum(xpad,nt,p)
+      call gf_stf_apply(stf,tax%dt_sub,w,p,xpad,nt,y)
+
+      do it = 1,nt
+        seis(ista,icomp,it) = y(it)
+      enddo
+
+      !--- the centroid-time partial, from the same padded trace -----------
+
+      if (want_loc) then
+        call gf_partials_time(xpad,nt,tax%dt_sub,stf,dp10,wsum_raw,ierr)
+        if (ierr /= GF_OK) goto 99
+        do it = 1,nt
+          dp(GF_DP_TIM,ista,icomp,it) = dp10(it)
+        enddo
+      endif
+
+    enddo
+
+    !--- the moment-tensor partials, from the same strain -------------------
+
+    call gf_partials_mt(eps,nt_db,loc%theta,loc%phi,scale_amp/src%scale_moment, &
+                        tax,stf,w,dpm,ierr)
+    if (ierr /= GF_OK) goto 99
+
+    do it = 1,nt
+      do icomp = 1,GF_NCOMP
+        do ip = 1,GF_NDP_MT
+          dp(ip,ista,icomp,it) = dpm(ip,icomp,it)
+        enddo
+      enddo
+    enddo
+
+    !--- the centroid-position partials --------------------------------------
+
+    if (want_loc) then
+      call gf_partials_loc(eps,deps,nt_db,m_cart,dm_dtheta,dm_dphi,dtheta_dlat,dphi_dlon, &
+                           loc%jinv,dxds,scale_amp,tax,stf,w,dpl,ierr)
+      if (ierr /= GF_OK) goto 99
+      do it = 1,nt
+        do icomp = 1,GF_NCOMP
+          do ip = 1,3
+            dp(GF_DP_LAT+ip-1,ista,icomp,it) = dpl(ip,icomp,it)
+          enddo
+        enddo
+      enddo
+    endif
+
+  enddo
+
+  ierr = GF_OK
+
+99 continue
+  if (allocated(displ)) deallocate(displ)
+  if (allocated(eps)) deallocate(eps)
+  if (allocated(deps)) deallocate(deps)
+  if (allocated(dpm)) deallocate(dpm)
+  if (allocated(dpl)) deallocate(dpl)
+  if (allocated(dp10)) deallocate(dp10)
+  if (allocated(trace)) deallocate(trace)
+  if (allocated(tdb)) deallocate(tdb)
+  if (allocated(xpad)) deallocate(xpad)
+  if (allocated(p)) deallocate(p)
+  if (allocated(y)) deallocate(y)
+  if (allocated(w)) deallocate(w)
+
+  end subroutine gf_seis_cmt_partials
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   subroutine gf_seis(db,src,loc,tax,stf,seis,t,onset,ierr)
 
 ! seismograms for either kind of source, on a planned axis
@@ -675,6 +965,95 @@
   ierr = GF_OK
 
   end subroutine gf_write_seis
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_write_partials(db,src,loc,tax,stf,ndp,dp,t,outdir,ierr)
+
+! writes one ASCII file of partial derivatives per station
+!
+! <NET>.<STA>.partials.txt, beside the seismogram: the same provenance and
+! conversion header as gf_write_seis, a `# partials` line naming the slots
+! and a `# units` line, then `t` followed by dp(ip,comp) for comp = N,E,Z
+! and ip = 1..ndp, ip varying fastest -- 1 + 3 ndp columns. Like the
+! seismogram format this is an interface, read by the tests and by Stage
+! 9's binding checks.
+
+  use constants, only: MAX_STRING_LEN
+
+  implicit none
+
+  type(t_gfdb), intent(in) :: db
+  type(t_gf_source), intent(in) :: src
+  type(t_gf_location), intent(in) :: loc
+  type(t_gf_taxis), intent(in) :: tax
+  type(t_gf_stf), intent(in) :: stf
+  integer, intent(in) :: ndp
+  double precision, dimension(ndp,db%nstations,GF_NCOMP,tax%nt), intent(in) :: dp
+  double precision, dimension(tax%nt), intent(in) :: t
+  character(len=*), intent(in) :: outdir
+  integer, intent(out) :: ierr
+
+  ! local parameters
+  character(len=MAX_STRING_LEN) :: filename,line
+  integer :: ista,it,ip,icomp,iout,ios
+  logical :: exists
+
+  if (ndp < 1 .or. ndp > GF_NDP_LOC) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_write_partials: ndp must be between 1 and 10')
+    return
+  endif
+
+  call gf_dir_exists(outdir,exists)
+  if (.not. exists) then
+    call gf_set_error(ierr,GF_ERR_ARG,'output directory does not exist: '//trim(outdir))
+    return
+  endif
+
+  do ista = 1,db%nstations
+
+    filename = trim(outdir)//'/'//trim(db%stations(ista)%id)//'.partials.txt'
+
+    open(newunit=iout,file=trim(filename),status='replace',action='write',iostat=ios)
+    if (ios /= 0) then
+      call gf_set_error(ierr,GF_ERR_IO,'could not open for writing: '//trim(filename))
+      return
+    endif
+
+    call gf_write_header(db,src,loc,ista,iout)
+
+    write(iout,'(a,a)')               '# stf kind   : ',trim(gf_stf_kind_name(stf%kind_stf))
+    write(iout,'(a,4es24.16)')        '# stf hdur   : ',stf%hdur_src,stf%hdur_target,stf%hdur_db,stf%hdur_corr
+    write(iout,'(a,es24.16,i12,l4)')  '# stf kernel : ',stf%trunc,stf%khalf,stf%guard
+    write(iout,'(a,es24.16,4i12)')    '# axis       : ',tax%dt,tax%subsample_step,tax%nt_db,tax%npad,tax%nt
+    write(iout,'(a,4es24.16)')        '# axis t0    : ',tax%t0_db,tax%t0_req,tax%t0,tax%t_first
+
+    line = ''
+    do ip = 1,ndp
+      line = trim(line)//' '//GF_DP_NAME(ip)
+    enddo
+    write(iout,'(a,i0,a)') '# partials   : ',ndp,trim(line)
+    line = ''
+    do ip = 1,ndp
+      line = trim(line)//' '//trim(GF_DP_UNIT(ip))
+    enddo
+    write(iout,'(a)') '# units      :'//trim(line)
+    write(iout,'(a)') '# columns: t[s]  then dp(ip,comp) for comp = '//GF_COMP_NAME(1)//','// &
+                      GF_COMP_NAME(2)//','//GF_COMP_NAME(3)//' and ip = 1..ndp, ip varying fastest'
+
+    do it = 1,tax%nt
+      write(iout,'(*(es24.16))') t(it),((dp(ip,ista,icomp,it),ip = 1,ndp),icomp = 1,GF_NCOMP)
+    enddo
+
+    close(iout)
+
+  enddo
+
+  ierr = GF_OK
+
+  end subroutine gf_write_partials
 
 !
 !-------------------------------------------------------------------------------------------------

@@ -84,6 +84,7 @@
   ! geographic chain. Keeping the get_topo_bathy() call in this module means
   ! gf_geometry.F90 stays free of model_topo_bathy.shared.o and its MPI stubs.
   public :: gf_topo_elevation
+  public :: gf_topo_gradient
   ! exported for gf_seismograms.F90, which must check an output directory
   ! before writing into it. Fortran's inquire(file=) does not answer
   ! reliably for directories, so this goes through gf_dirlist.c.
@@ -1353,6 +1354,56 @@
   call get_topo_bathy(lat,lon,elevation,db%ibathy_topo)
 
   end subroutine gf_topo_elevation
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_topo_gradient(db,lat,lon,delev_dlat,delev_dlon)
+
+! the gradient of the surface elevation, in metres per degree
+!
+! get_topo_bathy is a bilinear interpolation of an integer grid whose
+! cells are RESOLUTION_TOPO_FILE/60 degrees (model_topo_bathy.f90:795-846),
+! and a bilinear function is linear along each axis at fixed other
+! coordinate, so a symmetric difference of it with a step inside the cell
+! is its derivative *exactly*. Across a cell edge the same difference is
+! the average of the two slopes, which is what a finite difference through
+! the whole map sees as well. Reusing get_topo_bathy this way keeps its
+! index arithmetic, the longitude wrap and the Berkeley branch in one
+! place. Zero without topography, like gf_topo_elevation.
+!
+! The step is a small fraction of a cell (1/32: 0.002 degrees at 4 arc
+! minutes), far above round-off on integer-metre elevations. Stage 8's
+! partials carry this term because specfem measures depth below the
+! topographic surface, so a move in latitude at fixed depth is also a move
+! in radius by the change in elevation.
+
+  implicit none
+
+  type(t_gfdb), intent(in) :: db
+  double precision, intent(in) :: lat,lon
+  double precision, intent(out) :: delev_dlat,delev_dlon
+
+  ! local parameters
+  double precision :: step,ep,em
+
+  delev_dlat = 0.d0
+  delev_dlon = 0.d0
+  if (.not. db%topo_loaded) return
+  if (db%RESOLUTION_TOPO_FILE <= 0.d0) return
+
+  step = (db%RESOLUTION_TOPO_FILE/60.d0)/32.d0
+
+  call get_topo_bathy(lat + step,lon,ep,db%ibathy_topo)
+  call get_topo_bathy(lat - step,lon,em,db%ibathy_topo)
+  delev_dlat = (ep - em)/(2.d0*step)
+
+  call get_topo_bathy(lat,lon + step,ep,db%ibathy_topo)
+  call get_topo_bathy(lat,lon - step,em,db%ibathy_topo)
+  delev_dlon = (ep - em)/(2.d0*step)
+
+  end subroutine gf_topo_gradient
 
 !
 !-------------------------------------------------------------------------------------------------

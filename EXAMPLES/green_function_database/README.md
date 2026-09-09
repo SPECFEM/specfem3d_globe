@@ -39,6 +39,21 @@ SPECFEM3D_GLOBE and validate it against direct forward simulations.
      workflow fails if any station's misfit exceeds `GF_COMPARE_THRESHOLD`;
      the figures survive a failure, on purpose, so it can be diagnosed.
 
+   Extraction by hand, once the database is built:
+
+   ```bash
+   bin/xgf3d --seis <GFDB> <CMTSOLUTION|FORCESOLUTION> <outdir> [--format sac|sacan|ascii|all] \
+                    [--partials 1|2] [--t0 <s>]
+   ```
+
+   writes `NET.STA.BX{N,E,Z}.sem.sac` with the solver's own header rules
+   (`--format sac`, the default), the alphanumeric form (`sacan`), or the
+   `NET.STA.gf3d.txt` columns the comparison reads (`ascii`; the workflow
+   asks for this one explicitly). `--partials 1` adds the six moment-tensor
+   partial derivatives of a CMTSOLUTION's seismograms in the same format
+   (`NET.STA.BXN.Mrr.sem.sac`, or `NET.STA.partials.txt`), per dyne-cm;
+   `--partials 2` adds latitude, longitude, depth and centroid time.
+
    **Note 1**: The regional workflow is affected by the absorbing boundary conditions. It is important to choose the stations carefully to avoid strong reflections from the boundaries.
 
 3. **Run the global workflow**

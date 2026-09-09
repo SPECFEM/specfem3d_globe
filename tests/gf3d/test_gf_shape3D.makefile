@@ -8,8 +8,9 @@ default: test_gf_shape3D
 O := ./obj
 
 # The kernel objects, plus recompute_jacobian.shared.o -- which is the point
-# of this test: gf_shape3D.F90 is a fork of it, and the original serves as a
-# bit-for-bit oracle.
+# of this test: gf_shape3D.F90 is a fork of it, and the original serves as
+# the oracle (to a derived tolerance; see the test's header for why not
+# bit for bit).
 #
 # Note this links the *objects*, not $L/libgf3d.a. 0.configure.default_make.sh
 # configures without --with-hdf5, so no archive exists; the whole reason
