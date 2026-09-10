@@ -464,4 +464,66 @@
 
   end function gf_error_string
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  logical function gf_is_finite(x)
+
+! true when x is neither NaN nor infinite
+!
+! Written as a bit test rather than with ieee_is_finite() because the
+! intrinsic IEEE modules are not universally available — the Red Hat
+! gcc-toolset gfortran packages, among others, ship without them — and
+! because a comparison against a NaN is itself an invalid operation under
+! -ffpe-trap=invalid. transfer() and iand() touch no floating-point unit.
+!
+! An IEEE-754 binary64 is NaN or infinite exactly when its 11 exponent
+! bits (52..62) are all set. ISHFT is defined as a *logical* shift, so the
+! sign bit does not smear into the result.
+!
+! Lives here rather than in gf_database (where it was written, to screen
+! centroids.bin) because every value that enters the library from outside
+! is screened with it: a NaN reaching gf_locate would pass reduce()'s
+! range test — both comparisons are false — and reach the kd-tree, whose
+! "found no point" branch is a stop, which inside a .so takes the calling
+! interpreter with it.
+
+  implicit none
+
+  double precision, intent(in) :: x
+
+  ! local parameters
+  integer(kind=8) :: bits
+  integer(kind=8), parameter :: EXPONENT_MASK = 2047_8
+
+  bits = transfer(x,bits)
+
+  gf_is_finite = (iand(ishft(bits,-52),EXPONENT_MASK) /= EXPONENT_MASK)
+
+  end function gf_is_finite
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  logical function gf_all_finite(x)
+
+! true when every element of x is neither NaN nor infinite
+
+  implicit none
+
+  double precision, dimension(:), intent(in) :: x
+
+  ! local parameters
+  integer :: i
+
+  gf_all_finite = .false.
+  do i = 1,size(x)
+    if (.not. gf_is_finite(x(i))) return
+  enddo
+  gf_all_finite = .true.
+
+  end function gf_all_finite
+
   end module gf_par
