@@ -265,7 +265,17 @@ def _load():
 
 lib, library_path = _load()
 
-LIBRARY_LOCK = threading.Lock()
+# Reentrant on purpose. The lock serialises calls into a library that keeps
+# process-wide state, and that is all it is for -- but the wrapper's own
+# properties compose (Database.stations needs Database.info, and either may
+# have to call the library), and under a plain Lock any such nesting is a
+# deadlock. One existed: Database.stations resolved nstations inside the
+# lock, so asking a fresh database for its stations before anything had
+# read its info hung the interpreter. That call is now hoisted out, and
+# this is reentrant so that the next composition of two locked properties
+# is merely slow to write rather than fatal to run. An RLock still
+# serialises across threads, which is the property that matters.
+LIBRARY_LOCK = threading.RLock()
 
 
 # ---------------------------------------------------------------------------

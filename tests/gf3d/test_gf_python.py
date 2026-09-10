@@ -24,6 +24,8 @@ from __future__ import annotations
 import subprocess
 import sys
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FuturesTimeout
 from pathlib import Path
 
 import numpy as np
@@ -113,6 +115,30 @@ def main(argv):
         gf3d.Database("/nonexistent/gf3d/database")
     except gf3d.GF3DError as exc:
         ok("the message names the path", "/nonexistent/gf3d/database" in str(exc))
+
+    # Stations before info, on a database that has cached neither.
+    #
+    # These properties compose -- stations needs info -- and both call the
+    # library under its lock, so with a non-reentrant lock this deadlocks
+    # unless something happened to populate the cache first. Every other
+    # caller here reads info first and hid it. Do it in this order, once,
+    # and with a watchdog, because the symptom of a regression is a hang
+    # rather than a failure and a hung test tells nobody anything.
+    def _first_call_order():
+        fresh = gf3d.Database(dbpath)
+        try:
+            return fresh.station_ids
+        finally:
+            fresh.close()
+
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        future = pool.submit(_first_call_order)
+        try:
+            ids_first = future.result(timeout=60)
+            ok("station_ids works before info is cached", len(ids_first) > 0)
+        except FuturesTimeout:
+            ok("station_ids works before info is cached (DEADLOCK)", False)
+            return 1
 
     db = gf3d.Database(dbpath)
     ok("the database is open", not db.closed)

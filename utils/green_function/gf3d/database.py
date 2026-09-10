@@ -305,11 +305,15 @@ class Database:
     @property
     def stations(self) -> list:
         """Every station, in the library's own order."""
+        # resolved before the lock is taken, not inside the loop: self.info
+        # may itself have to call the library
+        nstations = self.info["nstations"]
+
         out = []
         c = CStation()
         with LIBRARY_LOCK:
             h = self._h()
-            for i in range(self.info["nstations"]):
+            for i in range(nstations):
                 check(lib.gf3d_get_station(h, i, ctypes.byref(c)), f"station {i}")
                 out.append(Station._from_c(c))
         return out
