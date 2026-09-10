@@ -40,11 +40,14 @@
 !----     the solver's own rollover -- 16.40 + 29 s giving nzsec 45 and
 !----     nzmsec 399, as the forward file in EXAMPLES/ has it -- and the
 !----     minute, day and year boundaries the same way;
-!----   * the data round-trips to single precision bitwise;
+!----   * the header reals and the data round-trip to single precision
+!----     (1e-6 relative; the trace peak as the data's scale); integers
+!----     and strings exactly;
 !----   * a partial's file name and KUSER1/KUSER2 name the parameter.
 !----
 !---- The oracle is the file format and the solver's expressions, not
-!---- another writer.
+!---- another writer. Every member of a grouped assertion names itself in
+!---- the log when it fails: on the CI the log is all there is of a run.
 !----
 
   program test_gf_sac
@@ -70,6 +73,13 @@
   integer, parameter :: NTDB = 544, SS = 34
 
   character(len=*), parameter :: OUTDIR = './OUTPUT_FILES'
+
+  ! single-precision storage: unit roundoff 2^-24 = 6e-8 relative, and the
+  ! alphanumeric cards' G15.7 carry 7 digits; 1e-6 covers both with headroom.
+  ! Not equality: the test's real(x) and the writer's are two compilation
+  ! units (the CI ifort failed the bitwise form), and a real defect -- a
+  ! shifted sample, a swapped component, a wrong slot -- is a whole sample.
+  double precision, parameter :: TOL_SINGLE = 1.d-6
 
   integer :: nfail
 
@@ -164,11 +174,14 @@
   integer, dimension(5) :: icard
   character(len=8) :: c8a,c8b,c8c
   character(len=16) :: c16
-  double precision :: t
+  double precision :: t,err_real,err_data,peak,e,emax
   integer :: ierr,nt,it,icomp,iunit,ios,nbad,nlines
-  logical :: exists
+  integer :: nbad_file,nbad_int,nbad_str,itmax
+  integer(kind=8) :: fsize
+  logical :: exists,readok
   character(len=256) :: fname
   character(len=3), dimension(GF_NCOMP) :: chn
+  character(len=5) :: pre
 
   write(*,'(a)') '2. files'
 
@@ -232,74 +245,153 @@
   chn(1) = 'BXN' ; chn(2) = 'BXE' ; chn(3) = 'BXZ'
 
   !--- the binary seismograms, read back against the format ---------------
+  !
+  ! Five groups over the three files: the bytes, the header reals, the
+  ! header integers, the header strings, the data. The reals and the data
+  ! assert TOL_SINGLE against the doubles the writer was given -- not
+  ! equality with a real(x) re-evaluated here, which is a claim across two
+  ! compilation units and the one the CI ifort failed; integers and strings
+  ! are bytes and stay exact. A file that cannot be read fails the first
+  ! group and drops out of the others.
 
   allocate(data(nt))
-  nbad = 0
+  nbad_file = 0 ; nbad_int = 0 ; nbad_str = 0
+  err_real = 0.d0 ; err_data = 0.d0
   do icomp = 1,GF_NCOMP
+    pre = chn(icomp)//': '
     fname = OUTDIR//'/IU.SJG.'//chn(icomp)//'.sem.sac'
     inquire(file=trim(fname),exist=exists)
-    if (.not. exists) then
-      nbad = nbad + 1
-      cycle
-    endif
+    call note(exists,pre//'missing '//trim(fname),nbad_file)
+    if (.not. exists) cycle
+    ! the size first, so that a short file and a failed read are told apart
+    inquire(file=trim(fname),size=fsize)
+    call note(fsize == 632 + 4*nt,pre//'file size',nbad_file,int(fsize))
     open(newunit=iunit,file=trim(fname),access='stream',form='unformatted',status='old',action='read',iostat=ios)
+    call note(ios == 0,pre//'open, ios',nbad_file,ios)
+    if (ios /= 0) cycle
     read(iunit,iostat=ios) fh,ih,ch,data
     close(iunit)
-    if (ios /= 0) then
-      nbad = nbad + 1
-      cycle
-    endif
+    call note(ios == 0,pre//'stream read, ios',nbad_file,ios)
+    if (ios /= 0) cycle
 
     ! reals: DELTA(1) B(6) O(8) STLA(32) STLO(33) STEL(34) STDP(35) EVLA(36)
-    ! EVLO(37) EVDP(39) USER0(41) CMPAZ(58) CMPINC(59)
-    if (fh(1) /= real(tax%dt_sub) .or. fh(6) /= real(tax%t_first) .or. fh(8) /= 0.0) nbad = nbad + 1
-    if (fh(32) /= real(18.1091d0) .or. fh(33) /= real(-66.15d0) .or. fh(34) /= -12345.0 .or. fh(35) /= 0.0) nbad = nbad + 1
-    if (fh(36) /= real(-5.812d0) .or. fh(37) /= real(-75.27d0) .or. fh(39) /= real(122.6d0)) nbad = nbad + 1
-    if (fh(41) /= 60.0 .or. fh(43) /= 500.0) nbad = nbad + 1
+    ! EVLO(37) EVDP(39) USER0(41) USER2(43) CMPAZ(58) CMPINC(59)
+    call note_real(pre//'DELTA',fh(1),tax%dt_sub,err_real)
+    call note_real(pre//'B',fh(6),tax%t_first,err_real)
+    call note_real(pre//'O',fh(8),0.d0,err_real)
+    call note_real(pre//'STLA',fh(32),18.1091d0,err_real)
+    call note_real(pre//'STLO',fh(33),-66.15d0,err_real)
+    call note_real(pre//'STEL',fh(34),-12345.d0,err_real)
+    call note_real(pre//'STDP',fh(35),0.d0,err_real)
+    call note_real(pre//'EVLA',fh(36),-5.812d0,err_real)
+    call note_real(pre//'EVLO',fh(37),-75.27d0,err_real)
+    call note_real(pre//'EVDP',fh(39),122.6d0,err_real)
+    call note_real(pre//'USER0',fh(41),60.d0,err_real)
+    call note_real(pre//'USER2',fh(43),500.d0,err_real)
     select case (icomp)
     case (1)
-      if (fh(58) /= 0.0 .or. fh(59) /= 90.0) nbad = nbad + 1
+      call note_real(pre//'CMPAZ',fh(58),0.d0,err_real)
+      call note_real(pre//'CMPINC',fh(59),90.d0,err_real)
     case (2)
-      if (fh(58) /= 90.0 .or. fh(59) /= 90.0) nbad = nbad + 1
+      call note_real(pre//'CMPAZ',fh(58),90.d0,err_real)
+      call note_real(pre//'CMPINC',fh(59),90.d0,err_real)
     case (3)
-      if (fh(58) /= 0.0 .or. fh(59) /= 0.0) nbad = nbad + 1
+      call note_real(pre//'CMPAZ',fh(58),0.d0,err_real)
+      call note_real(pre//'CMPINC',fh(59),0.d0,err_real)
     end select
     ! integers: NZYEAR..NZMSEC (1..6), NVHDR(7), NPTS(10), IFTYPE(16),
     ! IDEP(17), IZTYPE(18), LEVEN(36), LCALDA(39)
-    if (ih(1) /= 1994 .or. ih(2) /= 160 .or. ih(3) /= 0 .or. ih(4) /= 33 .or. ih(5) /= 45 .or. ih(6) /= 399) nbad = nbad + 1
-    if (ih(7) /= 6 .or. ih(10) /= nt .or. ih(16) /= 1 .or. ih(17) /= 6 .or. ih(18) /= 11) nbad = nbad + 1
-    if (ih(36) /= 1 .or. ih(39) /= 1) nbad = nbad + 1
+    call note(ih(1) == 1994,pre//'NZYEAR',nbad_int,ih(1))
+    call note(ih(2) == 160,pre//'NZJDAY',nbad_int,ih(2))
+    call note(ih(3) == 0,pre//'NZHOUR',nbad_int,ih(3))
+    call note(ih(4) == 33,pre//'NZMIN',nbad_int,ih(4))
+    call note(ih(5) == 45,pre//'NZSEC',nbad_int,ih(5))
+    call note(ih(6) == 399,pre//'NZMSEC',nbad_int,ih(6))
+    call note(ih(7) == 6,pre//'NVHDR',nbad_int,ih(7))
+    call note(ih(10) == nt,pre//'NPTS',nbad_int,ih(10))
+    call note(ih(16) == 1,pre//'IFTYPE',nbad_int,ih(16))
+    call note(ih(17) == 6,pre//'IDEP',nbad_int,ih(17))
+    call note(ih(18) == 11,pre//'IZTYPE',nbad_int,ih(18))
+    call note(ih(36) == 1,pre//'LEVEN',nbad_int,ih(36))
+    call note(ih(39) == 1,pre//'LCALDA',nbad_int,ih(39))
     ! strings: KSTNM(1:8) KEVNM(9:24) KHOLE(25:32) KUSER0(137:144) KUSER1(145:152)
-    ! KUSER2(153:160) KCMPNM(161:168) KNETWK(169:176)
-    if (ch(1:8) /= 'SJG     ' .or. ch(9:24) /= '060994A         ' .or. ch(25:32) /= 'S3      ') nbad = nbad + 1
-    if (ch(137:144) /= 'SY      ' .or. ch(145:152) /= 'gf3d    ' .or. ch(161:168) /= chn(icomp)//'     ' .or. &
-        ch(169:176) /= 'IU      ') nbad = nbad + 1
-    ! the data, single precision, bitwise
+    ! KUSER2(153:160) KCMPNM(161:168) KNETWK(169:176); blank-padded, as the
+    ! writer pads them
+    call note(ch(1:8) == 'SJG',pre//'KSTNM '//ch(1:8),nbad_str)
+    call note(ch(9:24) == '060994A',pre//'KEVNM '//ch(9:24),nbad_str)
+    call note(ch(25:32) == 'S3',pre//'KHOLE '//ch(25:32),nbad_str)
+    call note(ch(137:144) == 'SY',pre//'KUSER0 '//ch(137:144),nbad_str)
+    call note(ch(145:152) == 'gf3d',pre//'KUSER1 '//ch(145:152),nbad_str)
+    call note(ch(153:160) == GF3D_VERSION,pre//'KUSER2 '//ch(153:160),nbad_str)
+    call note(ch(161:168) == chn(icomp),pre//'KCMPNM '//ch(161:168),nbad_str)
+    call note(ch(169:176) == 'IU',pre//'KNETWK '//ch(169:176),nbad_str)
+    ! the data, against the doubles the writer was given, relative to the
+    ! trace's peak: per sample, a zero crossing would divide by ~0 and a
+    ! tiny sample flushed under -ftz would count as a defect; the rounding
+    ! bound u|x| <= u*peak still holds, and a shifted sample or a swapped
+    ! component is a whole sample of the peak, not a rounding
+    peak = maxval(abs(seis(1,icomp,:)))
+    emax = 0.d0 ; itmax = 0
     do it = 1,nt
-      if (data(it) /= real(seis(1,icomp,it))) nbad = nbad + 1
+      e = abs(dble(data(it)) - seis(1,icomp,it))/peak
+      if (e > emax) then
+        emax = e ; itmax = it
+      endif
     enddo
+    if (emax > TOL_SINGLE) write(*,'(a,es10.3,a,i0)') '       mismatch: '//pre//'data, rel. err ',emax,' at sample ',itmax
+    err_data = max(err_data,emax)
   enddo
-  call gf_report_true('binary seismograms: header fields and data as written',nbad == 0,nfail)
+  call gf_report_true('binary seismograms: 3 files of 632 + 4 nt bytes, read back',nbad_file == 0,nfail)
+  call gf_report('binary seismograms: header reals to single precision (rel)',err_real,TOL_SINGLE,nfail)
+  call gf_report_true('binary seismograms: header integers NZ*, NVHDR, NPTS, IFTYPE, IDEP, IZTYPE, LEVEN, LCALDA', &
+                      nbad_int == 0,nfail)
+  call gf_report_true('binary seismograms: header strings KSTNM, KEVNM, KHOLE, KUSER0..2, KCMPNM, KNETWK', &
+                      nbad_str == 0,nfail)
+  call gf_report('binary seismograms: data to single precision (rel. to the trace peak)',err_data,TOL_SINGLE,nfail)
 
   !--- the binary partial ----------------------------------------------------
 
-  nbad = 0
+  nbad_file = 0 ; nbad_str = 0
+  err_real = 0.d0 ; err_data = 0.d0
+  readok = .false.
   fname = OUTDIR//'/IU.SJG.BXZ.Mrr.sem.sac'
   inquire(file=trim(fname),exist=exists)
+  call note(exists,'missing '//trim(fname),nbad_file)
   if (exists) then
+    inquire(file=trim(fname),size=fsize)
+    call note(fsize == 632 + 4*nt,'file size',nbad_file,int(fsize))
     open(newunit=iunit,file=trim(fname),access='stream',form='unformatted',status='old',action='read',iostat=ios)
-    read(iunit,iostat=ios) fh,ih,ch,data
-    close(iunit)
-    if (ios /= 0) nbad = nbad + 1
-    if (ch(145:152) /= 'Mrr     ' .or. ch(153:160) /= 'm/dynecm') nbad = nbad + 1
-    if (ch(161:168) /= 'BXZ     ' .or. ih(10) /= nt .or. fh(6) /= real(tax%t_first)) nbad = nbad + 1
-    do it = 1,nt
-      if (data(it) /= real(dp(1,1,3,it))) nbad = nbad + 1
-    enddo
-  else
-    nbad = nbad + 1
+    call note(ios == 0,'open, ios',nbad_file,ios)
+    if (ios == 0) then
+      read(iunit,iostat=ios) fh,ih,ch,data
+      close(iunit)
+      call note(ios == 0,'stream read, ios',nbad_file,ios)
+      readok = (ios == 0)
+    endif
   endif
-  call gf_report_true('binary partial: named in the file and in KUSER1/KUSER2, data as written',nbad == 0,nfail)
+  call gf_report_true('binary partial: file of 632 + 4 nt bytes, read back',nbad_file == 0,nfail)
+  if (readok) then
+    call note(ch(145:152) == 'Mrr','KUSER1 '//ch(145:152),nbad_str)
+    call note(ch(153:160) == 'm/dynecm','KUSER2 '//ch(153:160),nbad_str)
+    call note(ch(161:168) == 'BXZ','KCMPNM '//ch(161:168),nbad_str)
+    call note(ih(10) == nt,'NPTS',nbad_str,ih(10))
+    call gf_report_true('binary partial: KUSER1 = Mrr, KUSER2 = m/dynecm, KCMPNM = BXZ, NPTS = nt',nbad_str == 0,nfail)
+    call note_real('B',fh(6),tax%t_first,err_real)
+    call gf_report('binary partial: B = t_first to single precision (rel)',err_real,TOL_SINGLE,nfail)
+    peak = maxval(abs(dp(1,1,3,:)))
+    emax = 0.d0 ; itmax = 0
+    do it = 1,nt
+      e = abs(dble(data(it)) - dp(1,1,3,it))/peak
+      if (e > emax) then
+        emax = e ; itmax = it
+      endif
+    enddo
+    if (emax > TOL_SINGLE) write(*,'(a,es10.3,a,i0)') '       mismatch: data, rel. err ',emax,' at sample ',itmax
+    err_data = emax
+    call gf_report('binary partial: data to single precision (rel. to the trace peak)',err_data,TOL_SINGLE,nfail)
+  else
+    write(*,'(a)') '       skipped: the partial''s header and data comparisons (the file was not read)'
+  endif
 
   !--- the alphanumeric file -------------------------------------------------
 
@@ -357,5 +449,56 @@
   deallocate(seis,dp,data,db%stations)
 
   end subroutine test_files
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine note(cond,what,nbad,ival)
+
+! one member of a boolean group: names itself in the log when it fails, so
+! that the group's verdict line is not the only trace of which field was
+! wrong (the CI log is all there is of a run there); ival, when given, is
+! the value found
+
+  implicit none
+  logical, intent(in) :: cond
+  character(len=*), intent(in) :: what
+  integer, intent(inout) :: nbad
+  integer, intent(in), optional :: ival
+
+  if (cond) return
+  if (present(ival)) then
+    write(*,'(a,i0)') '       mismatch: '//what//' = ',ival
+  else
+    write(*,'(a)') '       mismatch: '//what
+  endif
+  nbad = nbad + 1
+
+  end subroutine note
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine note_real(what,f,x,err)
+
+! one single-precision header field against the double the writer was
+! given: |f - x| / max(1,|x|), accumulated into the group's error and named
+! when above TOL_SINGLE
+
+  implicit none
+  character(len=*), intent(in) :: what
+  real, intent(in) :: f
+  double precision, intent(in) :: x
+  double precision, intent(inout) :: err
+
+  double precision :: e
+
+  e = abs(dble(f) - x)/max(1.d0,abs(x))
+  if (e > TOL_SINGLE) write(*,'(a,es12.5,a,es12.5)') '       mismatch: '//what//' = ',f,'  expected ',x
+  err = max(err,e)
+
+  end subroutine note_real
 
   end program test_gf_sac
