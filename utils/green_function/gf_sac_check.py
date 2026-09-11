@@ -46,6 +46,34 @@ except ImportError:  # pragma: no cover - the runner skips before this
 
 COMPONENTS = "NEZ"
 
+# The single-precision row of testing.md's tolerance table, applied to the
+# stored data relative to the trace's own peak.
+#
+# Not bitwise, and the reason is a real difference between compilers rather
+# than a slack tolerance. The Intel builds carry -ftz (flags.guess:104,115),
+# so the writer's real(x) flushes a subnormal to zero where numpy's
+# float32() keeps it. On the moment-tensor partials, whose values are ~1e-32
+# per dyne-cm, three dozen samples per trace are subnormal, and under ifx
+# every one of them differs -- by 1e-7 of the trace peak, which is nothing,
+# while a shifted sample or a swapped component would be a whole peak.
+#
+# The same rule was applied to the tier-1 re-read in test_gf_sac.f90 after
+# the Intel CI failed it; this is the tier-2 half of it. See testing.md.
+SINGLE_TOL = 1.0e-6
+
+
+def data_error(stored, expected):
+    """Largest difference between two single-precision traces, relative to
+    the peak of the expected one."""
+    stored = np.asarray(stored, dtype=np.float64)
+    expected = np.asarray(expected, dtype=np.float64)
+    if stored.shape != expected.shape:
+        return np.inf
+    peak = np.abs(expected).max()
+    if peak == 0.0:
+        return float(np.abs(stored).max())
+    return float(np.abs(stored - expected).max() / peak)
+
 
 class Checker:
     def __init__(self):
@@ -122,10 +150,12 @@ def main():
                       f"{station}.{chan}: b = t_first ({h.b} vs {plan['t_first']})")
             chk.check(h.o == 0.0, f"{station}.{chan}: o = 0")
 
-            # the data, single precision, exactly
+            # the data, at the single-precision row
             col = traces[comp].astype(np.float32)
-            chk.check(tr.data.dtype == np.float32 and np.array_equal(tr.data, col),
-                      f"{station}.{chan}: data equal the ASCII column in single precision")
+            err = data_error(tr.data, col)
+            chk.check(tr.data.dtype == np.float32 and err <= SINGLE_TOL,
+                      f"{station}.{chan}: data equal the ASCII column in single precision "
+                      f"({err:.2e})")
 
             # the forward run's headers
             fsac = os.path.join(args.fwd, f"{station}.{chan}.sem.sac")
@@ -157,8 +187,9 @@ def main():
                     chk.check(False, f"{station}.{chan}.{name}: obspy read failed: {exc}")
                     continue
                 ph = ptr.stats.sac
-                chk.check(np.array_equal(ptr.data, pcols[(comp, name)].astype(np.float32)),
-                          f"{station}.{chan}.{name}: data equal the partials column")
+                perr = data_error(ptr.data, pcols[(comp, name)].astype(np.float32))
+                chk.check(perr <= SINGLE_TOL,
+                          f"{station}.{chan}.{name}: data equal the partials column ({perr:.2e})")
                 chk.check(str(ph.kuser1).strip() == name, f"{station}.{chan}.{name}: kuser1 = {name}")
                 same = all(getattr(ph, k) == getattr(h, k) for k in
                            ("b", "delta", "npts", "o", "nzyear", "nzjday", "nzhour", "nzmin", "nzsec",

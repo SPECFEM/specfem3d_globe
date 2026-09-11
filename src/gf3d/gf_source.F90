@@ -54,21 +54,35 @@
 !----   the centroid time. Those seconds are origin-time metadata for Stage
 !----   10's SAC headers, not part of the trace.
 !----
-!---- Known wart, deferred to Stage 9
-!---- -------------------------------
-!---- get_force `stop`s on malformed input (get_force.f90:240,248,272), which
-!---- breaks this library's no-stop invariant. The common case -- a missing
-!---- file, :103 -- is pre-empted below with an inquire(); the rest need a
-!---- validating pre-pass that would amount to a second parser, and forking
-!---- the reader would give up the scaleF reuse that motivates using it. The
-!---- trade is recorded rather than hidden.
+!---- The `stop`s in the readers, and the way round them (Stage 9)
+!---- -----------------------------------------------------------
+!---- get_force `stop`s on malformed input (get_force.f90:240,248,272) and
+!---- get_cmt on a missing file (:103), which breaks this library's no-stop
+!---- invariant. A `stop` inside lib/libgf3d.so kills the calling Python
+!---- interpreter with no traceback, so the C facade must not be able to
+!---- reach one.
+!----
+!---- The common case -- a missing file -- is pre-empted below with an
+!---- inquire(). For the rest, Stage 9 does not fork the readers (that would
+!---- give up the scaleF/scaleM reuse that motivates using them) and does not
+!---- add a validating pre-pass (that would amount to a second parser).
+!---- Instead the *file* route stays exactly as it is, for xgf3d and for a
+!---- Fortran caller, and the C/Python route never enters it: the caller
+!---- passes values, and gf_source_set_cmt/gf_source_set_force apply the
+!---- readers' own post-parse arithmetic to them, returning an error code
+!---- where the reader would stop. Parsing a CMTSOLUTION is then the Python
+!---- side's job, which is where a malformed file should be diagnosed anyway.
+!----
+!---- The two routes are pinned against each other by tests/gf3d/
+!---- 4d.test_gf_source, at the suite's derived tolerance: they are separate
+!---- compilation units evaluating the same expressions.
 !----
 !---- No `use hdf5`: this is a kernel module.
 !----
 
   module gf_source
 
-  use gf_par, only: t_gf_source,gf_set_error, &
+  use gf_par, only: t_gf_source,gf_set_error,gf_is_finite,gf_all_finite, &
                     GF_OK,GF_ERR_ARG,GF_ERR_NO_FILE,GF_ERR_FORMAT, &
                     GF_SRC_FORCE,GF_SRC_CMT
 
@@ -79,6 +93,8 @@
   public :: gf_read_force_source
   public :: gf_read_cmt_source
   public :: gf_read_source
+  public :: gf_source_set_cmt
+  public :: gf_source_set_force
   public :: gf_detect_source_type
   public :: gf_force_direction
   public :: gf_print_source
@@ -271,6 +287,242 @@
   ierr = GF_OK
 
   end subroutine gf_read_cmt_source
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_source_set_cmt(src,lat,lon,depth_km,hdur,time_shift,moment_dynecm,dt,ierr)
+
+! builds a CMT source from values rather than from a file
+!
+! This is what the C facade calls, so that no path reachable from Python
+! enters get_cmt() and its stop statements (see the module header).
+!
+! Everything get_cmt does to the numbers *after* it has parsed them is
+! applied here, line by line, so that the two routes cannot drift:
+!
+!   get_cmt.f90:397     hdur = max(hdur, 5*DT). Unconditional in the current
+!                       source: the USE_FORCE_POINT_SOURCE branch above it
+!                       (:387-393) is commented out. A null half duration
+!                       means a Heaviside, replaced by a very short error
+!                       function.
+!   get_cmt.f90:405     NOISE_TOMOGRAPHY /= 0 zeroes hdur entirely
+!   get_cmt.f90:408     EXTERNAL_SOURCE_TIME_FUNCTION does the same
+!                       (constants.h:337, .false.); both are no-ops under
+!                       the settings gf_shared_params installs, and both are
+!                       mirrored so that flipping either cannot make the two
+!                       routes disagree
+!   get_cmt.f90:411-413 NSOURCES == 1 zeroes tshift_src and returns the file's
+!                       value in min_tshift_src_original, so t = 0 is the
+!                       centroid time
+!   get_cmt.f90:427-428 scaleM, and the moment tensor divided by it
+!
+! `moment_dynecm` is (Mrr,Mtt,Mpp,Mrt,Mrp,Mtp) in dyne-cm, i.e. the
+! CMTSOLUTION's own numbers and units. `depth_km` is km, `hdur` the raw
+! triangle half duration in seconds, `time_shift` the file's `time shift:`
+! in seconds. `dt` is the database's solver step, needed for the clamp.
+!
+! The PDE header fields and the event name are left blank: they exist for
+! Stage 10's SAC headers, which the in-memory API does not write.
+
+  use constants, only: PI,GRAV,EXTERNAL_SOURCE_TIME_FUNCTION
+
+  use shared_parameters, only: RHOAV,R_PLANET,NOISE_TOMOGRAPHY
+
+  implicit none
+
+  type(t_gf_source), intent(out) :: src
+  double precision, intent(in) :: lat,lon,depth_km,hdur,time_shift,dt
+  double precision, dimension(6), intent(in) :: moment_dynecm
+  integer, intent(out) :: ierr
+
+  ! local parameters
+  double precision :: scale_moment,hdur_use
+
+  src = t_gf_source()
+
+  ! screened before anything arithmetic touches them: a NaN latitude would
+  ! pass reduce()'s range test in gf_locate (both comparisons are false)
+  ! and reach the kd-tree, which stops when it finds no point
+  if (.not. (gf_is_finite(lat) .and. gf_is_finite(lon) .and. gf_is_finite(depth_km) &
+       .and. gf_is_finite(hdur) .and. gf_is_finite(time_shift) .and. gf_is_finite(dt))) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_source_set_cmt: a source parameter is not finite')
+    return
+  endif
+  if (.not. gf_all_finite(moment_dynecm)) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_source_set_cmt: a moment tensor component is not finite')
+    return
+  endif
+
+  if (dt <= 0.d0) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_source_set_cmt: the database time step must be positive')
+    return
+  endif
+
+  if (RHOAV <= 0.d0 .or. R_PLANET <= 0.d0) then
+    call gf_set_error(ierr,GF_ERR_ARG, &
+      'gf_source_set_cmt: planet constants are unset; open a database first')
+    return
+  endif
+
+  src%source_type = GF_SRC_CMT
+  src%filename = ''
+
+  src%latitude  = lat
+  src%longitude = lon
+  src%depth     = depth_km
+
+  ! get_cmt.f90:397, and then :405/:408
+  hdur_use = hdur
+  if (hdur_use < 5.d0 * dt) hdur_use = 5.d0 * dt
+  if (NOISE_TOMOGRAPHY /= 0) hdur_use = 0.d0
+  if (EXTERNAL_SOURCE_TIME_FUNCTION) hdur_use = 0.d0
+
+  src%hdur = hdur_use
+
+  ! get_cmt.f90:411-413
+  src%tshift_src = 0.d0
+  src%min_tshift_src_original = time_shift
+
+  ! get_cmt.f90:427-428, in get_cmt's own expression from the same module
+  ! variables gf_shared_params set from the database
+  scale_moment = 1.d7 * RHOAV * (R_PLANET**5) * PI*GRAV*RHOAV
+
+  src%moment_tensor(1:6) = moment_dynecm(1:6) / scale_moment
+  src%scale_moment = scale_moment
+
+  ierr = GF_OK
+
+  end subroutine gf_source_set_cmt
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_source_set_force(src,lat,lon,depth_km,f0,time_shift,force_stf, &
+                                 factor_newton,dir_E,dir_N,dir_Z_UP,dt,ierr)
+
+! builds a force source from values rather than from a file
+!
+! The force half of gf_source_set_cmt, and the one that matters more for the
+! no-stop invariant: get_force stops on three malformed inputs, and each of
+! them is an error code here.
+!
+!   get_force.f90:218-249  per force_stf, the half-duration check:
+!                            0, 2, 4  hdur = max(f0, 5*DT)
+!                            1        Ricker, hdur = max(f0, TINYVAL)
+!                            3        monochromatic; f0 < TINYVAL *stops*
+!                            other    *stops*
+!                          (the reader writes `5. * DT`, a default-real
+!                           literal that is exactly 5, so 5.d0*dt agrees
+!                           bit for bit)
+!   get_force.f90:260      a second, unconditional hdur = max(hdur, TINYVAL)
+!   get_force.f90:265-273  a (near) zero-length direction vector *stops*
+!   get_force.f90:277-279  NSOURCES == 1 zeroes tshift_src
+!   get_force.f90:289-290  scaleF, and the factor divided by it
+!
+! `f0` is the FORCESOLUTION's `f0:` field -- a dominant frequency for a
+! Ricker, a Gaussian width otherwise -- which the reader stores in `hdur`.
+! `factor_newton` is `factor force source:` in Newtons. The direction vector
+! has arbitrary length; gf_force_direction normalises it.
+
+  use constants, only: PI,GRAV,TINYVAL
+
+  use shared_parameters, only: RHOAV,R_PLANET
+
+  implicit none
+
+  type(t_gf_source), intent(out) :: src
+  double precision, intent(in) :: lat,lon,depth_km,f0,time_shift
+  integer, intent(in) :: force_stf
+  double precision, intent(in) :: factor_newton,dir_E,dir_N,dir_Z_UP,dt
+  integer, intent(out) :: ierr
+
+  ! local parameters
+  double precision :: scaleF,hdur_use,norm
+
+  src = t_gf_source()
+
+  if (.not. (gf_is_finite(lat) .and. gf_is_finite(lon) .and. gf_is_finite(depth_km) &
+       .and. gf_is_finite(f0) .and. gf_is_finite(time_shift) .and. gf_is_finite(dt) &
+       .and. gf_is_finite(factor_newton) &
+       .and. gf_is_finite(dir_E) .and. gf_is_finite(dir_N) .and. gf_is_finite(dir_Z_UP))) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_source_set_force: a source parameter is not finite')
+    return
+  endif
+
+  if (dt <= 0.d0) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_source_set_force: the database time step must be positive')
+    return
+  endif
+
+  if (RHOAV <= 0.d0 .or. R_PLANET <= 0.d0) then
+    call gf_set_error(ierr,GF_ERR_ARG, &
+      'gf_source_set_force: planet constants are unset; open a database first')
+    return
+  endif
+
+  ! get_force.f90:218-249, with the two stops turned into error codes
+  hdur_use = f0
+  select case (force_stf)
+  case (0,2,4)
+    ! Gaussian, step, or Meschede Gaussian: a null width means a Dirac,
+    ! replaced by a very short function
+    if (hdur_use < 5.d0 * dt) hdur_use = 5.d0 * dt
+  case (1)
+    ! Ricker: f0 is the dominant frequency
+    if (hdur_use < TINYVAL) hdur_use = TINYVAL
+  case (3)
+    ! monochromatic: f0 is the period, and there is no sensible default
+    if (hdur_use < TINYVAL) then
+      call gf_set_error(ierr,GF_ERR_ARG, &
+        'gf_source_set_force: a monochromatic force (source time function 3) needs a non-zero period')
+      return
+    endif
+  case default
+    call gf_set_error(ierr,GF_ERR_ARG, &
+      'gf_source_set_force: unsupported source time function type (force_stf), expected 0 to 4')
+    return
+  end select
+
+  ! get_force.f90:260
+  if (hdur_use < TINYVAL) hdur_use = TINYVAL
+
+  ! get_force.f90:265-273
+  norm = sqrt(dir_E**2 + dir_N**2 + dir_Z_UP**2)
+  if (norm < TINYVAL) then
+    call gf_set_error(ierr,GF_ERR_ARG, &
+      'gf_source_set_force: the force direction vector has (almost) zero length')
+    return
+  endif
+
+  src%source_type = GF_SRC_FORCE
+  src%filename = ''
+
+  src%latitude  = lat
+  src%longitude = lon
+  src%depth     = depth_km
+
+  src%hdur = hdur_use
+
+  ! get_force.f90:277-279
+  src%tshift_src = 0.d0
+  src%min_tshift_src_original = time_shift
+
+  src%force_stf = force_stf
+
+  ! get_force.f90:289-290
+  scaleF = RHOAV * (R_PLANET**4) * PI*GRAV*RHOAV
+  src%factor_force_source = factor_newton / scaleF
+
+  src%comp_dir_vect_source_E    = dir_E
+  src%comp_dir_vect_source_N    = dir_N
+  src%comp_dir_vect_source_Z_UP = dir_Z_UP
+
+  ierr = GF_OK
+
+  end subroutine gf_source_set_force
 
 !
 !-------------------------------------------------------------------------------------------------

@@ -41,6 +41,16 @@ FCFLAGS_f90 = -I${SETUP} @FCFLAGS_f90@ -I@top_builddir@
 FC_MODEXT = @FC_MODEXT@
 FC_MODDIR = @FC_MODDIR@
 
+# module output/search flags, used by src/gf3d/ to build the -fPIC objects of
+# lib/libgf3d.so into their own module directory.
+#
+# configure appends ${ac_empty} to either flag when it needs a trailing space
+# (ifort's "-module ", as opposed to gfortran's "-J"), so ac_empty must exist
+# here and expand to nothing: see AC_FC_MODULE_OUTPUT_FLAG in m4/cit_backports.m4.
+ac_empty =
+FC_MODOUT = @FC_MODOUT@
+FC_MODINC = @FC_MODINC@
+
 FCCOMPILE_CHECK =@FCENV@ ${FC} ${FCFLAGS} $(FLAGS_CHECK)
 
 MPIFCCOMPILE_CHECK =@FCENV@ ${MPIFC} ${FCFLAGS} $(FLAGS_CHECK)
@@ -759,6 +769,7 @@ ifeq ($(HDF5), yes)
 	@echo "for Green function database extraction: [make gf3d]"
 	@echo "    xgf3d"
 	@echo "    lib/libgf3d.a"
+	@echo "    lib/libgf3d.so   (with include/gf3d.h for C and include/gf3d.mod for Fortran)"
 	@echo ""
 endif
 

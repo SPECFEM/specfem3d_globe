@@ -810,33 +810,10 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  logical function gf_is_finite(x)
-
-! true when x is neither NaN nor infinite
-!
-! Written as a bit test rather than with ieee_is_finite() because the
-! intrinsic IEEE modules are not universally available — the Red Hat
-! gcc-toolset gfortran packages, among others, ship without them — and
-! because a comparison against a NaN is itself an invalid operation under
-! -ffpe-trap=invalid. transfer() and iand() touch no floating-point unit.
-!
-! An IEEE-754 binary64 is NaN or infinite exactly when its 11 exponent
-! bits (52..62) are all set. ISHFT is defined as a *logical* shift, so the
-! sign bit does not smear into the result.
-
-  implicit none
-
-  double precision, intent(in) :: x
-
-  ! local parameters
-  integer(kind=8) :: bits
-  integer(kind=8), parameter :: EXPONENT_MASK = 2047_8
-
-  bits = transfer(x,bits)
-
-  gf_is_finite = (iand(ishft(bits,-52),EXPONENT_MASK) /= EXPONENT_MASK)
-
-  end function gf_is_finite
+! gf_is_finite() moved to gf_par in Stage 9: the C facade screens every
+! value that crosses the boundary with it, and gf_source (a kernel module,
+! below the HDF5 tier) needs it too. It is used unchanged here, by use
+! association.
 
 !
 !-------------------------------------------------------------------------------------------------

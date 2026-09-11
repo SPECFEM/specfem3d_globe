@@ -1,0 +1,5 @@
+# the demonstrations' own output
+gf3d_api_demo.png
+gf3d_events_demo.png
+__pycache__/
+*.png

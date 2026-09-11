@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gf3d"
+version = "0.1.0"
+description = "Green function extraction from a specfem3d_globe reciprocal database"
+requires-python = ">=3.10"
+license = { text = "GPL-3.0-or-later" }
+# numpy only: the package is a ctypes binding, so there is nothing to
+# compile at install time and no build backend to depend on. obspy is
+# needed by Result.to_stream() alone.
+dependencies = ["numpy>=1.22"]
+
+[project.optional-dependencies]
+obspy = ["obspy>=1.4"]
+
+[tool.setuptools]
+packages = ["gf3d"]

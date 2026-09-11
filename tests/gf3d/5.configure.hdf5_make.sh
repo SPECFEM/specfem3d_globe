@@ -100,11 +100,54 @@ fi
 echo "binary exists: $var" >> $testdir/results.log
 echo "library exists: lib/libgf3d.a" >> $testdir/results.log
 
+# Stage 9's products: the shared object, the C header and the public module.
+# A missing one is a build regression, not a reason to skip: `make gf3d`
+# just succeeded, so it promised all four.
+for f in ./lib/libgf3d.so ./include/gf3d.h; do
+  if [ ! -e "$f" ]; then
+    echo "make gf3d did not produce $f, please check..." >> $testdir/results.log
+    exit 1
+  fi
+  echo "exists: $f" >> $testdir/results.log
+done
+
+# the module file's name follows the compiler's own case convention
+if [ ! -e ./include/gf3d.mod ] && [ ! -e ./include/GF3D.mod ]; then
+  echo "make gf3d did not install the public module into include/" >> $testdir/results.log
+  exit 1
+fi
+echo "exists: include/gf3d.mod" >> $testdir/results.log
+
+# the C entry points must actually be exported from the shared object
+echo "checking the exported C symbols" >> $testdir/results.log
+if command -v nm > /dev/null 2>&1; then
+  for sym in gf3d_open gf3d_close gf3d_get_info gf3d_get_station gf3d_locate \
+             gf3d_get_plan gf3d_seismograms gf3d_partials gf3d_last_error gf3d_sizeof; do
+    if ! nm -D --defined-only ./lib/libgf3d.so 2>/dev/null | grep -q " T $sym$"; then
+      echo "libgf3d.so does not export $sym, please check..." >> $testdir/results.log
+      exit 1
+    fi
+  done
+  echo "all C entry points are exported" >> $testdir/results.log
+fi
+
+# The point of baking an rpath into the shared object is that ctypes can
+# load it with no LD_LIBRARY_PATH set. Check that, rather than assuming it.
+if command -v ldd > /dev/null 2>&1; then
+  echo "checking that libgf3d.so resolves HDF5 without LD_LIBRARY_PATH" >> $testdir/results.log
+  env -u LD_LIBRARY_PATH ldd ./lib/libgf3d.so >> $testdir/results.log 2>&1
+  if env -u LD_LIBRARY_PATH ldd ./lib/libgf3d.so 2>/dev/null | grep -i "hdf5.*not found" > /dev/null; then
+    echo "libgf3d.so cannot find HDF5 without LD_LIBRARY_PATH, please check..." >> $testdir/results.log
+    exit 1
+  fi
+fi
+
 # the library itself must reference no MPI symbol. HDF5 may of course be a
 # parallel build and drag libmpi in transitively; that is HDF5's dependency,
-# not ours, so this checks our own objects rather than ldd of the binary.
+# not ours, so this checks our own objects rather than ldd of the binary or
+# of the shared object.
 echo "checking that libgf3d.a references no MPI" >> $testdir/results.log
-if nm ./obj/gf_*.o ./obj/gf3d_main*.o | grep -i ' U .*mpi_' >> $testdir/results.log 2>&1; then
+if nm ./obj/gf_*.o ./obj/gf3d_main*.o ./obj/gf3d_capi*.o | grep -i ' U .*mpi_' >> $testdir/results.log 2>&1; then
   echo "a gf3d object references MPI, please check..." >> $testdir/results.log
   exit 1
 fi

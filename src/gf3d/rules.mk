@@ -88,12 +88,20 @@ gf3d_KERNEL_SHARED_OBJECTS = \
 	$(EMPTY_MACRO)
 
 ## the parts that read the database, and therefore need HDF5
+##
+## gf3d.gf3d.o is the public Fortran module -- a re-export facade, so that a
+## downstream program needs `use gf3d` and nothing else -- and
+## gf3d_capi.gf3d.o is the bind(C) facade behind include/gf3d.h and the
+## Python package. Both sit here rather than with the kernels because they
+## re-export the database side.
 gf3d_HDF5_OBJECTS = \
 	$O/gf_hdf5_read.gf3d.o \
 	$O/gf_database.gf3d.o \
 	$O/gf_element_io.gf3d.o \
 	$O/gf_locate.gf3d.o \
 	$O/gf_seismograms.gf3d.o \
+	$O/gf3d.gf3d.o \
+	$O/gf3d_capi.gf3d.o \
 	$(EMPTY_MACRO)
 
 ## From src/specfem3D/: the FORCESOLUTION and CMTSOLUTION readers, reused
@@ -169,6 +177,95 @@ gf3d_SHARED_OBJECTS = \
 	$(gf3d_KERNEL_SHARED_OBJECTS) \
 	$(EMPTY_MACRO)
 
+#######################################
+##
+## -fPIC objects, for lib/libgf3d.so
+##
+## A shared object needs every one of its objects compiled -fPIC, and
+## $O/*.shared.o and $O/*.solver.o are not: they belong to the solver's
+## build, which must not change (this is PR 1's invariant, and a global
+## -fPIC would break it).
+##
+## Two halves, and they are handled differently:
+##
+##  - src/gf3d/'s own objects are compiled -fPIC *always*, in place. Nothing
+##    but gf3d links them, position-independent code costs nothing
+##    measurable on x86-64, and a second copy of every gf_*.o would mean a
+##    second copy of every gf_*.mod and a module-file race under `make -j`.
+##
+##  - the src/shared and src/specfem3D sources the library reuses get a
+##    second object suffix, $O/%.gfpic.o, and their module files go into
+##    $O/gfpic/ so that they can never race the solver's own compile of the
+##    same source.
+##
+## The twins are only ever built for the .so; lib/libgf3d.a keeps using the
+## ordinary $O/*.shared.o, so a Fortran or C caller of the static library
+## links exactly what it did before.
+gf3d_PICMODDIR = $O/gfpic
+
+## Module output and search flags for the twins. Deliberately *without*
+## $(FC_MODINC)$O: if a twin is missing a dependency below, it must fail to
+## compile rather than quietly pick up the solver's .mod file from $O.
+FCFLAGS_gfpic = -I${SETUP} $(FC_MODOUT)$(gf3d_PICMODDIR) $(FC_MODINC)$(gf3d_PICMODDIR) -I$B
+
+## Overridable, for a compiler that spells it differently
+## (e.g. `make FC_PICFLAG=-PIC gf3d` for some non-GNU/Intel front ends).
+FC_PICFLAG ?= -fPIC
+CC_PICFLAG ?= -fPIC
+
+gf3d_PIC_SHARED_OBJECTS = \
+	$O/shared_par.gfpic.o \
+	$O/flush_system.gfpic.o \
+	$O/model_topo_bathy.gfpic.o \
+	$O/rthetaphi_xyz.gfpic.o \
+	$O/reduce.gfpic.o \
+	$O/make_ellipticity.gfpic.o \
+	$O/spline_routines.gfpic.o \
+	$O/intgrl.gfpic.o \
+	$O/model_prem.gfpic.o \
+	$O/model_Sohl.gfpic.o \
+	$O/model_vpremoon.gfpic.o \
+	$O/heap_sort.gfpic.o \
+	$O/search_kdtree.gfpic.o \
+	$O/gll_library.gfpic.o \
+	$O/lagrange_poly.gfpic.o \
+	$O/hex_nodes.gfpic.o \
+	$O/recompute_jacobian.gfpic.o \
+	$O/calendar.gfpic.o \
+	$O/binary_c_io.gfpic_cc.o \
+	$O/get_force.gfpic.o \
+	$O/get_cmt.gfpic.o \
+	$(EMPTY_MACRO)
+
+## everything that goes into the shared object: the gf3d objects (already
+## -fPIC) plus the twins, with gf3d_SOLVER_OBJECTS replaced by theirs
+gf3d_PIC_OBJECTS = \
+	$(gf3d_KERNEL_OBJECTS) \
+	$(gf3d_HDF5_OBJECTS) \
+	$(gf3d_PIC_SHARED_OBJECTS) \
+	$(EMPTY_MACRO)
+
+## the public C header and Fortran module, installed for downstream callers
+gf3d_INCDIR = $B/include
+
+gf3d_INCLUDES = \
+	$(gf3d_INCDIR)/gf3d.h \
+	$(gf3d_INCDIR)/gf3d.$(FC_MODEXT) \
+	$(EMPTY_MACRO)
+
+## Appended to gf3d_MODULES so that the central `clean` in Makefile.in
+## removes them. It has to be unconditional: gf3d_TARGETS is empty when the
+## tree was configured without HDF5, and `realclean` clears $E, $O and $L but
+## never include/.
+gf3d_CLEAN_EXTRA = \
+	$L/libgf3d.so \
+	$(gf3d_PIC_SHARED_OBJECTS) \
+	$(gf3d_PICMODDIR)/*.$(FC_MODEXT) \
+	$(gf3d_INCLUDES) \
+	$(EMPTY_MACRO)
+
+#######################################
+
 gf3d_MODULES = \
 	$(FC_MODDIR)/gf_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/gf_hdf5_read.$(FC_MODEXT) \
@@ -187,6 +284,9 @@ gf3d_MODULES = \
 	$(FC_MODDIR)/gf_partials.$(FC_MODEXT) \
 	$(FC_MODDIR)/gf_sac.$(FC_MODEXT) \
 	$(FC_MODDIR)/gf_seismograms.$(FC_MODEXT) \
+	$(FC_MODDIR)/gf3d.$(FC_MODEXT) \
+	$(FC_MODDIR)/gf3d_capi.$(FC_MODEXT) \
+	$(gf3d_CLEAN_EXTRA) \
 	$(EMPTY_MACRO)
 
 #######################################
@@ -200,7 +300,9 @@ ifeq ($(HDF5), yes)
 
 gf3d_TARGETS = \
 	$L/libgf3d.a \
+	$L/libgf3d.so \
 	$E/xgf3d \
+	$(gf3d_INCLUDES) \
 	$(EMPTY_MACRO)
 
 else
@@ -242,6 +344,53 @@ $L/libgf3d.a: $(gf3d_OBJECTS) $(gf3d_SHARED_OBJECTS)
 $E/xgf3d: $(gf3d_PROGRAM_OBJECTS) $L/libgf3d.a
 	${FCCOMPILE_CHECK} -o $@ $(gf3d_PROGRAM_OBJECTS) $L/libgf3d.a $(LDFLAGS)
 
+####
+#### the shared object, for ctypes and for any C caller that dlopen()s us
+####
+
+## The HDF5 library directories are baked in as an rpath, so that
+## `ctypes.CDLL("libgf3d.so")` resolves them with no LD_LIBRARY_PATH set --
+## a Python user has no reason to know where this tree's HDF5 came from.
+## $(LDFLAGS) is where configure put them (Makefile.in, COND_HDF5).
+comma := ,
+gf3d_RPATH = $(patsubst -L%,-Wl$(comma)-rpath$(comma)%,$(filter -L%,$(LDFLAGS)))
+
+## HDF5_USE_SHLIB: when FC is HDF5's own h5fc/h5pfc wrapper, it appends the
+## *static* HDF5 archives by default, and those are not compiled -fPIC, so
+## the shared link dies on the first archive member the linker actually
+## needs (libhdf5_hl, which Makefile.in leaves to the wrapper). Asking the
+## wrapper for the shared libraries instead fixes it at the source. The
+## variable is meaningless to a plain gfortran/ifort, where HDF5_LIBS names
+## the library directory and the .so files carry their own dependencies.
+gf3d_SO_ENV = HDF5_USE_SHLIB=yes
+
+## Note the .so is deliberately *not* in DEFAULT: `make` builds xgf3d, and
+## `make gf3d` builds this as well. A shared link is the one step here that
+## can fail on an unusual toolchain, and it must not take the executable
+## down with it.
+##
+## Note also that with a parallel HDF5 the .so lists libmpi as NEEDED, pulled
+## in transitively by libhdf5 itself, exactly as bin/xgf3d already does. That
+## is HDF5's dependency and not ours; what is ours is checked on the objects,
+## `nm $O/gf_*.o | grep ' U .*mpi_'`, by tests/gf3d/.
+$L/libgf3d.so: $(gf3d_PIC_OBJECTS)
+	@-mkdir -p $L
+	$(gf3d_SO_ENV) ${FCCOMPILE_CHECK} $(FC_PICFLAG) -shared -o $@ $(gf3d_PIC_OBJECTS) $(LDFLAGS) $(gf3d_RPATH)
+
+####
+#### the public header and module
+####
+
+## include/ is created by configure and is gitignored, so the tracked copy of
+## the header lives beside the source it describes and is installed here.
+$(gf3d_INCDIR)/gf3d.h: ${S_TOP}/src/gf3d/gf3d.h
+	@-mkdir -p $(gf3d_INCDIR)
+	cp -f $< $@
+
+$(gf3d_INCDIR)/gf3d.$(FC_MODEXT): $O/gf3d.gf3d.o
+	@-mkdir -p $(gf3d_INCDIR)
+	cp -f $(FC_MODDIR)/gf3d.$(FC_MODEXT) $@
+
 #######################################
 
 ## compilation directories
@@ -274,17 +423,56 @@ $O/gf_seismograms.gf3d.o: $O/gf_par.gf3d.o $O/gf_database.gf3d.o $O/gf_element_i
                           $O/gf_interp.gf3d.o $O/gf_source.gf3d.o $O/gf_strain.gf3d.o \
                           $O/gf_moment.gf3d.o $O/gf_stf.gf3d.o $O/gf_partials.gf3d.o \
                           $O/gf_geo_chain.gf3d.o
+$O/gf3d.gf3d.o: $O/gf_par.gf3d.o $O/gf_database.gf3d.o $O/gf_locate.gf3d.o \
+                $O/gf_source.gf3d.o $O/gf_seismograms.gf3d.o $O/gf_partials.gf3d.o \
+                $O/gf_sac.gf3d.o $O/gf_shared_params.gf3d.o
+$O/gf3d_capi.gf3d.o: $O/gf_par.gf3d.o $O/gf_database.gf3d.o $O/gf_locate.gf3d.o \
+                     $O/gf_source.gf3d.o $O/gf_seismograms.gf3d.o $O/gf_partials.gf3d.o \
+                     $O/gf_shared_params.gf3d.o
 $O/gf3d_main.gf3d.o: $O/gf_par.gf3d.o $O/gf_database.gf3d.o $O/gf_locate.gf3d.o \
                      $O/gf_source.gf3d.o $O/gf_seismograms.gf3d.o $O/gf_partials.gf3d.o \
                      $O/gf_sac.gf3d.o
 
 ## unique object suffix: every rules.mk writes into the same $O, so the
 ## pattern rules of different subdirectories must not collide
+##
+## $(FC_PICFLAG): these objects go into lib/libgf3d.so as well as into
+## lib/libgf3d.a, and nothing outside src/gf3d/ links them -- see the
+## -fPIC section above.
 $O/%.gf3d.o: $S/%.f90 $O/shared_par.shared_module.o
-	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} $(FC_PICFLAG) -c -o $@ $<
 
 $O/%.gf3d.o: $S/%.F90 $O/shared_par.shared_module.o
-	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} $(FC_PICFLAG) -c -o $@ $<
 
 $O/%.gf3d_cc.o: $S/%.c ${SETUP}/config.h
-	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $@ $<
+	${CC} -c $(CPPFLAGS) $(CFLAGS) $(CC_PICFLAG) -o $@ $<
+
+####
+#### the -fPIC twins of the src/shared and src/specfem3D sources
+####
+
+$(gf3d_PICMODDIR):
+	@-mkdir -p $@
+
+## shared_par.f90 defines `constants` and `shared_parameters`, which every
+## other twin uses, so it is named explicitly: the pattern rule below would
+## otherwise make it a prerequisite of itself.
+$O/shared_par.gfpic.o: ${S_TOP}/src/shared/shared_par.f90 ${SETUP}/constants.h | $(gf3d_PICMODDIR)
+	${FCCOMPILE_CHECK} $(FCFLAGS_gfpic) $(FC_PICFLAG) -c -o $@ $<
+
+## the only inter-twin module dependency in the whole set: every other source
+## here uses nothing but `constants`/`shared_parameters` or a module defined
+## in its own file. (search_kdtree -> heap_sort and get_cmt -> julian_day are
+## plain calls, so they matter at link time only.)
+## Mirrors src/shared/rules.mk.
+$O/make_ellipticity.gfpic.o: $O/model_prem.gfpic.o $O/model_Sohl.gfpic.o $O/model_vpremoon.gfpic.o
+
+$O/%.gfpic.o: ${S_TOP}/src/shared/%.f90 $O/shared_par.gfpic.o | $(gf3d_PICMODDIR)
+	${FCCOMPILE_CHECK} $(FCFLAGS_gfpic) $(FC_PICFLAG) -c -o $@ $<
+
+$O/%.gfpic.o: ${S_TOP}/src/specfem3D/%.f90 $O/shared_par.gfpic.o | $(gf3d_PICMODDIR)
+	${FCCOMPILE_CHECK} $(FCFLAGS_gfpic) $(FC_PICFLAG) -c -o $@ $<
+
+$O/%.gfpic_cc.o: ${S_TOP}/src/shared/%.c ${SETUP}/config.h
+	${CC} -c $(CPPFLAGS) $(CFLAGS) $(CC_PICFLAG) -o $@ $<
