@@ -171,7 +171,9 @@
     double precision :: t0          = 0.d0    ! time of the first sample, s before origin
     double precision :: scale_displ = 0.d0    ! non-dimensionalisation of the stored displacement
     double precision :: R_PLANET    = 0.d0    ! m
-    double precision :: RHOAV       = 0.d0    ! kg/m^3, see note in gf_database.F90
+    double precision :: RHOAV       = 0.d0    ! kg/m^3, resolved at open time
+    logical :: rhoav_stored = .false.         ! .false.: RHOAV above is the build's
+                                              ! Earth default, not the database's
 
     integer :: nstep          = 0             ! solver time steps
     integer :: nt_subsampled  = 0             ! stored time samples = nstep / subsample_step

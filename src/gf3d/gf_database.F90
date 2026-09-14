@@ -153,33 +153,43 @@
   call gf_h5_init(ierr)
   if (ierr /= GF_OK) return
 
+  ! From here on the handle holds allocated arrays, so a failure exits
+  ! through 99 and closes it: a caller that ignores ierr must not be handed
+  ! a half-read database that answers nelem and nstations plausibly.
+
   call gf_read_mesh_info(db,ierr)
-  if (ierr /= GF_OK) return
+  if (ierr /= GF_OK) goto 99
 
   call gf_read_element_index(db,ierr)
-  if (ierr /= GF_OK) return
+  if (ierr /= GF_OK) goto 99
 
   call gf_read_stations(db,ierr)
-  if (ierr /= GF_OK) return
+  if (ierr /= GF_OK) goto 99
 
   call gf_validate(db,ierr)
-  if (ierr /= GF_OK) return
+  if (ierr /= GF_OK) goto 99
 
   ! the reused src/shared/ routines read module state that nothing else
   ! initialises in a standalone program
   call gf_init_shared_params(db,ierr)
-  if (ierr /= GF_OK) return
+  if (ierr /= GF_OK) goto 99
 
   do_check = .true.
   if (present(check_completion)) do_check = check_completion
 
   if (do_check) then
     call gf_check_completion(db,nincomplete,ierr)
-    if (ierr /= GF_OK) return
+    if (ierr /= GF_OK) goto 99
   endif
 
   db%is_open = .true.
   ierr = GF_OK
+  return
+
+99 continue
+  ! gf_close resets the handle to t_gfdb(), so the error code and gf_errmsg
+  ! set above are what the caller still has
+  call gf_close(db)
 
   end subroutine gf_open
 
@@ -232,6 +242,8 @@
   subroutine gf_read_mesh_info(db,ierr)
 
 ! reads {GFDB}/mesh_info.h5
+
+  use constants, only: EARTH_RHOAV
 
   implicit none
 
@@ -292,12 +304,17 @@
   call gf_h5_read_attr_d(fid,'R_PLANET',db%R_PLANET,ierr)
   if (ierr /= GF_OK) goto 99
 
-  ! not written by the current writer; read it if a later one adds it, so
-  ! that the library is not silently Earth-only (see gf_shared_params.F90)
-  db%RHOAV = 0.d0
-  if (gf_h5_has_attr(fid,'RHOAV')) then
+  ! Not written by the current writer; read it if a later one adds it, so
+  ! that the library is not silently Earth-only. Absent, the handle carries
+  ! the build's Earth default rather than a zero, so that everything
+  ! downstream reads one field and no caller has to know which case it is in
+  ! (gf_shared_params.F90 installs it; gf_source.F90 forms scaleM from it).
+  db%rhoav_stored = gf_h5_has_attr(fid,'RHOAV')
+  if (db%rhoav_stored) then
     call gf_h5_read_attr_d(fid,'RHOAV',db%RHOAV,ierr)
     if (ierr /= GF_OK) goto 99
+  else
+    db%RHOAV = EARTH_RHOAV
   endif
 
   !--- simulation flags ---
@@ -1233,10 +1250,11 @@
   write(iunit,'(a,i0)')     '  buffer_size          = ',db%buffer_size
   write(iunit,'(a,es22.14)') '  scale_displ          = ',db%scale_displ
   write(iunit,'(a,es22.14)') '  R_PLANET             = ',db%R_PLANET
-  if (db%RHOAV > 0.d0) then
+  if (db%rhoav_stored) then
     write(iunit,'(a,es22.14)') '  RHOAV                = ',db%RHOAV
   else
-    write(iunit,'(a)')      '  RHOAV                = (not stored; using the build default)'
+    write(iunit,'(a,es22.14,a)') '  RHOAV                = ',db%RHOAV, &
+                                 '  (not stored; the build default)'
   endif
   write(iunit,'(a)') ''
 

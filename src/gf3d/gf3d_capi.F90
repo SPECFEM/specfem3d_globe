@@ -107,8 +107,6 @@
 
   use gf_partials, only: gf_partials_ndp, GF_NDP_LOC, GF_DP_NAME, GF_DP_UNIT
 
-  use shared_parameters, only: R_PLANET, RHOAV
-
   implicit none
 
   private
@@ -737,11 +735,11 @@
   info%t0          = handles(h)%t0
   info%scale_displ = handles(h)%scale_displ
 
-  ! the values the library is actually using, not the (possibly zero) ones
-  ! the database recorded: the current writer stores neither RHOAV nor the
-  ! flattening, so these fall back to specfem's Earth defaults
-  info%r_planet = R_PLANET
-  info%rhoav    = RHOAV
+  ! the handle's own, which gf_open resolved: RHOAV falls back to the build's
+  ! Earth default there when the database does not carry the attribute, so
+  ! this reports what the library uses without reading process-wide state
+  info%r_planet = handles(h)%R_PLANET
+  info%rhoav    = handles(h)%RHOAV
 
   gf3d_get_info = GF_OK
 
