@@ -139,7 +139,7 @@
 !--- the mechanism, from the validation event ---------------------------
 !
 
-  call gf_read_cmt_source(CMT_PATH,db%dt,src,ierr)
+  call gf_read_cmt_source(db,CMT_PATH,src,ierr)
   if (ierr /= GF_OK) then
     write(*,'(a,a)') '  could not read the CMTSOLUTION: ',trim(gf_errmsg)
     stop 1

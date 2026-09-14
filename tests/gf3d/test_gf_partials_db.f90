@@ -128,7 +128,7 @@
     stop 1
   endif
 
-  call gf_read_source(cmtfile,db%dt,src,ierr)
+  call gf_read_source(db,cmtfile,src,ierr)
   if (ierr /= GF_OK .or. src%source_type /= GF_SRC_CMT) then
     write(*,'(a)') '  could not read a CMTSOLUTION: '//trim(gf_errmsg)
     call gf_close(db)

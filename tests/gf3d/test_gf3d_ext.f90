@@ -148,9 +148,10 @@
 
   type(t_gfdb) :: db
   type(t_gf_source) :: src
-  double precision, dimension(:,:,:), allocatable :: synt
-  double precision, dimension(:,:,:,:), allocatable :: dp
-  double precision, dimension(:), allocatable :: t
+  double precision, dimension(:,:,:), allocatable :: synt,synt_ref,synt_again
+  double precision, dimension(:,:,:,:), allocatable :: dp,dp_again
+  double precision, dimension(:), allocatable :: t,t_again
+  type(t_gfdb) :: db2
 
   type(gf3d_source_t) :: csrc
   type(gf3d_plan_t) :: cplan
@@ -158,9 +159,9 @@
   real(c_double), dimension(:), allocatable :: cseis,cdp,ct,consetd
   integer(c_int) :: ch,cerr
 
-  character(len=512) :: dbpath,cmtpath,forcepath
-  double precision :: t0
-  integer :: ierr,nfail,narg
+  character(len=512) :: dbpath,cmtpath,forcepath,dbpath2
+  double precision :: t0,worst
+  integer :: ierr,nfail,narg,ista,ic,it
 
   nfail = 0
 
@@ -179,6 +180,8 @@
   call get_command_argument(2,cmtpath)
   forcepath = ''
   if (narg >= 3) call get_command_argument(3,forcepath)
+  dbpath2 = ''
+  if (narg >= 4) call get_command_argument(4,dbpath2)
 
   !--- the Fortran route ---
 
@@ -191,7 +194,7 @@
     stop 1
   endif
 
-  call gf_read_cmt_source(trim(cmtpath),db%dt,src,ierr)
+  call gf_read_cmt_source(db,trim(cmtpath),src,ierr)
   call report_true('   gf_read_cmt_source',ierr == GF_OK,nfail)
   if (ierr /= GF_OK) stop 1
 
@@ -267,6 +270,8 @@
   call compare_dp(db%nstations,int(cplan%nt),dp,cdp,nfail)
 
   deallocate(cseis,cdp,ct,consetd)
+  allocate(synt_ref,source=synt)
+
   deallocate(synt,dp,t)
 
   !--- a force source, if the example ships one ---
@@ -278,6 +283,46 @@
 
   cerr = c_gf3d_close(ch)
   call report_true('   gf3d_close',cerr == GF_OK,nfail)
+
+  !--- two databases open at once, through the Fortran route ---
+  !
+  ! Opening the second writes the per-process globals the reused src/shared
+  ! routines read -- R_PLANET, NX_BATHY, RESOLUTION_TOPO_FILE -- and
+  ! rebuilds the one kd-tree. Extraction from the first must be unaffected.
+  ! It used to be the C facade that re-installed them, so this route was
+  ! the one that could silently return the second planet's answer.
+
+  if (len_trim(dbpath2) > 0) then
+    write(*,*) '5. a second database open at the same time'
+
+    call gf_open(trim(dbpath2),db2,ierr,check_completion=.false.)
+    call report_true('   the second database opens',ierr == GF_OK,nfail)
+
+    if (ierr == GF_OK) then
+      call get_seismograms(db,src,t0,synt_again,dp_again,0,t_again,ierr)
+      call report_true('   the first still extracts',ierr == GF_OK,nfail)
+
+      if (ierr == GF_OK) then
+        worst = 0.d0
+        do it = 1,size(t_again)
+          do ic = 1,GF_NCOMP
+            do ista = 1,db%nstations
+              worst = max(worst,abs(synt_again(ista,ic,it) - synt_ref(ista,ic,it)))
+            enddo
+          enddo
+        enddo
+        call report('   and returns what it did before',worst, &
+                    1.d-15*maxval(abs(synt_ref)),nfail)
+        deallocate(synt_again,dp_again,t_again)
+      endif
+
+      call gf_close(db2)
+    endif
+  else
+    write(*,*) '5. (only one example database built; two-database case skipped)'
+  endif
+
+  deallocate(synt_ref)
 
   ! the pair a long-lived caller must use: gf_close alone leaves the
   ! kd-tree allocated
@@ -464,7 +509,7 @@
   integer(c_int) :: cerr
   integer :: ierr
 
-  call gf_read_force_source(trim(forcepath),db%dt,fsrc,ierr)
+  call gf_read_force_source(db,trim(forcepath),fsrc,ierr)
   call report_true('   gf_read_force_source',ierr == GF_OK,nfail)
   if (ierr /= GF_OK) return
 

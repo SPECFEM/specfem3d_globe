@@ -123,7 +123,7 @@
   ! up, including the two semantics that live outside the reader.
   !--------------------------------------------------------------------
 
-  call gf_read_source(cmtfile,db%dt,src,ierr)
+  call gf_read_source(db,cmtfile,src,ierr)
   call gf_report_true('CMTSOLUTION read                  ',ierr == GF_OK,nfail)
   if (ierr /= GF_OK) then
     write(*,'(a)') '  '//trim(gf_error_string(ierr))//': '//trim(gf_errmsg)

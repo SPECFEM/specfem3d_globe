@@ -184,7 +184,7 @@
   ! interfaces deliberately cannot, because get_cmt() stops on malformed
   ! input and a stop inside a shared object would kill the caller. Reading
   ! the file is safe from a program that owns its own process.
-  call gf_read_cmt_source(CMT_PATH,db%dt,src,ierr)
+  call gf_read_cmt_source(db,CMT_PATH,src,ierr)
   if (ierr /= GF_OK) then
     write(*,'(a,a)') '  could not read the CMTSOLUTION: ',trim(gf_errmsg)
     stop 1

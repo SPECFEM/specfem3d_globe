@@ -292,7 +292,7 @@
     endif
 
     ! FORCESOLUTION or CMTSOLUTION, decided from the file's own first line
-    call gf_read_source(srcfile,db%dt,src,ierr)
+    call gf_read_source(db,srcfile,src,ierr)
     if (ierr /= GF_OK) then
       write(ISTDERR,'(a)') 'Error reading the source'
       write(ISTDERR,'(a)') '  '//trim(gf_error_string(ierr))//': '//trim(gf_errmsg)

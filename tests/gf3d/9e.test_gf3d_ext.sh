@@ -64,6 +64,16 @@ FORCE="$EX/validation_data/FORCESOLUTION"
 [ -e "$FORCE" ] || FORCE=""
 echo "example: $EX" >> $testdir/results.log
 
+# a second, different database, so that the test can hold two open at once;
+# empty when only one example is built and that case is then skipped
+GFDB2=""
+for cand in "$srcdir/EXAMPLES/green_function_database/regional" \
+            "$srcdir/EXAMPLES/green_function_database/global"; do
+  [ "$cand" = "$EX" ] && continue
+  if [ -e "$cand/GFDB/mesh_info.h5" ]; then GFDB2="$cand/GFDB"; break; fi
+done
+echo "second database: ${GFDB2:-(none)}" >> $testdir/results.log
+
 # clean
 mkdir -p bin
 rm -f ./bin/$var
@@ -81,7 +91,7 @@ fi
 
 # runs test
 echo "run: `date`" >> $testdir/results.log
-./bin/$var "$GFDB" "$CMT" $FORCE >> $testdir/results.log 2>$testdir/error.log
+./bin/$var "$GFDB" "$CMT" "$FORCE" "$GFDB2" >> $testdir/results.log 2>$testdir/error.log
 
 # checks exit code
 if [[ $? -ne 0 ]]; then

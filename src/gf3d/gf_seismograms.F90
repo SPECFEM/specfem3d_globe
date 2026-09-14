@@ -127,6 +127,8 @@
 
   use gf_database, only: gf_dir_exists,gf_topo_elevation,gf_topo_gradient
 
+  use gf_shared_params, only: gf_init_shared_params
+
   use gf_element_io, only: gf_read_element_displ
 
   use gf_interp, only: gf_interp_weights,gf_interp_weights_deriv,gf_interp_weights_deriv2, &
@@ -244,6 +246,10 @@
       return
     endif
   enddo
+
+  ! see gf_locate_source: the per-process globals must be this handle's
+  call gf_init_shared_params(db,ierr)
+  if (ierr /= GF_OK) return
 
   ! t0_req and hdur both reach the kernel widths and the padding count; a
   ! NaN there produces an array bound, not a NaN, so it is screened here

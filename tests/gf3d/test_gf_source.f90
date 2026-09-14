@@ -58,7 +58,7 @@
 
   program test_gf_source
 
-  use gf_par, only: t_gf_source,gf_errmsg,GF_OK,GF_ERR_ARG,GF_SRC_CMT,GF_SRC_FORCE
+  use gf_par, only: t_gfdb,t_gf_source,gf_errmsg,GF_OK,GF_ERR_ARG,GF_SRC_CMT,GF_SRC_FORCE
 
   use gf_shared_params, only: gf_init_shared_params
 
@@ -66,6 +66,8 @@
                        gf_source_set_cmt,gf_source_set_force
 
   use gf_manufactured, only: gf_report,gf_report_true
+
+  use constants, only: EARTH_R,EARTH_RHOAV
 
   implicit none
 
@@ -87,6 +89,12 @@
   ! the regional database's solver time step
   double precision, parameter :: DT = 0.1d0
 
+  ! The source routines take a handle now, not a bare dt: they install
+  ! specfem's per-process globals from it and read the planet constants off
+  ! it. There is no database in a tier-1 test, so the handle is built here
+  ! with the Earth values the shipped examples carry.
+  type(t_gfdb) :: db, db_dt0
+
   double precision, parameter :: TOL = 1.d-12
 
   character(len=*), parameter :: CMTFILE = './OUTPUT_FILES/test_gf_source.CMTSOLUTION'
@@ -107,6 +115,15 @@
   ! R_PLANET and RHOAV. A default t_gfdb leaves the Earth defaults standing,
   ! which is what a tier-1 test wants: no database exists here.
   call init_globals(nfail)
+
+  db = t_gfdb()
+  db%dt = DT
+  db%R_PLANET = EARTH_R
+  db%RHOAV = EARTH_RHOAV
+
+  ! the same handle with an unusable time step, for the refusal below
+  db_dt0 = db
+  db_dt0%dt = 0.d0
 
   call test_cmt_agrees(nfail)
   call test_cmt_clamp(nfail)
@@ -261,11 +278,11 @@
 
   call write_cmt(CMTFILE,HDUR,TSHIFT)
 
-  call gf_read_cmt_source(CMTFILE,DT,sfile,ier)
+  call gf_read_cmt_source(db,CMTFILE,sfile,ier)
   call gf_report_true('   get_cmt read the file',ier == GF_OK,nfail)
   if (ier /= GF_OK) return
 
-  call gf_source_set_cmt(sval,LAT,LON,DEP,HDUR,TSHIFT,m,DT,ier)
+  call gf_source_set_cmt(db,sval,LAT,LON,DEP,HDUR,TSHIFT,m,ier)
   call gf_report_true('   gf_source_set_cmt succeeded',ier == GF_OK,nfail)
   if (ier /= GF_OK) return
 
@@ -321,13 +338,13 @@
 
   call write_cmt(CMTFILE,0.d0,TSHIFT)
 
-  call gf_read_cmt_source(CMTFILE,DT,sfile,ier)
+  call gf_read_cmt_source(db,CMTFILE,sfile,ier)
   if (ier /= GF_OK) then
     call gf_report_true('   get_cmt read the zero-hdur file',.false.,nfail)
     return
   endif
 
-  call gf_source_set_cmt(sval,LAT,LON,DEP,0.d0,TSHIFT,m,DT,ier)
+  call gf_source_set_cmt(db,sval,LAT,LON,DEP,0.d0,TSHIFT,m,ier)
   if (ier /= GF_OK) then
     call gf_report_true('   gf_source_set_cmt on zero hdur',.false.,nfail)
     return
@@ -371,12 +388,12 @@
 
     call write_force(FORCEFILE,f0,istf,FACTOR,DE,DN,DZ)
 
-    call gf_read_force_source(FORCEFILE,DT,sfile,ier)
+    call gf_read_force_source(db,FORCEFILE,sfile,ier)
     write(label,'(a,i1,a)') '   stf ',istf,' read      '
     call gf_report_true(label,ier == GF_OK,nfail)
     if (ier /= GF_OK) cycle
 
-    call gf_source_set_force(sval,LAT,LON,DEP,f0,0.d0,istf,FACTOR,DE,DN,DZ,DT,ier)
+    call gf_source_set_force(db,sval,LAT,LON,DEP,f0,0.d0,istf,FACTOR,DE,DN,DZ,ier)
     write(label,'(a,i1,a)') '   stf ',istf,' built     '
     call gf_report_true(label,ier == GF_OK,nfail)
     if (ier /= GF_OK) cycle
@@ -436,39 +453,39 @@
   inf = transfer(int(z'7FF0000000000000',kind=8),inf)
 
   ! get_force.f90:248 -- an unsupported source time function type
-  call gf_source_set_force(s,LAT,LON,DEP,0.05d0,0.d0,5,1.d15,1.d0,0.d0,0.d0,DT,ier)
+  call gf_source_set_force(db,s,LAT,LON,DEP,0.05d0,0.d0,5,1.d15,1.d0,0.d0,0.d0,ier)
   call gf_report_true('   force_stf = 5 refused         ',ier == GF_ERR_ARG,nfail)
   call gf_report_true('   ... with a message            ',len_trim(gf_errmsg) > 0,nfail)
 
   ! get_force.f90:240 -- a monochromatic force with no period
-  call gf_source_set_force(s,LAT,LON,DEP,0.d0,0.d0,3,1.d15,1.d0,0.d0,0.d0,DT,ier)
+  call gf_source_set_force(db,s,LAT,LON,DEP,0.d0,0.d0,3,1.d15,1.d0,0.d0,0.d0,ier)
   call gf_report_true('   monochromatic f0 = 0 refused  ',ier == GF_ERR_ARG,nfail)
 
   ! get_force.f90:272 -- a direction vector of zero length
-  call gf_source_set_force(s,LAT,LON,DEP,0.05d0,0.d0,0,1.d15,0.d0,0.d0,0.d0,DT,ier)
+  call gf_source_set_force(db,s,LAT,LON,DEP,0.05d0,0.d0,0,1.d15,0.d0,0.d0,0.d0,ier)
   call gf_report_true('   zero direction vector refused ',ier == GF_ERR_ARG,nfail)
 
   ! not a reader case: the library's own precondition
-  call gf_source_set_cmt(s,LAT,LON,DEP,HDUR,TSHIFT,m,0.d0,ier)
+  call gf_source_set_cmt(db_dt0,s,LAT,LON,DEP,HDUR,TSHIFT,m,ier)
   call gf_report_true('   dt = 0 refused (CMT)          ',ier == GF_ERR_ARG,nfail)
 
   ! the ones that would reach the kd-tree's own stop through gf_locate
-  call gf_source_set_cmt(s,nan,LON,DEP,HDUR,TSHIFT,m,DT,ier)
+  call gf_source_set_cmt(db,s,nan,LON,DEP,HDUR,TSHIFT,m,ier)
   call gf_report_true('   NaN latitude refused          ',ier == GF_ERR_ARG,nfail)
 
-  call gf_source_set_cmt(s,LAT,LON,inf,HDUR,TSHIFT,m,DT,ier)
+  call gf_source_set_cmt(db,s,LAT,LON,inf,HDUR,TSHIFT,m,ier)
   call gf_report_true('   infinite depth refused        ',ier == GF_ERR_ARG,nfail)
 
   m(3) = nan
-  call gf_source_set_cmt(s,LAT,LON,DEP,HDUR,TSHIFT,m,DT,ier)
+  call gf_source_set_cmt(db,s,LAT,LON,DEP,HDUR,TSHIFT,m,ier)
   call gf_report_true('   NaN moment component refused  ',ier == GF_ERR_ARG,nfail)
   m(3) = MPP
 
-  call gf_source_set_force(s,LAT,nan,DEP,0.05d0,0.d0,0,1.d15,1.d0,0.d0,0.d0,DT,ier)
+  call gf_source_set_force(db,s,LAT,nan,DEP,0.05d0,0.d0,0,1.d15,1.d0,0.d0,0.d0,ier)
   call gf_report_true('   NaN longitude refused (force) ',ier == GF_ERR_ARG,nfail)
 
   ! and the program is still here to say so
-  call gf_source_set_cmt(s,LAT,LON,DEP,HDUR,TSHIFT,m,DT,ier)
+  call gf_source_set_cmt(db,s,LAT,LON,DEP,HDUR,TSHIFT,m,ier)
   call gf_report_true('   a good source still builds    ',ier == GF_OK,nfail)
 
   end subroutine test_refusals

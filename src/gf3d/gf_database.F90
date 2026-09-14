@@ -93,6 +93,10 @@
   ! unit numbers used for the plain-text / stream reads
   integer, parameter :: IIN_GF = 71
 
+  ! Counter behind t_gfdb%open_id: incremented on every successful gf_open,
+  ! never reused within a process. See the field's comment in gf_par.
+  integer :: last_open_id = 0
+
   contains
 
 !
@@ -182,6 +186,9 @@
     if (ierr /= GF_OK) goto 99
   endif
 
+  last_open_id = last_open_id + 1
+  db%open_id = last_open_id
+
   db%is_open = .true.
   ierr = GF_OK
   return
@@ -226,6 +233,7 @@
   endif
 
   db%is_open = .false.
+  db%open_id = 0
   db%path = ''
   db%topo_loaded = .false.
   db%nelem = 0

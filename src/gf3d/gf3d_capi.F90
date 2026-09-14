@@ -99,7 +99,7 @@
 
   use gf_source, only: gf_source_set_cmt, gf_source_set_force
 
-  use gf_locate, only: gf_locate_source, gf_locate_release
+  use gf_locate, only: gf_locate_source, gf_locate_release, gf_locate_tree_owner
 
   use gf_seismograms, only: gf_seis_plan, gf_seis, gf_seis_cmt_partials
 
@@ -289,14 +289,12 @@
 
   subroutine use_handle(h,ierr)
 
-! validates a handle and re-installs specfem's globals from it
+! validates a handle
 !
-! The re-installation is the part that is easy to miss: R_PLANET, NX_BATHY,
-! NY_BATHY and RESOLUTION_TOPO_FILE live in shared_parameters, one set per
-! process, and gf_open() writes them. With two databases open, the second
-! open would otherwise leave the first handle's topography grid being
-! indexed with the second's dimensions -- and get_topo_bathy() does not
-! range-check, it returns plausible-looking garbage.
+! It used to re-install specfem's per-process globals from the handle as
+! well. The library routines that read those globals now install them
+! themselves, so the two routes are configured the same way and the C route
+! is not the only one that is safe with two databases open.
 
   implicit none
 
@@ -313,7 +311,7 @@
     return
   endif
 
-  call gf_init_shared_params(handles(h),ierr)
+  ierr = GF_OK
 
   end subroutine use_handle
 
@@ -334,14 +332,13 @@
 
   select case (csrc%source_type)
   case (GF_SRC_CMT)
-    call gf_source_set_cmt(src,csrc%latitude,csrc%longitude,csrc%depth_km, &
-                           csrc%hdur,csrc%time_shift,csrc%moment,db%dt,ierr)
+    call gf_source_set_cmt(db,src,csrc%latitude,csrc%longitude,csrc%depth_km, &
+                           csrc%hdur,csrc%time_shift,csrc%moment,ierr)
   case (GF_SRC_FORCE)
-    call gf_source_set_force(src,csrc%latitude,csrc%longitude,csrc%depth_km, &
+    call gf_source_set_force(db,src,csrc%latitude,csrc%longitude,csrc%depth_km, &
                              csrc%hdur,csrc%time_shift,int(csrc%force_stf), &
                              csrc%force_factor, &
-                             csrc%force_dir(1),csrc%force_dir(2),csrc%force_dir(3), &
-                             db%dt,ierr)
+                             csrc%force_dir(1),csrc%force_dir(2),csrc%force_dir(3),ierr)
   case default
     call gf_set_error(ierr,GF_ERR_ARG, &
       'gf3d: source_type must be GF_SRC_CMT (2) or GF_SRC_FORCE (1)')
@@ -659,13 +656,13 @@
 
   integer(c_int) function gf3d_close(h) bind(C,name='gf3d_close')
 
-! closes a database and releases the process-wide search tree
+! closes a database, and the process-wide search tree if it is this one's
 !
-! The tree is released unconditionally, even when another handle is still
-! open: it belongs to whichever database located last, and the next locate
-! rebuilds it for whoever asks. Leaking it instead would leave
-! src/shared/search_kdtree.f90's module arrays allocated for the life of a
-! Python interpreter.
+! The tree belongs to whichever open located last. Releasing it here
+! unconditionally took it from a second handle that was still using it,
+! which cost that handle a rebuild on its next locate; leaking it instead
+! would leave src/shared/search_kdtree.f90's module arrays allocated for the
+! life of a Python interpreter. So it goes only when this open owns it.
 
   implicit none
 
@@ -686,7 +683,9 @@
     return
   endif
 
-  call gf_locate_release()
+  ! before gf_close, which clears open_id
+  if (gf_locate_tree_owner() == handles(h)%open_id) call gf_locate_release()
+
   call gf_close(handles(h))
 
   in_use(h) = .false.

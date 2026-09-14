@@ -59,7 +59,7 @@
   use gf_par, only: t_gfdb,t_gf_location,gf_errmsg,gf_error_string, &
                     GF_OK,GF_ERR_ARG,GF_ERR_NO_ELEMENT,GF_XI_TOL,GF_ANCHOR_TOL
   use gf_database, only: gf_open,gf_close
-  use gf_locate, only: gf_locate_source,gf_locate_release
+  use gf_locate, only: gf_locate_source,gf_locate_release,gf_locate_tree_owner
 
   use gf_manufactured, only: gf_report,gf_report_true,gf_quiet_nan
 
@@ -83,6 +83,7 @@
   double precision :: lat,lon,depth_km
   double precision, dimension(NDIM) :: xyz_ref
   double precision :: err,worst,dot
+  integer :: owner_first,owner_second
   logical :: have_second
 
   nfail = 0
@@ -258,10 +259,14 @@
     if (ierr == GF_OK) then
       call gf_locate_source(db2,lat,lon,depth_km,loc2,ierr)
       call gf_report_true('locate in the second database     ',ierr == GF_OK,nfail)
+      call gf_report_true('the tree belongs to the second    ', &
+                          gf_locate_tree_owner() == db2%open_id,nfail)
 
       ! back to the first
       call gf_locate_source(db,lat,lon,depth_km,loc_again,ierr)
       call gf_report_true('locate again in the first         ',ierr == GF_OK,nfail)
+      call gf_report_true('and the tree is the first''s again ', &
+                          gf_locate_tree_owner() == db%open_id,nfail)
 
       if (ierr == GF_OK) then
         call gf_report_true('same element after the switch     ', &
@@ -278,6 +283,42 @@
   else
     write(*,'(a)') ''
     write(*,'(a)') '  (no second database given, kd-tree ownership guard not exercised)'
+  endif
+
+  !--------------------------------------------------------------------
+  ! 7. the same path, opened twice, is two different opens
+  !
+  ! The tree used to be owned by the database's path, which made a handle
+  ! closed and reopened indistinguishable from the one that built the tree:
+  ! gf_tree_ensure would keep a tree built for arrays that gf_close had
+  ! already deallocated. Ownership is t_gfdb%open_id, so the reopen is a
+  ! different owner and the tree is rebuilt -- onto the same answer.
+  !--------------------------------------------------------------------
+
+  owner_first = gf_locate_tree_owner()
+  call gf_report_true('the tree belongs to this open     ', &
+                      owner_first == db%open_id .and. db%open_id /= 0,nfail)
+
+  call gf_close(db)
+  call gf_open(dbpath,db,ierr,check_completion=.false.)
+  call gf_report_true('the same path reopens             ',ierr == GF_OK,nfail)
+  call gf_report_true('with a different open id          ',db%open_id /= owner_first,nfail)
+
+  call gf_locate_source(db,lat,lon,depth_km,loc_again,ierr)
+  call gf_report_true('and locates again                 ',ierr == GF_OK,nfail)
+
+  owner_second = gf_locate_tree_owner()
+  call gf_report_true('the tree was rebuilt for it       ', &
+                      owner_second == db%open_id .and. owner_second /= owner_first,nfail)
+
+  if (ierr == GF_OK) then
+    call gf_report_true('onto the same element             ', &
+                        loc_again%ielem == loc%ielem .and. &
+                        loc_again%morton_hex == loc%morton_hex,nfail)
+    err = max(abs(loc_again%xi - loc%xi), &
+              abs(loc_again%eta - loc%eta), &
+              abs(loc_again%gamma - loc%gamma))
+    call gf_report('identical xi,eta,gamma after reopen',err,0.d0,nfail)
   endif
 
   !--------------------------------------------------------------------
