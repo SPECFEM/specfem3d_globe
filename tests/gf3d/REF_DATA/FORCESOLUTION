@@ -1,0 +1,11 @@
+FORCE  001
+time shift:     0.0000
+f0:            45.0000
+latitude:       -5.8120
+longitude:     -75.2700
+depth:         122.6000
+source time function: 0
+factor force source:  1.0d15
+comp dir vect source E:   1.0
+comp dir vect source N:   0.0
+comp dir vect source Z:   0.0

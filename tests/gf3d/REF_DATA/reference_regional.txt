@@ -1,0 +1,35 @@
+# Solver reference values for tests/gf3d/REF_DATA/CMTSOLUTION.
+#
+# These are the numbers the tests used to grep, at run time, out of
+#   EXAMPLES/green_function_database/regional/forward_cmt/OUTPUT_FILES/output_solver.txt
+# which is a gitignored product of a solver run. They are recorded here so that
+# tests/gf3d/ needs nothing from EXAMPLES/ -- see gfdb_env.sh.
+#
+# THEY DESCRIBE ONE DATABASE. `database` below names it; a runner must only
+# apply these values when it is extracting from that database. Pointing
+# GF3D_TEST_GFDB at any other database and these values at it would assert a
+# different mesh's answer, so the runners gate on GF3D_TEST_REFERENCE being
+# supplied deliberately rather than defaulting to this file.
+#
+# Format: `key value`, one per line, '#' comments, blank lines ignored.
+# Read by read_reference() in gfdb_env.sh.
+
+database   EXAMPLES/green_function_database/regional/GFDB
+
+# Source position in the solver's non-dimensional Cartesian frame, from the
+# FIRST "at (x,y,z)" line of output_solver.txt (:113) -- the source. The later
+# ones are receivers. Printed through sngl(), so ~3e-8 is all the precision
+# there is; test_gf_locate asserts 1e-7 against it.
+x          0.248383403
+y         -0.944765568
+z         -9.87713933E-02
+
+# Moment, from output_solver.txt:124-125. dyne-cm.
+M0         2.6299730036637251E+028
+Mw         8.2466343844251071
+
+# The raw triangle half duration and the rebased time shift, :120-121.
+# tshift is 0 because NSOURCES == 1 rebases it into min_tshift_src_original
+# (29.0 s, the CMTSOLUTION's own "time shift:" field).
+hdur       60.000000000000000
+tshift     0.0000000000000000
