@@ -16,7 +16,7 @@ What is asserted, per station and component:
   is zero;
 * the SAC data equal the ASCII columns rounded to single precision, which
   is what the writer stores, exactly;
-* against the forward SAC file: the reference time ``nz*`` (the PDE time
+* against the forward SAC file, when ``--fwd`` is given: the reference time ``nz*`` (the PDE time
   plus the CMT time shift, with the solver's rollover), ``evla/evlo/evdp``,
   ``stla/stlo``, ``cmpaz/cmpinc`` and ``o`` are equal, and ``b`` lies within
   one stored sample below the forward run's ``-t0`` (the planned axis
@@ -26,7 +26,9 @@ What is asserted, per station and component:
   data equal the partials file's column.
 
 The forward SAC files and the extraction's own ASCII are the oracles;
-nothing here re-derives a header rule.
+nothing here re-derives a header rule. Only the one group above needs the
+forward run, so ``--fwd`` is optional: without it the rest still runs, which
+is what lets this be checked against a database that has no forward run.
 """
 
 import argparse
@@ -114,7 +116,10 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--dir", required=True, help="xgf3d output written with --format all")
-    ap.add_argument("--fwd", required=True, help="the forward run's OUTPUT_FILES directory")
+    ap.add_argument("--fwd", default=None,
+                    help="the forward run's OUTPUT_FILES directory. Optional: without it the "
+                         "SAC files are still checked against the extraction's own ASCII, "
+                         "which is most of what is asserted here and needs no solver run")
     args = ap.parse_args()
 
     chk = Checker()
@@ -157,9 +162,9 @@ def main():
                       f"{station}.{chan}: data equal the ASCII column in single precision "
                       f"({err:.2e})")
 
-            # the forward run's headers
-            fsac = os.path.join(args.fwd, f"{station}.{chan}.sem.sac")
-            if os.path.exists(fsac):
+            # the forward run's headers, when there is a forward run
+            fsac = os.path.join(args.fwd, f"{station}.{chan}.sem.sac") if args.fwd else ""
+            if fsac and os.path.exists(fsac):
                 fh = obspy_read(fsac)[0].stats.sac
                 for key in ("nzyear", "nzjday", "nzhour", "nzmin", "nzsec", "nzmsec"):
                     chk.check(getattr(h, key) == getattr(fh, key),
@@ -175,7 +180,7 @@ def main():
                           f"{station}.{chan}: kevnm '{h.kevnm}' vs forward '{fh.kevnm}'")
                 chk.check(h.kstnm.strip() == fh.kstnm.strip() and h.knetwk.strip() == fh.knetwk.strip(),
                           f"{station}.{chan}: kstnm/knetwk vs forward")
-            else:
+            elif args.fwd:
                 print(f"  (no forward file {fsac}; header comparison skipped)")
 
             # the partials

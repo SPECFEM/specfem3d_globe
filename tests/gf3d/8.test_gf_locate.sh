@@ -1,24 +1,18 @@
 #!/bin/bash
 ###################################################
 #
-# Runs test_gf_locate against a built example Green function database, using
-# the solver's own OUTPUT_FILES/output_solver.txt as the reference.
+# Runs test_gf_locate against a Green function database from gfdb_env.sh.
 #
-# That file is the only oracle this step has: gf_cross_validate.py never
-# converts lat/lon/depth to Cartesian itself, it reads x, y, z straight out
-# of the solver log. So the reference values are extracted here with grep and
-# awk and passed to the test as arguments.
-#
-# Needs, for one example:
-#   <example>/GFDB/mesh_info.h5
-#   <example>/validation_data/CMTSOLUTION
-#   <example>/forward_cmt/OUTPUT_FILES/output_solver.txt
-#
-# The last of those is *not* committed -- forward_cmt/ is gitignored -- so
-# this test skips cleanly on a fresh checkout and in CI, like its siblings.
-#
-# When both example databases are present the second is passed as well, which
-# exercises the kd-tree ownership guard in src/gf3d/gf_locate.F90.
+# Two kinds of check live here. The kd-tree ownership guard and the geometry
+# of whatever element is found need only a valid database, so they run
+# against the synthetic fixture. The comparison of the geographic chain
+# against the solver's own Cartesian position needs the forward run that
+# produced that database, and there is no substitute for it -- the library is
+# the only other implementation of that chain, so checking it against itself
+# would prove nothing. Those values therefore come from a reference file,
+# named by $GF3D_TEST_REFERENCE, and the comparison is made only when one is
+# supplied. REF_DATA/reference_regional.txt is the one for the shipped
+# regional example.
 #
 # Override the example directory with $GF3D_TEST_EXAMPLE.
 #
@@ -48,71 +42,45 @@ if [ ! -e ./lib/libgf3d.a ]; then
   exit 0
 fi
 
-# locates an example that has a database *and* a forward CMT run to compare against
-EX=""
-for cand in "${GF3D_TEST_EXAMPLE}" \
-            "$srcdir/EXAMPLES/green_function_database/regional" \
-            "$srcdir/EXAMPLES/green_function_database/global"; do
-  [ -z "$cand" ] && continue
-  if [ -e "$cand/GFDB/mesh_info.h5" ] && \
-     [ -e "$cand/validation_data/CMTSOLUTION" ] && \
-     [ -e "$cand/forward_cmt/OUTPUT_FILES/output_solver.txt" ]; then
-    EX="$cand"; break
-  fi
-done
-
-if [ -z "$EX" ]; then
-  echo "skipped: no example with both a database and a forward CMT run" >> $testdir/results.log
-  echo "  needs <example>/GFDB, <example>/validation_data/CMTSOLUTION and" >> $testdir/results.log
-  echo "  <example>/forward_cmt/OUTPUT_FILES/output_solver.txt" >> $testdir/results.log
-  echo "  build one with EXAMPLES/green_function_database/*/Snakefile" >> $testdir/results.log
-  echo "skipped: no example with both a database and a forward CMT run"
+# resolves a database and the source files: $GF3D_TEST_GFDB, or a fixture
+. ./gfdb_env.sh
+if [ $? -ne 0 ]; then
+  echo "skipped: no database and no fixture could be built" >> $testdir/results.log
+  echo "skipped: no database and no fixture could be built"
   exit 0
 fi
 
-GFDB="$EX/GFDB"
-CMT="$EX/validation_data/CMTSOLUTION"
-SOLVER="$EX/forward_cmt/OUTPUT_FILES/output_solver.txt"
-
-echo "example:  $EX" >> $testdir/results.log
-
-# a second database, for the kd-tree ownership guard
-GFDB2=""
-for cand in "$srcdir/EXAMPLES/green_function_database/regional/GFDB" \
-            "$srcdir/EXAMPLES/green_function_database/global/GFDB"; do
-  if [ -e "$cand/mesh_info.h5" ] && [ "$cand" != "$GFDB" ]; then GFDB2="$cand"; break; fi
-done
-
 ###################################################
 #
-# the reference values
+# the request, and the solver's answer to it
+#
+# The position comes from the CMTSOLUTION in REF_DATA/, which is test data.
+# The Cartesian position the solver settled on comes from a reference file,
+# because it is a property of one forward run and not of the library: it is
+# supplied only when GF3D_TEST_REFERENCE names one. Without it the test runs
+# everything except that comparison.
 #
 ###################################################
 
-# the requested source position, from the CMTSOLUTION the forward run used
 LAT=`grep -E '^latitude:'  "$CMT" | head -1 | awk '{print $2}'`
 LON=`grep -E '^longitude:' "$CMT" | head -1 | awk '{print $2}'`
 DEP=`grep -E '^depth:'     "$CMT" | head -1 | awk '{print $2}'`
 
-# the Cartesian position the solver settled on:
-#    at (x,y,z)                  =   0.248383403  -0.944765568  -9.87713933E-02
-XYZ=`grep 'at (x,y,z)' "$SOLVER" | head -1 | sed 's/.*= *//'`
-XREF=`echo $XYZ | awk '{print $1}'`
-YREF=`echo $XYZ | awk '{print $2}'`
-ZREF=`echo $XYZ | awk '{print $3}'`
-
-if [ -z "$LAT" ] || [ -z "$LON" ] || [ -z "$DEP" ] || \
-   [ -z "$XREF" ] || [ -z "$YREF" ] || [ -z "$ZREF" ]; then
-  echo "could not extract the reference values:" >> $testdir/results.log
-  echo "  lat='$LAT' lon='$LON' depth='$DEP'" >> $testdir/results.log
-  echo "  x='$XREF' y='$YREF' z='$ZREF'" >> $testdir/results.log
+if [ -z "$LAT" ] || [ -z "$LON" ] || [ -z "$DEP" ]; then
+  echo "could not read the source position from $CMT" >> $testdir/results.log
   exit 1
 fi
 
+XREF=`read_reference x`
+YREF=`read_reference y`
+ZREF=`read_reference z`
+
 echo "request:  lat=$LAT lon=$LON depth=$DEP km" >> $testdir/results.log
-echo "solver:   x=$XREF y=$YREF z=$ZREF" >> $testdir/results.log
-if [ -n "$GFDB2" ]; then
-  echo "second:   $GFDB2" >> $testdir/results.log
+if [ -n "$XREF" ] && [ -n "$YREF" ] && [ -n "$ZREF" ]; then
+  echo "solver:   x=$XREF y=$YREF z=$ZREF" >> $testdir/results.log
+else
+  echo "solver:   (no reference supplied; position comparison not asserted)" >> $testdir/results.log
+  XREF=""; YREF=""; ZREF=""
 fi
 
 # clean
@@ -139,7 +107,7 @@ fi
 
 # runs test
 echo "run: `date`" >> $testdir/results.log
-./bin/$var "$GFDB" "$LAT" "$LON" "$DEP" "$XREF" "$YREF" "$ZREF" "$GFDB2" \
+./bin/$var "$GFDB" "$LAT" "$LON" "$DEP" $XREF $YREF $ZREF \
   >> $testdir/results.log 2>$testdir/error.log
 
 # checks exit code
@@ -165,9 +133,9 @@ rm -f $testdir/error.log
 #
 ###################################################
 
-if [ -e ./bin/xgf3d ]; then
+if [ -e ./bin/xgf3d ] && [ -n "$XREF" ]; then
   echo "" >> $testdir/results.log
-  echo "cross-checking xgf3d --locate against output_solver.txt" >> $testdir/results.log
+  echo "cross-checking xgf3d --locate against the solver reference" >> $testdir/results.log
 
   ./bin/xgf3d --locate "$GFDB" "$LAT" "$LON" "$DEP" > $testdir/loc.log 2>$testdir/error.log
   if [[ $? -ne 0 ]] || [[ -s $testdir/error.log ]]; then

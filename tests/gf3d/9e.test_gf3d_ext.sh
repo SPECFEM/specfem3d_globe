@@ -41,38 +41,13 @@ if [ ! -e ./include/gf3d.mod ] && [ ! -e ./include/GF3D.mod ]; then
   exit 0
 fi
 
-# locates an example database with a validation source
-EX=""
-for cand in "${GF3D_TEST_EXAMPLE}" \
-            "$srcdir/EXAMPLES/green_function_database/regional" \
-            "$srcdir/EXAMPLES/green_function_database/global"; do
-  [ -z "$cand" ] && continue
-  if [ -e "$cand/GFDB/mesh_info.h5" ] && [ -e "$cand/validation_data/CMTSOLUTION" ]; then
-    EX="$cand"; break
-  fi
-done
-
-if [ -z "$EX" ]; then
-  echo "skipped: no built example database (set GF3D_TEST_EXAMPLE)" >> $testdir/results.log
-  echo "skipped: no built example database"
+# resolves a database and the source files: $GF3D_TEST_GFDB, or a fixture
+. ./gfdb_env.sh
+if [ $? -ne 0 ]; then
+  echo "skipped: no database and no fixture could be built" >> $testdir/results.log
+  echo "skipped: no database and no fixture could be built"
   exit 0
 fi
-
-GFDB="$EX/GFDB"
-CMT="$EX/validation_data/CMTSOLUTION"
-FORCE="$EX/validation_data/FORCESOLUTION"
-[ -e "$FORCE" ] || FORCE=""
-echo "example: $EX" >> $testdir/results.log
-
-# a second, different database, so that the test can hold two open at once;
-# empty when only one example is built and that case is then skipped
-GFDB2=""
-for cand in "$srcdir/EXAMPLES/green_function_database/regional" \
-            "$srcdir/EXAMPLES/green_function_database/global"; do
-  [ "$cand" = "$EX" ] && continue
-  if [ -e "$cand/GFDB/mesh_info.h5" ]; then GFDB2="$cand/GFDB"; break; fi
-done
-echo "second database: ${GFDB2:-(none)}" >> $testdir/results.log
 
 # clean
 mkdir -p bin
@@ -91,7 +66,7 @@ fi
 
 # runs test
 echo "run: `date`" >> $testdir/results.log
-./bin/$var "$GFDB" "$CMT" "$FORCE" "$GFDB2" >> $testdir/results.log 2>$testdir/error.log
+./bin/$var "$GFDB" "$CMT" "$FORCE" >> $testdir/results.log 2>$testdir/error.log
 
 # checks exit code
 if [[ $? -ne 0 ]]; then

@@ -1,18 +1,12 @@
 #!/bin/bash
 ###################################################
 #
-# Runs test_gf_open against a built example Green function database, and
-# diffs `xgf3d --info` against the values h5dump reads out of mesh_info.h5.
+# Runs test_gf_open against a Green function database, and diffs
+# `xgf3d --info` against the values h5dump reads out of mesh_info.h5.
 #
-# Skips cleanly when there is nothing to run against. Both are the normal
-# case in CI: 5.configure.hdf5_make.sh skips without HDF5, and the example
-# databases are gitignored (300 MB to 1.7 GB), so neither bin/xgf3d nor a
-# database will exist there.
-#
-# Database search order:
-#   1. $GF3D_TEST_GFDB
-#   2. EXAMPLES/green_function_database/regional/GFDB
-#   3. EXAMPLES/green_function_database/global/GFDB
+# The database comes from gfdb_env.sh -- $GF3D_TEST_GFDB, or a synthetic
+# fixture built on the spot. Skips cleanly only when there is no HDF5 build
+# to test, which is what 5.configure.hdf5_make.sh leaves behind in CI.
 #
 ###################################################
 
@@ -40,23 +34,13 @@ if [ ! -e ./lib/libgf3d.a ] || [ ! -e ./bin/xgf3d ]; then
   exit 0
 fi
 
-# locates a database
-GFDB=""
-for cand in "${GF3D_TEST_GFDB}" \
-            "$srcdir/EXAMPLES/green_function_database/regional/GFDB" \
-            "$srcdir/EXAMPLES/green_function_database/global/GFDB"; do
-  if [ -n "$cand" ] && [ -e "$cand/mesh_info.h5" ]; then GFDB="$cand"; break; fi
-done
-
-if [ -z "$GFDB" ]; then
-  echo "skipped: no example Green function database found" >> $testdir/results.log
-  echo "  build one with EXAMPLES/green_function_database/*/Snakefile," >> $testdir/results.log
-  echo "  or point GF3D_TEST_GFDB at one" >> $testdir/results.log
-  echo "skipped: no example Green function database found"
+# resolves a database: $GF3D_TEST_GFDB, or a fixture built for the occasion
+. ./gfdb_env.sh
+if [ $? -ne 0 ]; then
+  echo "skipped: no database and no fixture could be built" >> $testdir/results.log
+  echo "skipped: no database and no fixture could be built"
   exit 0
 fi
-
-echo "database: $GFDB" >> $testdir/results.log
 
 # clean
 mkdir -p bin

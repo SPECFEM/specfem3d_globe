@@ -10,15 +10,15 @@
 # forward run's, b within one stored sample of the forward run's -t0, and
 # the SAC data equal to the ASCII columns in single precision.
 #
-# Needs, for one example:
-#   <example>/GFDB/mesh_info.h5
-#   <example>/validation_data/CMTSOLUTION
-#   <example>/forward_cmt/OUTPUT_FILES/*.sem.sac
-# and a Python with obspy: $GF3D_PYTHON, else the example's own venv
-# (EXAMPLES/green_function_database/.venv/bin/python).
+# Most of what is asserted is the SAC output against the extraction's own
+# ASCII output -- the same numbers through two writers, which is how the
+# single-precision storage floor and the -ftz subnormal flush were caught --
+# and that needs only a database, so it runs against the fixture. The header
+# comparison against the solver's own *.sem.sac additionally needs the
+# forward run that produced the database: set $GF3D_TEST_FORWARD_SAC (with a
+# matching $GF3D_TEST_GFDB) and it happens too.
 #
-# forward_cmt/ is gitignored, so this skips cleanly on a fresh checkout and
-# in CI, like its siblings. Override the example with $GF3D_TEST_EXAMPLE.
+# Needs a Python with obspy, in $GF3D_PYTHON or on PATH.
 #
 ###################################################
 
@@ -46,37 +46,39 @@ if [ ! -e ./bin/$var ]; then
   exit 0
 fi
 
-# locates an example with a database and a forward CMT run
-EX=""
-for cand in "${GF3D_TEST_EXAMPLE}" \
-            "$srcdir/EXAMPLES/green_function_database/regional" \
-            "$srcdir/EXAMPLES/green_function_database/global"; do
-  [ -z "$cand" ] && continue
-  if [ -e "$cand/GFDB/mesh_info.h5" ] && \
-     [ -e "$cand/validation_data/CMTSOLUTION" ] && \
-     ls "$cand"/forward_cmt/OUTPUT_FILES/*.sem.sac > /dev/null 2>&1; then
-    EX="$cand"; break
-  fi
-done
-
-if [ -z "$EX" ]; then
-  echo "skipped: no example with both a database and forward CMT SAC files" >> $testdir/results.log
-  echo "skipped: no example with both a database and forward CMT SAC files"
+# resolves a database and the source files: $GF3D_TEST_GFDB, or a fixture
+. ./gfdb_env.sh
+if [ $? -ne 0 ]; then
+  echo "skipped: no database and no fixture could be built" >> $testdir/results.log
+  echo "skipped: no database and no fixture could be built"
   exit 0
 fi
 
+# The forward run's own seismograms, if there are any. Most of what
+# gf_sac_check.py asserts is the SAC output against the extraction's own
+# ASCII -- same numbers, two writers -- and that needs no solver run. Only
+# the header comparison does, so $GF3D_TEST_FORWARD_SAC is optional and the
+# test runs either way.
+FWD="${GF3D_TEST_FORWARD_SAC}"
+FWDARG=""
+if [ -n "$FWD" ] && ls "$FWD"/*.sem.sac > /dev/null 2>&1; then
+  FWDARG="--fwd $FWD"
+  echo "forward:  $FWD" >> $testdir/results.log
+else
+  FWD=""
+  echo "forward:  (none; SAC headers not compared against a solver run)" >> $testdir/results.log
+fi
+
 # a Python with obspy
-PY="${GF3D_PYTHON}"
-if [ -z "$PY" ]; then PY="$srcdir/EXAMPLES/green_function_database/.venv/bin/python"; fi
+PY="${GF3D_PYTHON:-python3}"
 if ! "$PY" -c "import obspy, numpy" > /dev/null 2>&1; then
   echo "skipped: no Python with obspy (set GF3D_PYTHON)" >> $testdir/results.log
   echo "skipped: no Python with obspy (set GF3D_PYTHON)"
   exit 0
 fi
 
-GFDB="$EX/GFDB"
-CMT="$EX/validation_data/CMTSOLUTION"
-FWD="$EX/forward_cmt/OUTPUT_FILES"
+echo "python:   $PY" >> $testdir/results.log
+
 OUT="$testdir/OUTPUT_FILES/sac_check"
 
 echo "example:  $EX" >> $testdir/results.log
@@ -99,7 +101,7 @@ if [[ -s $testdir/error.log ]]; then
 fi
 
 # the check
-"$PY" "$srcdir/utils/green_function/gf_sac_check.py" --dir "$OUT" --fwd "$FWD" >> $testdir/results.log 2>$testdir/error.log
+"$PY" "$srcdir/utils/green_function/gf_sac_check.py" --dir "$OUT" $FWDARG >> $testdir/results.log 2>$testdir/error.log
 if [[ $? -ne 0 ]]; then
   echo "test failed"; echo "error log:"; cat $testdir/error.log; echo ""
   tail -30 $testdir/results.log

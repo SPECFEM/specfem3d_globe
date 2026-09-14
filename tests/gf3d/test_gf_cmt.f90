@@ -52,7 +52,7 @@
 !---- rotation against a specfem routine rather than against a re-derivation.
 !----
 !---- usage:
-!----   test_gf_cmt <GFDB> <CMTSOLUTION> <M0_ref> <Mw_ref> <hdur_ref> <tshift_ref>
+!----   test_gf_cmt <GFDB> <CMTSOLUTION> [<M0_ref> <Mw_ref> <hdur_ref> <tshift_ref>]
 !----
 
   program test_gf_cmt
@@ -77,6 +77,7 @@
   type(t_gf_location) :: loc
   double precision, dimension(NDIM,NDIM) :: m_cart
   double precision :: m0_ref,mw_ref,hdur_ref,tshift_ref
+  logical :: have_reference
   double precision :: m0,mw,m0_cart,mrr_file
   character(len=MAX_STRING_LEN) :: field
   integer :: nfail,ierr,nargs
@@ -87,25 +88,36 @@
   nfail = 0
 
   nargs = command_argument_count()
-  if (nargs < 6) then
+  if (nargs < 2) then
     write(*,'(a)') 'usage: test_gf_cmt <GFDB> <CMTSOLUTION> <M0> <Mw> <hdur> <tshift>'
     stop 1
   endif
 
   call get_command_argument(1,dbpath)
   call get_command_argument(2,cmtfile)
-  call read_double_arg(3,m0_ref)
-  call read_double_arg(4,mw_ref)
-  call read_double_arg(5,hdur_ref)
-  call read_double_arg(6,tshift_ref)
+  ! The solver reference is optional: it belongs to the forward run that
+  ! produced one particular database, not to the library. Supplied, the four
+  ! comparisons below are asserted; absent, everything else still runs.
+  have_reference = (nargs >= 6)
+  m0_ref = 0.d0 ; mw_ref = 0.d0 ; hdur_ref = 0.d0 ; tshift_ref = 0.d0
+  if (have_reference) then
+    call read_double_arg(3,m0_ref)
+    call read_double_arg(4,mw_ref)
+    call read_double_arg(5,hdur_ref)
+    call read_double_arg(6,tshift_ref)
+  endif
 
   write(*,'(a)') ''
   write(*,'(a)') 'test_gf_cmt'
   write(*,'(a)') ''
   write(*,'(a,a)')       '  database  = ',trim(dbpath)
   write(*,'(a,a)')       '  source    = ',trim(cmtfile)
-  write(*,'(a,es24.16)') '  solver M0 = ',m0_ref
-  write(*,'(a,es24.16)') '  solver Mw = ',mw_ref
+  if (have_reference) then
+    write(*,'(a,es24.16)') '  solver M0 = ',m0_ref
+    write(*,'(a,es24.16)') '  solver Mw = ',mw_ref
+  else
+    write(*,'(a)')         '  solver    = (no reference supplied; not compared)'
+  endif
   write(*,'(a)') ''
 
   call gf_open(dbpath,db,ierr,check_completion=.false.)
@@ -135,13 +147,13 @@
 
   ! get_cmt returns the raw *triangle* half duration; the /1.628 conversion
   ! to a Gaussian width is the caller's, and is Stage 5's
-  call gf_report('half duration vs output_solver    ', &
+  if (have_reference) call gf_report('half duration vs output_solver    ', &
                  abs(src%hdur - hdur_ref),1.d-12,nfail)
 
   ! get_cmt zeroes tshift_src when NSOURCES == 1 and returns the original in
   ! min_tshift_src_original, so t = 0 is the centroid time. The solver
   ! prints the zeroed value, which is what this compares against.
-  call gf_report('time shift vs output_solver       ', &
+  if (have_reference) call gf_report('time shift vs output_solver       ', &
                  abs(src%tshift_src - tshift_ref),1.d-12,nfail)
 
   write(*,'(a,es24.16)') '     min_tshift_src_original = ',src%min_tshift_src_original
@@ -176,14 +188,14 @@
 
   write(*,'(a,es24.16)') '     our M0                  = ',m0
 
-  call gf_report('scalar moment M0 vs the solver    ', &
+  if (have_reference) call gf_report('scalar moment M0 vs the solver    ', &
                  abs(m0 - m0_ref)/abs(m0_ref),1.d-12,nfail)
 
   mw = get_cmt_moment_magnitude(src%moment_tensor(1),src%moment_tensor(2), &
                                 src%moment_tensor(3),src%moment_tensor(4), &
                                 src%moment_tensor(5),src%moment_tensor(6))
 
-  call gf_report('moment magnitude Mw vs the solver ', &
+  if (have_reference) call gf_report('moment magnitude Mw vs the solver ', &
                  abs(mw - mw_ref)/abs(mw_ref),1.d-12,nfail)
 
   !--------------------------------------------------------------------

@@ -334,13 +334,18 @@
   call execute_command_line('mkdir -p '''//dst//'''',exitstat=stat)
   if (stat /= 0) return
 
-  call execute_command_line('cp '''//src//'/mesh_info.h5'' '''// &
-                            src//'/manifest.csv'' '''// &
-                            src//'/centroids.bin'' '''//dst//'''',exitstat=stat)
+  call execute_command_line('cp '''//src//'/mesh_info.h5'' '''//dst//'''',exitstat=stat)
   if (stat /= 0) then
     call remove_partial_db(dst)
     return
   endif
+
+  ! manifest.csv and centroids.bin are optional in the format and the
+  ! synthetic fixture omits them, so a failure here is not one: gf_open then
+  ! takes the directory-scan index route, which is what we want it to reach.
+  call execute_command_line('cp '''//src//'/manifest.csv'' '''// &
+                            src//'/centroids.bin'' '''//dst//''' 2>/dev/null', &
+                            exitstat=stat)
 
   call execute_command_line('ln -s '''//src//'/elements'' '''//dst//'/elements''',exitstat=stat)
   if (stat /= 0) then

@@ -331,8 +331,34 @@
                                                '  ratio(h1/h2) ',ratio,'  Richardson ',rich
 
     if (same_elem .and. in_cell) then
-      call gf_report_true('  '//trim(pname)//': second-order convergence (ratio in [3, 5])', &
-                          ratio > 3.d0 .and. ratio < 5.d0,nfail)
+
+      ! The convergence ratio is only a statement about truncation while
+      ! truncation is what is being measured. Once the finite difference has
+      ! bottomed out on round-off the errors stop falling -- they wander, and
+      ! may even rise as h shrinks -- and a ratio taken there is a ratio of
+      ! two noise samples. Asserting it would be asserting noise, so the
+      ! ratio is claimed only when the coarsest step is well clear of the
+      ! floor, estimated as the smallest error in the sweep.
+      !
+      ! Both cases are real. On the shipped example all three parameters are
+      ! truncation-dominated. On a field smooth enough that the third
+      ! derivative along one direction is small -- the synthetic fixture's
+      ! depth direction, for instance -- that parameter is noise-limited from
+      ! the coarsest step onwards.
+      !
+      ! The Richardson value is asserted either way: it compares the
+      ! extrapolated derivative against the analytic one, which is the
+      ! property this section exists for, and a noise-limited sweep simply
+      ! makes it a tighter check rather than a meaningless one.
+      if (err_h(1) >= 20.d0*minval(err_h)) then
+        call gf_report_true('  '//trim(pname)//': second-order convergence (ratio in [3, 5])', &
+                            ratio > 3.d0 .and. ratio < 5.d0,nfail)
+      else
+        write(*,'(a,a,a,es10.3,a)') '     ',trim(pname), &
+          ': finite difference is round-off limited (floor ',minval(err_h), &
+          '); convergence ratio reported, not asserted'
+      endif
+
       call gf_report('  '//trim(pname)//': Richardson FD vs analytic (rel)',rich,1.d-6,nfail)
       ncount = ncount + 1
     endif

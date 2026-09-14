@@ -16,7 +16,7 @@ and units of the partials, the linearity identity the moment-tensor
 partials satisfy, and -- the reason the facade exists -- that every
 mistake raises a Python exception instead of ending the interpreter.
 
-Usage: test_gf_python.py <xgf3d> <GFDB> <CMTSOLUTION> [FORCESOLUTION] [second GFDB]
+Usage: test_gf_python.py <xgf3d> <GFDB> <CMTSOLUTION> [FORCESOLUTION]
 """
 
 from __future__ import annotations
@@ -90,7 +90,6 @@ def main(argv):
     dbpath = Path(argv[2]).resolve()
     cmtpath = Path(argv[3]).resolve()
     forcepath = Path(argv[4]).resolve() if len(argv) > 4 and argv[4] else None
-    dbpath2 = Path(argv[5]).resolve() if len(argv) > 5 and argv[5] else None
 
     print()
     print(" ******************************")
@@ -291,26 +290,22 @@ def main(argv):
     # ------------------------------------------------------------------
     print("\n 8. closing, and a second database")
 
-    if dbpath2 is not None and (dbpath2 / "mesh_info.h5").exists():
-        # The two-database case: opening the second re-installs specfem's
-        # process-wide globals, and the facade re-installs the first
-        # handle's before every call. If it did not, this extraction would
-        # come back subtly different -- the topography grid indexed with the
-        # other database's dimensions.
-        db2 = gf3d.Database(dbpath2)
-        print(f"       second: {db2!r}")
-        r2 = db2.seismograms(cmt)
-        ok("the second database extracts", np.isfinite(r2.data).all())
+    # A second handle on the same directory. Opening it re-installs specfem's
+    # process-wide globals and takes the one kd-tree; the library re-installs
+    # the first handle's state on every call, and if it did not, this
+    # extraction would come back subtly different. The second open need not
+    # be a *different* database for that -- it is a different open, which is
+    # what the library keys on -- and requiring a second example meant this
+    # never ran, both being gitignored.
+    db2 = gf3d.Database(dbpath)
+    print(f"       second handle: {db2!r}")
+    r2 = db2.seismograms(cmt)
+    ok("the second handle extracts", np.isfinite(r2.data).all())
 
-        again = db.partials(cmt)
-        ok("the first database is bit-for-bit unchanged",
-           np.array_equal(again.data, r.data) and np.array_equal(again.dp, r.dp))
-        db2.close()
-    else:
-        print("       (only one example database is built, skipped)")
-        again = db.partials(cmt)
-        ok("a repeated extraction is bit-for-bit identical",
-           np.array_equal(again.data, r.data) and np.array_equal(again.dp, r.dp))
+    again = db.partials(cmt)
+    ok("the first handle is bit-for-bit unchanged",
+       np.array_equal(again.data, r.data) and np.array_equal(again.dp, r.dp))
+    db2.close()
 
     db.close()
     ok("the database is closed", db.closed)

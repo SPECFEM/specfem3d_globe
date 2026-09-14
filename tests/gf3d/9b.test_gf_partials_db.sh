@@ -41,27 +41,13 @@ if [ ! -e ./lib/libgf3d.a ]; then
   exit 0
 fi
 
-# locates an example with a database and a validation CMTSOLUTION
-EX=""
-for cand in "${GF3D_TEST_EXAMPLE}" \
-            "$srcdir/EXAMPLES/green_function_database/regional" \
-            "$srcdir/EXAMPLES/green_function_database/global"; do
-  [ -z "$cand" ] && continue
-  if [ -e "$cand/GFDB/mesh_info.h5" ] && [ -e "$cand/validation_data/CMTSOLUTION" ]; then
-    EX="$cand"; break
-  fi
-done
-
-if [ -z "$EX" ]; then
-  echo "skipped: no example with a database and a validation CMTSOLUTION" >> $testdir/results.log
-  echo "skipped: no example with a database and a validation CMTSOLUTION"
+# resolves a database and the source files: $GF3D_TEST_GFDB, or a fixture
+. ./gfdb_env.sh
+if [ $? -ne 0 ]; then
+  echo "skipped: no database and no fixture could be built" >> $testdir/results.log
+  echo "skipped: no database and no fixture could be built"
   exit 0
 fi
-
-GFDB="$EX/GFDB"
-CMT="$EX/validation_data/CMTSOLUTION"
-
-echo "example:  $EX" >> $testdir/results.log
 
 # clean
 mkdir -p bin

@@ -1,17 +1,12 @@
 #!/bin/bash
 ###################################################
 #
-# Runs test_gf_anchors against a built example Green function database, and
-# cross-checks it against `xgf3d --check-anchors`.
+# Runs test_gf_anchors against a Green function database, and cross-checks it
+# against `xgf3d --check-anchors`.
 #
-# Skips cleanly when there is nothing to run against, which is the normal
-# case in CI: 5.configure.hdf5_make.sh skips without HDF5, and the example
-# databases are gitignored (300 MB to 1.7 GB).
-#
-# Database search order:
-#   1. $GF3D_TEST_GFDB
-#   2. EXAMPLES/green_function_database/regional/GFDB
-#   3. EXAMPLES/green_function_database/global/GFDB
+# The database comes from gfdb_env.sh. Note the synthetic fixture is affine,
+# so its anchor residual is the float32 storage floor rather than a real
+# mesh's -- the assertion is the same 1e-6 either way.
 #
 ###################################################
 
@@ -39,23 +34,13 @@ if [ ! -e ./lib/libgf3d.a ] || [ ! -e ./bin/xgf3d ]; then
   exit 0
 fi
 
-# locates a database
-GFDB=""
-for cand in "${GF3D_TEST_GFDB}" \
-            "$srcdir/EXAMPLES/green_function_database/regional/GFDB" \
-            "$srcdir/EXAMPLES/green_function_database/global/GFDB"; do
-  if [ -n "$cand" ] && [ -e "$cand/mesh_info.h5" ]; then GFDB="$cand"; break; fi
-done
-
-if [ -z "$GFDB" ]; then
-  echo "skipped: no example Green function database found" >> $testdir/results.log
-  echo "  build one with EXAMPLES/green_function_database/*/Snakefile," >> $testdir/results.log
-  echo "  or point GF3D_TEST_GFDB at one" >> $testdir/results.log
-  echo "skipped: no example Green function database found"
+# resolves a database and the source files: $GF3D_TEST_GFDB, or a fixture
+. ./gfdb_env.sh
+if [ $? -ne 0 ]; then
+  echo "skipped: no database and no fixture could be built" >> $testdir/results.log
+  echo "skipped: no database and no fixture could be built"
   exit 0
 fi
-
-echo "database: $GFDB" >> $testdir/results.log
 
 # clean
 mkdir -p bin

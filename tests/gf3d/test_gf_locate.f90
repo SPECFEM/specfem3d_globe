@@ -76,7 +76,7 @@
   double precision, parameter :: TOL_CLOSURE_KM = 1.d-9
 
   ! local parameters
-  character(len=MAX_STRING_LEN) :: dbpath,dbpath2,arg
+  character(len=MAX_STRING_LEN) :: dbpath
   type(t_gfdb) :: db,db2
   type(t_gf_location) :: loc,loc2,loc_again
   integer :: nfail,ierr,nargs,i,j
@@ -84,13 +84,13 @@
   double precision, dimension(NDIM) :: xyz_ref
   double precision :: err,worst,dot
   integer :: owner_first,owner_second
-  logical :: have_second
+  logical :: have_reference
 
   nfail = 0
 
   nargs = command_argument_count()
-  if (nargs < 7) then
-    write(*,'(a)') 'usage: test_gf_locate <GFDB> <lat> <lon> <depth_km> <x_ref> <y_ref> <z_ref> [<GFDB2>]'
+  if (nargs < 4) then
+    write(*,'(a)') 'usage: test_gf_locate <GFDB> <lat> <lon> <depth_km> [<x_ref> <y_ref> <z_ref>]'
     stop 1
   endif
 
@@ -98,18 +98,18 @@
   call read_double_arg(2,lat)
   call read_double_arg(3,lon)
   call read_double_arg(4,depth_km)
-  call read_double_arg(5,xyz_ref(1))
-  call read_double_arg(6,xyz_ref(2))
-  call read_double_arg(7,xyz_ref(3))
 
-  have_second = .false.
-  dbpath2 = ''
-  if (nargs >= 8) then
-    call get_command_argument(8,arg)
-    if (len_trim(arg) > 0) then
-      dbpath2 = arg
-      have_second = .true.
-    endif
+  ! The solver reference is optional. It describes one specific database --
+  ! the forward run that produced it -- so it is supplied only when the
+  ! runner was given one to go with the database it is testing. Without it
+  ! everything here still runs except the two comparisons against the
+  ! solver's own Cartesian position, which are reported instead.
+  have_reference = (nargs >= 7)
+  xyz_ref(:) = 0.d0
+  if (have_reference) then
+    call read_double_arg(5,xyz_ref(1))
+    call read_double_arg(6,xyz_ref(2))
+    call read_double_arg(7,xyz_ref(3))
   endif
 
   write(*,'(a)') ''
@@ -117,7 +117,11 @@
   write(*,'(a)') ''
   write(*,'(a,a)')       '  database   = ',trim(dbpath)
   write(*,'(a,3es22.14)') '  request    = ',lat,lon,depth_km
-  write(*,'(a,3es22.14)') '  reference  = ',xyz_ref(1),xyz_ref(2),xyz_ref(3)
+  if (have_reference) then
+    write(*,'(a,3es22.14)') '  reference  = ',xyz_ref(1),xyz_ref(2),xyz_ref(3)
+  else
+    write(*,'(a)')          '  reference  = (none supplied; solver comparison not asserted)'
+  endif
   write(*,'(a)') ''
 
   call gf_open(dbpath,db,ierr,check_completion=.false.)
@@ -159,17 +163,22 @@
   ! actually converged onto it.
   !--------------------------------------------------------------------
 
-  worst = 0.d0
-  do i = 1,NDIM
-    worst = max(worst,abs(loc%xyz_target(i) - xyz_ref(i)))
-  enddo
-  call gf_report('geographic chain vs output_solver ',worst,TOL_POSITION,nfail)
+  if (have_reference) then
+    worst = 0.d0
+    do i = 1,NDIM
+      worst = max(worst,abs(loc%xyz_target(i) - xyz_ref(i)))
+    enddo
+    call gf_report('geographic chain vs output_solver ',worst,TOL_POSITION,nfail)
 
-  worst = 0.d0
-  do i = 1,NDIM
-    worst = max(worst,abs(loc%xyz(i) - xyz_ref(i)))
-  enddo
-  call gf_report('mapped position vs output_solver  ',worst,TOL_POSITION,nfail)
+    worst = 0.d0
+    do i = 1,NDIM
+      worst = max(worst,abs(loc%xyz(i) - xyz_ref(i)))
+    enddo
+    call gf_report('mapped position vs output_solver  ',worst,TOL_POSITION,nfail)
+  else
+    write(*,'(a)') '     no solver reference for this database: the geographic'
+    write(*,'(a)') '     chain is not compared (it has no other oracle)'
+  endif
 
   call gf_report('Newton closure |mapped-target| km ',loc%distance_km,TOL_CLOSURE_KM,nfail)
 
@@ -243,46 +252,48 @@
   ! 6. the kd-tree ownership guard
   !
   ! src/shared/search_kdtree.f90 keeps one tree per process in module
-  ! variables. Locating in a second database rebuilds it; going back to the
-  ! first must rebuild it again and return the same answer. Without the
-  ! owner check in gf_tree_ensure this returns database B's elements for a
-  ! database A query -- silently, and with a plausible result.
+  ! variables, so which open it describes is tracked by t_gfdb%open_id.
+  ! Opening the same directory a second time is a different open, and is
+  ! therefore the same exercise as a second database would be -- without
+  ! needing one. Both shipped examples are gitignored, so a check that needed
+  ! two of them ran only on a machine that had built both.
+  !
+  ! The owner is what is asserted. Two handles on one directory hold
+  ! identical centroids, so a tree that was never rebuilt would still return
+  ! the right element: only gf_locate_tree_owner() distinguishes the two.
   !--------------------------------------------------------------------
 
-  if (have_second) then
-    write(*,'(a)') ''
-    write(*,'(a,a)') '  second database = ',trim(dbpath2)
+  write(*,'(a)') ''
 
-    call gf_open(dbpath2,db2,ierr,check_completion=.false.)
-    call gf_report_true('second database opened            ',ierr == GF_OK,nfail)
+  call gf_open(dbpath,db2,ierr,check_completion=.false.)
+  call gf_report_true('the same database opens twice     ',ierr == GF_OK,nfail)
+
+  if (ierr == GF_OK) then
+    call gf_report_true('the second open has its own id    ', &
+                        db2%open_id /= db%open_id .and. db2%open_id /= 0,nfail)
+
+    call gf_locate_source(db2,lat,lon,depth_km,loc2,ierr)
+    call gf_report_true('locate through the second handle  ',ierr == GF_OK,nfail)
+    call gf_report_true('the tree belongs to the second    ', &
+                        gf_locate_tree_owner() == db2%open_id,nfail)
+
+    ! back to the first
+    call gf_locate_source(db,lat,lon,depth_km,loc_again,ierr)
+    call gf_report_true('locate again through the first    ',ierr == GF_OK,nfail)
+    call gf_report_true('and the tree is the first''s again ', &
+                        gf_locate_tree_owner() == db%open_id,nfail)
 
     if (ierr == GF_OK) then
-      call gf_locate_source(db2,lat,lon,depth_km,loc2,ierr)
-      call gf_report_true('locate in the second database     ',ierr == GF_OK,nfail)
-      call gf_report_true('the tree belongs to the second    ', &
-                          gf_locate_tree_owner() == db2%open_id,nfail)
-
-      ! back to the first
-      call gf_locate_source(db,lat,lon,depth_km,loc_again,ierr)
-      call gf_report_true('locate again in the first         ',ierr == GF_OK,nfail)
-      call gf_report_true('and the tree is the first''s again ', &
-                          gf_locate_tree_owner() == db%open_id,nfail)
-
-      if (ierr == GF_OK) then
-        call gf_report_true('same element after the switch     ', &
-                            loc_again%ielem == loc%ielem .and. &
-                            loc_again%morton_hex == loc%morton_hex,nfail)
-        err = max(abs(loc_again%xi - loc%xi), &
-                  abs(loc_again%eta - loc%eta), &
-                  abs(loc_again%gamma - loc%gamma))
-        call gf_report('identical xi,eta,gamma after switch',err,0.d0,nfail)
-      endif
-
-      call gf_close(db2)
+      call gf_report_true('same element after the switch     ', &
+                          loc_again%ielem == loc%ielem .and. &
+                          loc_again%morton_hex == loc%morton_hex,nfail)
+      err = max(abs(loc_again%xi - loc%xi), &
+                abs(loc_again%eta - loc%eta), &
+                abs(loc_again%gamma - loc%gamma))
+      call gf_report('identical xi,eta,gamma after switch',err,0.d0,nfail)
     endif
-  else
-    write(*,'(a)') ''
-    write(*,'(a)') '  (no second database given, kd-tree ownership guard not exercised)'
+
+    call gf_close(db2)
   endif
 
   !--------------------------------------------------------------------
