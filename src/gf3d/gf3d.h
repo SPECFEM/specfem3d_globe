@@ -103,6 +103,10 @@ extern "C" {
 /* a Morton code as 16 hex digits, plus room for a terminator */
 #define GF3D_MORTON_STRLEN 24
 
+/* the largest gf3d_location_t.anchor_err an accepted element may have: the
+   float32 storage floor of the mesh coordinates, not an arithmetic bound */
+#define GF3D_ANCHOR_TOL 1.0e-6
+
 /* an open database. Valid values are 1..GF3D_MAX_HANDLES. */
 typedef int gf3d_handle;
 

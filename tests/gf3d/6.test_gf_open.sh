@@ -82,7 +82,8 @@ fi
 
 # runs test
 echo "run: `date`" >> $testdir/results.log
-./bin/$var "$GFDB" >> $testdir/results.log 2>$testdir/error.log
+./bin/$var "$GFDB" > $testdir/open.log 2>$testdir/error.log
+cat $testdir/open.log >> $testdir/results.log
 
 # checks exit code
 if [[ $? -ne 0 ]]; then
@@ -97,6 +98,14 @@ if [[ -s $testdir/error.log ]]; then
   exit 1
 fi
 rm -f $testdir/error.log
+
+# an incomplete database stops the test early with a skip, not a failure
+if grep -q '^skipped:' $testdir/open.log; then
+  grep '^skipped:' $testdir/open.log
+  rm -f $testdir/open.log
+  exit 0
+fi
+rm -f $testdir/open.log
 
 ###################################################
 #

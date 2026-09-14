@@ -229,11 +229,13 @@ int main(int argc, char **argv)
 
   nsta = info.nstations;
 
-  /* station names must be present and distinct */
+  /* station names must be present and distinct -- over every station the
+     database has, not the first 64 of them */
   {
     int distinct = 1, nonempty = 1;
-    char ids[64][GF3D_STRLEN];
-    for (i = 0; i < nsta && i < 64; i++) {
+    char (*ids)[GF3D_STRLEN] = malloc((size_t) nsta * GF3D_STRLEN);
+    if (ids == NULL) { fprintf(stderr, "out of memory for %d station names\n", nsta); return 1; }
+    for (i = 0; i < nsta; i++) {
       ierr = gf3d_get_station(h, i, &sta);
       if (ierr != GF_OK) { nonempty = 0; break; }
       strncpy(ids[i], sta.id, GF3D_STRLEN - 1);
@@ -243,8 +245,9 @@ int main(int argc, char **argv)
     }
     ok("every station has a name", nonempty);
     ok("station names are distinct", distinct);
-    printf("       first station: %s at %.4f, %.4f\n", ids[0],
+    printf("       all %d station names read; first: %s at %.4f, %.4f\n", nsta, ids[0],
            sta.latitude, sta.longitude);
+    free(ids);
   }
 
   ok_status("station index -1 refused", gf3d_get_station(h, -1, &sta), GF_ERR_ARG);
@@ -291,7 +294,7 @@ int main(int argc, char **argv)
   ok("Morton code came back", strlen(loc.morton_hex) > 0);
   ok("the mapped point is where it was asked for", loc.distance_km < 1.0e-6);
   ok("xi is inside the accepted range", fabs(loc.xi) <= 1.1);
-  ok("the 27-anchor residual is small", loc.anchor_err < 1.0e-5);
+  ok("the 27-anchor residual is within GF3D_ANCHOR_TOL", loc.anchor_err <= GF3D_ANCHOR_TOL);
 
   /* the NaN that would otherwise reach the kd-tree's own stop */
   ok_status("NaN latitude refused",

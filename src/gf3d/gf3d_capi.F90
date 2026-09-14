@@ -88,7 +88,7 @@
   use gf_par, only: t_gfdb, t_gf_source, t_gf_location, t_gf_taxis, t_gf_stf, &
                     GF_VERSION_STRING => GF3D_VERSION, GF_NCOMP, &
                     GF_OK, GF_ERR_ARG, GF_ERR_ALLOC, &
-                    GF_SRC_FORCE, GF_SRC_CMT, &
+                    GF_SRC_FORCE, GF_SRC_CMT, GF_ANCHOR_TOL, &
                     gf_set_error, gf_error_string, gf_errmsg, gf_is_finite
 
   use gf_shared_params, only: gf_init_shared_params
@@ -113,6 +113,9 @@
   integer, parameter :: GF3D_MAX_HANDLES = 32
   integer, parameter :: GF3D_STRLEN = 64
   integer, parameter :: GF3D_MORTON_STRLEN = 24
+  ! the header's GF3D_ANCHOR_TOL: taken from gf_par so that only the C side
+  ! of this pair can drift
+  double precision, parameter :: GF3D_ANCHOR_TOL = GF_ANCHOR_TOL
 
   !-----------------------------------------------------------------
   ! the interoperable mirrors of the library's derived types

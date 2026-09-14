@@ -91,6 +91,16 @@
   ! the real thing
   !--------------------------------------------------------------------
   call gf_open(dbpath,db,ierr)
+
+  ! A database that is still being written is not a defect in gf_open, and
+  ! everything below this point reads element data: report it as a skip and
+  ! leave the runner's exit status at zero.
+  if (ierr == GF_ERR_INCOMPLETE) then
+    write(*,'(a)') 'skipped: this database is still incomplete'
+    write(*,'(a)') '         '//trim(gf_errmsg)
+    stop                      ! bare: a stop code would be printed on stderr
+  endif
+
   if (ierr /= GF_OK) then
     print *,'  FAIL: gf_open returned ',trim(gf_error_string(ierr))
     print *,'        ',trim(gf_errmsg)
@@ -147,6 +157,9 @@
   call check(station_ids_are_unique(db),'station ids are unique',nfail)
 
   !--- completion ---
+  ! gf_open with its default check_completion has already refused an
+  ! incomplete database above, so reaching here with a gap would mean the
+  ! two sweeps disagree
   call gf_check_completion(db,nincomplete,ierr)
   call check(ierr == GF_OK .and. nincomplete == 0, &
              'every element-station file exists with computed_ALL set',nfail)

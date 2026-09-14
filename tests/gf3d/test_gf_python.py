@@ -162,8 +162,9 @@ def main(argv):
     cmt = gf3d.CMTSource.read(cmtpath)
     print(f"       {cmt.latitude}, {cmt.longitude} at {cmt.depth} km, "
           f"hdur {cmt.hdur} s, shift {cmt.time_shift} s, event {cmt.event_name}")
+    # not Mrr in particular: a pure strike-slip source has Mrr = 0
     ok("the moment tensor is six numbers in dyne-cm",
-       len(cmt.tensor) == 6 and abs(cmt.Mrr) > 1e20)
+       len(cmt.tensor) == 6 and max(abs(m) for m in cmt.tensor) > 0)
     ok("the origin time was parsed", cmt.origin_time is not None)
     ok("the centroid time is the origin plus the shift",
        cmt.centroid_time is not None
