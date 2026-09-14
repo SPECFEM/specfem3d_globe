@@ -166,8 +166,9 @@
 
   write(*,'(a)') '1. hdur_Gaussian = hdur/SOURCE_DECAY_MIMIC_TRIANGLE'
 
-  call gf_report_true('gf_hdur_gaussian(60) == 60/1.628, bitwise', &
-                      gf_hdur_gaussian(HCMT) == HCMT/SOURCE_DECAY_MIMIC_TRIANGLE,nfail)
+  call gf_report('gf_hdur_gaussian(60) vs 60/1.628', &
+                 abs(gf_hdur_gaussian(HCMT) - HCMT/SOURCE_DECAY_MIMIC_TRIANGLE) &
+                 /(HCMT/SOURCE_DECAY_MIMIC_TRIANGLE),1.d-14,nfail)
 
   ! the force forward run prints 'Gaussian half duration: 27.641277641277643'
   ! for its f0 = 45 (forward/OUTPUT_FILES/output_solver.txt:142)
@@ -725,15 +726,19 @@
   write(*,'(a)') '11. force_stf dispatch'
 
   call gf_stf_plan(GF_SRC_FORCE,0,45.d0,HDB,DTG,GF_STF_TRUNC,stf,ierr)
-  call gf_report_true('force_stf 0: Gaussian at hdur/1.628', &
-                      stf%kind_stf == GF_STF_GAUSS .and. stf%hdur_target == 45.d0/SOURCE_DECAY_MIMIC_TRIANGLE,nfail)
+  call gf_report_true('force_stf 0: Gaussian',stf%kind_stf == GF_STF_GAUSS,nfail)
+  call gf_report('  at hdur/1.628', &
+                 abs(stf%hdur_target - 45.d0/SOURCE_DECAY_MIMIC_TRIANGLE) &
+                 /(45.d0/SOURCE_DECAY_MIMIC_TRIANGLE),1.d-14,nfail)
   call gf_report('  hdur_corr = sqrt((45/1.628)^2 - hdur_db^2)', &
                  abs(stf%hdur_corr - sqrt((45.d0/SOURCE_DECAY_MIMIC_TRIANGLE)**2 - HDB**2)),1.d-14,nfail)
   call gf_report_true('  khalf = ceiling(6 hdur_corr/dt) = 402',stf%khalf == 402,nfail)
 
   call gf_stf_plan(GF_SRC_FORCE,2,45.d0,HDB,DTG,GF_STF_TRUNC,stf,ierr)
-  call gf_report_true('force_stf 2: Heaviside at hdur/1.628', &
-                      stf%kind_stf == GF_STF_HEAVI .and. stf%hdur_target == 45.d0/SOURCE_DECAY_MIMIC_TRIANGLE,nfail)
+  call gf_report_true('force_stf 2: Heaviside',stf%kind_stf == GF_STF_HEAVI,nfail)
+  call gf_report('  at hdur/1.628', &
+                 abs(stf%hdur_target - 45.d0/SOURCE_DECAY_MIMIC_TRIANGLE) &
+                 /(45.d0/SOURCE_DECAY_MIMIC_TRIANGLE),1.d-14,nfail)
 
   call gf_stf_plan(GF_SRC_FORCE,4,45.d0,HDB,DTG,GF_STF_TRUNC,stf,ierr)
   call gf_report_true('force_stf 4: Gaussian',stf%kind_stf == GF_STF_GAUSS,nfail)

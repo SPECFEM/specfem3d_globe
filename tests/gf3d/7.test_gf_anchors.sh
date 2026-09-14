@@ -120,17 +120,16 @@ fi
 rm -f $testdir/error.log
 
 ref=`grep -E "^ +worst residual +=" $testdir/anchors.log | sed 's/.*= *//'`
-got=`grep -E "^ +ok +27 anchors reproduce" $testdir/results.log | tail -1 | sed 's/.*error = *//' | awk '{print $1}'`
+got=`grep -E "^ +worst anchor residual +=" $testdir/results.log | tail -1 | sed 's/.*= *//'`
 
 if [ -z "$ref" ] || [ -z "$got" ]; then
   echo "  could not read the worst residual from both sources" >> $testdir/results.log
   exit 1
 fi
 
-# Compares as numbers, not as strings, and at the precision the *narrower*
-# of the two is printed with: xgf3d --check-anchors uses es22.14 while
-# gf_report uses es12.5, so six significant digits is all that is on the
-# table. This is a "the tool and the library agree" check, not a bitwise one.
+# Compares as numbers, not as strings. Both sides print es22.14, but the two
+# sweep the database in their own loops, so this is a "the tool and the
+# library agree" check at six significant digits, not a bitwise one.
 same=`awk -v a="$ref" -v b="$got" 'BEGIN{ d=a-b; if (d<0) d=-d; r=(a<0?-a:a); print (d <= 1e-5*(r>0?r:1)) ? "yes" : "no" }'`
 if [ "$same" != "yes" ]; then
   echo "  MISMATCH worst residual: xgf3d says '$ref', test_gf_anchors says '$got'" >> $testdir/results.log

@@ -60,7 +60,7 @@
 
   program test_gf_anchors
 
-  use gf_par, only: t_gfdb,gf_errmsg,gf_error_string,GF_OK,GF_ANCHOR_TOL
+  use gf_par, only: t_gfdb,gf_errmsg,gf_error_string,GF_OK
   use gf_database, only: gf_open,gf_close
   use gf_locate, only: gf_check_anchors,gf_check_anchors_all,gf_locate_release
 
@@ -118,15 +118,18 @@
     stop 1
   endif
 
-  call gf_report('27 anchors reproduce 125 GLL coords',worst_err,GF_ANCHOR_TOL,nfail)
-
+  ! the dimensionless value is what 7.test_gf_anchors.sh reads back to
+  ! compare the library against `xgf3d --check-anchors`, in es22.14 so that
+  ! the comparison is not limited by the printed precision
+  write(*,'(a,es22.14)') '     worst anchor residual    = ',worst_err
   write(*,'(a,es22.14)') '     worst residual in metres = ',worst_err*db%R_PLANET
   if (ielem_worst > 0) then
     write(*,'(a,a)')     '     worst element            = ',db%morton_hex(ielem_worst)
   endif
 
-  ! Records the measured value against the float32 floor rather than only
-  ! against the tolerance. float32 epsilon is 1.19e-7 and the coordinates are
+  ! The bound is written here rather than taken from the library's
+  ! GF_ANCHOR_TOL, so that a change to that constant cannot move the
+  ! assertion with it. float32 epsilon is 1.19e-7 and the coordinates are
   ! O(1), so a residual far *below* ~1e-8 would mean the database was written
   ! in double precision (a CUSTOM_REAL = 8 solver), and one far above 1e-7
   ! would mean the map is not tri-quadratic at all. Both are worth seeing in

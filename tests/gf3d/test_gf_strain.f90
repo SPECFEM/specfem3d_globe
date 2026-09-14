@@ -77,7 +77,7 @@
                        GF_VOIGT,GF_XX,GF_YY,GF_ZZ,GF_XY,GF_XZ,GF_YZ
 
   use gf_moment, only: gf_rotate_moment_tensor,gf_moment_contract, &
-                       gf_moment_contract_full,gf_moment_unit_tensor
+                       gf_moment_unit_tensor
 
   use gf_manufactured, only: gf_lcg_seed,gf_rand_range,gf_report,gf_report_true
 
@@ -363,16 +363,24 @@
   eps_full(1,3) = expected(GF_XZ) ; eps_full(3,1) = expected(GF_XZ)
   eps_full(2,3) = expected(GF_YZ) ; eps_full(3,2) = expected(GF_YZ)
 
+  ! the oracle is written out here, not called from the library: a routine
+  ! that packs Voigt the same wrong way as the one under test would agree
+  val2 = 0.d0
+  do p = 1,NDIM
+    do q = 1,NDIM
+      val2 = val2 + m_cart(p,q)*eps_full(p,q)
+    enddo
+  enddo
+
   call gf_moment_contract(m_cart,expected,val1)
-  call gf_moment_contract_full(m_cart,eps_full,val2)
   call gf_report('Voigt contraction == full 3x3 sum ',abs(val1-val2)/abs(val2),1.d-14,nfail)
 
   !--------------------------------------------------------------------
-  ! 8. linearity in M -- the identity Stage 6's partials rest on
+  ! 8. linearity in M -- the identity the moment-tensor partials rest on
   !
   ! SUM_v M_v * contract(unit_v, eps) must reproduce contract(M, eps). If it
   ! does, the six moment-tensor partial derivatives are the same strain
-  ! re-contracted, exactly, and Stage 6 is a loop rather than a derivation.
+  ! re-contracted, exactly, so computing them is a loop and not a derivation.
   !--------------------------------------------------------------------
 
   val2 = 0.d0

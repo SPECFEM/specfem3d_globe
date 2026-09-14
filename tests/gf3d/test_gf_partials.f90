@@ -289,7 +289,7 @@
   integer, intent(inout) :: nfail
 
   double precision, dimension(:,:,:), allocatable :: eps,dp
-  double precision, dimension(:,:), allocatable :: seis,recon,seis_v
+  double precision, dimension(:,:), allocatable :: seis,recon
   double precision, dimension(:), allocatable :: trace,xpad,p,y,w
   double precision, dimension(6) :: m_sph,e_sph
   double precision, dimension(3,3) :: m_cart
@@ -310,7 +310,7 @@
   nt = tax%nt
 
   allocate(eps(GF_VOIGT,GF_NCOMP,NTDB),dp(GF_NDP_MT,GF_NCOMP,nt), &
-           seis(GF_NCOMP,nt),recon(GF_NCOMP,nt),seis_v(GF_NCOMP,nt), &
+           seis(GF_NCOMP,nt),recon(GF_NCOMP,nt), &
            trace(NTDB),xpad(nt),p(0:nt),y(nt),w(-stf%khalf:stf%khalf))
 
   ! a smooth, distinct trace per Voigt slot and component: a wave packet
@@ -372,10 +372,12 @@
   worst = maxval(abs(recon - seis))/ref
   call gf_report('SUM_v M_v dp(v) == seismogram (rel)  ',worst,1.d-12,nfail)
 
-  ! each partial is the seismogram of its unit tensor: the same library
-  ! routines on the same numbers, with the scaling statement between them
-  ! written here and in gf_partials_mt -- two compilation units, so a
-  ! derived tolerance rather than equality
+  ! Each partial is the seismogram of its unit tensor. The chain re-run here
+  ! is the library's own, so what this pins is not the physics but the slot
+  ! order of dp and the single scale factor applied between contraction and
+  ! integration: a permuted slot or a scale applied twice fails, a wrong
+  ! Green function does not. The statement is written in both compilation
+  ! units, so the bound is derived rather than equality.
   worst = 0.d0
   ref = maxval(abs(dp))
   do v = 1,6
@@ -395,7 +397,7 @@
       enddo
     enddo
   enddo
-  call gf_report('dp(v) == seismogram of unit tensor v (rel)',worst,1.d-14,nfail)
+  call gf_report('dp(v) has the unit-tensor slot order and scale',worst,1.d-14,nfail)
 
   ! the partials are not degenerate: no two proportional, none zero
   worst = 1.d0
@@ -409,7 +411,7 @@
   call gf_partials_mt(eps,NTDB,theta,phi,scale_mt,tax,stf_g,w,dp,ierr)
   call gf_report_true('a Gaussian plan is refused          ',ierr /= GF_OK,nfail)
 
-  deallocate(eps,dp,seis,recon,seis_v,trace,xpad,p,y,w)
+  deallocate(eps,dp,seis,recon,trace,xpad,p,y,w)
 
   end subroutine test_mt_linearity
 
