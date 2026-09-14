@@ -90,7 +90,7 @@
   integer, parameter :: MAXDEG = 4
 
   ! local parameters
-  integer :: nfail,ierr,i,j,k,ia,p,q,v
+  integer :: nfail,ierr,i,j,k,ia,p,q,v,neval
   double precision, dimension(NDIM,NGNOD) :: xiref
   double precision, dimension(NGNOD) :: xelm,yelm,zelm
   double precision, dimension(NGLLX) :: xigll,wxgll
@@ -285,12 +285,14 @@
 
   ! sampled at several points: a constant strain must come back constant
   worst = 0.d0
+  neval = 0
   do k = -1,1
     do j = -1,1
       do i = -1,1
         call map_curved(x0,amat,0.15d0,0.4d0*dble(i),0.4d0*dble(j),0.4d0*dble(k),xstar)
         call lib_strain(xelm,yelm,zelm,u,0.4d0*dble(i),0.4d0*dble(j),0.4d0*dble(k),eps,ierr)
         if (ierr /= GF_OK) cycle
+        neval = neval + 1
         call analytic_strain(cf,xstar,expected)
         do ia = 1,GF_NCOMP
           do v = 1,GF_VOIGT
@@ -300,6 +302,8 @@
       enddo
     enddo
   enddo
+  ! a run in which every point was skipped would report a worst of zero
+  call gf_report_true('all 27 evaluations succeeded      ',neval == 27,nfail)
   call gf_report('curved Q2 patch test, 27 points   ',worst,1.d-11,nfail)
 
   !--------------------------------------------------------------------
@@ -312,18 +316,21 @@
   !--------------------------------------------------------------------
 
   worst = 0.d0
+  neval = 0
   do k = 1,NGLLZ
     do j = 1,NGLLY
       do i = 1,NGLLX
         call map_curved(x0,amat,0.15d0,xigll(i),yigll(j),zigll(k),xstar)
         call eval_map_from_anchors(xelm,yelm,zelm,xigll(i),yigll(j),zigll(k),eps_full(:,1),ierr)
         if (ierr /= GF_OK) cycle
+        neval = neval + 1
         do p = 1,NDIM
           worst = max(worst,abs(eps_full(p,1) - xstar(p)))
         enddo
       enddo
     enddo
   enddo
+  call gf_report_true('all 125 evaluations succeeded     ',neval == NGLLX*NGLLY*NGLLZ,nfail)
   call gf_report('27 anchors reproduce 125 GLL (Q2) ',worst,1.d-14,nfail)
 
   !--------------------------------------------------------------------

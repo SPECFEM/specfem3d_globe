@@ -103,8 +103,7 @@ def main(argv):
     print(f"       library: {gf3d.library_path}")
     print(f"       version: {gf3d.library_version()}")
     ok("a version string came back", len(gf3d.library_version()) > 0)
-    # the struct layout check runs at import; getting here means it passed
-    ok("the struct layouts agree with the header", True)
+    # the struct layout check runs at import: a disagreement raises there
 
     # ------------------------------------------------------------------
     print("\n 2. opening")
