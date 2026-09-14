@@ -81,7 +81,7 @@
 
   module gf_locate
 
-  use gf_par, only: t_gfdb,t_gf_location,gf_set_error,MAX_STRING_LEN, &
+  use gf_par, only: t_gfdb,t_gf_location,gf_set_error,gf_is_finite,MAX_STRING_LEN, &
                     GF_OK,GF_ERR_ARG,GF_ERR_ALLOC,GF_ERR_MISMATCH, &
                     GF_ERR_NO_ELEMENT,GF_XI_TOL,GF_NCAND,GF_ANCHOR_TOL
 
@@ -395,6 +395,14 @@
 
   if (.not. db%is_open) then
     call gf_set_error(ierr,GF_ERR_ARG,'gf_locate_source: database is not open')
+    return
+  endif
+
+  ! A NaN reaching the kd-tree stops the process (search_kdtree.f90:305), so
+  ! the screen belongs here, where the position first becomes a coordinate,
+  ! rather than in every route that leads here.
+  if (.not. (gf_is_finite(lat) .and. gf_is_finite(lon) .and. gf_is_finite(depth_km))) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_locate_source: latitude, longitude or depth is not finite')
     return
   endif
 

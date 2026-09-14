@@ -120,6 +120,7 @@
   module gf_seismograms
 
   use gf_par, only: t_gfdb,t_gf_location,t_gf_source,t_gf_stf,t_gf_taxis,gf_set_error, &
+                    gf_is_finite, &
                     GF_OK,GF_ERR_ARG,GF_ERR_ALLOC,GF_ERR_IO,GF_ERR_MISMATCH, &
                     GF_NCOMP,GF3D_VERSION,GF_STF_TRUNC,GF_STF_HEAVI, &
                     GF_SRC_FORCE,GF_SRC_CMT
@@ -243,6 +244,13 @@
       return
     endif
   enddo
+
+  ! t0_req and hdur both reach the kernel widths and the padding count; a
+  ! NaN there produces an array bound, not a NaN, so it is screened here
+  if (.not. (gf_is_finite(t0_req) .and. gf_is_finite(src%hdur))) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_plan: t0 or the source half duration is not finite')
+    return
+  endif
 
   if (t0_req < 0.d0) then
     call gf_set_error(ierr,GF_ERR_ARG, &

@@ -67,7 +67,7 @@
   program test_gf_partials_db
 
   use gf_par, only: t_gfdb,t_gf_source,t_gf_location,t_gf_taxis,t_gf_stf, &
-                    gf_errmsg,gf_error_string,GF_OK,GF_NCOMP,GF_SRC_CMT
+                    gf_errmsg,gf_error_string,GF_OK,GF_ERR_ARG,GF_NCOMP,GF_SRC_CMT
   use gf_database, only: gf_open,gf_close,gf_topo_elevation
   use gf_locate, only: gf_locate_source,gf_locate_release
   use gf_source, only: gf_read_source
@@ -76,7 +76,7 @@
   use gf_stf, only: gf_default_t0
   use gf_partials, only: gf_partials_ndp,GF_NDP_LOC,GF_DP_NAME,GF_DP_LAT,GF_DP_LON,GF_DP_DEP,GF_DP_TIM
 
-  use gf_manufactured, only: gf_report,gf_report_true
+  use gf_manufactured, only: gf_report,gf_report_true,gf_quiet_nan
 
   use constants, only: MAX_STRING_LEN
 
@@ -91,10 +91,10 @@
 
   character(len=MAX_STRING_LEN) :: dbpath,cmtfile
   type(t_gfdb) :: db
-  type(t_gf_source) :: src,srcp
+  type(t_gf_source) :: src,srcp,src_bad
   type(t_gf_location) :: loc,locp
-  type(t_gf_taxis) :: tax
-  type(t_gf_stf) :: stf
+  type(t_gf_taxis) :: tax,tax_bad
+  type(t_gf_stf) :: stf,stf_bad
   double precision, dimension(:,:,:), allocatable :: seis,seis0,fp,fm
   double precision, dimension(:,:,:,:), allocatable :: dp
   double precision, dimension(:,:,:), allocatable :: dfd            ! (NH, ncomp, nt) per parameter, one station
@@ -157,6 +157,20 @@
     call gf_close(db)
     stop 1
   endif
+
+  ! t0 and hdur set the padding count and the kernel half length, so a NaN
+  ! there becomes an array bound rather than a NaN in the output. The screen
+  ! is in gf_seis_plan, which is what both routes call.
+  call gf_seis_plan(db,src,gf_quiet_nan(),tax_bad,stf_bad,ierr)
+  call gf_report_true('plan: a NaN t0 is refused         ',ierr == GF_ERR_ARG,nfail)
+
+  src_bad = src
+  src_bad%hdur = gf_quiet_nan()
+  call gf_seis_plan(db,src_bad,t0,tax_bad,stf_bad,ierr)
+  call gf_report_true('plan: a NaN hdur is refused       ',ierr == GF_ERR_ARG,nfail)
+
+  call gf_seis_plan(db,src,-1.d0,tax_bad,stf_bad,ierr)
+  call gf_report_true('plan: an unresolved t0 is refused ',ierr == GF_ERR_ARG,nfail)
   nt = tax%nt
   dt_sub = tax%dt_sub
 

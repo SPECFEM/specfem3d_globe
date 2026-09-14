@@ -57,11 +57,11 @@
   program test_gf_locate
 
   use gf_par, only: t_gfdb,t_gf_location,gf_errmsg,gf_error_string, &
-                    GF_OK,GF_ERR_NO_ELEMENT,GF_XI_TOL,GF_ANCHOR_TOL
+                    GF_OK,GF_ERR_ARG,GF_ERR_NO_ELEMENT,GF_XI_TOL,GF_ANCHOR_TOL
   use gf_database, only: gf_open,gf_close
   use gf_locate, only: gf_locate_source,gf_locate_release
 
-  use gf_manufactured, only: gf_report,gf_report_true
+  use gf_manufactured, only: gf_report,gf_report_true,gf_quiet_nan
 
   use constants, only: MAX_STRING_LEN,NDIM
 
@@ -227,6 +227,16 @@
   if (ierr == GF_ERR_NO_ELEMENT) then
     write(*,'(a,a)') '     reported: ',trim(gf_errmsg)
   endif
+
+  ! A NaN passes reduce()'s range test -- both comparisons are false -- and
+  ! reaches the kd-tree, whose "found no point" branch is a stop. The screen
+  ! is in gf_locate_source, so the Fortran route is covered by it too and
+  ! the process is still here to assert that.
+  call gf_locate_source(db,gf_quiet_nan(),lon,depth_km,loc2,ierr)
+  call gf_report_true('a NaN latitude is refused         ',ierr == GF_ERR_ARG,nfail)
+  call gf_locate_source(db,lat,lon,gf_quiet_nan(),loc2,ierr)
+  call gf_report_true('a NaN depth is refused            ',ierr == GF_ERR_ARG,nfail)
+  call gf_report_true('and the process is still running  ',.true.,nfail)
 
   !--------------------------------------------------------------------
   ! 6. the kd-tree ownership guard

@@ -44,7 +44,9 @@
 !----     c_associated. Not `optional`: an optional bind(C) dummy is
 !----     Fortran 2018, and the tests build with -std=f2008;
 !----   * every real that arrives from outside is screened with
-!----     gf_is_finite before anything arithmetic touches it.
+!----     gf_is_finite before anything arithmetic touches it -- in the
+!----     library routine that consumes it, not here, so that the Fortran
+!----     route is screened by the same test.
 !----
 !---- Why an integer handle rather than an opaque pointer
 !---- -------------------------------------------------
@@ -89,7 +91,7 @@
                     GF_VERSION_STRING => GF3D_VERSION, GF_NCOMP, &
                     GF_OK, GF_ERR_ARG, GF_ERR_ALLOC, &
                     GF_SRC_FORCE, GF_SRC_CMT, GF_ANCHOR_TOL, &
-                    gf_set_error, gf_error_string, gf_errmsg, gf_is_finite
+                    gf_set_error, gf_error_string, gf_errmsg
 
   use gf_shared_params, only: gf_init_shared_params
 
@@ -816,14 +818,6 @@
     return
   endif
 
-  ! a NaN would pass reduce()'s range test -- both comparisons are false --
-  ! and reach the kd-tree, which stops when it finds no point
-  if (.not. (gf_is_finite(lat) .and. gf_is_finite(lon) .and. gf_is_finite(depth_km))) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf3d_locate: latitude, longitude or depth is not finite')
-    gf3d_locate = int(ierr,kind=c_int)
-    return
-  endif
-
   call gf_locate_source(handles(h),lat,lon,depth_km,floc,ierr)
   if (ierr /= GF_OK) then
     gf3d_locate = int(ierr,kind=c_int)
@@ -858,12 +852,6 @@
 
   call use_handle(h,ierr)
   if (ierr /= GF_OK) then
-    gf3d_get_plan = int(ierr,kind=c_int)
-    return
-  endif
-
-  if (.not. gf_is_finite(t0_req)) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf3d_get_plan: t0 is not finite')
     gf3d_get_plan = int(ierr,kind=c_int)
     return
   endif
@@ -999,12 +987,6 @@
     return
   endif
 
-  if (.not. gf_is_finite(t0_req)) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf3d_seismograms: t0 is not finite')
-    gf3d_seismograms = int(ierr,kind=c_int)
-    return
-  endif
-
   call build_source(src,handles(h),fsrc,ierr)
   if (ierr /= GF_OK) then
     gf3d_seismograms = int(ierr,kind=c_int)
@@ -1105,12 +1087,6 @@
 
   call use_handle(h,ierr)
   if (ierr /= GF_OK) then
-    gf3d_partials = int(ierr,kind=c_int)
-    return
-  endif
-
-  if (.not. gf_is_finite(t0_req)) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf3d_partials: t0 is not finite')
     gf3d_partials = int(ierr,kind=c_int)
     return
   endif
