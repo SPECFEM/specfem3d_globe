@@ -101,6 +101,8 @@
 
   use gf_seismograms, only: gf_seis_plan, gf_seis, gf_seis_cmt_partials
 
+  use gf_stf, only: gf_default_t0
+
   use gf_partials, only: gf_partials_ndp, GF_NDP_LOC, GF_DP_NAME, GF_DP_UNIT
 
   use shared_parameters, only: R_PLANET, RHOAV
@@ -377,13 +379,42 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine fill_plan(tax,stf,t0_req,cplan)
+  subroutine resolve_t0(fsrc,t0_req,t0,ierr)
+
+! the C ABI's start-time sentinel, resolved once for every entry that takes
+! one: a negative t0_req asks for the start time specfem's own forward run
+! would use for this source. gf_seis_plan below takes resolved values only.
+
+  implicit none
+
+  type(t_gf_source), intent(in) :: fsrc
+  double precision, intent(in) :: t0_req
+  double precision, intent(out) :: t0
+  integer, intent(out) :: ierr
+
+  ierr = GF_OK
+  if (t0_req < 0.d0) then
+    call gf_default_t0(fsrc,t0,ierr)
+  else
+    t0 = t0_req
+  endif
+
+  end subroutine resolve_t0
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine fill_plan(tax,stf,cplan)
+
+! t0_req is reported as the axis resolved it, not as the caller wrote it: a
+! negative value on the way in means "specfem's own rule", and the header
+! this plan describes already carries the resolved number.
 
   implicit none
 
   type(t_gf_taxis), intent(in) :: tax
   type(t_gf_stf), intent(in) :: stf
-  double precision, intent(in) :: t0_req
   type(gf3d_plan_t), intent(out) :: cplan
 
   cplan%nt = int(tax%nt,kind=c_int)
@@ -398,7 +429,7 @@
   cplan%dt = tax%dt
   cplan%dt_sub = tax%dt_sub
   cplan%t0_db = tax%t0_db
-  cplan%t0_req = t0_req
+  cplan%t0_req = tax%t0_req
   cplan%t0 = tax%t0
   cplan%t_first = tax%t_first
   cplan%hdur_src = stf%hdur_src
@@ -822,6 +853,7 @@
   type(t_gf_source) :: fsrc
   type(t_gf_taxis) :: tax
   type(t_gf_stf) :: stf
+  double precision :: t0
   integer :: ierr
 
   call use_handle(h,ierr)
@@ -842,13 +874,19 @@
     return
   endif
 
-  call gf_seis_plan(handles(h),fsrc,t0_req,tax,stf,ierr)
+  call resolve_t0(fsrc,t0_req,t0,ierr)
   if (ierr /= GF_OK) then
     gf3d_get_plan = int(ierr,kind=c_int)
     return
   endif
 
-  call fill_plan(tax,stf,t0_req,plan)
+  call gf_seis_plan(handles(h),fsrc,t0,tax,stf,ierr)
+  if (ierr /= GF_OK) then
+    gf3d_get_plan = int(ierr,kind=c_int)
+    return
+  endif
+
+  call fill_plan(tax,stf,plan)
 
   gf3d_get_plan = GF_OK
 
@@ -952,6 +990,7 @@
   type(t_gf_stf) :: stf
   double precision, dimension(:,:,:), allocatable :: fseis
   double precision, dimension(:), allocatable :: ft,fonset
+  double precision :: t0
   integer :: ierr,ier,nsta,it,ista
 
   call use_handle(h,ierr)
@@ -978,7 +1017,13 @@
     return
   endif
 
-  call gf_seis_plan(handles(h),fsrc,t0_req,tax,stf,ierr)
+  call resolve_t0(fsrc,t0_req,t0,ierr)
+  if (ierr /= GF_OK) then
+    gf3d_seismograms = int(ierr,kind=c_int)
+    return
+  endif
+
+  call gf_seis_plan(handles(h),fsrc,t0,tax,stf,ierr)
   if (ierr /= GF_OK) then
     gf3d_seismograms = int(ierr,kind=c_int)
     return
@@ -1055,6 +1100,7 @@
   double precision, dimension(:,:,:), allocatable :: fseis
   double precision, dimension(:,:,:,:), allocatable :: fdp
   double precision, dimension(:), allocatable :: ft,fonset
+  double precision :: t0
   integer :: ierr,ier,nsta,ndp_want,it,ista
 
   call use_handle(h,ierr)
@@ -1108,7 +1154,13 @@
     return
   endif
 
-  call gf_seis_plan(handles(h),fsrc,t0_req,tax,stf,ierr)
+  call resolve_t0(fsrc,t0_req,t0,ierr)
+  if (ierr /= GF_OK) then
+    gf3d_partials = int(ierr,kind=c_int)
+    return
+  endif
+
+  call gf_seis_plan(handles(h),fsrc,t0,tax,stf,ierr)
   if (ierr /= GF_OK) then
     gf3d_partials = int(ierr,kind=c_int)
     return

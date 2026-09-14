@@ -244,7 +244,8 @@ typedef struct {
   double dt;               /* solver step, s */
   double dt_sub;           /* stored sample spacing = dt*subsample_step */
   double t0_db;
-  double t0_req;           /* the start time asked for */
+  double t0_req;           /* the start time in force: a negative request has
+                              been resolved to specfem's own rule by here */
   double t0;
   double t_first;          /* t[0] */
   double hdur_src;         /* the source's own field */
@@ -316,8 +317,8 @@ int gf3d_locate(gf3d_handle h, double lat, double lon, double depth_km,
  *
  * t0_req is the requested start time in seconds before the centroid time;
  * pass a negative value for specfem's own rule for a forward run (1.5*hdur
- * for a moment tensor). Call this first: plan.nt is how long the output
- * arrays must be.
+ * for a moment tensor), and plan.t0_req comes back with the value that rule
+ * chose. Call this first: plan.nt is how long the output arrays must be.
  */
 int gf3d_get_plan(gf3d_handle h, const gf3d_source *src, double t0_req,
                   gf3d_plan *plan);

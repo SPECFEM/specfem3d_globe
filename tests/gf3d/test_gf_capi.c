@@ -317,7 +317,17 @@ int main(int argc, char **argv)
   ok("dt_sub is dt times the subsampling",
      fabs(plan.dt_sub - plan.dt * plan.subsample_step) < 1.0e-12 * plan.dt_sub);
   ok("the axis starts at or before -1.5*hdur", plan.t_first <= -1.5 * src.hdur);
+  /* the negative request comes back resolved, not echoed */
+  ok("t0_req is specfem's own start time",
+     fabs(plan.t0_req - 1.5 * src.hdur) <= 1.0e-12 * (1.5 * src.hdur));
   ok("a Heaviside conversion for a moment tensor", plan.kind_stf == 2);
+
+  {
+    gf3d_plan p2;
+    ierr = gf3d_get_plan(h, &src, 120.0, &p2);
+    ok_status("gf3d_get_plan with an explicit t0", ierr, GF_OK);
+    ok("an explicit t0 is reported as asked", fabs(p2.t0_req - 120.0) <= 1.0e-12 * 120.0);
+  }
 
   /* ---------------------------------------------------------------- */
   printf("\n 7. seismograms\n");

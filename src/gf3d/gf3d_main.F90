@@ -59,7 +59,7 @@
                             gf_write_seis,gf_write_partials,gf_write_dump
   use gf_partials, only: gf_partials_ndp
   use gf_sac, only: gf_write_sac
-  use gf_stf, only: gf_print_stf
+  use gf_stf, only: gf_print_stf,gf_default_t0
 
   use constants, only: MAX_STRING_LEN,NGLLX,NGNOD
 
@@ -202,7 +202,8 @@
     call get_command_argument(4,outdir)
 
     station = ''
-    ! a negative request asks gf_seis_plan for specfem's own rule, 1.5*hdur
+    ! resolved below, once the source is read: absent --t0 means specfem's
+    ! own rule for this source
     t0_req = -1.d0
     have_t0 = .false.
     itypsokern = 0
@@ -326,6 +327,19 @@
       write(*,'(a,a)') 'wrote interpolated displacement to ',trim(outdir)
 
     else
+
+      ! --t0 left off asks for specfem's own start time for this source;
+      ! gf_seis_plan itself takes a resolved value only
+      if (.not. have_t0) then
+        call gf_default_t0(src,t0_req,ierr)
+        if (ierr /= GF_OK) then
+          write(ISTDERR,'(a)') 'Error choosing the default start time'
+          write(ISTDERR,'(a)') '  '//trim(gf_error_string(ierr))//': '//trim(gf_errmsg)
+          call gf_locate_release()
+          call gf_close(db)
+          stop 1
+        endif
+      endif
 
       ! the conversion and the axis are decided before any element is read,
       ! so a bad request fails in milliseconds and the plan is on record

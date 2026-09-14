@@ -110,7 +110,7 @@
   !--- the source time function and the output time axis
   use gf_stf, only: &
     gf_stf_plan, gf_taxis_plan, gf_taxis_times, gf_stf_kind_name, gf_print_stf, &
-    gf_hdur_gaussian
+    gf_hdur_gaussian, gf_default_t0
 
   !--- extraction
   use gf_seismograms, only: &
@@ -164,7 +164,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine get_seismograms(db,src,synt,dp,itypsokern,t,ierr)
+  subroutine get_seismograms(db,src,t0,synt,dp,itypsokern,t,ierr)
 
 ! seismograms, and optionally their partial derivatives, for one source
 !
@@ -179,9 +179,10 @@
 ! and both are allocated here. itypsokern = 3 (GF3DF's half-duration
 ! partial) is not supported; see gf_partials.
 !
-! The output axis is specfem's own for the forward run, 1.5*hdur before the
-! centroid time for a CMT source. A caller that wants another start time
-! calls gf_seis_plan/gf_seis directly, as xgf3d --t0 does.
+! `t0` is where the output axis starts, in seconds before the centroid time,
+! and must be non-negative. gf_default_t0() returns what specfem's own
+! forward run would use (1.5*hdur for a CMT); pass that unless there is a
+! reason to choose another.
 !
 ! `src` is intent(in): unlike GF3DF, nothing is written back into it.
 
@@ -189,6 +190,7 @@
 
   type(t_gfdb), intent(inout) :: db          ! inout: the topography grid loads lazily
   type(t_gf_source), intent(in) :: src
+  double precision, intent(in) :: t0
   double precision, dimension(:,:,:), allocatable, intent(out) :: synt
   double precision, dimension(:,:,:,:), allocatable, intent(out) :: dp
   integer, intent(in) :: itypsokern
@@ -219,7 +221,7 @@
   call gf_locate_source(db,src%latitude,src%longitude,src%depth,loc,ierr)
   if (ierr /= GF_OK) return
 
-  call gf_seis_plan(db,src,-1.d0,tax,stf,ierr)
+  call gf_seis_plan(db,src,t0,tax,stf,ierr)
   if (ierr /= GF_OK) return
 
   allocate(synt(db%nstations,GF_NCOMP,tax%nt), &

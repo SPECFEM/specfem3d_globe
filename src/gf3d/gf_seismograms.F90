@@ -202,13 +202,11 @@
 ! decides the source time function conversion and the output axis for a
 ! source, before any element is read
 !
-! `t0_req` is the requested start time in seconds before the origin. A
-! negative value asks for specfem's own rule for the forward run
-! (setup_sources_receivers.f90:784-809): 1.5*hdur for a CMT and for the
-! Gaussian and Heaviside force types, 1.2/f0 for a Ricker, 0 for a
-! monochromatic force. tshift_src is zero for a single source, so that is
-! the forward run's t0 exactly (SAC header b = -90 for the shipped
-! CMTSOLUTION, -67.5 for the FORCESOLUTION).
+! `t0_req` is the start time in seconds before the origin, and must be a
+! real one: a caller that wants specfem's own rule calls gf_default_t0
+! first and passes the result. Only the two boundaries with a human user --
+! `xgf3d --t0` left off, and a negative t0_req through the C ABI -- still
+! carry a sentinel, and each resolves it before calling here.
 !
 ! The database's half duration is a per-station attribute; it is T_min/10
 ! by construction and therefore the same for every station of one mesh,
@@ -246,30 +244,12 @@
     endif
   enddo
 
-  t0 = t0_req
-  if (t0 < 0.d0) then
-    select case (src%source_type)
-    case (GF_SRC_CMT)
-      t0 = 1.5d0*src%hdur
-    case (GF_SRC_FORCE)
-      select case (src%force_stf)
-      case (1)
-        ! Ricker: hdur holds the dominant frequency
-        if (src%hdur <= 0.d0) then
-          call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_plan: a Ricker force needs a positive f0')
-          return
-        endif
-        t0 = 1.2d0/src%hdur
-      case (3)
-        t0 = 0.d0
-      case default
-        t0 = 1.5d0*src%hdur
-      end select
-    case default
-      call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_plan: the source has no type set')
-      return
-    end select
+  if (t0_req < 0.d0) then
+    call gf_set_error(ierr,GF_ERR_ARG, &
+      'gf_seis_plan: t0_req must be a resolved start time; call gf_default_t0 for specfem''s rule')
+    return
   endif
+  t0 = t0_req
 
   dt_sub = db%dt*dble(db%subsample_step)
 

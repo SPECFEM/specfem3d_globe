@@ -159,6 +159,7 @@
   integer(c_int) :: ch,cerr
 
   character(len=512) :: dbpath,cmtpath,forcepath
+  double precision :: t0
   integer :: ierr,nfail,narg
 
   nfail = 0
@@ -194,7 +195,11 @@
   call report_true('   gf_read_cmt_source',ierr == GF_OK,nfail)
   if (ierr /= GF_OK) stop 1
 
-  call get_seismograms(db,src,synt,dp,2,t,ierr)
+  call gf_default_t0(src,t0,ierr)
+  call report_true('   gf_default_t0',ierr == GF_OK,nfail)
+  if (ierr /= GF_OK) stop 1
+
+  call get_seismograms(db,src,t0,synt,dp,2,t,ierr)
   call report_true('   get_seismograms with partials',ierr == GF_OK,nfail)
   if (ierr /= GF_OK) then
     write(*,*) '   ',trim(gf_errmsg)
@@ -452,6 +457,7 @@
   double precision, dimension(:,:,:), allocatable :: fsynt
   double precision, dimension(:,:,:,:), allocatable :: fdp
   double precision, dimension(:), allocatable :: ft
+  double precision :: ft0
   type(gf3d_source_t) :: cf
   type(gf3d_plan_t) :: fplan
   real(c_double), dimension(:), allocatable :: fseis,fct,fonset
@@ -462,7 +468,11 @@
   call report_true('   gf_read_force_source',ierr == GF_OK,nfail)
   if (ierr /= GF_OK) return
 
-  call get_seismograms(db,fsrc,fsynt,fdp,0,ft,ierr)
+  call gf_default_t0(fsrc,ft0,ierr)
+  call report_true('   gf_default_t0, force',ierr == GF_OK,nfail)
+  if (ierr /= GF_OK) return
+
+  call get_seismograms(db,fsrc,ft0,fsynt,fdp,0,ft,ierr)
   call report_true('   get_seismograms, force',ierr == GF_OK,nfail)
   if (ierr /= GF_OK) return
 

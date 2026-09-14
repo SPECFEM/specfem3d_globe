@@ -97,7 +97,7 @@
 
   double precision :: t_open,t_locate,t_locate2,t_extract,t_total
   double precision, dimension(0:NHALVE) :: t_reloc,step,err
-  double precision :: peak,worst,ratio
+  double precision :: peak,worst,ratio,t0
   integer :: ierr,i,ista,icomp,ip,k,nsta,nt
 
   character(len=34) :: label
@@ -232,14 +232,21 @@
 
   call banner('3. the output axis and the source time function')
 
-  call gf_seis_plan(db,src,-1.d0,tax,stf,ierr)
+  ! gf_default_t0() is specfem's own rule for a forward run: 1.5*hdur before
+  ! the centroid time for a moment tensor. Pass any non-negative number to
+  ! gf_seis_plan instead to choose the start time yourself.
+  call gf_default_t0(src,t0,ierr)
+  if (ierr /= GF_OK) then
+    write(*,'(a,a)') '  no default start time: ',trim(gf_errmsg)
+    stop 1
+  endif
+
+  call gf_seis_plan(db,src,t0,tax,stf,ierr)
   if (ierr /= GF_OK) then
     write(*,'(a,a)') '  could not plan: ',trim(gf_errmsg)
     stop 1
   endif
 
-  ! -1 above asks for specfem's own rule for a forward run, 1.5*hdur before
-  ! the centroid time for a moment tensor. Pass a positive number to choose.
   call gf_print_stf(stf,tax,6)
 
   nt = tax%nt
@@ -250,11 +257,18 @@
 
   call banner('4. seismograms and partial derivatives')
 
-  ! get_seismograms() is GF3DF's name and argument shape: it locates, plans
-  ! and extracts in one call, and allocates its own outputs. itypsokern = 2
-  ! asks for all ten partials; 1 gives the six moment-tensor ones, 0 none.
+  ! get_seismograms() locates, plans and extracts in one call, and allocates
+  ! its own outputs. itypsokern = 2 asks for all ten partials; 1 gives the
+  ! six moment-tensor ones, 0 none. gf_default_t0() is the start time
+  ! specfem's own forward run would use.
+  call gf_default_t0(src,t0,ierr)
+  if (ierr /= GF_OK) then
+    write(*,'(a,a)') '  no default start time: ',trim(gf_errmsg)
+    stop 1
+  endif
+
   call tic()
-  call get_seismograms(db,src,synt,dp,2,t,ierr)
+  call get_seismograms(db,src,t0,synt,dp,2,t,ierr)
   call toc(t_extract)
 
   if (ierr /= GF_OK) then
@@ -337,7 +351,7 @@
     moved%latitude = src%latitude + step(k)
 
     call tic()
-    call get_seismograms(db,moved,truth,dp_unused,0,t_unused,ierr)
+    call get_seismograms(db,moved,t0,truth,dp_unused,0,t_unused,ierr)
     call toc(t_reloc(k))
 
     if (ierr /= GF_OK) then

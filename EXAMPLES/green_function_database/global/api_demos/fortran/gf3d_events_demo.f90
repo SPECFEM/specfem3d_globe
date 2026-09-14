@@ -81,7 +81,7 @@
 
   character(len=32) :: hdr
 
-  double precision :: t_open,sum_extract
+  double precision :: t_open,sum_extract,t0
   integer :: ierr,k,ista,nsta,nt,nok
 
   integer(kind=8) :: clock_start,clock_rate
@@ -186,7 +186,10 @@
 
     ! itypsokern = 0: seismograms only, no partials
     call tic()
-    call get_seismograms(db,event,synt,dp_unused,0,t,ierr)
+    call gf_default_t0(event,t0,ierr)
+    if (ierr /= GF_OK) cycle
+
+    call get_seismograms(db,event,t0,synt,dp_unused,0,t,ierr)
     call toc(t_extract(k))
 
     if (ierr /= GF_OK) then

@@ -72,6 +72,8 @@
   use gf_locate, only: gf_locate_source,gf_locate_release
   use gf_source, only: gf_read_source
   use gf_seismograms, only: gf_seis_plan,gf_seis_cmt,gf_seis_cmt_partials
+
+  use gf_stf, only: gf_default_t0
   use gf_partials, only: gf_partials_ndp,GF_NDP_LOC,GF_DP_NAME,GF_DP_LAT,GF_DP_LON,GF_DP_DEP,GF_DP_TIM
 
   use gf_manufactured, only: gf_report,gf_report_true
@@ -98,7 +100,7 @@
   double precision, dimension(:,:,:), allocatable :: dfd            ! (NH, ncomp, nt) per parameter, one station
   double precision, dimension(:), allocatable :: t,onset,onsetp
   double precision, dimension(6) :: m_dynecm
-  double precision :: worst,ref,err_h(NH),ratio,rich,elev_p,elev_m,elev_0,dt_sub,h,s0,worst_bit
+  double precision :: worst,ref,err_h(NH),ratio,rich,elev_p,elev_m,elev_0,dt_sub,h,s0,worst_bit,t0
   integer :: nfail,ierr,nargs,ndp,ista,icomp,it,nt,ip,ih,v,nbad,ista_sweep,ncount
   logical :: same_elem,in_db,in_cell
   character(len=8) :: pname
@@ -144,8 +146,17 @@
   endif
   write(*,'(a,a,a,3f10.5)') '  element ',loc%morton_hex,'  xi,eta,gamma = ',loc%xi,loc%eta,loc%gamma
 
-  call gf_seis_plan(db,src,-1.d0,tax,stf,ierr)
+  call gf_default_t0(src,t0,ierr)
+  call gf_report_true('gf_default_t0                     ',ierr == GF_OK,nfail)
+
+  call gf_seis_plan(db,src,t0,tax,stf,ierr)
   call gf_report_true('plan: Heaviside conversion        ',ierr == GF_OK,nfail)
+  if (ierr /= GF_OK) then
+    write(*,'(a)') '  '//trim(gf_errmsg)
+    call gf_locate_release()
+    call gf_close(db)
+    stop 1
+  endif
   nt = tax%nt
   dt_sub = tax%dt_sub
 

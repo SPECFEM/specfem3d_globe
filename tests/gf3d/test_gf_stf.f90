@@ -52,7 +52,7 @@
 
   use constants, only: PI,SOURCE_DECAY_MIMIC_TRIANGLE
 
-  use gf_par, only: t_gf_stf,t_gf_taxis,GF_OK,GF_ERR_ARG, &
+  use gf_par, only: t_gf_stf,t_gf_taxis,t_gf_source,GF_OK,GF_ERR_ARG, &
                     GF_STF_NONE,GF_STF_GAUSS,GF_STF_HEAVI,GF_STF_TRUNC, &
                     GF_SRC_FORCE,GF_SRC_CMT
 
@@ -79,6 +79,7 @@
   write(*,'(a)') ''
 
   call test_hdur_pin(nfail)
+  call test_default_t0(nfail)
   call test_gauss_kernel(nfail)
   call test_heavi_kernel(nfail)
   call test_delta(nfail)
@@ -176,6 +177,92 @@
                  abs(gf_hdur_gaussian(45.d0) - 27.641277641277643d0)/27.641277641277643d0,1.d-14,nfail)
 
   end subroutine test_hdur_pin
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine test_default_t0(nfail)
+
+! the start time specfem's forward run would use, per source kind
+!
+! The rule is in setup_sources_receivers.f90:784-809. It is the only thing
+! left that resolves a negative t0: xgf3d without --t0 and the C ABI with a
+! negative t0_req both call this and pass the result down, so a drift here
+! moves the b header of every trace the library writes.
+
+  implicit none
+  integer, intent(inout) :: nfail
+
+  type(t_gf_source) :: src
+  double precision :: t0
+  integer :: ierr
+
+  write(*,'(a)') '1b. gf_default_t0'
+
+  ! a moment tensor: 1.5*hdur, which is 90 s for the shipped CMTSOLUTION
+  src%source_type = GF_SRC_CMT
+  src%hdur = HCMT
+  call gf_default_t0(src,t0,ierr)
+  call gf_report_true('CMT: succeeded',ierr == GF_OK,nfail)
+  call gf_report('CMT: t0 = 1.5 hdur',abs(t0 - 1.5d0*HCMT)/(1.5d0*HCMT),1.d-15,nfail)
+
+  ! force_stf 0, 2 and 4 share the moment tensor's rule
+  src%source_type = GF_SRC_FORCE
+  src%hdur = 45.d0
+  src%force_stf = 0
+  call gf_default_t0(src,t0,ierr)
+  call gf_report_true('force 0: succeeded',ierr == GF_OK,nfail)
+  call gf_report('force 0: t0 = 1.5 hdur',abs(t0 - 1.5d0*45.d0)/(1.5d0*45.d0),1.d-15,nfail)
+
+  src%force_stf = 2
+  call gf_default_t0(src,t0,ierr)
+  call gf_report('force 2: t0 = 1.5 hdur',abs(t0 - 1.5d0*45.d0)/(1.5d0*45.d0),1.d-15,nfail)
+
+  src%force_stf = 4
+  call gf_default_t0(src,t0,ierr)
+  call gf_report('force 4: t0 = 1.5 hdur',abs(t0 - 1.5d0*45.d0)/(1.5d0*45.d0),1.d-15,nfail)
+
+  ! a Ricker carries its dominant frequency in hdur, and wants 1.2/f0
+  src%force_stf = 1
+  call gf_default_t0(src,t0,ierr)
+  call gf_report_true('Ricker: succeeded',ierr == GF_OK,nfail)
+  call gf_report('Ricker: t0 = 1.2/f0',abs(t0 - 1.2d0/45.d0)/(1.2d0/45.d0),1.d-15,nfail)
+
+  src%hdur = 0.d0
+  call gf_report_true('Ricker with f0 = 0 is refused', &
+                      refuses_t0(src) == GF_ERR_ARG,nfail)
+
+  ! a monochromatic force starts at the origin
+  src%hdur = 45.d0
+  src%force_stf = 3
+  call gf_default_t0(src,t0,ierr)
+  call gf_report_true('monochromatic: succeeded',ierr == GF_OK,nfail)
+  call gf_report_true('monochromatic: t0 = 0',t0 == 0.d0,nfail)
+
+  ! and a source whose type was never set is an error, not a zero
+  src%source_type = 0
+  call gf_report_true('an unset source type is refused', &
+                      refuses_t0(src) == GF_ERR_ARG,nfail)
+
+  end subroutine test_default_t0
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  integer function refuses_t0(src)
+
+! gf_default_t0's error code for a source it cannot serve
+
+  implicit none
+  type(t_gf_source), intent(in) :: src
+
+  double precision :: t0
+
+  call gf_default_t0(src,t0,refuses_t0)
+
+  end function refuses_t0
 
 !
 !-------------------------------------------------------------------------------------------------

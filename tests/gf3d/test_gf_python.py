@@ -183,6 +183,11 @@ def main(argv):
     print(f"       nt = {plan.nt}, dt_sub = {plan.dt_sub}, t_first = {plan.t_first}")
     ok("the plan is the stored length plus the padding", plan.nt == plan.nt_db + plan.npad)
     ok("a Heaviside conversion for a moment tensor", plan.kind_stf == 2)
+    # t0=None asks the library for specfem's own rule and gets the number back
+    ok("t0_req is specfem's own start time",
+       abs(plan.t0_req - 1.5 * cmt.hdur) <= 1e-12 * 1.5 * cmt.hdur)
+    ok("an explicit t0 is reported as asked",
+       abs(db.plan(cmt, t0=120.0).t0_req - 120.0) <= 1e-12 * 120.0)
     ok("the plan's own axis matches the arithmetic",
        np.allclose(plan.times, plan.t_first + np.arange(plan.nt) * plan.dt_sub, atol=0))
 
