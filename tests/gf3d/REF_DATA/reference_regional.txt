@@ -3,7 +3,7 @@
 # These are the numbers the tests used to grep, at run time, out of
 #   EXAMPLES/green_function_database/regional/forward_cmt/OUTPUT_FILES/output_solver.txt
 # which is a gitignored product of a solver run. They are recorded here so that
-# tests/gf3d/ needs nothing from EXAMPLES/ -- see gfdb_env.sh.
+# tests/gf3d/ needs nothing from EXAMPLES/ -- see gfdb_env.bash.
 #
 # THEY DESCRIBE ONE DATABASE. `database` below names it; a runner must only
 # apply these values when it is extracting from that database. Pointing
@@ -12,7 +12,7 @@
 # supplied deliberately rather than defaulting to this file.
 #
 # Format: `key value`, one per line, '#' comments, blank lines ignored.
-# Read by read_reference() in gfdb_env.sh.
+# Read by read_reference() in gfdb_env.bash.
 
 database   EXAMPLES/green_function_database/regional/GFDB
 

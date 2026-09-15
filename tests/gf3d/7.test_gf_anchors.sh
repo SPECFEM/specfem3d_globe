@@ -4,7 +4,7 @@
 # Runs test_gf_anchors against a Green function database, and cross-checks it
 # against `xgf3d --check-anchors`.
 #
-# The database comes from gfdb_env.sh. Note the synthetic fixture is affine,
+# The database comes from gfdb_env.bash. Note the synthetic fixture is affine,
 # so its anchor residual is the float32 storage floor rather than a real
 # mesh's -- the assertion is the same 1e-6 either way.
 #
@@ -35,7 +35,7 @@ if [ ! -e ./lib/libgf3d.a ] || [ ! -e ./bin/xgf3d ]; then
 fi
 
 # resolves a database and the source files: $GF3D_TEST_GFDB, or a fixture
-. ./gfdb_env.sh
+. ./gfdb_env.bash
 if [ $? -ne 0 ]; then
   echo "skipped: no database and no fixture could be built" >> $testdir/results.log
   echo "skipped: no database and no fixture could be built"

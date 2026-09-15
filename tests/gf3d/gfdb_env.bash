@@ -1,7 +1,13 @@
 #
 # Resolves the Green function database the database-backed tests run against.
 #
-# Sourced, not executed:  . ./gfdb_env.sh   then test the return status.
+# Sourced, not executed:  . ./gfdb_env.bash   then test the return status.
+#
+# Named .bash and not .sh deliberately. tests/run_tests.sh:124 executes every
+# ./*.sh in a test directory as a test, so a sourced helper called .sh is run
+# as one -- with $testdir unset and a `return` at top level, which is an
+# error, and the whole gf3d directory then fails. The guard below is the
+# second line of defence in case that convention ever changes.
 #
 # This exists so that nothing in tests/gf3d/ knows about EXAMPLES/. The
 # example databases are gitignored products of a solver run -- 786 MB and
@@ -32,6 +38,13 @@
 # Returns non-zero when it cannot produce a database, so the caller keeps its
 # own "skipped: ...; exit 0" idiom rather than exiting from inside a source.
 #
+
+# executed rather than sourced: say so and do nothing, rather than failing
+# halfway through with $testdir unset
+if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
+  echo "gfdb_env.bash is sourced by the database test runners, not run on its own."
+  exit 0
+fi
 
 # the source files are test data, not example data
 CMT="$testdir/REF_DATA/CMTSOLUTION"

@@ -32,7 +32,7 @@
 !---- the extraction path can run against, so that the database-backed tests
 !---- run on a bare checkout instead of needing the 786 MB gitignored example.
 !---- It is built into a temporary directory and removed again, never committed.
-!---- tests/gf3d/gfdb_env.sh builds one into a temporary directory whenever
+!---- tests/gf3d/gfdb_env.bash builds one into a temporary directory whenever
 !---- GF3D_TEST_GFDB is unset.
 !----
 !---- usage: make_fixture_db <directory>       writes <directory>/GFDB/...

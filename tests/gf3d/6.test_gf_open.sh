@@ -4,7 +4,7 @@
 # Runs test_gf_open against a Green function database, and diffs
 # `xgf3d --info` against the values h5dump reads out of mesh_info.h5.
 #
-# The database comes from gfdb_env.sh -- $GF3D_TEST_GFDB, or a synthetic
+# The database comes from gfdb_env.bash -- $GF3D_TEST_GFDB, or a synthetic
 # fixture built on the spot. Skips cleanly only when there is no HDF5 build
 # to test, which is what 5.configure.hdf5_make.sh leaves behind in CI.
 #
@@ -35,7 +35,7 @@ if [ ! -e ./lib/libgf3d.a ] || [ ! -e ./bin/xgf3d ]; then
 fi
 
 # resolves a database: $GF3D_TEST_GFDB, or a fixture built for the occasion
-. ./gfdb_env.sh
+. ./gfdb_env.bash
 if [ $? -ne 0 ]; then
   echo "skipped: no database and no fixture could be built" >> $testdir/results.log
   echo "skipped: no database and no fixture could be built"

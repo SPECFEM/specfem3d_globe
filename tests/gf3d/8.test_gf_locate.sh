@@ -1,7 +1,7 @@
 #!/bin/bash
 ###################################################
 #
-# Runs test_gf_locate against a Green function database from gfdb_env.sh.
+# Runs test_gf_locate against a Green function database from gfdb_env.bash.
 #
 # Two kinds of check live here. The kd-tree ownership guard and the geometry
 # of whatever element is found need only a valid database, so they run
@@ -43,7 +43,7 @@ if [ ! -e ./lib/libgf3d.a ]; then
 fi
 
 # resolves a database and the source files: $GF3D_TEST_GFDB, or a fixture
-. ./gfdb_env.sh
+. ./gfdb_env.bash
 if [ $? -ne 0 ]; then
   echo "skipped: no database and no fixture could be built" >> $testdir/results.log
   echo "skipped: no database and no fixture could be built"

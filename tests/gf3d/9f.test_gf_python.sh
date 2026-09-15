@@ -53,7 +53,7 @@ fi
 echo "python: $PY" >> $testdir/results.log
 
 # resolves a database and the source files: $GF3D_TEST_GFDB, or a fixture
-. ./gfdb_env.sh
+. ./gfdb_env.bash
 if [ $? -ne 0 ]; then
   echo "skipped: no database and no fixture could be built" >> $testdir/results.log
   echo "skipped: no database and no fixture could be built"
