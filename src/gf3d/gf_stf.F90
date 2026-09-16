@@ -140,7 +140,7 @@
 
   use constants, only: PI,SOURCE_DECAY_MIMIC_TRIANGLE
 
-  use gf_par, only: t_gf_stf,t_gf_taxis,gf_set_error, &
+  use gf_par, only: t_gf_stf,t_gf_taxis,t_gf_source,gf_set_error, &
                     GF_OK,GF_ERR_ARG, &
                     GF_STF_NONE,GF_STF_GAUSS,GF_STF_HEAVI,GF_STF_TRUNC, &
                     GF_SRC_FORCE,GF_SRC_CMT
@@ -150,6 +150,7 @@
   private
 
   public :: gf_hdur_gaussian
+  public :: gf_default_t0
   public :: gf_stf_khalf
   public :: gf_stf_plan
   public :: gf_stf_kernel_gauss
@@ -189,6 +190,57 @@
   gf_hdur_gaussian = hdur / SOURCE_DECAY_MIMIC_TRIANGLE
 
   end function gf_hdur_gaussian
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_default_t0(src,t0,ierr)
+
+! the start time specfem's own forward run would use for this source
+!
+! setup_sources_receivers.f90:784-809: 1.5*hdur for a CMT and for the
+! Gaussian and Heaviside force types, 1.2/f0 for a Ricker (force_stf 1,
+! where hdur holds the dominant frequency), 0 for a monochromatic force
+! (force_stf 3). tshift_src is zero for a single source, so this is the
+! forward run's t0 exactly: b = -90 in the SAC header of the shipped
+! CMTSOLUTION, -67.5 for the FORCESOLUTION.
+!
+! `t0` is seconds before the origin and is therefore non-negative. It is
+! arithmetic on the source alone -- no database -- which is why it lives
+! here and not in gf_seismograms.
+
+  implicit none
+
+  type(t_gf_source), intent(in) :: src
+  double precision, intent(out) :: t0
+  integer, intent(out) :: ierr
+
+  ierr = GF_OK
+  t0 = 0.d0
+
+  select case (src%source_type)
+  case (GF_SRC_CMT)
+    t0 = 1.5d0*src%hdur
+  case (GF_SRC_FORCE)
+    select case (src%force_stf)
+    case (1)
+      if (src%hdur <= 0.d0) then
+        call gf_set_error(ierr,GF_ERR_ARG,'gf_default_t0: a Ricker force needs a positive f0')
+        return
+      endif
+      t0 = 1.2d0/src%hdur
+    case (3)
+      t0 = 0.d0
+    case default
+      t0 = 1.5d0*src%hdur
+    end select
+  case default
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_default_t0: the source has no type set')
+    return
+  end select
+
+  end subroutine gf_default_t0
 
 !
 !-------------------------------------------------------------------------------------------------

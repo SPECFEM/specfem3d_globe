@@ -22,3 +22,10 @@ loc.log
 
 # module files from compiling gf_manufactured.f90 alongside a test
 *.mod
+
+# Core dumps. A test that crashes drops one here, and `git add -A tests/gf3d`
+# after a failed run then commits six megabytes of it -- which is exactly how
+# two of them reached this branch before being rewritten out of it.
+core
+core.*
+vgcore.*

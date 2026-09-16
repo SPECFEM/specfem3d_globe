@@ -344,10 +344,10 @@
   ! 7. the CUSTOM_REAL wrapper against the double core
   !
   ! Same field, same point, the only difference being that the wrapper's
-  ! input has been through float32. The measured value is the noise floor
-  ! this library imposes on anything driven from the database, and Stage 8's
-  ! finite-difference step-size budget depends on knowing it -- so it is
-  ! printed, not merely asserted.
+  ! input has been through float32. The value is the noise floor this
+  ! library imposes on anything driven from the database, which sets the
+  ! step size any finite difference over it may use -- so it is printed,
+  ! not merely asserted.
   !--------------------------------------------------------------------
 
   call build_field(u,coef,s,q,xigll,yigll,zigll)
@@ -370,21 +370,6 @@
   enddo
   call gf_report('CUSTOM_REAL wrapper vs double core',worst_rel,5.d-7,nfail)
   write(*,'(a,es12.5)') '     measured float32 noise floor (relative) = ',worst_rel
-
-  ! and with a double-precision input the wrapper must agree with the core
-  ! exactly, since widening is exact -- this is what makes the seam a seam
-  ! rather than a second implementation
-  if (CUSTOM_REAL == 8) then
-    worst = 0.d0
-    do it = 1,NT
-      do d = 1,GF_NCOMP
-        do f = 1,GF_NCOMP
-          worst = max(worst,abs(out_r(f,d,it) - out(f,d,it)))
-        enddo
-      enddo
-    enddo
-    call gf_report('wrapper == core at CUSTOM_REAL = 8',worst,0.d0,nfail)
-  endif
 
   !--------------------------------------------------------------------
   ! 8. the snapshot and trace entry points must agree

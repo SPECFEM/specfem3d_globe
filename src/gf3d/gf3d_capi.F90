@@ -44,7 +44,9 @@
 !----     c_associated. Not `optional`: an optional bind(C) dummy is
 !----     Fortran 2018, and the tests build with -std=f2008;
 !----   * every real that arrives from outside is screened with
-!----     gf_is_finite before anything arithmetic touches it.
+!----     gf_is_finite before anything arithmetic touches it -- in the
+!----     library routine that consumes it, not here, so that the Fortran
+!----     route is screened by the same test.
 !----
 !---- Why an integer handle rather than an opaque pointer
 !---- -------------------------------------------------
@@ -88,8 +90,8 @@
   use gf_par, only: t_gfdb, t_gf_source, t_gf_location, t_gf_taxis, t_gf_stf, &
                     GF_VERSION_STRING => GF3D_VERSION, GF_NCOMP, &
                     GF_OK, GF_ERR_ARG, GF_ERR_ALLOC, &
-                    GF_SRC_FORCE, GF_SRC_CMT, &
-                    gf_set_error, gf_error_string, gf_errmsg, gf_is_finite
+                    GF_SRC_FORCE, GF_SRC_CMT, GF_ANCHOR_TOL, &
+                    gf_set_error, gf_error_string, gf_errmsg
 
   use gf_shared_params, only: gf_init_shared_params
 
@@ -97,13 +99,13 @@
 
   use gf_source, only: gf_source_set_cmt, gf_source_set_force
 
-  use gf_locate, only: gf_locate_source, gf_locate_release
+  use gf_locate, only: gf_locate_source, gf_locate_release, gf_locate_tree_owner
 
   use gf_seismograms, only: gf_seis_plan, gf_seis, gf_seis_cmt_partials
 
-  use gf_partials, only: gf_partials_ndp, GF_NDP_LOC, GF_DP_NAME, GF_DP_UNIT
+  use gf_stf, only: gf_default_t0
 
-  use shared_parameters, only: R_PLANET, RHOAV
+  use gf_partials, only: gf_partials_ndp, GF_NDP_LOC, GF_DP_NAME, GF_DP_UNIT
 
   implicit none
 
@@ -113,6 +115,9 @@
   integer, parameter :: GF3D_MAX_HANDLES = 32
   integer, parameter :: GF3D_STRLEN = 64
   integer, parameter :: GF3D_MORTON_STRLEN = 24
+  ! the header's GF3D_ANCHOR_TOL: taken from gf_par so that only the C side
+  ! of this pair can drift
+  double precision, parameter :: GF3D_ANCHOR_TOL = GF_ANCHOR_TOL
 
   !-----------------------------------------------------------------
   ! the interoperable mirrors of the library's derived types
@@ -284,14 +289,12 @@
 
   subroutine use_handle(h,ierr)
 
-! validates a handle and re-installs specfem's globals from it
+! validates a handle
 !
-! The re-installation is the part that is easy to miss: R_PLANET, NX_BATHY,
-! NY_BATHY and RESOLUTION_TOPO_FILE live in shared_parameters, one set per
-! process, and gf_open() writes them. With two databases open, the second
-! open would otherwise leave the first handle's topography grid being
-! indexed with the second's dimensions -- and get_topo_bathy() does not
-! range-check, it returns plausible-looking garbage.
+! It used to re-install specfem's per-process globals from the handle as
+! well. The library routines that read those globals now install them
+! themselves, so the two routes are configured the same way and the C route
+! is not the only one that is safe with two databases open.
 
   implicit none
 
@@ -308,7 +311,7 @@
     return
   endif
 
-  call gf_init_shared_params(handles(h),ierr)
+  ierr = GF_OK
 
   end subroutine use_handle
 
@@ -329,14 +332,13 @@
 
   select case (csrc%source_type)
   case (GF_SRC_CMT)
-    call gf_source_set_cmt(src,csrc%latitude,csrc%longitude,csrc%depth_km, &
-                           csrc%hdur,csrc%time_shift,csrc%moment,db%dt,ierr)
+    call gf_source_set_cmt(db,src,csrc%latitude,csrc%longitude,csrc%depth_km, &
+                           csrc%hdur,csrc%time_shift,csrc%moment,ierr)
   case (GF_SRC_FORCE)
-    call gf_source_set_force(src,csrc%latitude,csrc%longitude,csrc%depth_km, &
+    call gf_source_set_force(db,src,csrc%latitude,csrc%longitude,csrc%depth_km, &
                              csrc%hdur,csrc%time_shift,int(csrc%force_stf), &
                              csrc%force_factor, &
-                             csrc%force_dir(1),csrc%force_dir(2),csrc%force_dir(3), &
-                             db%dt,ierr)
+                             csrc%force_dir(1),csrc%force_dir(2),csrc%force_dir(3),ierr)
   case default
     call gf_set_error(ierr,GF_ERR_ARG, &
       'gf3d: source_type must be GF_SRC_CMT (2) or GF_SRC_FORCE (1)')
@@ -374,13 +376,42 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine fill_plan(tax,stf,t0_req,cplan)
+  subroutine resolve_t0(fsrc,t0_req,t0,ierr)
+
+! the C ABI's start-time sentinel, resolved once for every entry that takes
+! one: a negative t0_req asks for the start time specfem's own forward run
+! would use for this source. gf_seis_plan below takes resolved values only.
+
+  implicit none
+
+  type(t_gf_source), intent(in) :: fsrc
+  double precision, intent(in) :: t0_req
+  double precision, intent(out) :: t0
+  integer, intent(out) :: ierr
+
+  ierr = GF_OK
+  if (t0_req < 0.d0) then
+    call gf_default_t0(fsrc,t0,ierr)
+  else
+    t0 = t0_req
+  endif
+
+  end subroutine resolve_t0
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine fill_plan(tax,stf,cplan)
+
+! t0_req is reported as the axis resolved it, not as the caller wrote it: a
+! negative value on the way in means "specfem's own rule", and the header
+! this plan describes already carries the resolved number.
 
   implicit none
 
   type(t_gf_taxis), intent(in) :: tax
   type(t_gf_stf), intent(in) :: stf
-  double precision, intent(in) :: t0_req
   type(gf3d_plan_t), intent(out) :: cplan
 
   cplan%nt = int(tax%nt,kind=c_int)
@@ -395,7 +426,7 @@
   cplan%dt = tax%dt
   cplan%dt_sub = tax%dt_sub
   cplan%t0_db = tax%t0_db
-  cplan%t0_req = t0_req
+  cplan%t0_req = tax%t0_req
   cplan%t0 = tax%t0
   cplan%t_first = tax%t_first
   cplan%hdur_src = stf%hdur_src
@@ -625,13 +656,13 @@
 
   integer(c_int) function gf3d_close(h) bind(C,name='gf3d_close')
 
-! closes a database and releases the process-wide search tree
+! closes a database, and the process-wide search tree if it is this one's
 !
-! The tree is released unconditionally, even when another handle is still
-! open: it belongs to whichever database located last, and the next locate
-! rebuilds it for whoever asks. Leaking it instead would leave
-! src/shared/search_kdtree.f90's module arrays allocated for the life of a
-! Python interpreter.
+! The tree belongs to whichever open located last. Releasing it here
+! unconditionally took it from a second handle that was still using it,
+! which cost that handle a rebuild on its next locate; leaking it instead
+! would leave src/shared/search_kdtree.f90's module arrays allocated for the
+! life of a Python interpreter. So it goes only when this open owns it.
 
   implicit none
 
@@ -652,7 +683,9 @@
     return
   endif
 
-  call gf_locate_release()
+  ! before gf_close, which clears open_id
+  if (gf_locate_tree_owner() == handles(h)%open_id) call gf_locate_release()
+
   call gf_close(handles(h))
 
   in_use(h) = .false.
@@ -701,11 +734,11 @@
   info%t0          = handles(h)%t0
   info%scale_displ = handles(h)%scale_displ
 
-  ! the values the library is actually using, not the (possibly zero) ones
-  ! the database recorded: the current writer stores neither RHOAV nor the
-  ! flattening, so these fall back to specfem's Earth defaults
-  info%r_planet = R_PLANET
-  info%rhoav    = RHOAV
+  ! the handle's own, which gf_open resolved: RHOAV falls back to the build's
+  ! Earth default there when the database does not carry the attribute, so
+  ! this reports what the library uses without reading process-wide state
+  info%r_planet = handles(h)%R_PLANET
+  info%rhoav    = handles(h)%RHOAV
 
   gf3d_get_info = GF_OK
 
@@ -782,14 +815,6 @@
     return
   endif
 
-  ! a NaN would pass reduce()'s range test -- both comparisons are false --
-  ! and reach the kd-tree, which stops when it finds no point
-  if (.not. (gf_is_finite(lat) .and. gf_is_finite(lon) .and. gf_is_finite(depth_km))) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf3d_locate: latitude, longitude or depth is not finite')
-    gf3d_locate = int(ierr,kind=c_int)
-    return
-  endif
-
   call gf_locate_source(handles(h),lat,lon,depth_km,floc,ierr)
   if (ierr /= GF_OK) then
     gf3d_locate = int(ierr,kind=c_int)
@@ -819,16 +844,11 @@
   type(t_gf_source) :: fsrc
   type(t_gf_taxis) :: tax
   type(t_gf_stf) :: stf
+  double precision :: t0
   integer :: ierr
 
   call use_handle(h,ierr)
   if (ierr /= GF_OK) then
-    gf3d_get_plan = int(ierr,kind=c_int)
-    return
-  endif
-
-  if (.not. gf_is_finite(t0_req)) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf3d_get_plan: t0 is not finite')
     gf3d_get_plan = int(ierr,kind=c_int)
     return
   endif
@@ -839,13 +859,19 @@
     return
   endif
 
-  call gf_seis_plan(handles(h),fsrc,t0_req,tax,stf,ierr)
+  call resolve_t0(fsrc,t0_req,t0,ierr)
   if (ierr /= GF_OK) then
     gf3d_get_plan = int(ierr,kind=c_int)
     return
   endif
 
-  call fill_plan(tax,stf,t0_req,plan)
+  call gf_seis_plan(handles(h),fsrc,t0,tax,stf,ierr)
+  if (ierr /= GF_OK) then
+    gf3d_get_plan = int(ierr,kind=c_int)
+    return
+  endif
+
+  call fill_plan(tax,stf,plan)
 
   gf3d_get_plan = GF_OK
 
@@ -949,16 +975,11 @@
   type(t_gf_stf) :: stf
   double precision, dimension(:,:,:), allocatable :: fseis
   double precision, dimension(:), allocatable :: ft,fonset
+  double precision :: t0
   integer :: ierr,ier,nsta,it,ista
 
   call use_handle(h,ierr)
   if (ierr /= GF_OK) then
-    gf3d_seismograms = int(ierr,kind=c_int)
-    return
-  endif
-
-  if (.not. gf_is_finite(t0_req)) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf3d_seismograms: t0 is not finite')
     gf3d_seismograms = int(ierr,kind=c_int)
     return
   endif
@@ -975,7 +996,13 @@
     return
   endif
 
-  call gf_seis_plan(handles(h),fsrc,t0_req,tax,stf,ierr)
+  call resolve_t0(fsrc,t0_req,t0,ierr)
+  if (ierr /= GF_OK) then
+    gf3d_seismograms = int(ierr,kind=c_int)
+    return
+  endif
+
+  call gf_seis_plan(handles(h),fsrc,t0,tax,stf,ierr)
   if (ierr /= GF_OK) then
     gf3d_seismograms = int(ierr,kind=c_int)
     return
@@ -1052,16 +1079,11 @@
   double precision, dimension(:,:,:), allocatable :: fseis
   double precision, dimension(:,:,:,:), allocatable :: fdp
   double precision, dimension(:), allocatable :: ft,fonset
+  double precision :: t0
   integer :: ierr,ier,nsta,ndp_want,it,ista
 
   call use_handle(h,ierr)
   if (ierr /= GF_OK) then
-    gf3d_partials = int(ierr,kind=c_int)
-    return
-  endif
-
-  if (.not. gf_is_finite(t0_req)) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf3d_partials: t0 is not finite')
     gf3d_partials = int(ierr,kind=c_int)
     return
   endif
@@ -1105,7 +1127,13 @@
     return
   endif
 
-  call gf_seis_plan(handles(h),fsrc,t0_req,tax,stf,ierr)
+  call resolve_t0(fsrc,t0_req,t0,ierr)
+  if (ierr /= GF_OK) then
+    gf3d_partials = int(ierr,kind=c_int)
+    return
+  endif
+
+  call gf_seis_plan(handles(h),fsrc,t0,tax,stf,ierr)
   if (ierr /= GF_OK) then
     gf3d_partials = int(ierr,kind=c_int)
     return

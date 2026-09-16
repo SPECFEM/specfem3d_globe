@@ -43,13 +43,8 @@ if [ ! -e ./bin/xgf3d ]; then
   exit 0
 fi
 
-# a Python with numpy. GF3D_PYTHON wins; otherwise the examples' own venv,
-# then whatever is on PATH.
-PY="${GF3D_PYTHON}"
-if [ -z "$PY" ]; then PY="$srcdir/EXAMPLES/green_function_database/.venv/bin/python"; fi
-if ! "$PY" -c "import numpy" > /dev/null 2>&1; then
-  PY=`command -v python3`
-fi
+# a Python with numpy: GF3D_PYTHON, else whatever is on PATH
+PY="${GF3D_PYTHON:-`command -v python3`}"
 if [ -z "$PY" ] || ! "$PY" -c "import numpy" > /dev/null 2>&1; then
   echo "skipped: no Python with numpy (set GF3D_PYTHON)" >> $testdir/results.log
   echo "skipped: no Python with numpy"
@@ -57,45 +52,19 @@ if [ -z "$PY" ] || ! "$PY" -c "import numpy" > /dev/null 2>&1; then
 fi
 echo "python: $PY" >> $testdir/results.log
 
-# locates an example database with a validation source
-EX=""
-for cand in "${GF3D_TEST_EXAMPLE}" \
-            "$srcdir/EXAMPLES/green_function_database/regional" \
-            "$srcdir/EXAMPLES/green_function_database/global"; do
-  [ -z "$cand" ] && continue
-  if [ -e "$cand/GFDB/mesh_info.h5" ] && [ -e "$cand/validation_data/CMTSOLUTION" ]; then
-    EX="$cand"; break
-  fi
-done
-
-if [ -z "$EX" ]; then
-  echo "skipped: no built example database (set GF3D_TEST_EXAMPLE)" >> $testdir/results.log
-  echo "skipped: no built example database"
+# resolves a database and the source files: $GF3D_TEST_GFDB, or a fixture
+. ./gfdb_env.bash
+if [ $? -ne 0 ]; then
+  echo "skipped: no database and no fixture could be built" >> $testdir/results.log
+  echo "skipped: no database and no fixture could be built"
   exit 0
 fi
-
-GFDB="$EX/GFDB"
-CMT="$EX/validation_data/CMTSOLUTION"
-FORCE="$EX/validation_data/FORCESOLUTION"
-[ -e "$FORCE" ] || FORCE=""
-
-# a second, different database exercises the shared-parameter refresh
-GFDB2=""
-for cand in "$srcdir/EXAMPLES/green_function_database/regional" \
-            "$srcdir/EXAMPLES/green_function_database/global"; do
-  if [ "$cand/GFDB" != "$GFDB" ] && [ -e "$cand/GFDB/mesh_info.h5" ]; then
-    GFDB2="$cand/GFDB"; break
-  fi
-done
-
-echo "example: $EX" >> $testdir/results.log
-[ -n "$GFDB2" ] && echo "second database: $GFDB2" >> $testdir/results.log
 
 # runs test
 echo "run: `date`" >> $testdir/results.log
 PYTHONPATH="$srcdir/utils/green_function" \
 GF3D_LIB="$testdir/lib/libgf3d.so" \
-  "$PY" "$testdir/$var.py" "$testdir/bin/xgf3d" "$GFDB" "$CMT" "$FORCE" "$GFDB2" \
+  "$PY" "$testdir/$var.py" "$testdir/bin/xgf3d" "$GFDB" "$CMT" "$FORCE" \
   >> $testdir/results.log 2>$testdir/error.log
 
 # checks exit code

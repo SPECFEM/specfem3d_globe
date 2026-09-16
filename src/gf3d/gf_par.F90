@@ -171,7 +171,15 @@
     double precision :: t0          = 0.d0    ! time of the first sample, s before origin
     double precision :: scale_displ = 0.d0    ! non-dimensionalisation of the stored displacement
     double precision :: R_PLANET    = 0.d0    ! m
-    double precision :: RHOAV       = 0.d0    ! kg/m^3, see note in gf_database.F90
+    ! Identifies this open, not this database: two handles on the same path
+    ! get different ids, and a closed handle has zero. gf_locate uses it to
+    ! say which open the live kd-tree was built for, so that closing a
+    ! handle that no longer owns the tree does not take it from another.
+    integer :: open_id = 0
+
+    double precision :: RHOAV       = 0.d0    ! kg/m^3, resolved at open time
+    logical :: rhoav_stored = .false.         ! .false.: RHOAV above is the build's
+                                              ! Earth default, not the database's
 
     integer :: nstep          = 0             ! solver time steps
     integer :: nt_subsampled  = 0             ! stored time samples = nstep / subsample_step

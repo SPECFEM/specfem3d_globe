@@ -48,11 +48,17 @@
 
   use gf_par
   use gf_database
+  use gf_shared_params, only: gf_init_shared_params
+
+  ! the process-wide state a failed open must not have touched; the test
+  ! links the same objects the library does, so this is the same variable
+  use shared_parameters, only: R_PLANET
 
   implicit none
 
-  character(len=MAX_STRING_LEN) :: dbpath
-  type(t_gfdb) :: db
+  character(len=MAX_STRING_LEN) :: dbpath,partial
+  type(t_gfdb) :: db,bad
+  double precision :: r_planet_before
   integer :: ierr,i,nfail,nincomplete
 
   nfail = 0
@@ -88,9 +94,69 @@
   call check(ierr /= GF_OK,'a directory without mesh_info.h5 returns an error',nfail)
 
   !--------------------------------------------------------------------
+  ! a failure after gf_open has already allocated
+  !
+  ! mesh_info.h5 and the element index read; stations/ is not there. Without
+  ! the cleanup path in gf_open the handle came back with nelem set and the
+  ! Morton index allocated while is_open was false -- a caller that checked
+  ! only nstations, or leaked the handle, saw a plausible half-read
+  ! database. It must come back exactly as gf_close leaves one.
+  !--------------------------------------------------------------------
+  partial = trim(dbpath)//'.gf3d_test_no_stations'
+  call make_stationless_db(trim(dbpath),trim(partial),ierr)
+
+  if (ierr /= 0) then
+    write(*,'(a)') '   note: could not stage a database without stations/; skipping that case'
+  else
+    call gf_open(trim(partial),db,ierr)
+    call check(ierr /= GF_OK,'a database without stations/ is refused',nfail)
+    call check(.not. db%is_open,'and the handle is left closed',nfail)
+    call check(db%nelem == 0,'and nelem is back to zero',nfail)
+    call check(len_trim(db%path) == 0,'and the path is cleared',nfail)
+    call check(.not. allocated(db%morton),'and the element index is released',nfail)
+    call check(.not. allocated(db%centroid),'and the centroids are released',nfail)
+    call check(.not. allocated(db%stations),'and no stations are allocated',nfail)
+
+    call remove_partial_db(trim(partial))
+  endif
+
+  !--------------------------------------------------------------------
+  ! gf_init_shared_params is all or nothing
+  !
+  ! It writes module variables that outlive the call, so a database it
+  ! refuses must not have left the process configured for it: the next
+  ! handle, or a second one already open, would read the wrong planet.
+  ! TOPOGRAPHY set with no grid geometry is the condition it rejects.
+  !--------------------------------------------------------------------
+  r_planet_before = R_PLANET
+
+  bad = t_gfdb()
+  bad%R_PLANET = 1.d0                ! nothing like any planet
+  bad%RHOAV = 1.d0
+  bad%topography = .true.
+  bad%NX_BATHY = 0                   ! which is what it refuses
+  bad%NY_BATHY = 0
+  bad%RESOLUTION_TOPO_FILE = 0.d0
+
+  call gf_init_shared_params(bad,ierr)
+  call check(ierr /= GF_OK,'a database with TOPOGRAPHY and no grid is refused',nfail)
+  call check(R_PLANET == r_planet_before, &
+             'and R_PLANET is untouched by the refusal',nfail)
+
+  !--------------------------------------------------------------------
   ! the real thing
   !--------------------------------------------------------------------
   call gf_open(dbpath,db,ierr)
+
+  ! A database that is still being written is not a defect in gf_open, and
+  ! everything below this point reads element data: report it as a skip and
+  ! leave the runner's exit status at zero.
+  if (ierr == GF_ERR_INCOMPLETE) then
+    write(*,'(a)') 'skipped: this database is still incomplete'
+    write(*,'(a)') '         '//trim(gf_errmsg)
+    stop                      ! bare: a stop code would be printed on stderr
+  endif
+
   if (ierr /= GF_OK) then
     print *,'  FAIL: gf_open returned ',trim(gf_error_string(ierr))
     print *,'        ',trim(gf_errmsg)
@@ -147,6 +213,9 @@
   call check(station_ids_are_unique(db),'station ids are unique',nfail)
 
   !--- completion ---
+  ! gf_open with its default check_completion has already refused an
+  ! incomplete database above, so reaching here with a gap would mean the
+  ! two sweeps disagree
   call gf_check_completion(db,nincomplete,ierr)
   call check(ierr == GF_OK .and. nincomplete == 0, &
              'every element-station file exists with computed_ALL set',nfail)
@@ -234,6 +303,76 @@
   endif
 
   end subroutine check
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine make_stationless_db(src,dst,ierr)
+
+! stages a database that reads as far as the element index and no further
+!
+! Everything but stations/, with elements/ symlinked rather than copied --
+! it is hundreds of megabytes and nothing here opens a file inside it.
+! execute_command_line rather than Fortran I/O: mesh_info.h5 is HDF5 and
+! this test has no business parsing it. ierr /= 0 means the case is skipped,
+! not that anything failed.
+
+  implicit none
+
+  character(len=*), intent(in) :: src,dst
+  integer, intent(out) :: ierr
+
+  ! local parameters
+  integer :: stat
+
+  ierr = 1
+
+  call execute_command_line('rm -rf '''//dst//'''',exitstat=stat)
+  if (stat /= 0) return
+
+  call execute_command_line('mkdir -p '''//dst//'''',exitstat=stat)
+  if (stat /= 0) return
+
+  call execute_command_line('cp '''//src//'/mesh_info.h5'' '''//dst//'''',exitstat=stat)
+  if (stat /= 0) then
+    call remove_partial_db(dst)
+    return
+  endif
+
+  ! manifest.csv and centroids.bin are optional in the format and the
+  ! synthetic fixture omits them, so a failure here is not one: gf_open then
+  ! takes the directory-scan index route, which is what we want it to reach.
+  call execute_command_line('cp '''//src//'/manifest.csv'' '''// &
+                            src//'/centroids.bin'' '''//dst//''' 2>/dev/null', &
+                            exitstat=stat)
+
+  call execute_command_line('ln -s '''//src//'/elements'' '''//dst//'/elements''',exitstat=stat)
+  if (stat /= 0) then
+    call remove_partial_db(dst)
+    return
+  endif
+
+  ierr = 0
+
+  end subroutine make_stationless_db
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine remove_partial_db(dst)
+
+  implicit none
+
+  character(len=*), intent(in) :: dst
+
+  ! local parameters
+  integer :: stat
+
+  call execute_command_line('rm -rf '''//dst//'''',exitstat=stat)
+
+  end subroutine remove_partial_db
 
 !
 !-------------------------------------------------------------------------------------------------

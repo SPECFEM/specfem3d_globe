@@ -92,6 +92,44 @@
   type(t_gfdb), intent(in) :: db
   integer, intent(out) :: ierr
 
+  !--------------------------------------------------------------------
+  ! Every condition is checked before the first assignment.
+  !
+  ! These are process-wide module variables. A failed gf_open() that had
+  ! already written R_PLANET would leave the process configured for a
+  ! database it then refused -- and the next caller, or a still-open second
+  ! handle, would read the wrong planet. Nothing below the checks can fail.
+  !--------------------------------------------------------------------
+
+  ! get_topo_bathy() indexes ibathy_topo with these and does not range-check
+  if (db%topography) then
+    if (db%NX_BATHY <= 0 .or. db%NY_BATHY <= 0 .or. db%RESOLUTION_TOPO_FILE <= 0.d0) then
+      call gf_set_error(ierr,GF_ERR_MISMATCH, &
+        'database has TOPOGRAPHY set but no usable NX_BATHY/NY_BATHY/RESOLUTION_TOPO_FILE')
+      return
+    endif
+  endif
+
+  ! get_topo_bathy() takes the Berkeley smoothed branch when
+  ! PATHNAME_TOPO_FILE == PATHNAME_TOPO_FILE_BERKELEY. The topography grid
+  ! comes out of mesh_info.h5, never off disk, so any other value will do --
+  ! but it must not be that one.
+  if (EARTH_PATHNAME_TOPO_FILE == PATHNAME_TOPO_FILE_BERKELEY) then
+    call gf_set_error(ierr,GF_ERR_MISMATCH, &
+      'PATHNAME_TOPO_FILE default matches the Berkeley smoothed topography path; ' // &
+      'get_topo_bathy would take the wrong branch')
+    return
+  endif
+
+  ! range used when validating a topography grid read off disk; we never read
+  ! one, but keep the values consistent with the Earth grid in the database
+  if (TOPO_MINIMUM >= TOPO_MAXIMUM) then
+    call gf_set_error(ierr,GF_ERR_MISMATCH,'inconsistent TOPO_MINIMUM/TOPO_MAXIMUM defaults')
+    return
+  endif
+
+  !--- from here on nothing returns early ------------------------------
+
   ! this is a serial library: there is exactly one process, and it is rank 0
   myrank = 0
 
@@ -105,7 +143,11 @@
   ! used by incidental writers in reused routines
   OUTPUT_FILES = '.'
 
-  ! planet constants, from the database rather than the Earth defaults
+  ! Planet constants, from the database rather than the Earth defaults. Zero
+  ! means "not set on this handle" and leaves the build's default standing:
+  ! a blank t_gfdb is how a test with no database installs the rest of this
+  ! (tests/gf3d/test_gf_source.f90). gf_open resolves db%RHOAV to the Earth
+  ! default itself, so on an open handle neither guard is ever taken.
   if (db%R_PLANET > 0.d0) then
     R_PLANET    = db%R_PLANET
     R_PLANET_KM = db%R_PLANET / 1000.d0
@@ -114,43 +156,15 @@
     R_EARTH_KM  = db%R_PLANET / 1000.d0
   endif
 
-  ! note: RHOAV is not written to mesh_info.h5 by the current writer, so
-  !       db%RHOAV is zero for the shipped example databases and the Earth
-  !       default declared in shared_par.f90 stands. It first matters in
-  !       Stage 4, where get_cmt() forms scaleM from it. gf_open() reads the
-  !       attribute if a future writer adds it.
   if (db%RHOAV > 0.d0) RHOAV = db%RHOAV
 
-  ! topography grid geometry: get_topo_bathy() indexes ibathy_topo with these
   if (db%topography) then
-    if (db%NX_BATHY <= 0 .or. db%NY_BATHY <= 0 .or. db%RESOLUTION_TOPO_FILE <= 0.d0) then
-      call gf_set_error(ierr,GF_ERR_MISMATCH, &
-        'database has TOPOGRAPHY set but no usable NX_BATHY/NY_BATHY/RESOLUTION_TOPO_FILE')
-      return
-    endif
     NX_BATHY = db%NX_BATHY
     NY_BATHY = db%NY_BATHY
     RESOLUTION_TOPO_FILE = db%RESOLUTION_TOPO_FILE
   endif
 
-  ! get_topo_bathy() takes the Berkeley smoothed branch when
-  ! PATHNAME_TOPO_FILE == PATHNAME_TOPO_FILE_BERKELEY. The topography grid
-  ! comes out of mesh_info.h5, never off disk, so any other value will do —
-  ! but it must not be that one.
   PATHNAME_TOPO_FILE = EARTH_PATHNAME_TOPO_FILE
-  if (PATHNAME_TOPO_FILE == PATHNAME_TOPO_FILE_BERKELEY) then
-    call gf_set_error(ierr,GF_ERR_MISMATCH, &
-      'PATHNAME_TOPO_FILE default matches the Berkeley smoothed topography path; ' // &
-      'get_topo_bathy would take the wrong branch')
-    return
-  endif
-
-  ! range used when validating a topography grid read off disk; we never read
-  ! one, but keep the values consistent with the Earth grid in the database
-  if (TOPO_MINIMUM >= TOPO_MAXIMUM) then
-    call gf_set_error(ierr,GF_ERR_MISMATCH,'inconsistent TOPO_MINIMUM/TOPO_MAXIMUM defaults')
-    return
-  endif
 
   ierr = GF_OK
 

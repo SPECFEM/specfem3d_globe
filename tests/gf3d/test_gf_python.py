@@ -16,7 +16,7 @@ and units of the partials, the linearity identity the moment-tensor
 partials satisfy, and -- the reason the facade exists -- that every
 mistake raises a Python exception instead of ending the interpreter.
 
-Usage: test_gf_python.py <xgf3d> <GFDB> <CMTSOLUTION> [FORCESOLUTION] [second GFDB]
+Usage: test_gf_python.py <xgf3d> <GFDB> <CMTSOLUTION> [FORCESOLUTION]
 """
 
 from __future__ import annotations
@@ -90,7 +90,6 @@ def main(argv):
     dbpath = Path(argv[2]).resolve()
     cmtpath = Path(argv[3]).resolve()
     forcepath = Path(argv[4]).resolve() if len(argv) > 4 and argv[4] else None
-    dbpath2 = Path(argv[5]).resolve() if len(argv) > 5 and argv[5] else None
 
     print()
     print(" ******************************")
@@ -103,8 +102,7 @@ def main(argv):
     print(f"       library: {gf3d.library_path}")
     print(f"       version: {gf3d.library_version()}")
     ok("a version string came back", len(gf3d.library_version()) > 0)
-    # the struct layout check runs at import; getting here means it passed
-    ok("the struct layouts agree with the header", True)
+    # the struct layout check runs at import: a disagreement raises there
 
     # ------------------------------------------------------------------
     print("\n 2. opening")
@@ -163,8 +161,9 @@ def main(argv):
     cmt = gf3d.CMTSource.read(cmtpath)
     print(f"       {cmt.latitude}, {cmt.longitude} at {cmt.depth} km, "
           f"hdur {cmt.hdur} s, shift {cmt.time_shift} s, event {cmt.event_name}")
+    # not Mrr in particular: a pure strike-slip source has Mrr = 0
     ok("the moment tensor is six numbers in dyne-cm",
-       len(cmt.tensor) == 6 and abs(cmt.Mrr) > 1e20)
+       len(cmt.tensor) == 6 and max(abs(m) for m in cmt.tensor) > 0)
     ok("the origin time was parsed", cmt.origin_time is not None)
     ok("the centroid time is the origin plus the shift",
        cmt.centroid_time is not None
@@ -183,6 +182,11 @@ def main(argv):
     print(f"       nt = {plan.nt}, dt_sub = {plan.dt_sub}, t_first = {plan.t_first}")
     ok("the plan is the stored length plus the padding", plan.nt == plan.nt_db + plan.npad)
     ok("a Heaviside conversion for a moment tensor", plan.kind_stf == 2)
+    # t0=None asks the library for specfem's own rule and gets the number back
+    ok("t0_req is specfem's own start time",
+       abs(plan.t0_req - 1.5 * cmt.hdur) <= 1e-12 * 1.5 * cmt.hdur)
+    ok("an explicit t0 is reported as asked",
+       abs(db.plan(cmt, t0=120.0).t0_req - 120.0) <= 1e-12 * 120.0)
     ok("the plan's own axis matches the arithmetic",
        np.allclose(plan.times, plan.t_first + np.arange(plan.nt) * plan.dt_sub, atol=0))
 
@@ -286,26 +290,22 @@ def main(argv):
     # ------------------------------------------------------------------
     print("\n 8. closing, and a second database")
 
-    if dbpath2 is not None and (dbpath2 / "mesh_info.h5").exists():
-        # The two-database case: opening the second re-installs specfem's
-        # process-wide globals, and the facade re-installs the first
-        # handle's before every call. If it did not, this extraction would
-        # come back subtly different -- the topography grid indexed with the
-        # other database's dimensions.
-        db2 = gf3d.Database(dbpath2)
-        print(f"       second: {db2!r}")
-        r2 = db2.seismograms(cmt)
-        ok("the second database extracts", np.isfinite(r2.data).all())
+    # A second handle on the same directory. Opening it re-installs specfem's
+    # process-wide globals and takes the one kd-tree; the library re-installs
+    # the first handle's state on every call, and if it did not, this
+    # extraction would come back subtly different. The second open need not
+    # be a *different* database for that -- it is a different open, which is
+    # what the library keys on -- and requiring a second example meant this
+    # never ran, both being gitignored.
+    db2 = gf3d.Database(dbpath)
+    print(f"       second handle: {db2!r}")
+    r2 = db2.seismograms(cmt)
+    ok("the second handle extracts", np.isfinite(r2.data).all())
 
-        again = db.partials(cmt)
-        ok("the first database is bit-for-bit unchanged",
-           np.array_equal(again.data, r.data) and np.array_equal(again.dp, r.dp))
-        db2.close()
-    else:
-        print("       (only one example database is built, skipped)")
-        again = db.partials(cmt)
-        ok("a repeated extraction is bit-for-bit identical",
-           np.array_equal(again.data, r.data) and np.array_equal(again.dp, r.dp))
+    again = db.partials(cmt)
+    ok("the first handle is bit-for-bit unchanged",
+       np.array_equal(again.data, r.data) and np.array_equal(again.dp, r.dp))
+    db2.close()
 
     db.close()
     ok("the database is closed", db.closed)

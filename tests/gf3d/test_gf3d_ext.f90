@@ -148,9 +148,11 @@
 
   type(t_gfdb) :: db
   type(t_gf_source) :: src
-  double precision, dimension(:,:,:), allocatable :: synt
-  double precision, dimension(:,:,:,:), allocatable :: dp
-  double precision, dimension(:), allocatable :: t
+  double precision, dimension(:,:,:), allocatable :: synt,synt_ref,synt_again
+  double precision, dimension(:,:,:,:), allocatable :: dp,dp_again
+  double precision, dimension(:), allocatable :: t,t_again
+  type(t_gfdb) :: db2
+  type(t_gf_location) :: loc2
 
   type(gf3d_source_t) :: csrc
   type(gf3d_plan_t) :: cplan
@@ -159,7 +161,8 @@
   integer(c_int) :: ch,cerr
 
   character(len=512) :: dbpath,cmtpath,forcepath
-  integer :: ierr,nfail,narg
+  double precision :: t0,worst
+  integer :: ierr,nfail,narg,ista,ic,it
 
   nfail = 0
 
@@ -190,11 +193,15 @@
     stop 1
   endif
 
-  call gf_read_cmt_source(trim(cmtpath),db%dt,src,ierr)
+  call gf_read_cmt_source(db,trim(cmtpath),src,ierr)
   call report_true('   gf_read_cmt_source',ierr == GF_OK,nfail)
   if (ierr /= GF_OK) stop 1
 
-  call get_seismograms(db,src,synt,dp,2,t,ierr)
+  call gf_default_t0(src,t0,ierr)
+  call report_true('   gf_default_t0',ierr == GF_OK,nfail)
+  if (ierr /= GF_OK) stop 1
+
+  call get_seismograms(db,src,t0,synt,dp,2,t,ierr)
   call report_true('   get_seismograms with partials',ierr == GF_OK,nfail)
   if (ierr /= GF_OK) then
     write(*,*) '   ',trim(gf_errmsg)
@@ -262,6 +269,8 @@
   call compare_dp(db%nstations,int(cplan%nt),dp,cdp,nfail)
 
   deallocate(cseis,cdp,ct,consetd)
+  allocate(synt_ref,source=synt)
+
   deallocate(synt,dp,t)
 
   !--- a force source, if the example ships one ---
@@ -273,6 +282,56 @@
 
   cerr = c_gf3d_close(ch)
   call report_true('   gf3d_close',cerr == GF_OK,nfail)
+
+  !--- a second handle on the same database, through the Fortran route ---
+  !
+  ! The second open is of the same directory on purpose. Ownership of the one
+  ! process-wide kd-tree is by open id, not by path, so two handles on one
+  ! database exercise it exactly as two databases would -- and this runs
+  ! wherever a single database exists, which a second example does not: both
+  ! shipped examples are gitignored, so a check needing two of them never ran
+  ! anywhere but a machine that had built both.
+  !
+  ! The rebuild is asserted through gf_locate_tree_owner() and not inferred
+  ! from the result. Two handles on one directory hold identical centroids,
+  ! so a tree that was never rebuilt would still give the right answer: only
+  ! the owner says whether the mechanism worked.
+
+  write(*,*) '5. a second handle on the same database'
+
+  call gf_open(trim(dbpath),db2,ierr,check_completion=.false.)
+  call report_true('   a second handle opens',ierr == GF_OK,nfail)
+  call report_true('   with a different open id',db2%open_id /= db%open_id,nfail)
+
+  if (ierr == GF_OK) then
+    call gf_locate_source(db2,src%latitude,src%longitude,src%depth,loc2,ierr)
+    call report_true('   the second handle locates',ierr == GF_OK,nfail)
+    call report_true('   and the tree is now its own', &
+                     gf_locate_tree_owner() == db2%open_id,nfail)
+
+    call get_seismograms(db,src,t0,synt_again,dp_again,0,t_again,ierr)
+    call report_true('   the first still extracts',ierr == GF_OK,nfail)
+    call report_true('   taking the tree back', &
+                     gf_locate_tree_owner() == db%open_id,nfail)
+
+    if (ierr == GF_OK) then
+      worst = 0.d0
+      do it = 1,size(t_again)
+        do ic = 1,GF_NCOMP
+          do ista = 1,db%nstations
+            worst = max(worst,abs(synt_again(ista,ic,it) - synt_ref(ista,ic,it)))
+          enddo
+        enddo
+      enddo
+      call report('   and returns what it did before',worst, &
+                  1.d-15*maxval(abs(synt_ref)),nfail)
+      deallocate(synt_again,dp_again,t_again)
+    endif
+
+    call gf_close(db2)
+  endif
+
+  deallocate(synt_ref)
 
   ! the pair a long-lived caller must use: gf_close alone leaves the
   ! kd-tree allocated
@@ -452,17 +511,22 @@
   double precision, dimension(:,:,:), allocatable :: fsynt
   double precision, dimension(:,:,:,:), allocatable :: fdp
   double precision, dimension(:), allocatable :: ft
+  double precision :: ft0
   type(gf3d_source_t) :: cf
   type(gf3d_plan_t) :: fplan
   real(c_double), dimension(:), allocatable :: fseis,fct,fonset
   integer(c_int) :: cerr
   integer :: ierr
 
-  call gf_read_force_source(trim(forcepath),db%dt,fsrc,ierr)
+  call gf_read_force_source(db,trim(forcepath),fsrc,ierr)
   call report_true('   gf_read_force_source',ierr == GF_OK,nfail)
   if (ierr /= GF_OK) return
 
-  call get_seismograms(db,fsrc,fsynt,fdp,0,ft,ierr)
+  call gf_default_t0(fsrc,ft0,ierr)
+  call report_true('   gf_default_t0, force',ierr == GF_OK,nfail)
+  if (ierr /= GF_OK) return
+
+  call get_seismograms(db,fsrc,ft0,fsynt,fdp,0,ft,ierr)
   call report_true('   get_seismograms, force',ierr == GF_OK,nfail)
   if (ierr /= GF_OK) return
 

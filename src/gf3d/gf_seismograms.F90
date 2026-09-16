@@ -120,11 +120,14 @@
   module gf_seismograms
 
   use gf_par, only: t_gfdb,t_gf_location,t_gf_source,t_gf_stf,t_gf_taxis,gf_set_error, &
+                    gf_is_finite, &
                     GF_OK,GF_ERR_ARG,GF_ERR_ALLOC,GF_ERR_IO,GF_ERR_MISMATCH, &
                     GF_NCOMP,GF3D_VERSION,GF_STF_TRUNC,GF_STF_HEAVI, &
                     GF_SRC_FORCE,GF_SRC_CMT
 
   use gf_database, only: gf_dir_exists,gf_topo_elevation,gf_topo_gradient
+
+  use gf_shared_params, only: gf_init_shared_params
 
   use gf_element_io, only: gf_read_element_displ
 
@@ -202,13 +205,11 @@
 ! decides the source time function conversion and the output axis for a
 ! source, before any element is read
 !
-! `t0_req` is the requested start time in seconds before the origin. A
-! negative value asks for specfem's own rule for the forward run
-! (setup_sources_receivers.f90:784-809): 1.5*hdur for a CMT and for the
-! Gaussian and Heaviside force types, 1.2/f0 for a Ricker, 0 for a
-! monochromatic force. tshift_src is zero for a single source, so that is
-! the forward run's t0 exactly (SAC header b = -90 for the shipped
-! CMTSOLUTION, -67.5 for the FORCESOLUTION).
+! `t0_req` is the start time in seconds before the origin, and must be a
+! real one: a caller that wants specfem's own rule calls gf_default_t0
+! first and passes the result. Only the two boundaries with a human user --
+! `xgf3d --t0` left off, and a negative t0_req through the C ABI -- still
+! carry a sentinel, and each resolves it before calling here.
 !
 ! The database's half duration is a per-station attribute; it is T_min/10
 ! by construction and therefore the same for every station of one mesh,
@@ -246,30 +247,23 @@
     endif
   enddo
 
-  t0 = t0_req
-  if (t0 < 0.d0) then
-    select case (src%source_type)
-    case (GF_SRC_CMT)
-      t0 = 1.5d0*src%hdur
-    case (GF_SRC_FORCE)
-      select case (src%force_stf)
-      case (1)
-        ! Ricker: hdur holds the dominant frequency
-        if (src%hdur <= 0.d0) then
-          call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_plan: a Ricker force needs a positive f0')
-          return
-        endif
-        t0 = 1.2d0/src%hdur
-      case (3)
-        t0 = 0.d0
-      case default
-        t0 = 1.5d0*src%hdur
-      end select
-    case default
-      call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_plan: the source has no type set')
-      return
-    end select
+  ! see gf_locate_source: the per-process globals must be this handle's
+  call gf_init_shared_params(db,ierr)
+  if (ierr /= GF_OK) return
+
+  ! t0_req and hdur both reach the kernel widths and the padding count; a
+  ! NaN there produces an array bound, not a NaN, so it is screened here
+  if (.not. (gf_is_finite(t0_req) .and. gf_is_finite(src%hdur))) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_plan: t0 or the source half duration is not finite')
+    return
   endif
+
+  if (t0_req < 0.d0) then
+    call gf_set_error(ierr,GF_ERR_ARG, &
+      'gf_seis_plan: t0_req must be a resolved start time; call gf_default_t0 for specfem''s rule')
+    return
+  endif
+  t0 = t0_req
 
   dt_sub = db%dt*dble(db%subsample_step)
 

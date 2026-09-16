@@ -81,11 +81,13 @@
 
   module gf_locate
 
-  use gf_par, only: t_gfdb,t_gf_location,gf_set_error,MAX_STRING_LEN, &
+  use gf_par, only: t_gfdb,t_gf_location,gf_set_error,gf_is_finite,MAX_STRING_LEN, &
                     GF_OK,GF_ERR_ARG,GF_ERR_ALLOC,GF_ERR_MISMATCH, &
                     GF_ERR_NO_ELEMENT,GF_XI_TOL,GF_NCAND,GF_ANCHOR_TOL
 
   use gf_database, only: gf_load_topo,gf_topo_elevation
+
+  use gf_shared_params, only: gf_init_shared_params
 
   use gf_element_io, only: gf_read_element_coords
 
@@ -102,15 +104,22 @@
   public :: gf_locate_release
   public :: gf_check_anchors
   public :: gf_check_anchors_all
+  public :: gf_locate_tree_owner
 
   !-----------------------------------------------------------------
   ! kd-tree ownership
   !
   ! kdtree_search keeps its tree in module variables, so these track which
-  ! database the live tree describes. Empty `tree_owner` means no tree.
+  ! database the live tree describes. Zero `tree_owner` means no tree.
+  !
+  ! The owner is t_gfdb%open_id, not the path: two handles may be open on
+  ! the same directory, and a handle closed and reopened is a different
+  ! open. Comparing paths made those indistinguishable, so a close could
+  ! take the tree from a handle that was still using it -- or leave a tree
+  ! built for a closed handle looking current.
   !-----------------------------------------------------------------
 
-  character(len=MAX_STRING_LEN) :: tree_owner = ''
+  integer :: tree_owner = 0
   logical :: tree_ready = .false.
 
   ! representative element size, non-dimensional, from the centroid cloud;
@@ -147,7 +156,7 @@
   double precision :: diag
 
   if (tree_ready) then
-    if (trim(tree_owner) == trim(db%path)) then
+    if (tree_owner == db%open_id .and. db%open_id /= 0) then
       ierr = GF_OK
       return
     endif
@@ -194,7 +203,7 @@
   tree_typical_size = diag / max(1.d0,dble(db%nelem)**(1.d0/3.d0))
   if (tree_typical_size <= 0.d0) tree_typical_size = 1.d-3
 
-  tree_owner = db%path
+  tree_owner = db%open_id
   tree_ready = .true.
 
   ierr = GF_OK
@@ -233,11 +242,26 @@
   kdtree_num_nodes = 0
   kdtree_search_num_nodes = 0
 
-  tree_owner = ''
+  tree_owner = 0
   tree_ready = .false.
   tree_typical_size = 0.d0
 
   end subroutine gf_locate_release
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  integer function gf_locate_tree_owner()
+
+! the open_id the live kd-tree was built for, or zero when there is no tree
+
+  implicit none
+
+  gf_locate_tree_owner = 0
+  if (tree_ready) gf_locate_tree_owner = tree_owner
+
+  end function gf_locate_tree_owner
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -395,6 +419,19 @@
 
   if (.not. db%is_open) then
     call gf_set_error(ierr,GF_ERR_ARG,'gf_locate_source: database is not open')
+    return
+  endif
+
+  ! the geographic chain below calls reused src/shared routines that read
+  ! per-process globals; this handle's must be the ones installed
+  call gf_init_shared_params(db,ierr)
+  if (ierr /= GF_OK) return
+
+  ! A NaN reaching the kd-tree stops the process (search_kdtree.f90:305), so
+  ! the screen belongs here, where the position first becomes a coordinate,
+  ! rather than in every route that leads here.
+  if (.not. (gf_is_finite(lat) .and. gf_is_finite(lon) .and. gf_is_finite(depth_km))) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_locate_source: latitude, longitude or depth is not finite')
     return
   endif
 

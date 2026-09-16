@@ -229,4 +229,27 @@
 
   end function gf_poly3
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  double precision function gf_quiet_nan()
+
+! a quiet NaN, built from its bit pattern
+!
+! 0/0 would be an invalid operation and the suite builds with
+! -ffpe-trap=invalid, so the value is transferred in rather than computed --
+! the same reason gf_is_finite() reads the exponent bits instead of
+! comparing. Never do arithmetic on the result: pass it to the routine under
+! test and let that routine refuse it.
+!
+! IEEE-754 binary64: sign 0, all eleven exponent bits set, the leading
+! mantissa bit set (0x7FF8000000000000).
+
+  implicit none
+
+  gf_quiet_nan = transfer(9221120237041090560_8,1.d0)
+
+  end function gf_quiet_nan
+
   end module gf_manufactured

@@ -82,9 +82,11 @@
 
   module gf_source
 
-  use gf_par, only: t_gf_source,gf_set_error,gf_is_finite,gf_all_finite, &
+  use gf_par, only: t_gfdb,t_gf_source,gf_set_error,gf_is_finite,gf_all_finite, &
                     GF_OK,GF_ERR_ARG,GF_ERR_NO_FILE,GF_ERR_FORMAT, &
                     GF_SRC_FORCE,GF_SRC_CMT
+
+  use gf_shared_params, only: gf_init_shared_params
 
   implicit none
 
@@ -105,22 +107,21 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine gf_read_force_source(filename,dt,src,ierr)
+  subroutine gf_read_force_source(db,filename,src,ierr)
 
 ! reads a FORCESOLUTION through the solver's own get_force()
 !
-! `dt` is the solver time step the database was written with, from
-! mesh_info.h5. get_force needs it because several of its source time
-! function branches clamp hdur to 5*DT (get_force.f90:223,234,246), and using
-! a different DT here than the reciprocal runs used would put a different
-! floor on the source it reports.
+! The database supplies the solver time step the reciprocal runs used.
+! get_force needs it because several of its source time function branches
+! clamp hdur to 5*DT (get_force.f90:223,234,246), and a different DT here
+! would put a different floor on the source it reports.
 
   use constants, only: MAX_STRING_LEN
 
   implicit none
 
+  type(t_gfdb), intent(in) :: db
   character(len=*), intent(in) :: filename
-  double precision, intent(in) :: dt
   type(t_gf_source), intent(out) :: src
   integer, intent(out) :: ierr
 
@@ -134,10 +135,17 @@
   double precision, dimension(NSOURCES) :: factor_force_source
   double precision, dimension(NSOURCES) :: comp_E,comp_N,comp_Z_UP
   integer, dimension(NSOURCES) :: force_stf
-  double precision :: min_tshift_src_original
+  double precision :: min_tshift_src_original,dt
   logical :: exists
 
   src = t_gf_source()
+
+  ! get_force reads the globals this installs from the handle; see
+  ! gf_source_set_cmt
+  call gf_init_shared_params(db,ierr)
+  if (ierr /= GF_OK) return
+
+  dt = db%dt
 
   if (len_trim(filename) == 0) then
     call gf_set_error(ierr,GF_ERR_ARG,'gf_read_force_source: no FORCESOLUTION path given')
@@ -189,7 +197,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine gf_read_cmt_source(filename,dt,src,ierr)
+  subroutine gf_read_cmt_source(db,filename,src,ierr)
 
 ! reads a CMTSOLUTION through the solver's own get_cmt()
 !
@@ -211,12 +219,10 @@
 
   use constants, only: MAX_STRING_LEN,PI,GRAV
 
-  use shared_parameters, only: RHOAV,R_PLANET
-
   implicit none
 
+  type(t_gfdb), intent(in) :: db
   character(len=*), intent(in) :: filename
-  double precision, intent(in) :: dt
   type(t_gf_source), intent(out) :: src
   integer, intent(out) :: ierr
 
@@ -226,11 +232,18 @@
   ! local parameters
   double precision, dimension(NSOURCES) :: tshift_src,hdur,lat,lon,depth
   double precision, dimension(6,NSOURCES) :: moment_tensor
-  double precision :: min_tshift_src_original,sec
+  double precision :: min_tshift_src_original,sec,dt
   integer :: yr,jda,mo,da,ho,mi
   logical :: exists
 
   src = t_gf_source()
+
+  ! get_cmt reads the globals this installs from the handle; see
+  ! gf_source_set_cmt
+  call gf_init_shared_params(db,ierr)
+  if (ierr /= GF_OK) return
+
+  dt = db%dt
 
   if (len_trim(filename) == 0) then
     call gf_set_error(ierr,GF_ERR_ARG,'gf_read_cmt_source: no CMTSOLUTION path given')
@@ -270,12 +283,11 @@
   ! divided by scaleM = 1.d7 * RHOAV * R_PLANET**5 * PI*GRAV*RHOAV
   src%moment_tensor(1:6) = moment_tensor(1:6,1)
 
-  ! the same scaleM, in get_cmt's own expression (get_cmt.f90:426) from the
-  ! same module variables, which gf_shared_params set from the database
-  ! before the source was read. get_cmt does not return it, and the
-  ! partials of Stage 6 are per dyne-cm, i.e. per unit of what the file
-  ! says, so the factor has to be known.
-  src%scale_moment = 1.d7 * RHOAV * (R_PLANET**5) * PI*GRAV*RHOAV
+  ! the same scaleM, in get_cmt's own expression (get_cmt.f90:426) but from
+  ! the handle rather than the module variables it installed: get_cmt does
+  ! not return the factor, and the moment-tensor partials are per dyne-cm,
+  ! i.e. per unit of what the file says, so it has to be known here.
+  src%scale_moment = 1.d7 * db%RHOAV * (db%R_PLANET**5) * PI*GRAV*db%RHOAV
 
   src%yr = yr ; src%jda = jda ; src%mo = mo
   src%da = da ; src%ho = ho ; src%mi = mi
@@ -292,7 +304,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine gf_source_set_cmt(src,lat,lon,depth_km,hdur,time_shift,moment_dynecm,dt,ierr)
+  subroutine gf_source_set_cmt(db,src,lat,lon,depth_km,hdur,time_shift,moment_dynecm,ierr)
 
 ! builds a CMT source from values rather than from a file
 !
@@ -321,26 +333,35 @@
 ! `moment_dynecm` is (Mrr,Mtt,Mpp,Mrt,Mrp,Mtp) in dyne-cm, i.e. the
 ! CMTSOLUTION's own numbers and units. `depth_km` is km, `hdur` the raw
 ! triangle half duration in seconds, `time_shift` the file's `time shift:`
-! in seconds. `dt` is the database's solver step, needed for the clamp.
+! in seconds. The database supplies the solver step the hdur clamp needs.
 !
 ! The PDE header fields and the event name are left blank: they exist for
 ! Stage 10's SAC headers, which the in-memory API does not write.
 
   use constants, only: PI,GRAV,EXTERNAL_SOURCE_TIME_FUNCTION
 
-  use shared_parameters, only: RHOAV,R_PLANET,NOISE_TOMOGRAPHY
+  use shared_parameters, only: NOISE_TOMOGRAPHY
 
   implicit none
 
+  type(t_gfdb), intent(in) :: db
   type(t_gf_source), intent(out) :: src
-  double precision, intent(in) :: lat,lon,depth_km,hdur,time_shift,dt
+  double precision, intent(in) :: lat,lon,depth_km,hdur,time_shift
   double precision, dimension(6), intent(in) :: moment_dynecm
   integer, intent(out) :: ierr
 
   ! local parameters
-  double precision :: scale_moment,hdur_use
+  double precision :: scale_moment,hdur_use,dt
 
   src = t_gf_source()
+
+  ! this handle's planet, this handle's topography grid: the globals the
+  ! reused src/shared routines read are per process, so a second open
+  ! database would otherwise be the one they describe
+  call gf_init_shared_params(db,ierr)
+  if (ierr /= GF_OK) return
+
+  dt = db%dt
 
   ! screened before anything arithmetic touches them: a NaN latitude would
   ! pass reduce()'s range test in gf_locate (both comparisons are false)
@@ -360,7 +381,7 @@
     return
   endif
 
-  if (RHOAV <= 0.d0 .or. R_PLANET <= 0.d0) then
+  if (db%RHOAV <= 0.d0 .or. db%R_PLANET <= 0.d0) then
     call gf_set_error(ierr,GF_ERR_ARG, &
       'gf_source_set_cmt: planet constants are unset; open a database first')
     return
@@ -387,7 +408,7 @@
 
   ! get_cmt.f90:427-428, in get_cmt's own expression from the same module
   ! variables gf_shared_params set from the database
-  scale_moment = 1.d7 * RHOAV * (R_PLANET**5) * PI*GRAV*RHOAV
+  scale_moment = 1.d7 * db%RHOAV * (db%R_PLANET**5) * PI*GRAV*db%RHOAV
 
   src%moment_tensor(1:6) = moment_dynecm(1:6) / scale_moment
   src%scale_moment = scale_moment
@@ -400,8 +421,8 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine gf_source_set_force(src,lat,lon,depth_km,f0,time_shift,force_stf, &
-                                 factor_newton,dir_E,dir_N,dir_Z_UP,dt,ierr)
+  subroutine gf_source_set_force(db,src,lat,lon,depth_km,f0,time_shift,force_stf, &
+                                 factor_newton,dir_E,dir_N,dir_Z_UP,ierr)
 
 ! builds a force source from values rather than from a file
 !
@@ -429,20 +450,25 @@
 
   use constants, only: PI,GRAV,TINYVAL
 
-  use shared_parameters, only: RHOAV,R_PLANET
-
   implicit none
 
+  type(t_gfdb), intent(in) :: db
   type(t_gf_source), intent(out) :: src
   double precision, intent(in) :: lat,lon,depth_km,f0,time_shift
   integer, intent(in) :: force_stf
-  double precision, intent(in) :: factor_newton,dir_E,dir_N,dir_Z_UP,dt
+  double precision, intent(in) :: factor_newton,dir_E,dir_N,dir_Z_UP
   integer, intent(out) :: ierr
 
   ! local parameters
-  double precision :: scaleF,hdur_use,norm
+  double precision :: scaleF,hdur_use,norm,dt
 
   src = t_gf_source()
+
+  ! see gf_source_set_cmt
+  call gf_init_shared_params(db,ierr)
+  if (ierr /= GF_OK) return
+
+  dt = db%dt
 
   if (.not. (gf_is_finite(lat) .and. gf_is_finite(lon) .and. gf_is_finite(depth_km) &
        .and. gf_is_finite(f0) .and. gf_is_finite(time_shift) .and. gf_is_finite(dt) &
@@ -457,7 +483,7 @@
     return
   endif
 
-  if (RHOAV <= 0.d0 .or. R_PLANET <= 0.d0) then
+  if (db%RHOAV <= 0.d0 .or. db%R_PLANET <= 0.d0) then
     call gf_set_error(ierr,GF_ERR_ARG, &
       'gf_source_set_force: planet constants are unset; open a database first')
     return
@@ -513,7 +539,7 @@
   src%force_stf = force_stf
 
   ! get_force.f90:289-290
-  scaleF = RHOAV * (R_PLANET**4) * PI*GRAV*RHOAV
+  scaleF = db%RHOAV * (db%R_PLANET**4) * PI*GRAV*db%RHOAV
   src%factor_force_source = factor_newton / scaleF
 
   src%comp_dir_vect_source_E    = dir_E
@@ -638,14 +664,14 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine gf_read_source(filename,dt,src,ierr)
+  subroutine gf_read_source(db,filename,src,ierr)
 
 ! reads either kind of source file, deciding which from its contents
 
   implicit none
 
+  type(t_gfdb), intent(in) :: db
   character(len=*), intent(in) :: filename
-  double precision, intent(in) :: dt
   type(t_gf_source), intent(out) :: src
   integer, intent(out) :: ierr
 
@@ -656,9 +682,9 @@
   if (ierr /= GF_OK) return
 
   if (source_type == GF_SRC_FORCE) then
-    call gf_read_force_source(filename,dt,src,ierr)
+    call gf_read_force_source(db,filename,src,ierr)
   else
-    call gf_read_cmt_source(filename,dt,src,ierr)
+    call gf_read_cmt_source(db,filename,src,ierr)
   endif
 
   end subroutine gf_read_source

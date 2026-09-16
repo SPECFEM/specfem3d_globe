@@ -112,7 +112,7 @@ class Plan:
     dt: float
     dt_sub: float
     t0_db: float
-    t0_req: float
+    t0_req: float          # resolved: never the caller's negative sentinel
     t0: float
     t_first: float
     hdur_src: float
