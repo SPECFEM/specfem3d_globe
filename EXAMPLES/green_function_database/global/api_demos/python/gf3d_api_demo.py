@@ -359,6 +359,84 @@ def plot(r, cmt, ista, icomp, steps, errors, truths, predictions, png):
 # ---------------------------------------------------------------------------
 
 
+def crossing(db, cmt, step=0.25, nmax=40):
+    """What it costs to move the source into a different element.
+
+    Steps north until the located element changes, then extracts twice at
+    each of the two positions so that reading an element off disk and
+    interpolating one already in the page cache can be told apart.
+
+    The two traces are seismograms for two different source positions. They
+    are not meant to agree and are not compared: adjacent elements give a
+    moment-tensor seismogram that jumps across the shared face by the mesh's
+    own strain error.
+    """
+    rule("5. loading a neighbouring element")
+
+    here = db.locate(cmt.latitude, cmt.longitude, cmt.depth)
+
+    far = copy.deepcopy(cmt)
+    there = None
+    for i in range(1, nmax + 1):
+        far.latitude = cmt.latitude + i * step
+        try:
+            cand = db.locate(far.latitude, far.longitude, far.depth)
+        except gf3d.GF3DError:
+            # between elements: a database covers the region its source
+            # needed, not the whole planet
+            continue
+        if cand.morton_hex != here.morton_hex:
+            there = cand
+            break
+
+    if there is None:
+        print(f"  no second element within {nmax * step:.2f} degrees north; skipping")
+        return
+
+    print(f"  the source leaves its element {i * step:.3f} degrees north")
+    print()
+    print(f"    A: {here.morton_hex}  (element {here.ielem})")
+    print(f"    B: {there.morton_hex}  (element {there.ielem})")
+    print()
+
+    # A, B, A, B. The third is the measurement that matters and the only
+    # one that does not depend on the machine: if the library kept the
+    # element it just used, returning to A would be cheap.
+    ra, t1 = timed("db.seismograms  1. at A", db.seismograms, cmt)
+    rb, t2 = timed("db.seismograms  2. moved to B", db.seismograms, far)
+    _, t3 = timed("db.seismograms  3. back to A", db.seismograms, cmt)
+    _, t4 = timed("db.seismograms  4. back to B", db.seismograms, far)
+
+    print("    extraction              element       time")
+    for label, elem, ms in (
+        ("1. at A", here.morton_hex, t1),
+        ("2. moved to B", there.morton_hex, t2),
+        ("3. back to A", here.morton_hex, t3),
+        ("4. back to B", there.morton_hex, t4),
+    ):
+        print(f"    {label:<21s} {elem[-4:]}  {ms:10.1f} ms")
+    print()
+
+    info = db.info
+    # per station: 3 force directions x 3 components x 125 GLL points x
+    # nt_subsampled samples, float32. NGLL is 5 in every gf3d database.
+    mb = info["nstations"] * info["nt_subsampled"] * 9 * 125 * 4 / 1048576
+    print(f"  Each extraction re-reads its element: {mb:.1f} MB, and puts all")
+    print("  of it back through the interpolation. Step 3 costs what step 1")
+    print("  did even though nothing about element A changed in between --")
+    print("  the library keeps no element between calls, so a sample loop")
+    print("  that wanders in and out of one element pays for it every time.")
+    print()
+    print("  If one of these four differs by much more than the rest, that is")
+    print("  the operating system's file cache, not the library: the first")
+    print("  read of a file this process has never touched may come from the")
+    print("  storage rather than from RAM. That is a property of the machine")
+    print("  and of what ran before, so it is reported, not asserted.")
+    print()
+    print("  The two positions are different sources. Their traces are not")
+    print("  meant to agree and are not compared.")
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -402,6 +480,7 @@ def main(argv=None):
         r = extract(db, cmt)
         identity(r, cmt)
         steps, errors, truths, predictions = frechet(db, cmt, r, args.step)
+        crossing(db, cmt)
         if not steps:
             raise SystemExit(
                 f"\nthe relocation of {args.step}° left the database, so step 4 showed "

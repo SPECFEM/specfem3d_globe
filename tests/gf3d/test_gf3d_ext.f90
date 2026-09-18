@@ -150,6 +150,15 @@
   type(t_gf_source) :: src
   double precision, dimension(:,:,:), allocatable :: synt,synt_ref,synt_again
   double precision, dimension(:,:,:,:), allocatable :: dp
+
+  ! section 6: walk north in these steps until the element changes
+  double precision, parameter :: WALK_STEP = 0.25d0
+  integer, parameter :: WALK_MAX = 40
+  type(t_gf_source) :: far
+  type(t_gf_location) :: loc_a,loc_b,loc_back
+  double precision, dimension(:,:,:), allocatable :: synt_far
+  integer :: iw
+  logical :: crossed
   double precision, dimension(:), allocatable :: t,t_again
   type(t_gfdb) :: db2
   type(t_gf_location) :: loc2
@@ -332,6 +341,61 @@
   endif
 
   deallocate(synt_ref)
+
+  !--- 6. a source that leaves its element ---
+  !
+  ! Extraction from a neighbouring element must work exactly as from the
+  ! first: the element index, the kd-tree and the read path are all shared
+  ! state, and a source that moves is the whole point of the library.
+  !
+  ! The crossing distance is found by walking rather than hard-coded, so
+  ! this runs on the fixture and on either shipped example. A step that
+  ! lands between elements is skipped -- a database covers the region its
+  ! source needed, not the whole planet.
+
+  write(*,*) '6. a source in a second element'
+
+  call gf_locate_source(db,src%latitude,src%longitude,src%depth,loc_a,ierr)
+  call report_true('   the original position locates',ierr == GF_OK,nfail)
+
+  far = src
+  crossed = .false.
+  do iw = 1,WALK_MAX
+    far%latitude = src%latitude + dble(iw)*WALK_STEP
+    call gf_locate_source(db,far%latitude,far%longitude,far%depth,loc_b,ierr)
+    if (ierr /= GF_OK) cycle
+    if (loc_b%morton_hex /= loc_a%morton_hex) then
+      crossed = .true.
+      exit
+    endif
+  enddo
+
+  call report_true('   a second element is reachable    ',crossed,nfail)
+
+  if (crossed) then
+    call report_true('   its Morton code differs          ', &
+                     loc_b%morton_hex /= loc_a%morton_hex,nfail)
+    call report_true('   its element index differs        ', &
+                     loc_b%ielem /= loc_a%ielem,nfail)
+
+    call get_seismograms(db,far,t0,synt_far,ierr)
+    call report_true('   extraction from it returns GF_OK ',ierr == GF_OK,nfail)
+
+    if (ierr == GF_OK) then
+      call report_true('   its traces are finite            ', &
+                       all(synt_far == synt_far) .and. &
+                       maxval(abs(synt_far)) < huge(1.d0),nfail)
+      call report_true('   and not identically zero         ', &
+                       maxval(abs(synt_far)) > 0.d0,nfail)
+      deallocate(synt_far)
+    endif
+
+    ! moving back must recover the first element: nothing about the crossing
+    ! may leave the index or the tree wedged
+    call gf_locate_source(db,src%latitude,src%longitude,src%depth,loc_back,ierr)
+    call report_true('   moving back recovers element A   ', &
+                     ierr == GF_OK .and. loc_back%ielem == loc_a%ielem,nfail)
+  endif
 
   ! the pair a long-lived caller must use: gf_close alone leaves the
   ! kd-tree allocated

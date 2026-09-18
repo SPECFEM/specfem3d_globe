@@ -103,6 +103,15 @@
   double precision, parameter :: SRC_DEPTH_KM = 122.6d0
   double precision, parameter :: HALF_WIDTH = 0.05d0        ! ~320 km, non-dimensional
 
+  ! How far north the second element sits, in degrees. The two boxes must be
+  ! DISJOINT: a test that asserts the located element changed proves nothing
+  ! if a point can be inside both. HALF_WIDTH is 0.05 non-dimensional and the
+  ! off-diagonal terms in affine_element widen each box to about +-0.0585, so
+  ! the centres must be more than 0.117 apart -- 8 degrees is about 0.14.
+  ! Latitude rather than a Cartesian offset, because a latitude walk is what
+  ! the tests and the demos use to find a second element.
+  double precision, parameter :: ELEM2_DLAT = 8.0d0
+
   integer, parameter :: NELEM = 2
   integer, parameter :: NSTA = 2
 
@@ -111,7 +120,7 @@
 
   character(len=512) :: root,gfdb,edir,fname
   character(len=16) :: hexcode(NELEM)
-  double precision :: centre(3),cen(3,NELEM)
+  double precision :: centre(3),centre_e(3),cen(3,NELEM)
   double precision :: xyz(3,NG,NG,NG)
   real :: xyz32(3,NG,NG,NG)
   real :: displ(NCOMP,NCOMP,NG,NG,NG,NT_SUB)
@@ -138,9 +147,10 @@
 
   call sphere_position(SRC_LAT,SRC_LON,SRC_DEPTH_KM,centre)
 
-  ! Two elements side by side along x, so the index has more than one entry
-  ! and the Morton codes have something to order. The codes are made up: the
-  ! library only requires 16 uppercase hex digits, strictly ascending.
+  ! Two elements, the second ELEM2_DLAT degrees north, so the index has more
+  ! than one entry and the Morton codes have something to order. The codes
+  ! are made up: the library only requires 16 uppercase hex digits, strictly
+  ! ascending.
   hexcode(1) = '0000000000000010'
   hexcode(2) = '00000000000000A0'
 
@@ -154,7 +164,12 @@
     edir = trim(gfdb)//'/elements/'//trim(hexcode(ie))
     call make_dir(trim(edir))
 
-    call affine_element(centre,dble(ie-1)*HALF_WIDTH,HALF_WIDTH,xyz,cen(:,ie))
+    if (ie == 1) then
+      centre_e(:) = centre(:)
+    else
+      call sphere_position(SRC_LAT + ELEM2_DLAT,SRC_LON,SRC_DEPTH_KM,centre_e)
+    endif
+    call affine_element(centre_e,HALF_WIDTH,xyz,cen(:,ie))
     xyz32(:,:,:,:) = real(xyz(:,:,:,:))
 
     call write_coordinates(trim(edir)//'/coordinates.h5',xyz32,cen(:,ie))
@@ -246,7 +261,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine affine_element(centre_in,offset,h,xyz_out,centroid)
+  subroutine affine_element(centre_in,h,xyz_out,centroid)
 
 ! an affine hexahedron: x(i,j,k) = c + A (xi_i, eta_j, gam_k)
 !
@@ -256,7 +271,7 @@
 
   implicit none
   double precision, dimension(3), intent(in) :: centre_in
-  double precision, intent(in) :: offset,h
+  double precision, intent(in) :: h
   double precision, dimension(3,NG,NG,NG), intent(out) :: xyz_out
   double precision, dimension(3), intent(out) :: centroid
 
@@ -268,7 +283,6 @@
   call gll_points(xi)
 
   c(:) = centre_in(:)
-  c(1) = c(1) + offset
 
   amat(1,1) = h        ; amat(1,2) = 0.12d0*h ; amat(1,3) = -0.05d0*h
   amat(2,1) = -0.08d0*h ; amat(2,2) = h        ; amat(2,3) = 0.10d0*h
