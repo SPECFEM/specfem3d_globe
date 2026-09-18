@@ -115,8 +115,8 @@
 
   !--- extraction
   use gf_seismograms, only: &
-    gf_time_axis, gf_seis_plan, gf_seis, gf_seis_cmt, gf_seis_force, &
-    gf_seis_cmt_partials, gf_write_seis, gf_write_partials, gf_write_dump
+    gf_time_axis, gf_seis_plan, gf_seis, &
+    gf_write_seis, gf_write_partials, gf_write_dump
 
   !--- partial derivatives: the count, the slot order, the names and units
   use gf_partials, only: &
@@ -165,27 +165,22 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine get_seismograms(db,src,t0,synt,dp,itypsokern,t,ierr)
+  subroutine get_seismograms(db,src,t0,synt,ierr,t)
 
-! seismograms, and optionally their partial derivatives, for one source
+! seismograms at every station for one source
 !
-! The whole of xgf3d's --seis path in one call: locate, plan, extract. The
-! name and the (synt, dp, itypsokern) shape are GF3DF's get_sdp(), so that a
-! downstream caller reads familiarly -- but the arrays are ours:
+! The whole of xgf3d's --seis path in one call: locate, plan, extract.
 !
-!   synt(nsta, 3, nt)          metres, components N/E/Z
-!   dp(ndp, nsta, 3, nt)       ndp = 0, 6 or 10 for itypsokern = 0, 1, 2
-!   t(nt)                      seconds relative to the centroid time
-!
-! and both are allocated here. itypsokern = 3 (GF3DF's half-duration
-! partial) is not supported; see gf_partials.
+!   synt(nsta, 3, nt)   metres, components N/E/Z, allocated here
+!   t(nt)               seconds relative to the centroid time; optional
 !
 ! `t0` is where the output axis starts, in seconds before the centroid time,
 ! and must be non-negative. gf_default_t0() returns what specfem's own
 ! forward run would use (1.5*hdur for a CMT); pass that unless there is a
 ! reason to choose another.
 !
-! `src` is intent(in): unlike GF3DF, nothing is written back into it.
+! For the partial derivatives as well, call get_partials. `src` is
+! intent(in): nothing is written back into it.
 
   implicit none
 
@@ -193,31 +188,100 @@
   type(t_gf_source), intent(in) :: src
   double precision, intent(in) :: t0
   double precision, dimension(:,:,:), allocatable, intent(out) :: synt
-  double precision, dimension(:,:,:,:), allocatable, intent(out) :: dp
-  integer, intent(in) :: itypsokern
-  double precision, dimension(:), allocatable, intent(out) :: t
   integer, intent(out) :: ierr
+  double precision, dimension(:), allocatable, intent(out), optional :: t
+
+  ! local parameters
+  double precision, dimension(:,:,:,:), allocatable :: dp
+
+  call extract(db,src,t0,0,synt,dp,ierr,t)
+
+  if (allocated(dp)) deallocate(dp)
+
+  end subroutine get_seismograms
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine get_partials(db,src,t0,itypsokern,synt,dp,ierr,t)
+
+! seismograms and their partial derivatives for one source
+!
+!   synt(nsta, 3, nt)      metres, components N/E/Z
+!   dp(ndp, nsta, 3, nt)   ndp = 6 for itypsokern = 1, 10 for 2
+!   t(nt)                  seconds relative to the centroid time; optional
+!
+! all allocated here. itypsokern = 1 gives the six moment-tensor partials;
+! 2 gives those plus latitude, longitude, depth and centroid time. The
+! parameter names and units are GF_DP_NAME and GF_DP_UNIT.
+!
+! The seismogram comes back too because it is computed on the way -- the
+! moment-tensor partials contracted with the moment tensor *are* the
+! seismogram -- so there is nothing to be saved by asking for one without
+! the other.
+!
+! Partials are defined for a moment-tensor source only. itypsokern = 3
+! (GF3DF's half-duration partial) is not supported; see gf_partials.
+
+  implicit none
+
+  type(t_gfdb), intent(inout) :: db
+  type(t_gf_source), intent(in) :: src
+  double precision, intent(in) :: t0
+  integer, intent(in) :: itypsokern
+  double precision, dimension(:,:,:), allocatable, intent(out) :: synt
+  double precision, dimension(:,:,:,:), allocatable, intent(out) :: dp
+  integer, intent(out) :: ierr
+  double precision, dimension(:), allocatable, intent(out), optional :: t
+
+  if (itypsokern < 1) then
+    call gf_set_error(ierr,GF_ERR_ARG, &
+      'get_partials: itypsokern must be 1 or 2; use get_seismograms for none')
+    return
+  endif
+
+  call extract(db,src,t0,itypsokern,synt,dp,ierr,t)
+
+  end subroutine get_partials
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine extract(db,src,t0,itypsokern,synt,dp,ierr,t)
+
+! locate, plan, allocate, extract -- the body both entry points share
+!
+! `dp` is always allocated, with a first extent of zero when no partials
+! were asked for, because gf_seis takes it by explicit shape. The caller
+! that does not want it throws it away.
+
+  implicit none
+
+  type(t_gfdb), intent(inout) :: db
+  type(t_gf_source), intent(in) :: src
+  double precision, intent(in) :: t0
+  integer, intent(in) :: itypsokern
+  double precision, dimension(:,:,:), allocatable, intent(out) :: synt
+  double precision, dimension(:,:,:,:), allocatable, intent(out) :: dp
+  integer, intent(out) :: ierr
+  double precision, dimension(:), allocatable, intent(out), optional :: t
 
   ! local parameters
   type(t_gf_location) :: loc
   type(t_gf_taxis) :: tax
   type(t_gf_stf) :: stf
-  double precision, dimension(:), allocatable :: onset
+  double precision, dimension(:), allocatable :: onset,tsec
   integer :: ndp,ier
 
   if (.not. db%is_open) then
-    call gf_set_error(ierr,GF_ERR_ARG,'get_seismograms: database is not open')
+    call gf_set_error(ierr,GF_ERR_ARG,'database is not open')
     return
   endif
 
   call gf_partials_ndp(itypsokern,ndp,ierr)
   if (ierr /= GF_OK) return
-
-  if (itypsokern > 0 .and. src%source_type /= GF_SRC_CMT) then
-    call gf_set_error(ierr,GF_ERR_ARG, &
-      'get_seismograms: partial derivatives are defined for a moment-tensor source only')
-    return
-  endif
 
   call gf_locate_source(db,src%latitude,src%longitude,src%depth,loc,ierr)
   if (ierr /= GF_OK) return
@@ -226,21 +290,28 @@
   if (ierr /= GF_OK) return
 
   allocate(synt(db%nstations,GF_NCOMP,tax%nt), &
-           dp(max(ndp,0),db%nstations,GF_NCOMP,tax%nt), &
-           t(tax%nt),onset(db%nstations),stat=ier)
+           dp(ndp,db%nstations,GF_NCOMP,tax%nt), &
+           tsec(tax%nt),onset(db%nstations),stat=ier)
   if (ier /= 0) then
-    call gf_set_error(ierr,GF_ERR_ALLOC,'get_seismograms: could not allocate the output arrays')
+    call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate the output arrays')
     return
   endif
 
-  if (itypsokern > 0) then
-    call gf_seis_cmt_partials(db,src,loc,tax,stf,itypsokern,ndp,synt,dp,t,onset,ierr)
-  else
-    call gf_seis(db,src,loc,tax,stf,synt,t,onset,ierr)
+  ! gf_seis refuses a source type that has no partials, so the check the
+  ! facade used to make itself is not repeated here
+  call gf_seis(db,src,loc,tax,stf,itypsokern,ndp,synt,dp,tsec,onset,ierr)
+
+  if (present(t)) then
+    allocate(t(tax%nt),stat=ier)
+    if (ier /= 0) then
+      call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate the time axis')
+    else
+      t(:) = tsec(:)
+    endif
   endif
 
-  deallocate(onset)
+  deallocate(onset,tsec)
 
-  end subroutine get_seismograms
+  end subroutine extract
 
   end module gf3d

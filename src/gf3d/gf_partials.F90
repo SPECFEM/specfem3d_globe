@@ -95,7 +95,8 @@
 
   use gf_moment, only: gf_rotate_moment_tensor,gf_moment_contract
 
-  use gf_stf, only: gf_pad_left,gf_cumsum,gf_stf_apply,gf_stf_kernel_gauss_unit,gf_conv_sym
+  use gf_stf, only: gf_stf_kernel_gauss_unit,gf_conv_sym, &
+                    t_gf_stf_work,gf_stf_convert
 
   implicit none
 
@@ -162,7 +163,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine gf_partials_mt(eps,nt_db,theta,phi,scale,tax,stf,w,dp,ierr)
+  subroutine gf_partials_mt(eps,nt_db,theta,phi,scale,tax,stf,work,dp,ierr)
 
 ! the six moment-tensor partials from a strain trace
 !
@@ -171,9 +172,14 @@
 ! the source's geocentric colatitude and longitude, about which the
 ! spherical unit tensors are rotated exactly as the moment tensor itself
 ! is; `scale` the amplitude factor per dyne-cm, i.e. the seismogram's
-! 1/factor_force_source divided by the source's scale_moment; `tax`, `stf`
-! and `w` the planned axis, conversion and Heaviside kernel the seismogram
-! used. `dp(6,3,tax%nt)` comes back on the output axis.
+! 1/factor_force_source divided by the source's scale_moment; `tax` and
+! `stf` the planned axis and conversion the seismogram used, and `work` its
+! scratch, carrying the same Heaviside kernel. `dp(6,3,tax%nt)` comes back
+! on the output axis.
+!
+! `work` is the caller's, and its trace/xpad/p/y are overwritten here. That
+! is safe wherever the caller has already copied out what it needed, which
+! is the order gf_seis_cmt_partials uses.
 !
 ! Everything after the contraction is the seismogram's own statement
 ! sequence (gf_seismograms.F90, gf_seis_cmt), so a partial computed for a
@@ -186,15 +192,14 @@
   double precision, intent(in) :: theta,phi,scale
   type(t_gf_taxis), intent(in) :: tax
   type(t_gf_stf), intent(in) :: stf
-  double precision, dimension(-stf%khalf:stf%khalf), intent(in) :: w
+  type(t_gf_stf_work), intent(inout) :: work
   double precision, dimension(GF_NDP_MT,GF_NCOMP,tax%nt), intent(out) :: dp
   integer, intent(out) :: ierr
 
   ! local parameters
-  double precision, dimension(:), allocatable :: trace,xpad,p,y
   double precision, dimension(6) :: e_sph
   double precision, dimension(3,3) :: m_unit
-  integer :: v,icomp,it,nt,ier
+  integer :: v,icomp,it,nt
 
   dp(:,:,:) = 0.d0
 
@@ -209,12 +214,6 @@
 
   nt = tax%nt
 
-  allocate(trace(nt_db),xpad(nt),p(0:nt),y(nt),stat=ier)
-  if (ier /= 0) then
-    call gf_set_error(ierr,GF_ERR_ALLOC,'gf_partials_mt: could not allocate the work arrays')
-    return
-  endif
-
   do v = 1,GF_NDP_MT
 
     ! the v-th spherical unit tensor, rotated the way the moment tensor is
@@ -225,24 +224,21 @@
     do icomp = 1,GF_NCOMP
 
       do it = 1,nt_db
-        call gf_moment_contract(m_unit,eps(:,icomp,it),trace(it))
-        trace(it) = scale * trace(it)
+        call gf_moment_contract(m_unit,eps(:,icomp,it),work%trace(it))
+        work%trace(it) = scale * work%trace(it)
       enddo
 
       ! extend, then convert: the seismogram's own three steps
-      call gf_pad_left(trace,nt_db,tax%npad,xpad)
-      call gf_cumsum(xpad,nt,p)
-      call gf_stf_apply(stf,tax%dt_sub,w,p,xpad,nt,y)
+      call gf_stf_convert(stf,tax,work,ierr)
+      if (ierr /= GF_OK) return
 
       do it = 1,nt
-        dp(v,icomp,it) = y(it)
+        dp(v,icomp,it) = work%y(it)
       enddo
 
     enddo
 
   enddo
-
-  deallocate(trace,xpad,p,y)
 
   ierr = GF_OK
 
@@ -313,7 +309,7 @@
 !
 
   subroutine gf_partials_loc(eps,deps,nt_db,m_cart,dm_dtheta,dm_dphi,dtheta_dlat,dphi_dlon, &
-                             jinv,dxds,scale,tax,stf,w,dp,ierr)
+                             jinv,dxds,scale,tax,stf,work,dp,ierr)
 
 ! the three centroid-position partials (Stage 8): lat, lon, depth
 !
@@ -348,15 +344,14 @@
   double precision, intent(in) :: scale
   type(t_gf_taxis), intent(in) :: tax
   type(t_gf_stf), intent(in) :: stf
-  double precision, dimension(-stf%khalf:stf%khalf), intent(in) :: w
+  type(t_gf_stf_work), intent(inout) :: work
   double precision, dimension(3,GF_NCOMP,tax%nt), intent(out) :: dp
   integer, intent(out) :: ierr
 
   ! local parameters
-  double precision, dimension(:), allocatable :: trace,xpad,p,y
   double precision, dimension(NDIM) :: g,gx
   double precision :: r_lat,r_lon
-  integer :: ia,icomp,it,b,m,nt,ier
+  integer :: ia,icomp,it,b,m,nt
 
   dp(:,:,:) = 0.d0
 
@@ -370,12 +365,6 @@
   endif
 
   nt = tax%nt
-
-  allocate(trace(nt_db),xpad(nt),p(0:nt),y(nt),stat=ier)
-  if (ier /= 0) then
-    call gf_set_error(ierr,GF_ERR_ALLOC,'gf_partials_loc: could not allocate the work arrays')
-    return
-  endif
 
   do ia = 1,3
     do icomp = 1,GF_NCOMP
@@ -391,29 +380,26 @@
         enddo
 
         ! the position term, and the rotation term for lat and lon
-        trace(it) = gx(1)*dxds(1,ia) + gx(2)*dxds(2,ia) + gx(3)*dxds(3,ia)
+        work%trace(it) = gx(1)*dxds(1,ia) + gx(2)*dxds(2,ia) + gx(3)*dxds(3,ia)
         if (ia == 1) then
           call gf_moment_contract(dm_dtheta,eps(:,icomp,it),r_lat)
-          trace(it) = trace(it) + r_lat*dtheta_dlat
+          work%trace(it) = work%trace(it) + r_lat*dtheta_dlat
         else if (ia == 2) then
           call gf_moment_contract(dm_dphi,eps(:,icomp,it),r_lon)
-          trace(it) = trace(it) + r_lon*dphi_dlon
+          work%trace(it) = work%trace(it) + r_lon*dphi_dlon
         endif
-        trace(it) = scale * trace(it)
+        work%trace(it) = scale * work%trace(it)
       enddo
 
-      call gf_pad_left(trace,nt_db,tax%npad,xpad)
-      call gf_cumsum(xpad,nt,p)
-      call gf_stf_apply(stf,tax%dt_sub,w,p,xpad,nt,y)
+      call gf_stf_convert(stf,tax,work,ierr)
+      if (ierr /= GF_OK) return
 
       do it = 1,nt
-        dp(ia,icomp,it) = y(it)
+        dp(ia,icomp,it) = work%y(it)
       enddo
 
     enddo
   enddo
-
-  deallocate(trace,xpad,p,y)
 
   ierr = GF_OK
 

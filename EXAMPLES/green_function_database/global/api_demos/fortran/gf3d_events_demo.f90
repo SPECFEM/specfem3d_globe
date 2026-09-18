@@ -65,7 +65,6 @@
   type(t_gf_location) :: loc
 
   double precision, dimension(:,:,:), allocatable :: synt
-  double precision, dimension(:,:,:,:), allocatable :: dp_unused
   double precision, dimension(:), allocatable :: t
 
   ! the hypocentres, as GF_LOCATIONS gives them
@@ -189,7 +188,7 @@
     call gf_default_t0(event,t0,ierr)
     if (ierr /= GF_OK) cycle
 
-    call get_seismograms(db,event,t0,synt,dp_unused,0,t,ierr)
+    call get_seismograms(db,event,t0,synt,ierr,t)
     call toc(t_extract(k))
 
     if (ierr /= GF_OK) then
@@ -212,7 +211,6 @@
       t_locate(k)*1.d3,' ms',t_extract(k)*1.d3,' ms',peak(k)
 
     deallocate(synt,t)
-    if (allocated(dp_unused)) deallocate(dp_unused)
   enddo
 
   if (nok == 0) then

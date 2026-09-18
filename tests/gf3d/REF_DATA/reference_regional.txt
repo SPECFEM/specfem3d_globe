@@ -24,6 +24,20 @@ x          0.248383403
 y         -0.944765568
 z         -9.87713933E-02
 
+# The source's local coordinates in the element the SOLVER chose, from the
+# first "at xi,eta,gamma coordinates" line of output_solver.txt (:113 region).
+# Printed through sngl(), so ~1e-7 is all the precision there is.
+#
+# This is the assertion that says gf3d picks the element the forward run
+# picked and lands on the same point inside it. Nothing else in the suite
+# pins it, and without it a reader who finds max|xi,eta,gamma| > 1 on some
+# database has no way to tell a bug from the solver's own choice -- the
+# global example's source sits at gamma = 1.053, outside its element, and
+# the solver put it there too.
+xi        -0.721708596
+eta        0.618740976
+gamma     -0.913822591
+
 # Moment, from output_solver.txt:124-125. dyne-cm.
 M0         2.6299730036637251E+028
 Mw         8.2466343844251071

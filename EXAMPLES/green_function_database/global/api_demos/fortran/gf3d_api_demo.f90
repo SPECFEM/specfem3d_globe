@@ -57,6 +57,7 @@
 !----   3. plan the output axis and the source time function conversion
 !----   4. extract seismograms and their ten partial derivatives
 !----   5. use a centroid partial as a derivative, and show it converges
+!----   6. move the source out of its element and time the reload
 !----
 !---- Section 5 is the one worth reading. Sections 1 to 4 can be had from
 !---- bin/xgf3d and a pile of SAC files; what the library is for is section
@@ -79,6 +80,10 @@
   double precision, parameter :: STEP0 = 0.05d0
   integer, parameter :: NHALVE = 2
 
+  ! section 6 walks north in these steps until the source leaves its element
+  double precision, parameter :: WALK_STEP = 0.25d0
+  integer, parameter :: WALK_MAX = 40
+
   type(t_gfdb) :: db
   type(t_gf_source) :: src,moved
   type(t_gf_location) :: loc
@@ -89,16 +94,20 @@
   double precision, dimension(:,:,:,:), allocatable :: dp
   double precision, dimension(:), allocatable :: t
 
-  ! scratch outputs for the itypsokern = 0 calls of section 5: they are
-  ! allocated zero-sized and never read, but get_seismograms allocates
-  ! through them, so they have to be variables rather than expressions
-  double precision, dimension(:,:,:,:), allocatable :: dp_unused
-  double precision, dimension(:), allocatable :: t_unused
 
   double precision :: t_open,t_locate,t_locate2,t_extract,t_total
   double precision, dimension(0:NHALVE) :: t_reloc,step,err
   double precision :: peak,worst,ratio,t0
   integer :: ierr,i,ista,icomp,ip,k,nsta,nt
+
+  ! section 6
+  type(t_gf_source) :: far
+  type(t_gf_location) :: loc_a,loc_b
+  double precision, dimension(:,:,:), allocatable :: seis_a,seis_b
+  double precision, dimension(4) :: t_cross
+  double precision :: peak_a,peak_b
+  integer :: iw
+  logical :: crossed
 
   character(len=34) :: label
 
@@ -257,10 +266,10 @@
 
   call banner('4. seismograms and partial derivatives')
 
-  ! get_seismograms() locates, plans and extracts in one call, and allocates
-  ! its own outputs. itypsokern = 2 asks for all ten partials; 1 gives the
-  ! six moment-tensor ones, 0 none. gf_default_t0() is the start time
-  ! specfem's own forward run would use.
+  ! get_partials() locates, plans and extracts in one call, and allocates
+  ! its own outputs. itypsokern = 2 asks for all ten partials, 1 the six
+  ! moment-tensor ones; get_seismograms() is the same call without them.
+  ! gf_default_t0() is the start time specfem's own forward run would use.
   call gf_default_t0(src,t0,ierr)
   if (ierr /= GF_OK) then
     write(*,'(a,a)') '  no default start time: ',trim(gf_errmsg)
@@ -268,7 +277,7 @@
   endif
 
   call tic()
-  call get_seismograms(db,src,t0,synt,dp,2,t,ierr)
+  call get_partials(db,src,t0,2,synt,dp,ierr,t)
   call toc(t_extract)
 
   if (ierr /= GF_OK) then
@@ -276,7 +285,7 @@
     stop 1
   endif
 
-  write(*,'(a,f9.1,a)') '  get_seismograms took ',t_extract*1.d3,' ms'
+  write(*,'(a,f9.1,a)') '  get_partials took ',t_extract*1.d3,' ms'
   write(*,*)
   write(*,'(a,i0,a,i0,a,i0,a)') '  synt(', size(synt,1),',',size(synt,2),',', &
                                 size(synt,3),')   stations, components N/E/Z, samples'
@@ -351,7 +360,7 @@
     moved%latitude = src%latitude + step(k)
 
     call tic()
-    call get_seismograms(db,moved,t0,truth,dp_unused,0,t_unused,ierr)
+    call get_seismograms(db,moved,t0,truth,ierr)
     call toc(t_reloc(k))
 
     if (ierr /= GF_OK) then
@@ -402,6 +411,97 @@
   endif
 
 !
+!--- 6. what it costs to move into another element ----------------------
+!
+
+  call banner('6. loading a neighbouring element')
+
+  write(*,*) ' Sections 4 and 5 stayed inside one element. A source that'
+  write(*,*) ' moves far enough leaves it, and the next extraction works'
+  write(*,*) ' from a different element. This section shows what that'
+  write(*,*) ' costs -- and what it does not.'
+  write(*,*)
+
+  ! Where the element changes depends on the database, so walk until it
+  ! does rather than hard-coding a distance. A step that lands between
+  ! elements is skipped: a database covers the region its source needed,
+  ! not the whole planet.
+  far = src
+  crossed = .false.
+  do iw = 1,WALK_MAX
+    far%latitude = src%latitude + dble(iw)*WALK_STEP
+    call gf_locate_source(db,far%latitude,far%longitude,far%depth,loc_b,ierr)
+    if (ierr /= GF_OK) cycle
+    if (loc_b%morton_hex /= loc%morton_hex) then
+      crossed = .true.
+      exit
+    endif
+  enddo
+
+  if (.not. crossed) then
+    write(*,'(a,f6.2,a)') '  no second element within ',dble(WALK_MAX)*WALK_STEP, &
+      ' degrees north; skipping'
+  else
+    write(*,'(a,f7.3,a)') '  the source leaves its element ',dble(iw)*WALK_STEP, &
+      ' degrees north'
+    write(*,*)
+    write(*,'(a,a,a,i0,a)') '    A: ',loc%morton_hex,'  (element ',loc%ielem,')'
+    write(*,'(a,a,a,i0,a)') '    B: ',loc_b%morton_hex,'  (element ',loc_b%ielem,')'
+    write(*,*)
+
+    ! A, B, then A again. The last one is the measurement that matters and
+    ! is the only one that does not depend on the machine: if the library
+    ! kept the element it just used, returning to A would be cheap.
+    call tic() ; call get_seismograms(db,src,t0,seis_a,ierr) ; call toc(t_cross(1))
+    if (allocated(seis_a)) deallocate(seis_a)
+
+    call tic() ; call get_seismograms(db,far,t0,seis_b,ierr) ; call toc(t_cross(2))
+    if (allocated(seis_b)) deallocate(seis_b)
+
+    call tic() ; call get_seismograms(db,src,t0,seis_a,ierr) ; call toc(t_cross(3))
+
+    call tic() ; call get_seismograms(db,far,t0,seis_b,ierr) ; call toc(t_cross(4))
+
+    if (ierr /= GF_OK) then
+      write(*,'(a,a)') '  extraction failed: ',trim(gf_errmsg)
+      ok = .false.
+    else
+      write(*,'(a)') '    extraction              element       time'
+      write(*,'(a,a,f11.1,a)') '    1. at A               ',loc%morton_hex(13:16), &
+        t_cross(1)*1.d3,' ms'
+      write(*,'(a,a,f11.1,a)') '    2. moved to B         ',loc_b%morton_hex(13:16), &
+        t_cross(2)*1.d3,' ms'
+      write(*,'(a,a,f11.1,a)') '    3. back to A          ',loc%morton_hex(13:16), &
+        t_cross(3)*1.d3,' ms'
+      write(*,'(a,a,f11.1,a)') '    4. back to B          ',loc_b%morton_hex(13:16), &
+        t_cross(4)*1.d3,' ms'
+      write(*,*)
+      ! per station: 3 force directions x 3 components x 125 GLL points
+      ! x nt_subsampled samples, float32. NGLL is 5 in every gf3d database.
+      write(*,'(a,f7.1,a)') '   Each extraction re-reads its element: ', &
+        dble(nsta)*dble(db%nt_subsampled)*9.d0*125.d0*4.d0/1.048576d6,' MB,'
+      write(*,*) '  and puts all of it back through the interpolation.'
+      write(*,*) '  Step 3 costs what step 1 did even though nothing about'
+      write(*,*) '  element A changed in between -- the library keeps no'
+      write(*,*) '  element between calls, so a sample loop that wanders in'
+      write(*,*) '  and out of one element pays for it on every sample.'
+      write(*,*)
+      write(*,*) '  If two of these four times differ by much more than the'
+      write(*,*) '  rest, that is the operating system''s file cache, not the'
+      write(*,*) '  library: the first read of a file this process has never'
+      write(*,*) '  touched may come from the storage rather than from RAM.'
+      write(*,*) '  That difference is a property of the machine and of what'
+      write(*,*) '  ran before, so it is reported, not asserted.'
+      write(*,*)
+      write(*,*) '  The two positions are different sources. Their traces are'
+      write(*,*) '  not meant to agree and are not compared.'
+    endif
+
+    if (allocated(seis_a)) deallocate(seis_a)
+    if (allocated(seis_b)) deallocate(seis_b)
+  endif
+
+!
 !--- timings ------------------------------------------------------------
 !
 
@@ -412,7 +512,7 @@
   call timing_line('gf_open',t_open)
   call timing_line('gf_locate_source, first',t_locate)
   call timing_line('gf_locate_source, again',t_locate2)
-  call timing_line('get_seismograms, 10 partials',t_extract)
+  call timing_line('get_partials, 10 partials',t_extract)
   do k = 0,NHALVE
     write(label,'(a,f7.4,a)') 'get_seismograms, at +',step(k),' deg'
     call timing_line(label,t_reloc(k))

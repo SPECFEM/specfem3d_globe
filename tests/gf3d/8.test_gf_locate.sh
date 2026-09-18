@@ -74,6 +74,9 @@ fi
 XREF=`read_reference x`
 YREF=`read_reference y`
 ZREF=`read_reference z`
+XIREF=`read_reference xi`
+ETAREF=`read_reference eta`
+GAMREF=`read_reference gamma`
 
 echo "request:  lat=$LAT lon=$LON depth=$DEP km" >> $testdir/results.log
 if [ -n "$XREF" ] && [ -n "$YREF" ] && [ -n "$ZREF" ]; then
@@ -81,6 +84,11 @@ if [ -n "$XREF" ] && [ -n "$YREF" ] && [ -n "$ZREF" ]; then
 else
   echo "solver:   (no reference supplied; position comparison not asserted)" >> $testdir/results.log
   XREF=""; YREF=""; ZREF=""
+fi
+if [ -n "$XIREF" ] && [ -n "$ETAREF" ] && [ -n "$GAMREF" ]; then
+  echo "solver:   xi=$XIREF eta=$ETAREF gamma=$GAMREF" >> $testdir/results.log
+else
+  XIREF=""; ETAREF=""; GAMREF=""
 fi
 
 # clean
@@ -107,7 +115,7 @@ fi
 
 # runs test
 echo "run: `date`" >> $testdir/results.log
-./bin/$var "$GFDB" "$LAT" "$LON" "$DEP" $XREF $YREF $ZREF \
+./bin/$var "$GFDB" "$LAT" "$LON" "$DEP" $XREF $YREF $ZREF $XIREF $ETAREF $GAMREF \
   >> $testdir/results.log 2>$testdir/error.log
 
 # checks exit code

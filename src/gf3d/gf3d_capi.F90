@@ -101,7 +101,7 @@
 
   use gf_locate, only: gf_locate_source, gf_locate_release, gf_locate_tree_owner
 
-  use gf_seismograms, only: gf_seis_plan, gf_seis, gf_seis_cmt_partials
+  use gf_seismograms, only: gf_seis_plan, gf_seis
 
   use gf_stf, only: gf_default_t0
 
@@ -974,6 +974,9 @@
   type(t_gf_taxis) :: tax
   type(t_gf_stf) :: stf
   double precision, dimension(:,:,:), allocatable :: fseis
+  ! gf_seis takes the partials array by explicit shape; this route asks for
+  ! none, so it passes a zero-sized one
+  double precision, dimension(:,:,:,:), allocatable :: fdp_none
   double precision, dimension(:), allocatable :: ft,fonset
   double precision :: t0
   integer :: ierr,ier,nsta,it,ista
@@ -1017,14 +1020,15 @@
 
   nsta = handles(h)%nstations
 
-  allocate(fseis(nsta,GF_NCOMP,tax%nt),ft(tax%nt),fonset(nsta),stat=ier)
+  allocate(fseis(nsta,GF_NCOMP,tax%nt),ft(tax%nt),fonset(nsta), &
+           fdp_none(0,nsta,GF_NCOMP,tax%nt),stat=ier)
   if (ier /= 0) then
     call gf_set_error(ierr,GF_ERR_ALLOC,'gf3d_seismograms: could not allocate the work arrays')
     gf3d_seismograms = int(ierr,kind=c_int)
     return
   endif
 
-  call gf_seis(handles(h),fsrc,floc,tax,stf,fseis,ft,fonset,ierr)
+  call gf_seis(handles(h),fsrc,floc,tax,stf,0,0,fseis,fdp_none,ft,fonset,ierr)
 
   if (ierr == GF_OK) then
     call pack_seis(nsta,tax%nt,fseis,seis)
@@ -1040,7 +1044,7 @@
     endif
   endif
 
-  deallocate(fseis,ft,fonset)
+  deallocate(fseis,fdp_none,ft,fonset)
 
   gf3d_seismograms = int(ierr,kind=c_int)
 
@@ -1156,7 +1160,7 @@
     return
   endif
 
-  call gf_seis_cmt_partials(handles(h),fsrc,floc,tax,stf,int(itypsokern),ndp_want, &
+  call gf_seis(handles(h),fsrc,floc,tax,stf,int(itypsokern),ndp_want, &
                             fseis,fdp,ft,fonset,ierr)
 
   if (ierr == GF_OK) then

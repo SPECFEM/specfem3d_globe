@@ -55,7 +55,7 @@
   use gf_database, only: gf_open,gf_close,gf_print_info
   use gf_locate, only: gf_locate_source,gf_locate_release,gf_check_anchors_all
   use gf_source, only: gf_read_source,gf_print_source
-  use gf_seismograms, only: gf_seis_plan,gf_seis,gf_seis_cmt_partials, &
+  use gf_seismograms, only: gf_seis_plan,gf_seis, &
                             gf_write_seis,gf_write_partials,gf_write_dump
   use gf_partials, only: gf_partials_ndp
   use gf_sac, only: gf_write_sac
@@ -384,7 +384,7 @@
           stop 1
         endif
 
-        call gf_seis_cmt_partials(db,src,loc,tax,stf,itypsokern,ndp,seis,dp,tsec,onset,ierr)
+        call gf_seis(db,src,loc,tax,stf,itypsokern,ndp,seis,dp,tsec,onset,ierr)
         if (ierr /= GF_OK) then
           write(ISTDERR,'(a)') 'Error computing the seismograms and partials'
           write(ISTDERR,'(a)') '  '//trim(gf_error_string(ierr))//': '//trim(gf_errmsg)
@@ -395,7 +395,7 @@
 
       else
 
-        call gf_seis(db,src,loc,tax,stf,seis,tsec,onset,ierr)
+        call gf_seis(db,src,loc,tax,stf,0,0,seis,dp,tsec,onset,ierr)
         if (ierr /= GF_OK) then
           write(ISTDERR,'(a)') 'Error computing the seismograms'
           write(ISTDERR,'(a)') '  '//trim(gf_error_string(ierr))//': '//trim(gf_errmsg)

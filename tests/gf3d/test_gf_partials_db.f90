@@ -71,7 +71,7 @@
   use gf_database, only: gf_open,gf_close,gf_topo_elevation
   use gf_locate, only: gf_locate_source,gf_locate_release
   use gf_source, only: gf_read_source
-  use gf_seismograms, only: gf_seis_plan,gf_seis_cmt,gf_seis_cmt_partials
+  use gf_seismograms, only: gf_seis_plan,gf_seis
 
   use gf_stf, only: gf_default_t0
   use gf_partials, only: gf_partials_ndp,GF_NDP_LOC,GF_DP_NAME,GF_DP_LAT,GF_DP_LON,GF_DP_DEP,GF_DP_TIM
@@ -99,6 +99,9 @@
   double precision, dimension(:,:,:,:), allocatable :: dp
   double precision, dimension(:,:,:), allocatable :: dfd            ! (NH, ncomp, nt) per parameter, one station
   double precision, dimension(:), allocatable :: t,onset,onsetp
+  ! gf_seis takes the partials array by explicit shape; the seismogram-only
+  ! calls below pass a zero-sized one
+  double precision, dimension(:,:,:,:), allocatable :: dp_none
   double precision, dimension(6) :: m_dynecm
   double precision :: worst,ref,err_h(NH),ratio,rich,elev_p,elev_m,elev_0,dt_sub,h,s0,worst_bit,t0
   integer :: nfail,ierr,nargs,ndp,ista,icomp,it,nt,ip,ih,v,nbad,ista_sweep,ncount
@@ -185,10 +188,11 @@
   !--------------------------------------------------------------------
 
   write(*,'(a)') '1. seismograms'
-  call gf_seis_cmt(db,src,loc,tax,stf,seis0,t,onset,ierr)
-  call gf_report_true('gf_seis_cmt                       ',ierr == GF_OK,nfail)
-  call gf_seis_cmt_partials(db,src,loc,tax,stf,2,ndp,seis,dp,t,onset,ierr)
-  call gf_report_true('gf_seis_cmt_partials, itypsokern 2',ierr == GF_OK,nfail)
+  allocate(dp_none(0,db%nstations,GF_NCOMP,nt))
+  call gf_seis(db,src,loc,tax,stf,0,0,seis0,dp_none,t,onset,ierr)
+  call gf_report_true('gf_seis, itypsokern 0             ',ierr == GF_OK,nfail)
+  call gf_seis(db,src,loc,tax,stf,2,ndp,seis,dp,t,onset,ierr)
+  call gf_report_true('gf_seis, itypsokern 2             ',ierr == GF_OK,nfail)
   if (ierr /= GF_OK) write(*,'(a)') '  '//trim(gf_errmsg)
 
   nbad = 0
@@ -202,7 +206,7 @@
       enddo
     enddo
   enddo
-  call gf_report('  seis == gf_seis_cmt (rel)         ',worst_bit,1.d-15,nfail)
+  call gf_report('  seis == itypsokern 0 (rel)        ',worst_bit,1.d-15,nfail)
   write(*,'(a,i0,a,i0,a)') '     bitwise mismatches = ',nbad,' of ',db%nstations*GF_NCOMP*nt, &
                            ' (informational: 0 under a value-safe FP model)'
 
@@ -275,7 +279,7 @@
         exit
       endif
       if (locp%ielem /= loc%ielem) same_elem = .false.
-      call gf_seis_cmt(db,srcp,locp,tax,stf,fp,t,onsetp,ierr)
+      call gf_seis(db,srcp,locp,tax,stf,0,0,fp,dp_none,t,onsetp,ierr)
       if (db%topography) call gf_topo_elevation(db,srcp%latitude,srcp%longitude,elev_p)
 
       ! - h
@@ -287,7 +291,7 @@
         exit
       endif
       if (locp%ielem /= loc%ielem) same_elem = .false.
-      call gf_seis_cmt(db,srcp,locp,tax,stf,fm,t,onsetp,ierr)
+      call gf_seis(db,srcp,locp,tax,stf,0,0,fm,dp_none,t,onsetp,ierr)
       if (db%topography) call gf_topo_elevation(db,srcp%latitude,srcp%longitude,elev_m)
 
       ! a linear elevation over the stencil: the bilinear interpolant's
