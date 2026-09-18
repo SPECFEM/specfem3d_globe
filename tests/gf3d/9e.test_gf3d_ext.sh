@@ -7,8 +7,9 @@
 # It checks two things at once -- that `use gf3d` alone is enough, and that
 # the public Fortran API and the C ABI produce the same numbers.
 #
-# Needs the HDF5 build from 5.configure.hdf5_make.sh and one of the example
-# databases, so it skips cleanly on a fresh checkout and in CI.
+# Needs the HDF5 build from 5.configure.hdf5_make.sh and a database, so it
+# skips cleanly on a fresh checkout and in Test 0. Test 19 has HDF5 and runs
+# it with GF3D_TEST_STRICT=1, where a skip fails.
 #
 ###################################################
 

@@ -6,7 +6,8 @@
 #
 # The database comes from gfdb_env.bash -- $GF3D_TEST_GFDB, or a synthetic
 # fixture built on the spot. Skips cleanly only when there is no HDF5 build
-# to test, which is what 5.configure.hdf5_make.sh leaves behind in CI.
+# to test, which is what 5.configure.hdf5_make.sh leaves behind in Test 0.
+# Test 19 has HDF5 and runs it with GF3D_TEST_STRICT=1, where a skip fails.
 #
 ###################################################
 
@@ -57,9 +58,12 @@ if [ ! -e ./bin/$var ]; then
   exit 1
 fi
 
-# a serial library must not have pulled MPI in
+# a serial library must not have pulled MPI in. The sed drops the ELF
+# symbol version node: Debian's parallel libhdf5_fortran tags its symbols
+# @HDF5_MPI_<version>, which a case-insensitive match for mpi_ otherwise
+# reads as an MPI reference.
 echo "checking that $var links no MPI" >> $testdir/results.log
-if nm ./bin/$var | grep -i ' U .*mpi_' >> $testdir/results.log 2>&1; then
+if nm ./bin/$var | sed 's/@.*//' | grep -i ' U .*mpi_' >> $testdir/results.log 2>&1; then
   echo "$var references MPI, please check..." >> $testdir/results.log
   exit 1
 fi
@@ -156,7 +160,7 @@ if command -v h5dump > /dev/null 2>&1; then
 
   rm -f $testdir/info.log
 else
-  echo "h5dump not available, skipping the metadata cross-check" >> $testdir/results.log
+  echo "skipped: h5dump not available, metadata cross-check not run" >> $testdir/results.log
 fi
 
 #cleanup

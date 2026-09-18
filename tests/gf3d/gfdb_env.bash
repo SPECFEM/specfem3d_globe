@@ -32,7 +32,16 @@
 #                         solver is the only oracle for it.
 #   GF3D_TEST_FORWARD_SAC a forward run's *.sem.sac directory (9c only; no
 #                         fixture can stand in for the solver's own output).
-#   GF3D_PYTHON           interpreter for the Python-dependent runners.
+#   GF3D_PYTHON           interpreter for the Python-dependent runners. 9f
+#                         needs numpy, 9c also obspy, scipy and h5py:
+#                         `uv sync --group test --project
+#                         utils/green_function` builds one at
+#                         utils/green_function/.venv/bin/python.
+#   GF3D_TEST_STRICT      =1 makes a skip a failure: z.strict_no_skips.sh
+#                         then fails the run if any runner here wrote a
+#                         `skipped:` line. Not read by this file; set by the
+#                         one CI job that installs HDF5, so that this tier
+#                         cannot silently go unrun again.
 #
 # Exports: GFDB, CMT, FORCE, REFERENCE, FIXTURE_DIR (empty unless we made one).
 # Returns non-zero when it cannot produce a database, so the caller keeps its

@@ -3,9 +3,10 @@
 #
 # Runs test_gf_python: the ctypes package against xgf3d's own output.
 #
-# Needs the shared library from 5.configure.hdf5_make.sh, a built example
-# database, and a Python with numpy. All three are absent in CI and on a
-# fresh checkout, so all three are skips rather than failures.
+# Needs the shared library from 5.configure.hdf5_make.sh, a database, and a
+# Python with numpy. All three are absent on a fresh checkout and in Test 0,
+# so all three are skips rather than failures. Test 19 supplies all three
+# and runs with GF3D_TEST_STRICT=1, where a skip fails.
 #
 # Note the Python step is judged by its exit code alone, not by whether it
 # wrote to stderr: numpy and obspy warn there routinely, and the test itself

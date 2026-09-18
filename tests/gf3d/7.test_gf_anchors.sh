@@ -58,8 +58,9 @@ if [ ! -e ./bin/$var ]; then
 fi
 
 # a serial library must not have pulled MPI in
+# version node stripped, see 6.test_gf_open.sh
 echo "checking that $var links no MPI" >> $testdir/results.log
-if nm ./bin/$var | grep ' U .*mpi_' >> $testdir/results.log 2>&1; then
+if nm ./bin/$var | sed 's/@.*//' | grep -i ' U .*mpi_' >> $testdir/results.log 2>&1; then
   echo "$var references MPI, please check..." >> $testdir/results.log
   exit 1
 fi
