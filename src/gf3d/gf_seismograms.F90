@@ -875,18 +875,7 @@
       return
     endif
 
-    call gf_write_header(db,src,loc,ista,iout)
-
-    ! the conversion and the axis, machine-parsable
-    write(iout,'(a,a)')               '# stf kind   : ',trim(gf_stf_kind_name(stf%kind_stf))
-    write(iout,'(a,4es24.16)')        '# stf hdur   : ',stf%hdur_src,stf%hdur_target,stf%hdur_db,stf%hdur_corr
-    write(iout,'(a,es24.16,i12,l4)')  '# stf kernel : ',stf%trunc,stf%khalf,stf%guard
-    write(iout,'(a,es24.16)')         '# stf onset  : ',onset(ista)
-    write(iout,'(a,a)')               '# stf note   : ',trim(stf%note)
-    write(iout,'(a,es24.16,4i12)')    '# axis       : ',tax%dt,tax%subsample_step,tax%nt_db,tax%npad,tax%nt
-    write(iout,'(a,4es24.16)')        '# axis t0    : ',tax%t0_db,tax%t0_req,tax%t0,tax%t_first
-    write(iout,'(a,i0,a)')            '# edge       : trailing ',stf%khalf, &
-                                      ' samples use zero-extended data; leading samples assume silence before the database start'
+    call gf_write_header(db,src,loc,ista,iout,tax,stf,onset(ista))
     write(iout,'(a)') '# columns: t[s]  '//GF_COMP_NAME(1)//'[m]  ' &
                       //GF_COMP_NAME(2)//'[m]  '//GF_COMP_NAME(3)//'[m]'
 
@@ -958,13 +947,7 @@
       return
     endif
 
-    call gf_write_header(db,src,loc,ista,iout)
-
-    write(iout,'(a,a)')               '# stf kind   : ',trim(gf_stf_kind_name(stf%kind_stf))
-    write(iout,'(a,4es24.16)')        '# stf hdur   : ',stf%hdur_src,stf%hdur_target,stf%hdur_db,stf%hdur_corr
-    write(iout,'(a,es24.16,i12,l4)')  '# stf kernel : ',stf%trunc,stf%khalf,stf%guard
-    write(iout,'(a,es24.16,4i12)')    '# axis       : ',tax%dt,tax%subsample_step,tax%nt_db,tax%npad,tax%nt
-    write(iout,'(a,4es24.16)')        '# axis t0    : ',tax%t0_db,tax%t0_req,tax%t0,tax%t_first
+    call gf_write_header(db,src,loc,ista,iout,tax,stf)
 
     line = ''
     do ip = 1,ndp
@@ -1192,13 +1175,20 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine gf_write_header(db,src,loc,ista,iout)
+  subroutine gf_write_header(db,src,loc,ista,iout,tax,stf,onset)
 
-! the '#' provenance block shared by both output formats
+! the '#' provenance block shared by every output format
 !
 ! Everything needed to reproduce the trace: which database, which source,
 ! which element and where in it, and the time axis. A trace whose provenance
 ! has to be reconstructed from the filename is a trace nobody can check.
+!
+! `tax`, `stf` and `onset` are optional because the three writers do not all
+! have them. --dump runs before a plan exists and passes none; the partials
+! file has no per-station onset. The order of the lines below is the order
+! both formats have always emitted and is compared byte for byte by
+! check_reference.sh, so an `if (present(...))` that moves a line is a
+! defect even though every line is still written.
 
   implicit none
 
@@ -1207,6 +1197,9 @@
   type(t_gf_location), intent(in) :: loc
   integer, intent(in) :: ista
   integer, intent(in) :: iout
+  type(t_gf_taxis), intent(in), optional :: tax
+  type(t_gf_stf), intent(in), optional :: stf
+  double precision, intent(in), optional :: onset
 
   write(iout,'(a)')  '# xgf3d '//GF3D_VERSION
   write(iout,'(a)')  '# database    : '//trim(db%path)
@@ -1221,6 +1214,28 @@
                              db%stations(ista)%depth
   write(iout,'(a,2es24.16,i12)') '# t0, dt_sub, nt          : ', &
                              db%t0,db%dt*dble(db%subsample_step),db%nt_subsampled
+
+  ! the conversion and the axis, machine-parsable
+  if (present(stf)) then
+    write(iout,'(a,a)')               '# stf kind   : ',trim(gf_stf_kind_name(stf%kind_stf))
+    write(iout,'(a,4es24.16)')        '# stf hdur   : ',stf%hdur_src,stf%hdur_target,stf%hdur_db,stf%hdur_corr
+    write(iout,'(a,es24.16,i12,l4)')  '# stf kernel : ',stf%trunc,stf%khalf,stf%guard
+  endif
+
+  if (present(onset)) then
+    write(iout,'(a,es24.16)')         '# stf onset  : ',onset
+    if (present(stf)) write(iout,'(a,a)') '# stf note   : ',trim(stf%note)
+  endif
+
+  if (present(tax)) then
+    write(iout,'(a,es24.16,4i12)')    '# axis       : ',tax%dt,tax%subsample_step,tax%nt_db,tax%npad,tax%nt
+    write(iout,'(a,4es24.16)')        '# axis t0    : ',tax%t0_db,tax%t0_req,tax%t0,tax%t_first
+  endif
+
+  if (present(onset) .and. present(stf)) then
+    write(iout,'(a,i0,a)')            '# edge       : trailing ',stf%khalf, &
+                                      ' samples use zero-extended data; leading samples assume silence before the database start'
+  endif
 
   end subroutine gf_write_header
 
