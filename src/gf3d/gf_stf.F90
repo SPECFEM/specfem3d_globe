@@ -141,7 +141,7 @@
   use constants, only: PI,SOURCE_DECAY_MIMIC_TRIANGLE
 
   use gf_par, only: t_gf_stf,t_gf_taxis,t_gf_source,gf_set_error, &
-                    GF_OK,GF_ERR_ARG, &
+                    GF_OK,GF_ERR_ARG,GF_ERR_ALLOC, &
                     GF_STF_NONE,GF_STF_GAUSS,GF_STF_HEAVI,GF_STF_TRUNC, &
                     GF_SRC_FORCE,GF_SRC_CMT
 
@@ -168,9 +168,47 @@
   public :: gf_stf_kind_name
   public :: gf_print_stf
   public :: gf_cumtrapz
+  public :: gf_stf_work_init
+  public :: gf_stf_convert
+  public :: gf_stf_work_free
 
   ! a kernel longer than this is a mistake in the arguments, not a request
   integer, parameter :: GF_STF_KHALF_MAX = 100000000
+
+  !-----------------------------------------------------------------
+  ! scratch for converting one trace at a time
+  !
+  ! Turning a database trace into an output trace is always the same three
+  ! steps -- extend, integrate, convolve -- on the same six arrays. Every
+  ! caller sized and allocated its own copies, so the arrays and the steps
+  ! were written out once per call site. They live here instead, allocated
+  ! once per plan and reused for every station and component.
+  !
+  ! `trace` is the input, filled by the caller; `y` is the result. `xpad`
+  ! survives the conversion on purpose: the centroid-time partial is a
+  ! second convolution of the *padded* trace, so gf_partials_time reads it
+  ! after gf_stf_convert has returned.
+  !
+  ! One rule, because it is the only way this type can be misused: never
+  ! pass `work` and one of its own components to the same routine. Holding
+  ! `work` and passing `work%xpad` onwards is fine and is what the partials
+  ! do; passing both would alias a target with its own container.
+  !-----------------------------------------------------------------
+
+  type, public :: t_gf_stf_work
+    ! the sizes this scratch was built for; gf_stf_convert refuses a plan
+    ! that does not match, because `w`'s bounds are baked in at init
+    integer :: nt_db = 0
+    integer :: nt = 0
+    integer :: khalf = -1
+
+    double precision, dimension(:), allocatable :: trace   ! (nt_db)  contracted, scaled
+    double precision, dimension(:), allocatable :: tdb     ! (nt_db)  database sample times
+    double precision, dimension(:), allocatable :: xpad    ! (nt)     trace, npad zeros ahead
+    double precision, dimension(:), allocatable :: p       ! (0:nt)   prefix sums of xpad
+    double precision, dimension(:), allocatable :: y       ! (nt)     the converted trace
+    double precision, dimension(:), allocatable :: w       ! (-khalf:khalf) the plan's kernel
+  end type t_gf_stf_work
 
   contains
 
@@ -768,6 +806,132 @@
   end select
 
   end subroutine gf_stf_apply
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_stf_work_init(stf,tax,work,ierr)
+
+! scratch for one plan, allocated once and reused for every trace
+!
+! `tdb` is allocated but NOT filled. The database sample times come from
+! gf_time_axis, which needs the handle, and gf_stf has no business knowing
+! about t_gfdb; the caller fills work%tdb itself. That is also the safer
+! split: tdb feeds gf_stf_onset, whose sample count appears in the ASCII
+! header, so deriving it from the padded axis here would quietly move a
+! printed number.
+
+  implicit none
+
+  type(t_gf_stf), intent(in) :: stf
+  type(t_gf_taxis), intent(in) :: tax
+  type(t_gf_stf_work), intent(inout) :: work
+  integer, intent(out) :: ierr
+
+  ! local parameters
+  integer :: ier
+
+  if (tax%nt_db < 1 .or. tax%nt < 1) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_stf_work_init: the time axis has no samples')
+    return
+  endif
+  if (tax%nt /= tax%nt_db + tax%npad) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_stf_work_init: nt does not match nt_db + npad')
+    return
+  endif
+  if (stf%khalf < 0) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_stf_work_init: the plan has no kernel half-width')
+    return
+  endif
+
+  call gf_stf_work_free(work)
+
+  allocate(work%trace(tax%nt_db),work%tdb(tax%nt_db), &
+           work%xpad(tax%nt),work%p(0:tax%nt),work%y(tax%nt), &
+           work%w(-stf%khalf:stf%khalf),stat=ier)
+  if (ier /= 0) then
+    call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate the source time function scratch')
+    return
+  endif
+
+  work%trace(:) = 0.d0
+  work%tdb(:) = 0.d0
+  work%xpad(:) = 0.d0
+  work%p(:) = 0.d0
+  work%y(:) = 0.d0
+
+  work%nt_db = tax%nt_db
+  work%nt = tax%nt
+  work%khalf = stf%khalf
+
+  ! the kernel depends only on the plan and dt_sub, so it is built once here
+  ! rather than once per station
+  call gf_stf_kernel(stf,tax%dt_sub,work%w)
+
+  ierr = GF_OK
+
+  end subroutine gf_stf_work_init
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_stf_convert(stf,tax,work,ierr)
+
+! work%trace -> work%y : extend, integrate, convolve
+!
+! The three statements every caller used to carry. `work%xpad` is left
+! holding the extended trace because the centroid-time partial convolves it
+! a second time.
+
+  implicit none
+
+  type(t_gf_stf), intent(in) :: stf
+  type(t_gf_taxis), intent(in) :: tax
+  type(t_gf_stf_work), intent(inout) :: work
+  integer, intent(out) :: ierr
+
+  ! w's bounds were fixed at init, so a plan with a different khalf would be
+  ! indexed through the wrong extents rather than diagnosed
+  if (work%nt_db /= tax%nt_db .or. work%nt /= tax%nt .or. work%khalf /= stf%khalf) then
+    call gf_set_error(ierr,GF_ERR_ARG, &
+      'gf_stf_convert: the scratch was built for a different plan')
+    return
+  endif
+
+  call gf_pad_left(work%trace,tax%nt_db,tax%npad,work%xpad)
+  call gf_cumsum(work%xpad,tax%nt,work%p)
+  call gf_stf_apply(stf,tax%dt_sub,work%w,work%p,work%xpad,tax%nt,work%y)
+
+  ierr = GF_OK
+
+  end subroutine gf_stf_convert
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_stf_work_free(work)
+
+! releases the scratch; safe on an object that was never initialised
+
+  implicit none
+
+  type(t_gf_stf_work), intent(inout) :: work
+
+  if (allocated(work%trace)) deallocate(work%trace)
+  if (allocated(work%tdb)) deallocate(work%tdb)
+  if (allocated(work%xpad)) deallocate(work%xpad)
+  if (allocated(work%p)) deallocate(work%p)
+  if (allocated(work%y)) deallocate(work%y)
+  if (allocated(work%w)) deallocate(work%w)
+
+  work%nt_db = 0
+  work%nt = 0
+  work%khalf = -1
+
+  end subroutine gf_stf_work_free
 
 !
 !-------------------------------------------------------------------------------------------------
