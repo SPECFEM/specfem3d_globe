@@ -1042,11 +1042,7 @@
   double precision, dimension(:,:,:), allocatable :: g,eps
   double precision, dimension(:,:), allocatable :: pre_stf
   double precision, dimension(:), allocatable :: t
-  double precision, dimension(NGLLX) :: hxi,hpxi
-  double precision, dimension(NGLLY) :: heta,hpeta
-  double precision, dimension(NGLLZ) :: hgam,hpgam
-  double precision, dimension(NGLLX,NGLLY,NGLLZ,NDIM) :: dw
-  double precision, dimension(NDIM,NDIM) :: m_cart
+  type(t_gf_seis_geom) :: geom
   character(len=MAX_STRING_LEN) :: filename
   integer :: ista,it,ia,id,iv,iout,ios,ier,nt,nwritten
   logical :: exists,do_strain
@@ -1070,12 +1066,11 @@
 
   do_strain = (src%source_type == GF_SRC_CMT)
 
-  call gf_interp_weights_deriv(loc%xi,loc%eta,loc%gamma,hxi,hpxi,heta,hpeta,hgam,hpgam)
-
-  if (do_strain) then
-    call gf_strain_dweights(hxi,hpxi,heta,hpeta,hgam,hpgam,loc%jinv,dw)
-    call gf_rotate_moment_tensor(loc%theta,loc%phi,src%moment_tensor,m_cart)
-  endif
+  ! the same weights, strain table and rotated moment tensor the seismogram
+  ! path uses, from the same routine, so that a disagreement between --dump
+  ! and --seis cannot come from the geometry
+  call gf_seis_geometry(db,src,loc,0,geom,ierr)
+  if (ierr /= GF_OK) return
 
   allocate(displ(GF_NCOMP,GF_NCOMP,NGLLX,NGLLY,NGLLZ,nt),g(GF_NCOMP,GF_NCOMP,nt), &
            eps(GF_VOIGT,GF_NCOMP,nt),pre_stf(GF_NCOMP,nt),t(nt),stat=ier)
@@ -1097,7 +1092,7 @@
     call gf_read_element_displ(db,loc%ielem,ista,displ,ierr)
     if (ierr /= GF_OK) goto 99
 
-    call gf_interp_trace(displ,hxi,heta,hgam,nt,g)
+    call gf_interp_trace(displ,geom%hxi,geom%heta,geom%hgam,nt,g)
 
     filename = trim(outdir)//'/'//trim(db%stations(ista)%id)//'.dump.txt'
 
@@ -1122,13 +1117,28 @@
 
     if (do_strain) then
 
-      call gf_strain_trace(displ,dw,nt,eps)
+      call gf_strain_trace(displ,geom%dw,nt,eps)
 
-      ! scaled exactly as gf_seis_cmt scales it, so the dumped trace is in
-      ! the seismogram's units and differs from it only by the conversion
+      ! The seismogram path refuses this rather than dividing by zero
+      ! (gf_seis_station); --dump used to divide anyway.
+      if (db%stations(ista)%factor_force_source == 0.d0) then
+        call gf_set_error(ierr,GF_ERR_ARG, &
+          'station '//trim(db%stations(ista)%id)//' has factor_force_source = 0')
+        goto 99
+      endif
+
+      ! In the seismogram's units, so the dumped trace differs from it only
+      ! by the source time function conversion.
+      !
+      ! Note this divides where gf_seis_station multiplies by a reciprocal
+      ! it formed once: x/f and x*(1/f) differ in the last bit whenever 1/f
+      ! is inexact, so the two are not bitwise equal and are not meant to be.
+      ! The .strain.txt files are in the reference set, so making them agree
+      ! is an output change with its own entry in
+      ! allowed_output_changes.md -- not something to tidy in passing.
       do ia = 1,GF_NCOMP
         do it = 1,nt
-          call gf_moment_contract(m_cart,eps(:,ia,it),pre_stf(ia,it))
+          call gf_moment_contract(geom%m_cart,eps(:,ia,it),pre_stf(ia,it))
           pre_stf(ia,it) = pre_stf(ia,it) / db%stations(ista)%factor_force_source
         enddo
       enddo
