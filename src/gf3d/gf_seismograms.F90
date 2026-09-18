@@ -119,6 +119,11 @@
 
   module gf_seismograms
 
+  ! at module scope because t_gf_seis_geom's components are sized by them;
+  ! the procedures below re-import the same names, which is legal and keeps
+  ! each one's dependencies readable
+  use constants, only: NGLLX,NGLLY,NGLLZ,NDIM
+
   use gf_par, only: t_gfdb,t_gf_location,t_gf_source,t_gf_stf,t_gf_taxis,gf_set_error, &
                     gf_is_finite, &
                     GF_OK,GF_ERR_ARG,GF_ERR_ALLOC,GF_ERR_IO,GF_ERR_MISMATCH, &
@@ -164,6 +169,41 @@
 
   ! component labels, in the stored force order (green_function_io.F90:38)
   character(len=1), dimension(GF_NCOMP), parameter :: GF_COMP_NAME = (/ 'N','E','Z' /)
+
+  !-----------------------------------------------------------------
+  ! everything about a source's position that does not depend on the
+  ! station, built once by gf_seis_geometry
+  !
+  ! Which parts are filled depends on what is being extracted: the force
+  ! direction for a force source, the strain weights and the rotated moment
+  ! tensor for a moment tensor, and the second-derivative tables and the
+  ! geographic Jacobian only when the centroid partials are wanted.
+  ! Fixed-size rather than allocatable -- ddw is the big one at ~9 kB, which
+  ! gf_seis_cmt_partials already carried as a local.
+  !-----------------------------------------------------------------
+
+  type :: t_gf_seis_geom
+    !--- every kind ---
+    ! from gf_interp_weights_deriv, i.e. lagrange_any. See gf_seis_geometry
+    ! for why these must NOT come from gf_interp_weights_deriv2.
+    double precision, dimension(NGLLX) :: hxi  = 0.d0
+    double precision, dimension(NGLLY) :: heta = 0.d0
+    double precision, dimension(NGLLZ) :: hgam = 0.d0
+
+    !--- GF_SRC_FORCE ---
+    double precision, dimension(NDIM) :: fhat = 0.d0
+
+    !--- GF_SRC_CMT ---
+    double precision, dimension(NGLLX,NGLLY,NGLLZ,NDIM) :: dw = 0.d0
+    double precision, dimension(NDIM,NDIM) :: m_cart = 0.d0
+
+    !--- itypsokern = 2 only ---
+    logical :: want_loc = .false.
+    double precision, dimension(NGLLX,NGLLY,NGLLZ,NDIM,NDIM) :: ddw = 0.d0
+    double precision, dimension(NDIM,NDIM) :: dm_dtheta = 0.d0, dm_dphi = 0.d0
+    double precision, dimension(NDIM,3) :: dxds = 0.d0
+    double precision :: dtheta_dlat = 0.d0, dphi_dlon = 0.d0
+  end type t_gf_seis_geom
 
   contains
 
@@ -278,6 +318,113 @@
 !-------------------------------------------------------------------------------------------------
 !
 
+  subroutine gf_seis_geometry(db,src,loc,itypsokern,geom,ierr)
+
+! everything about the source's position that does not depend on the station
+!
+! The three extraction routines each built their own copy of this, in the
+! same order, from the same inputs. `itypsokern` selects how much is needed:
+! 0 gives the interpolation weights and, for a force source, the direction;
+! 1 adds the strain weights and the rotated moment tensor; 2 adds the
+! second-derivative tables and the geographic Jacobian.
+!
+! `dw` comes from gf_interp_weights_deriv (lagrange_any, hand-unrolled for
+! NGLL = 5 with a fixed association order, lagrange_poly.f90:67-81) and `ddw`
+! from gf_interp_weights_deriv2 (lagrange_any_2nd, a generic loop
+! accumulating in a different order, :245). The two are kept in separate
+! variables rather than sharing one table.
+!
+! Measured, not assumed: building dw from deriv2's tables instead leaves
+! every reference output bitwise unchanged on both examples, so the two
+! routines do agree to the last bit there. The separation is kept anyway
+! because nothing guarantees that for every xi, and because the code this
+! replaces got the same effect by overwriting hxi/hpxi in place *after* dw
+! had been built -- correct, but resting on the order of two statements
+! twenty lines apart.
+
+  use constants, only: NGLLX,NGLLY,NGLLZ,NDIM
+
+  implicit none
+
+  type(t_gfdb), intent(in) :: db
+  type(t_gf_source), intent(in) :: src
+  type(t_gf_location), intent(in) :: loc
+  integer, intent(in) :: itypsokern
+  type(t_gf_seis_geom), intent(out) :: geom
+  integer, intent(out) :: ierr
+
+  ! local parameters
+  double precision, dimension(NGLLX) :: hpxi
+  double precision, dimension(NGLLY) :: hpeta
+  double precision, dimension(NGLLZ) :: hpgam
+  ! the deriv2 tables, deliberately separate from geom%hxi -- see above
+  double precision, dimension(NGLLX) :: hxi2,hpxi2,hppxi
+  double precision, dimension(NGLLY) :: heta2,hpeta2,hppeta
+  double precision, dimension(NGLLZ) :: hgam2,hpgam2,hppgam
+  double precision, dimension(1) :: no_spline
+  double precision :: elevation,delev_dlat,delev_dlon
+  integer :: nspl_use
+
+  geom%want_loc = (itypsokern == 2)
+
+  call gf_interp_weights_deriv(loc%xi,loc%eta,loc%gamma, &
+                               geom%hxi,hpxi,geom%heta,hpeta,geom%hgam,hpgam)
+
+  if (src%source_type == GF_SRC_FORCE) then
+    call gf_force_direction(src,loc%nu,geom%fhat,ierr)
+    if (ierr /= GF_OK) return
+  else
+    call gf_strain_dweights(geom%hxi,hpxi,geom%heta,hpeta,geom%hgam,hpgam,loc%jinv,geom%dw)
+    call gf_rotate_moment_tensor(loc%theta,loc%phi,src%moment_tensor,geom%m_cart)
+  endif
+
+  if (geom%want_loc) then
+    ! the differentiated weight table, the rotation's derivative and the
+    ! geographic map's derivative, once: none depends on the station
+    call gf_interp_weights_deriv2(loc%xi,loc%eta,loc%gamma,hxi2,hpxi2,hppxi,heta2,hpeta2,hppeta, &
+                                  hgam2,hpgam2,hppgam)
+    call gf_strain_ddweights(hxi2,hpxi2,hppxi,heta2,hpeta2,hppeta,hgam2,hpgam2,hppgam, &
+                             loc%jinv,loc%djinv,geom%ddw)
+
+    call gf_rotate_moment_tensor_deriv(loc%theta,loc%phi,src%moment_tensor, &
+                                       geom%dm_dtheta,geom%dm_dphi)
+
+    ! the elevation and its gradient, as gf_locate evaluated the elevation
+    elevation = 0.d0
+    delev_dlat = 0.d0
+    delev_dlon = 0.d0
+    if (db%topography) then
+      call gf_topo_elevation(db,src%latitude,src%longitude,elevation)
+      call gf_topo_gradient(db,src%latitude,src%longitude,delev_dlat,delev_dlon)
+    endif
+
+    ! the spline arrays only exist when the database has ELLIPTICITY set;
+    ! an unallocated allocatable cannot be passed, so the no-spline case
+    ! passes a length-one dummy instead
+    if (db%ellipticity) then
+      call gf_geographic_jacobian(src%latitude,src%longitude,src%depth,db%ellipticity, &
+                                  elevation,delev_dlat,delev_dlon, &
+                                  db%nspl,db%rspl,db%ellipicity_spline,db%ellipicity_spline2, &
+                                  db%R_PLANET,geom%dxds,geom%dtheta_dlat,geom%dphi_dlon,ierr)
+    else
+      no_spline(1) = 0.d0
+      nspl_use = 0
+      call gf_geographic_jacobian(src%latitude,src%longitude,src%depth,db%ellipticity, &
+                                  elevation,delev_dlat,delev_dlon, &
+                                  nspl_use,no_spline,no_spline,no_spline, &
+                                  db%R_PLANET,geom%dxds,geom%dtheta_dlat,geom%dphi_dlon,ierr)
+    endif
+    if (ierr /= GF_OK) return
+  endif
+
+  ierr = GF_OK
+
+  end subroutine gf_seis_geometry
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   subroutine gf_seis_force(db,src,loc,tax,stf,seis,t,onset,ierr)
 
 ! seismograms at every station for a force source
@@ -311,10 +458,7 @@
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: displ
   double precision, dimension(:,:,:), allocatable :: g
   type(t_gf_stf_work) :: work
-  double precision, dimension(NGLLX) :: hxi
-  double precision, dimension(NGLLY) :: heta
-  double precision, dimension(NGLLZ) :: hgam
-  double precision, dimension(NDIM) :: fhat
+  type(t_gf_seis_geom) :: geom
   double precision :: scale_amp,ratio
   integer :: ista,it,icomp,idisp,ier,nt_db,nt,nbefore
 
@@ -343,9 +487,7 @@
 
   call gf_taxis_times(tax,nt,t)
 
-  call gf_interp_weights(loc%xi,loc%eta,loc%gamma,hxi,heta,hgam)
-
-  call gf_force_direction(src,loc%nu,fhat,ierr)
+  call gf_seis_geometry(db,src,loc,0,geom,ierr)
   if (ierr /= GF_OK) return
 
   allocate(displ(GF_NCOMP,GF_NCOMP,NGLLX,NGLLY,NGLLZ,nt_db),g(GF_NCOMP,GF_NCOMP,nt_db),stat=ier)
@@ -369,7 +511,7 @@
 
     ! g(a,d,t): the interpolated field at the source, still carrying both
     ! the station-force index a and the displacement index d
-    call gf_interp_trace(displ,hxi,heta,hgam,nt_db,g)
+    call gf_interp_trace(displ,geom%hxi,geom%heta,geom%hgam,nt_db,g)
 
     if (db%stations(ista)%factor_force_source == 0.d0) then
       call gf_set_error(ierr,GF_ERR_ARG, &
@@ -383,7 +525,7 @@
       do it = 1,nt_db
         work%trace(it) = 0.d0
         do idisp = 1,GF_NCOMP
-          work%trace(it) = work%trace(it) + fhat(idisp)*g(icomp,idisp,it)
+          work%trace(it) = work%trace(it) + geom%fhat(idisp)*g(icomp,idisp,it)
         enddo
         work%trace(it) = scale_amp * work%trace(it)
       enddo
@@ -456,11 +598,7 @@
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: displ
   double precision, dimension(:,:,:), allocatable :: eps
   type(t_gf_stf_work) :: work
-  double precision, dimension(NGLLX) :: hxi,hpxi
-  double precision, dimension(NGLLY) :: heta,hpeta
-  double precision, dimension(NGLLZ) :: hgam,hpgam
-  double precision, dimension(NGLLX,NGLLY,NGLLZ,NDIM) :: dw
-  double precision, dimension(NDIM,NDIM) :: m_cart
+  type(t_gf_seis_geom) :: geom
   double precision :: scale_amp,ratio
   integer :: ista,it,icomp,ier,nt_db,nt,nbefore
 
@@ -495,11 +633,10 @@
 
   ! basis values and reference derivatives at the source, then the
   ! physical-space derivatives through the locator's inverse Jacobian
-  call gf_interp_weights_deriv(loc%xi,loc%eta,loc%gamma,hxi,hpxi,heta,hpeta,hgam,hpgam)
-  call gf_strain_dweights(hxi,hpxi,heta,hpeta,hgam,hpgam,loc%jinv,dw)
-
-  ! the moment tensor, rotated once: it does not depend on the station
-  call gf_rotate_moment_tensor(loc%theta,loc%phi,src%moment_tensor,m_cart)
+  ! the weights, the strain table and the rotated moment tensor, once:
+  ! none of them depends on the station
+  call gf_seis_geometry(db,src,loc,0,geom,ierr)
+  if (ierr /= GF_OK) return
 
   allocate(displ(GF_NCOMP,GF_NCOMP,NGLLX,NGLLY,NGLLZ,nt_db),eps(GF_VOIGT,GF_NCOMP,nt_db),stat=ier)
   if (ier /= 0) then
@@ -517,7 +654,7 @@
     call gf_read_element_displ(db,loc%ielem,ista,displ,ierr)
     if (ierr /= GF_OK) goto 99
 
-    call gf_strain_trace(displ,dw,nt_db,eps)
+    call gf_strain_trace(displ,geom%dw,nt_db,eps)
 
     ! per unit reciprocal force at the station; see the module header
     if (db%stations(ista)%factor_force_source == 0.d0) then
@@ -530,7 +667,7 @@
     do icomp = 1,GF_NCOMP
 
       do it = 1,nt_db
-        call gf_moment_contract(m_cart,eps(:,icomp,it),work%trace(it))
+        call gf_moment_contract(geom%m_cart,eps(:,icomp,it),work%trace(it))
         work%trace(it) = scale_amp * work%trace(it)
       enddo
 
@@ -613,15 +750,8 @@
   double precision, dimension(:,:,:,:), allocatable :: deps
   double precision, dimension(:), allocatable :: dp10
   type(t_gf_stf_work) :: work
-  double precision, dimension(NGLLX) :: hxi,hpxi,hppxi
-  double precision, dimension(NGLLY) :: heta,hpeta,hppeta
-  double precision, dimension(NGLLZ) :: hgam,hpgam,hppgam
-  double precision, dimension(NGLLX,NGLLY,NGLLZ,NDIM) :: dw
-  double precision, dimension(NGLLX,NGLLY,NGLLZ,NDIM,NDIM) :: ddw
-  double precision, dimension(NDIM,NDIM) :: m_cart,dm_dtheta,dm_dphi
-  double precision, dimension(NDIM,3) :: dxds
-  double precision, dimension(1) :: no_spline
-  double precision :: scale_amp,ratio,elevation,delev_dlat,delev_dlon,dtheta_dlat,dphi_dlon,wsum_raw
+  type(t_gf_seis_geom) :: geom
+  double precision :: scale_amp,ratio,wsum_raw
   integer :: ista,it,icomp,ier,nt_db,nt,nbefore,ip,b
   logical :: want_loc
 
@@ -685,42 +815,8 @@
 
   call gf_taxis_times(tax,nt,t)
 
-  call gf_interp_weights_deriv(loc%xi,loc%eta,loc%gamma,hxi,hpxi,heta,hpeta,hgam,hpgam)
-  call gf_strain_dweights(hxi,hpxi,heta,hpeta,hgam,hpgam,loc%jinv,dw)
-
-  call gf_rotate_moment_tensor(loc%theta,loc%phi,src%moment_tensor,m_cart)
-
-  if (want_loc) then
-    ! the differentiated weight table, the rotation's derivative and the
-    ! geographic map's derivative, once: none depends on the station
-    call gf_interp_weights_deriv2(loc%xi,loc%eta,loc%gamma,hxi,hpxi,hppxi,heta,hpeta,hppeta, &
-                                  hgam,hpgam,hppgam)
-    call gf_strain_ddweights(hxi,hpxi,hppxi,heta,hpeta,hppeta,hgam,hpgam,hppgam,loc%jinv,loc%djinv,ddw)
-
-    call gf_rotate_moment_tensor_deriv(loc%theta,loc%phi,src%moment_tensor,dm_dtheta,dm_dphi)
-
-    ! the elevation and its gradient, as gf_locate evaluated the elevation
-    elevation = 0.d0
-    delev_dlat = 0.d0
-    delev_dlon = 0.d0
-    if (db%topography) then
-      call gf_topo_elevation(db,src%latitude,src%longitude,elevation)
-      call gf_topo_gradient(db,src%latitude,src%longitude,delev_dlat,delev_dlon)
-    endif
-    if (db%ellipticity) then
-      call gf_geographic_jacobian(src%latitude,src%longitude,src%depth,db%ellipticity, &
-                                  elevation,delev_dlat,delev_dlon, &
-                                  db%nspl,db%rspl,db%ellipicity_spline,db%ellipicity_spline2, &
-                                  db%R_PLANET,dxds,dtheta_dlat,dphi_dlon,ierr)
-    else
-      no_spline(1) = 0.d0
-      call gf_geographic_jacobian(src%latitude,src%longitude,src%depth,db%ellipticity, &
-                                  elevation,delev_dlat,delev_dlon, &
-                                  0,no_spline,no_spline,no_spline, &
-                                  db%R_PLANET,dxds,dtheta_dlat,dphi_dlon,ierr)
-    endif
-    if (ierr /= GF_OK) return
-  endif
+  call gf_seis_geometry(db,src,loc,itypsokern,geom,ierr)
+  if (ierr /= GF_OK) return
 
   allocate(displ(GF_NCOMP,GF_NCOMP,NGLLX,NGLLY,NGLLZ,nt_db),eps(GF_VOIGT,GF_NCOMP,nt_db), &
            dpm(GF_NDP_MT,GF_NCOMP,nt),stat=ier)
@@ -746,12 +842,12 @@
     call gf_read_element_displ(db,loc%ielem,ista,displ,ierr)
     if (ierr /= GF_OK) goto 99
 
-    call gf_strain_trace(displ,dw,nt_db,eps)
+    call gf_strain_trace(displ,geom%dw,nt_db,eps)
 
     if (want_loc) then
       ! d eps / d xi_b: the same kernel with the differentiated table
       do b = 1,NDIM
-        call gf_strain_trace(displ,ddw(:,:,:,:,b),nt_db,deps(:,:,:,b))
+        call gf_strain_trace(displ,geom%ddw(:,:,:,:,b),nt_db,deps(:,:,:,b))
       enddo
     endif
 
@@ -766,7 +862,7 @@
     do icomp = 1,GF_NCOMP
 
       do it = 1,nt_db
-        call gf_moment_contract(m_cart,eps(:,icomp,it),work%trace(it))
+        call gf_moment_contract(geom%m_cart,eps(:,icomp,it),work%trace(it))
         work%trace(it) = scale_amp * work%trace(it)
       enddo
 
@@ -809,8 +905,9 @@
     !--- the centroid-position partials --------------------------------------
 
     if (want_loc) then
-      call gf_partials_loc(eps,deps,nt_db,m_cart,dm_dtheta,dm_dphi,dtheta_dlat,dphi_dlon, &
-                           loc%jinv,dxds,scale_amp,tax,stf,work,dpl,ierr)
+      call gf_partials_loc(eps,deps,nt_db,geom%m_cart,geom%dm_dtheta,geom%dm_dphi, &
+                           geom%dtheta_dlat,geom%dphi_dlon, &
+                           loc%jinv,geom%dxds,scale_amp,tax,stf,work,dpl,ierr)
       if (ierr /= GF_OK) goto 99
       do it = 1,nt
         do icomp = 1,GF_NCOMP
