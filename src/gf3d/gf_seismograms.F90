@@ -159,9 +159,6 @@
 
   public :: gf_time_axis
   public :: gf_seis_plan
-  public :: gf_seis_force
-  public :: gf_seis_cmt
-  public :: gf_seis_cmt_partials
   public :: gf_seis
   public :: gf_write_seis
   public :: gf_write_partials
@@ -682,92 +679,6 @@
   ierr = GF_OK
 
   end subroutine gf_seis_station
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine gf_seis_force(db,src,loc,tax,stf,seis,t,onset,ierr)
-
-! seismograms at every station for a force source: gf_seis with no partials
-
-  implicit none
-
-  type(t_gfdb), intent(in) :: db
-  type(t_gf_source), intent(in) :: src
-  type(t_gf_location), intent(in) :: loc
-  type(t_gf_taxis), intent(in) :: tax
-  type(t_gf_stf), intent(in) :: stf
-  double precision, dimension(db%nstations,GF_NCOMP,tax%nt), intent(out) :: seis
-  double precision, dimension(tax%nt), intent(out) :: t
-  double precision, dimension(db%nstations), intent(out) :: onset
-  integer, intent(out) :: ierr
-
-  ! local parameters
-  double precision, dimension(0,db%nstations,GF_NCOMP,tax%nt) :: dp_none
-
-  call gf_seis(db,src,loc,tax,stf,0,0,seis,dp_none,t,onset,ierr)
-
-  end subroutine gf_seis_force
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine gf_seis_cmt(db,src,loc,tax,stf,seis,t,onset,ierr)
-
-! seismograms at every station for a moment-tensor source: gf_seis with no
-! partials
-
-  implicit none
-
-  type(t_gfdb), intent(in) :: db
-  type(t_gf_source), intent(in) :: src
-  type(t_gf_location), intent(in) :: loc
-  type(t_gf_taxis), intent(in) :: tax
-  type(t_gf_stf), intent(in) :: stf
-  double precision, dimension(db%nstations,GF_NCOMP,tax%nt), intent(out) :: seis
-  double precision, dimension(tax%nt), intent(out) :: t
-  double precision, dimension(db%nstations), intent(out) :: onset
-  integer, intent(out) :: ierr
-
-  ! local parameters
-  double precision, dimension(0,db%nstations,GF_NCOMP,tax%nt) :: dp_none
-
-  call gf_seis(db,src,loc,tax,stf,0,0,seis,dp_none,t,onset,ierr)
-
-  end subroutine gf_seis_cmt
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine gf_seis_cmt_partials(db,src,loc,tax,stf,itypsokern,ndp,seis,dp,t,onset,ierr)
-
-! seismograms and their partial derivatives: gf_seis with itypsokern >= 1
-
-  implicit none
-
-  type(t_gfdb), intent(in) :: db
-  type(t_gf_source), intent(in) :: src
-  type(t_gf_location), intent(in) :: loc
-  type(t_gf_taxis), intent(in) :: tax
-  type(t_gf_stf), intent(in) :: stf
-  integer, intent(in) :: itypsokern,ndp
-  double precision, dimension(db%nstations,GF_NCOMP,tax%nt), intent(out) :: seis
-  double precision, dimension(ndp,db%nstations,GF_NCOMP,tax%nt), intent(out) :: dp
-  double precision, dimension(tax%nt), intent(out) :: t
-  double precision, dimension(db%nstations), intent(out) :: onset
-  integer, intent(out) :: ierr
-
-  if (itypsokern < 1) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_cmt_partials: itypsokern must be 1 or 2')
-    return
-  endif
-
-  call gf_seis(db,src,loc,tax,stf,itypsokern,ndp,seis,dp,t,onset,ierr)
-
-  end subroutine gf_seis_cmt_partials
 
 !
 !-------------------------------------------------------------------------------------------------

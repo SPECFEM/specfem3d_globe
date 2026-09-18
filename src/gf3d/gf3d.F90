@@ -115,8 +115,8 @@
 
   !--- extraction
   use gf_seismograms, only: &
-    gf_time_axis, gf_seis_plan, gf_seis, gf_seis_cmt, gf_seis_force, &
-    gf_seis_cmt_partials, gf_write_seis, gf_write_partials, gf_write_dump
+    gf_time_axis, gf_seis_plan, gf_seis, &
+    gf_write_seis, gf_write_partials, gf_write_dump
 
   !--- partial derivatives: the count, the slot order, the names and units
   use gf_partials, only: &

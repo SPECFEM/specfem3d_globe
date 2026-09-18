@@ -101,7 +101,7 @@
 
   use gf_locate, only: gf_locate_source, gf_locate_release, gf_locate_tree_owner
 
-  use gf_seismograms, only: gf_seis_plan, gf_seis, gf_seis_cmt_partials
+  use gf_seismograms, only: gf_seis_plan, gf_seis
 
   use gf_stf, only: gf_default_t0
 
@@ -1160,7 +1160,7 @@
     return
   endif
 
-  call gf_seis_cmt_partials(handles(h),fsrc,floc,tax,stf,int(itypsokern),ndp_want, &
+  call gf_seis(handles(h),fsrc,floc,tax,stf,int(itypsokern),ndp_want, &
                             fseis,fdp,ft,fonset,ierr)
 
   if (ierr == GF_OK) then
