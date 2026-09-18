@@ -81,7 +81,8 @@
   use gf_moment, only: gf_rotate_moment_tensor,gf_rotate_moment_tensor_deriv,gf_moment_contract
 
   use gf_stf, only: gf_stf_plan,gf_taxis_plan,gf_stf_kernel,gf_stf_kernel_gauss, &
-                    gf_stf_kernel_gauss_unit,gf_stf_khalf,gf_pad_left,gf_cumsum,gf_stf_apply
+                    gf_stf_kernel_gauss_unit,gf_stf_khalf,gf_pad_left,gf_cumsum,gf_stf_apply, &
+                    t_gf_stf_work,gf_stf_work_init,gf_stf_work_free
 
   use gf_partials
 
@@ -121,6 +122,10 @@
   type(t_gf_stf) :: ct_stf
   type(t_gf_taxis) :: ct_tax
   double precision, dimension(:), allocatable :: ct_w
+  ! ct_w stays: the finite-difference pipeline below is the independent
+  ! reference and keeps its own arrays. ct_work is only what gf_partials_loc
+  ! now takes.
+  type(t_gf_stf_work) :: ct_work
   integer :: ct_nt
 
   integer :: nfail
@@ -295,6 +300,11 @@
   double precision, dimension(3,3) :: m_cart
   type(t_gf_stf) :: stf,stf_g
   type(t_gf_taxis) :: tax
+  ! the scratch gf_partials_mt now takes. The hand-rolled pipeline below
+  ! keeps its own trace/xpad/p/y/w on purpose: it is the independent
+  ! reference the partials are checked against, and routing it through the
+  ! same helper would have it check that helper against itself.
+  type(t_gf_stf_work) :: work
   double precision :: theta,phi,scale_amp,scale_moment,scale_mt,t,worst,ref
   integer :: v,icomp,it,ierr,nt
 
@@ -342,6 +352,9 @@
 
   call gf_stf_kernel(stf,tax%dt_sub,w)
 
+  call gf_stf_work_init(stf,tax,work,ierr)
+  call gf_report_true('gf_stf_work_init returns GF_OK',ierr == GF_OK,nfail)
+
   ! the seismogram, the production way (gf_seis_cmt's statements)
   call gf_rotate_moment_tensor(theta,phi,m_sph,m_cart)
   do icomp = 1,GF_NCOMP
@@ -356,7 +369,7 @@
   enddo
 
   ! the partials
-  call gf_partials_mt(eps,NTDB,theta,phi,scale_mt,tax,stf,w,dp,ierr)
+  call gf_partials_mt(eps,NTDB,theta,phi,scale_mt,tax,stf,work,dp,ierr)
   call gf_report_true('gf_partials_mt returns GF_OK',ierr == GF_OK,nfail)
 
   ! linearity: the CMTSOLUTION's own numbers times the partials
@@ -408,9 +421,10 @@
 
   ! a Gaussian plan (a force source) is refused
   call gf_stf_plan(GF_SRC_FORCE,0,45.d0,HDB,DTR,GF_STF_TRUNC,stf_g,ierr)
-  call gf_partials_mt(eps,NTDB,theta,phi,scale_mt,tax,stf_g,w,dp,ierr)
+  call gf_partials_mt(eps,NTDB,theta,phi,scale_mt,tax,stf_g,work,dp,ierr)
   call gf_report_true('a Gaussian plan is refused          ',ierr /= GF_OK,nfail)
 
+  call gf_stf_work_free(work)
   deallocate(eps,dp,seis,recon,trace,xpad,p,y,w)
 
   end subroutine test_mt_linearity
@@ -1328,6 +1342,8 @@
            seis_p(GF_NCOMP,ct_nt),seis_m(GF_NCOMP,ct_nt),seis_p2(GF_NCOMP,ct_nt),seis_m2(GF_NCOMP,ct_nt), &
            dp(3,GF_NCOMP,ct_nt),d1(3,GF_NCOMP,ct_nt),dr(3,GF_NCOMP,ct_nt))
   call gf_stf_kernel(ct_stf,ct_tax%dt_sub,ct_w)
+  call gf_stf_work_init(ct_stf,ct_tax,ct_work,ierr)
+  call gf_report_true('gf_stf_work_init returns GF_OK             ',ierr == GF_OK,nfail)
 
   !--- the analytic route at s0 --------------------------------------------
 
@@ -1346,7 +1362,7 @@
   call gf_geographic_jacobian(ct_s0(1),ct_s0(2),ct_s0(3),.true.,ct_elev0,ct_glat,ct_glon, &
                               NSPL,ct_rspl,ct_ell,ct_ell2,R_EARTH,dxds,dtheta_dlat,dphi_dlon,ierr)
   call gf_partials_loc(eps,deps,NTC,m_cart,dm_dtheta,dm_dphi,dtheta_dlat,dphi_dlon,jinv,dxds, &
-                       1.d0,ct_tax,ct_stf,ct_w,dp,ierr)
+                       1.d0,ct_tax,ct_stf,ct_work,dp,ierr)
   call gf_report_true('gf_partials_loc returns GF_OK              ',ierr == GF_OK,nfail)
 
   !--- the finite difference of the production pipeline ----------------------
@@ -1371,6 +1387,7 @@
                    worst,1.d-8,nfail)
   enddo
 
+  call gf_stf_work_free(ct_work)
   deallocate(ct_w,eps,deps,seis_p,seis_m,seis_p2,seis_m2,dp,d1,dr)
 
   end subroutine test_full_chain

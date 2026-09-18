@@ -138,8 +138,8 @@
 
   use gf_moment, only: gf_rotate_moment_tensor,gf_rotate_moment_tensor_deriv,gf_moment_contract
 
-  use gf_stf, only: gf_stf_plan,gf_taxis_plan,gf_taxis_times,gf_pad_left,gf_cumsum, &
-                    gf_stf_kernel,gf_stf_apply,gf_stf_onset,gf_stf_kind_name
+  use gf_stf, only: gf_stf_plan,gf_taxis_plan,gf_taxis_times,gf_stf_onset,gf_stf_kind_name, &
+                    t_gf_stf_work,gf_stf_work_init,gf_stf_convert,gf_stf_work_free
 
   use gf_source, only: gf_force_direction
 
@@ -310,7 +310,7 @@
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: displ
   double precision, dimension(:,:,:), allocatable :: g
-  double precision, dimension(:), allocatable :: trace,tdb,xpad,p,y,w
+  type(t_gf_stf_work) :: work
   double precision, dimension(NGLLX) :: hxi
   double precision, dimension(NGLLY) :: heta
   double precision, dimension(NGLLZ) :: hgam
@@ -348,18 +348,19 @@
   call gf_force_direction(src,loc%nu,fhat,ierr)
   if (ierr /= GF_OK) return
 
-  allocate(displ(GF_NCOMP,GF_NCOMP,NGLLX,NGLLY,NGLLZ,nt_db),g(GF_NCOMP,GF_NCOMP,nt_db), &
-           trace(nt_db),tdb(nt_db),xpad(nt),p(0:nt),y(nt),w(-stf%khalf:stf%khalf),stat=ier)
+  allocate(displ(GF_NCOMP,GF_NCOMP,NGLLX,NGLLY,NGLLZ,nt_db),g(GF_NCOMP,GF_NCOMP,nt_db),stat=ier)
   if (ier /= 0) then
     call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate the element displacement buffer')
     return
   endif
 
-  ! the database's own axis, for the onset check
-  call gf_time_axis(db,nt_db,tdb)
+  ! the conversion scratch, including the kernel, once: neither depends on
+  ! the station
+  call gf_stf_work_init(stf,tax,work,ierr)
+  if (ierr /= GF_OK) goto 99
 
-  ! the conversion kernel, once: it does not depend on the station
-  call gf_stf_kernel(stf,tax%dt_sub,w)
+  ! the database's own axis, for the onset check
+  call gf_time_axis(db,nt_db,work%tdb)
 
   do ista = 1,db%nstations
 
@@ -380,23 +381,22 @@
     do icomp = 1,GF_NCOMP
 
       do it = 1,nt_db
-        trace(it) = 0.d0
+        work%trace(it) = 0.d0
         do idisp = 1,GF_NCOMP
-          trace(it) = trace(it) + fhat(idisp)*g(icomp,idisp,it)
+          work%trace(it) = work%trace(it) + fhat(idisp)*g(icomp,idisp,it)
         enddo
-        trace(it) = scale_amp * trace(it)
+        work%trace(it) = scale_amp * work%trace(it)
       enddo
 
-      call gf_stf_onset(trace,nt_db,tdb,stf%hdur_db,ratio,nbefore)
+      call gf_stf_onset(work%trace,nt_db,work%tdb,stf%hdur_db,ratio,nbefore)
       onset(ista) = max(onset(ista),ratio)
 
       ! extend, then convert: the kernel reaches into the padded region
-      call gf_pad_left(trace,nt_db,tax%npad,xpad)
-      call gf_cumsum(xpad,nt,p)
-      call gf_stf_apply(stf,tax%dt_sub,w,p,xpad,nt,y)
+      call gf_stf_convert(stf,tax,work,ierr)
+      if (ierr /= GF_OK) goto 99
 
       do it = 1,nt
-        seis(ista,icomp,it) = y(it)
+        seis(ista,icomp,it) = work%y(it)
       enddo
 
     enddo
@@ -408,12 +408,7 @@
 99 continue
   if (allocated(displ)) deallocate(displ)
   if (allocated(g)) deallocate(g)
-  if (allocated(trace)) deallocate(trace)
-  if (allocated(tdb)) deallocate(tdb)
-  if (allocated(xpad)) deallocate(xpad)
-  if (allocated(p)) deallocate(p)
-  if (allocated(y)) deallocate(y)
-  if (allocated(w)) deallocate(w)
+  call gf_stf_work_free(work)
 
   end subroutine gf_seis_force
 
@@ -460,7 +455,7 @@
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: displ
   double precision, dimension(:,:,:), allocatable :: eps
-  double precision, dimension(:), allocatable :: trace,tdb,xpad,p,y,w
+  type(t_gf_stf_work) :: work
   double precision, dimension(NGLLX) :: hxi,hpxi
   double precision, dimension(NGLLY) :: heta,hpeta
   double precision, dimension(NGLLZ) :: hgam,hpgam
@@ -506,16 +501,16 @@
   ! the moment tensor, rotated once: it does not depend on the station
   call gf_rotate_moment_tensor(loc%theta,loc%phi,src%moment_tensor,m_cart)
 
-  allocate(displ(GF_NCOMP,GF_NCOMP,NGLLX,NGLLY,NGLLZ,nt_db),eps(GF_VOIGT,GF_NCOMP,nt_db), &
-           trace(nt_db),tdb(nt_db),xpad(nt),p(0:nt),y(nt),w(-stf%khalf:stf%khalf),stat=ier)
+  allocate(displ(GF_NCOMP,GF_NCOMP,NGLLX,NGLLY,NGLLZ,nt_db),eps(GF_VOIGT,GF_NCOMP,nt_db),stat=ier)
   if (ier /= 0) then
     call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate the element displacement buffer')
     return
   endif
 
-  call gf_time_axis(db,nt_db,tdb)
+  call gf_stf_work_init(stf,tax,work,ierr)
+  if (ierr /= GF_OK) goto 99
 
-  call gf_stf_kernel(stf,tax%dt_sub,w)
+  call gf_time_axis(db,nt_db,work%tdb)
 
   do ista = 1,db%nstations
 
@@ -535,21 +530,20 @@
     do icomp = 1,GF_NCOMP
 
       do it = 1,nt_db
-        call gf_moment_contract(m_cart,eps(:,icomp,it),trace(it))
-        trace(it) = scale_amp * trace(it)
+        call gf_moment_contract(m_cart,eps(:,icomp,it),work%trace(it))
+        work%trace(it) = scale_amp * work%trace(it)
       enddo
 
-      call gf_stf_onset(trace,nt_db,tdb,stf%hdur_db,ratio,nbefore)
+      call gf_stf_onset(work%trace,nt_db,work%tdb,stf%hdur_db,ratio,nbefore)
       onset(ista) = max(onset(ista),ratio)
 
       ! Gaussian response -> Heaviside response at the CMT's half duration,
       ! in one convolution on the extended axis
-      call gf_pad_left(trace,nt_db,tax%npad,xpad)
-      call gf_cumsum(xpad,nt,p)
-      call gf_stf_apply(stf,tax%dt_sub,w,p,xpad,nt,y)
+      call gf_stf_convert(stf,tax,work,ierr)
+      if (ierr /= GF_OK) goto 99
 
       do it = 1,nt
-        seis(ista,icomp,it) = y(it)
+        seis(ista,icomp,it) = work%y(it)
       enddo
 
     enddo
@@ -561,12 +555,7 @@
 99 continue
   if (allocated(displ)) deallocate(displ)
   if (allocated(eps)) deallocate(eps)
-  if (allocated(trace)) deallocate(trace)
-  if (allocated(tdb)) deallocate(tdb)
-  if (allocated(xpad)) deallocate(xpad)
-  if (allocated(p)) deallocate(p)
-  if (allocated(y)) deallocate(y)
-  if (allocated(w)) deallocate(w)
+  call gf_stf_work_free(work)
 
   end subroutine gf_seis_cmt
 
@@ -622,7 +611,8 @@
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: displ
   double precision, dimension(:,:,:), allocatable :: eps,dpm,dpl
   double precision, dimension(:,:,:,:), allocatable :: deps
-  double precision, dimension(:), allocatable :: trace,tdb,xpad,p,y,w,dp10
+  double precision, dimension(:), allocatable :: dp10
+  type(t_gf_stf_work) :: work
   double precision, dimension(NGLLX) :: hxi,hpxi,hppxi
   double precision, dimension(NGLLY) :: heta,hpeta,hppeta
   double precision, dimension(NGLLZ) :: hgam,hpgam,hppgam
@@ -733,7 +723,6 @@
   endif
 
   allocate(displ(GF_NCOMP,GF_NCOMP,NGLLX,NGLLY,NGLLZ,nt_db),eps(GF_VOIGT,GF_NCOMP,nt_db), &
-           trace(nt_db),tdb(nt_db),xpad(nt),p(0:nt),y(nt),w(-stf%khalf:stf%khalf), &
            dpm(GF_NDP_MT,GF_NCOMP,nt),stat=ier)
   if (ier /= 0) then
     call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate the element displacement buffer')
@@ -747,9 +736,10 @@
     endif
   endif
 
-  call gf_time_axis(db,nt_db,tdb)
+  call gf_stf_work_init(stf,tax,work,ierr)
+  if (ierr /= GF_OK) goto 99
 
-  call gf_stf_kernel(stf,tax%dt_sub,w)
+  call gf_time_axis(db,nt_db,work%tdb)
 
   do ista = 1,db%nstations
 
@@ -776,25 +766,24 @@
     do icomp = 1,GF_NCOMP
 
       do it = 1,nt_db
-        call gf_moment_contract(m_cart,eps(:,icomp,it),trace(it))
-        trace(it) = scale_amp * trace(it)
+        call gf_moment_contract(m_cart,eps(:,icomp,it),work%trace(it))
+        work%trace(it) = scale_amp * work%trace(it)
       enddo
 
-      call gf_stf_onset(trace,nt_db,tdb,stf%hdur_db,ratio,nbefore)
+      call gf_stf_onset(work%trace,nt_db,work%tdb,stf%hdur_db,ratio,nbefore)
       onset(ista) = max(onset(ista),ratio)
 
-      call gf_pad_left(trace,nt_db,tax%npad,xpad)
-      call gf_cumsum(xpad,nt,p)
-      call gf_stf_apply(stf,tax%dt_sub,w,p,xpad,nt,y)
+      call gf_stf_convert(stf,tax,work,ierr)
+      if (ierr /= GF_OK) goto 99
 
       do it = 1,nt
-        seis(ista,icomp,it) = y(it)
+        seis(ista,icomp,it) = work%y(it)
       enddo
 
       !--- the centroid-time partial, from the same padded trace -----------
 
       if (want_loc) then
-        call gf_partials_time(xpad,nt,tax%dt_sub,stf,dp10,wsum_raw,ierr)
+        call gf_partials_time(work%xpad,nt,tax%dt_sub,stf,dp10,wsum_raw,ierr)
         if (ierr /= GF_OK) goto 99
         do it = 1,nt
           dp(GF_DP_TIM,ista,icomp,it) = dp10(it)
@@ -806,7 +795,7 @@
     !--- the moment-tensor partials, from the same strain -------------------
 
     call gf_partials_mt(eps,nt_db,loc%theta,loc%phi,scale_amp/src%scale_moment, &
-                        tax,stf,w,dpm,ierr)
+                        tax,stf,work,dpm,ierr)
     if (ierr /= GF_OK) goto 99
 
     do it = 1,nt
@@ -821,7 +810,7 @@
 
     if (want_loc) then
       call gf_partials_loc(eps,deps,nt_db,m_cart,dm_dtheta,dm_dphi,dtheta_dlat,dphi_dlon, &
-                           loc%jinv,dxds,scale_amp,tax,stf,w,dpl,ierr)
+                           loc%jinv,dxds,scale_amp,tax,stf,work,dpl,ierr)
       if (ierr /= GF_OK) goto 99
       do it = 1,nt
         do icomp = 1,GF_NCOMP
@@ -843,12 +832,7 @@
   if (allocated(dpm)) deallocate(dpm)
   if (allocated(dpl)) deallocate(dpl)
   if (allocated(dp10)) deallocate(dp10)
-  if (allocated(trace)) deallocate(trace)
-  if (allocated(tdb)) deallocate(tdb)
-  if (allocated(xpad)) deallocate(xpad)
-  if (allocated(p)) deallocate(p)
-  if (allocated(y)) deallocate(y)
-  if (allocated(w)) deallocate(w)
+  call gf_stf_work_free(work)
 
   end subroutine gf_seis_cmt_partials
 
