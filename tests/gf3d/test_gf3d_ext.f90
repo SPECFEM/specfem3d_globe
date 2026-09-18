@@ -149,7 +149,7 @@
   type(t_gfdb) :: db
   type(t_gf_source) :: src
   double precision, dimension(:,:,:), allocatable :: synt,synt_ref,synt_again
-  double precision, dimension(:,:,:,:), allocatable :: dp,dp_again
+  double precision, dimension(:,:,:,:), allocatable :: dp
   double precision, dimension(:), allocatable :: t,t_again
   type(t_gfdb) :: db2
   type(t_gf_location) :: loc2
@@ -201,8 +201,8 @@
   call report_true('   gf_default_t0',ierr == GF_OK,nfail)
   if (ierr /= GF_OK) stop 1
 
-  call get_seismograms(db,src,t0,synt,dp,2,t,ierr)
-  call report_true('   get_seismograms with partials',ierr == GF_OK,nfail)
+  call get_partials(db,src,t0,2,synt,dp,ierr,t)
+  call report_true('   get_partials, itypsokern 2   ',ierr == GF_OK,nfail)
   if (ierr /= GF_OK) then
     write(*,*) '   ',trim(gf_errmsg)
     stop 1
@@ -309,7 +309,7 @@
     call report_true('   and the tree is now its own', &
                      gf_locate_tree_owner() == db2%open_id,nfail)
 
-    call get_seismograms(db,src,t0,synt_again,dp_again,0,t_again,ierr)
+    call get_seismograms(db,src,t0,synt_again,ierr,t_again)
     call report_true('   the first still extracts',ierr == GF_OK,nfail)
     call report_true('   taking the tree back', &
                      gf_locate_tree_owner() == db%open_id,nfail)
@@ -325,7 +325,7 @@
       enddo
       call report('   and returns what it did before',worst, &
                   1.d-15*maxval(abs(synt_ref)),nfail)
-      deallocate(synt_again,dp_again,t_again)
+      deallocate(synt_again,t_again)
     endif
 
     call gf_close(db2)
@@ -509,7 +509,6 @@
   ! local parameters
   type(t_gf_source) :: fsrc
   double precision, dimension(:,:,:), allocatable :: fsynt
-  double precision, dimension(:,:,:,:), allocatable :: fdp
   double precision, dimension(:), allocatable :: ft
   double precision :: ft0
   type(gf3d_source_t) :: cf
@@ -526,7 +525,7 @@
   call report_true('   gf_default_t0, force',ierr == GF_OK,nfail)
   if (ierr /= GF_OK) return
 
-  call get_seismograms(db,fsrc,ft0,fsynt,fdp,0,ft,ierr)
+  call get_seismograms(db,fsrc,ft0,fsynt,ierr,ft)
   call report_true('   get_seismograms, force',ierr == GF_OK,nfail)
   if (ierr /= GF_OK) return
 
@@ -555,7 +554,7 @@
   if (cerr == GF_OK) call compare_seis(db%nstations,int(fplan%nt),fsynt,fseis,nfail)
 
   deallocate(fseis,fct,fonset)
-  deallocate(fsynt,fdp,ft)
+  deallocate(fsynt,ft)
 
   end subroutine test_force
 

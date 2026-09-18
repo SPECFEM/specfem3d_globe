@@ -89,11 +89,6 @@
   double precision, dimension(:,:,:,:), allocatable :: dp
   double precision, dimension(:), allocatable :: t
 
-  ! scratch outputs for the itypsokern = 0 calls of section 5: they are
-  ! allocated zero-sized and never read, but get_seismograms allocates
-  ! through them, so they have to be variables rather than expressions
-  double precision, dimension(:,:,:,:), allocatable :: dp_unused
-  double precision, dimension(:), allocatable :: t_unused
 
   double precision :: t_open,t_locate,t_locate2,t_extract,t_total
   double precision, dimension(0:NHALVE) :: t_reloc,step,err
@@ -257,10 +252,10 @@
 
   call banner('4. seismograms and partial derivatives')
 
-  ! get_seismograms() locates, plans and extracts in one call, and allocates
-  ! its own outputs. itypsokern = 2 asks for all ten partials; 1 gives the
-  ! six moment-tensor ones, 0 none. gf_default_t0() is the start time
-  ! specfem's own forward run would use.
+  ! get_partials() locates, plans and extracts in one call, and allocates
+  ! its own outputs. itypsokern = 2 asks for all ten partials, 1 the six
+  ! moment-tensor ones; get_seismograms() is the same call without them.
+  ! gf_default_t0() is the start time specfem's own forward run would use.
   call gf_default_t0(src,t0,ierr)
   if (ierr /= GF_OK) then
     write(*,'(a,a)') '  no default start time: ',trim(gf_errmsg)
@@ -268,7 +263,7 @@
   endif
 
   call tic()
-  call get_seismograms(db,src,t0,synt,dp,2,t,ierr)
+  call get_partials(db,src,t0,2,synt,dp,ierr,t)
   call toc(t_extract)
 
   if (ierr /= GF_OK) then
@@ -276,7 +271,7 @@
     stop 1
   endif
 
-  write(*,'(a,f9.1,a)') '  get_seismograms took ',t_extract*1.d3,' ms'
+  write(*,'(a,f9.1,a)') '  get_partials took ',t_extract*1.d3,' ms'
   write(*,*)
   write(*,'(a,i0,a,i0,a,i0,a)') '  synt(', size(synt,1),',',size(synt,2),',', &
                                 size(synt,3),')   stations, components N/E/Z, samples'
@@ -351,7 +346,7 @@
     moved%latitude = src%latitude + step(k)
 
     call tic()
-    call get_seismograms(db,moved,t0,truth,dp_unused,0,t_unused,ierr)
+    call get_seismograms(db,moved,t0,truth,ierr)
     call toc(t_reloc(k))
 
     if (ierr /= GF_OK) then
@@ -412,7 +407,7 @@
   call timing_line('gf_open',t_open)
   call timing_line('gf_locate_source, first',t_locate)
   call timing_line('gf_locate_source, again',t_locate2)
-  call timing_line('get_seismograms, 10 partials',t_extract)
+  call timing_line('get_partials, 10 partials',t_extract)
   do k = 0,NHALVE
     write(label,'(a,f7.4,a)') 'get_seismograms, at +',step(k),' deg'
     call timing_line(label,t_reloc(k))
