@@ -69,6 +69,8 @@
 
   ! agreement with a reference the solver printed through sngl()
   double precision, parameter :: TOL_POSITION = 1.d-7
+  ! output_solver.txt prints xi,eta,gamma through sngl()
+  double precision, parameter :: TOL_LOCAL_COORD = 1.d-7
 
   ! |mapped - target| after the Newton iteration, in km. The solver reports
   ! 7.1e-13 km for the shipped global example; 1e-9 km is a micrometre and
@@ -84,7 +86,8 @@
   double precision, dimension(NDIM) :: xyz_ref
   double precision :: err,worst,dot
   integer :: owner_first,owner_second
-  logical :: have_reference
+  logical :: have_reference,have_local_ref
+  double precision, dimension(NDIM) :: xi_ref
 
   nfail = 0
 
@@ -110,6 +113,18 @@
     call read_double_arg(5,xyz_ref(1))
     call read_double_arg(6,xyz_ref(2))
     call read_double_arg(7,xyz_ref(3))
+  endif
+
+  ! The solver's own xi,eta,gamma, when the reference carries them. This is
+  ! the only assertion in the suite that says we chose the element the
+  ! forward run chose: the Cartesian position above is the same point
+  ! whichever element it is expressed in, so it cannot tell them apart.
+  have_local_ref = (nargs >= 10)
+  xi_ref(:) = 0.d0
+  if (have_local_ref) then
+    call read_double_arg(8,xi_ref(1))
+    call read_double_arg(9,xi_ref(2))
+    call read_double_arg(10,xi_ref(3))
   endif
 
   write(*,'(a)') ''
@@ -178,6 +193,20 @@
   else
     write(*,'(a)') '     no solver reference for this database: the geographic'
     write(*,'(a)') '     chain is not compared (it has no other oracle)'
+  endif
+
+  ! The element the solver used, and where in it. A source may legitimately
+  ! sit outside its element -- the shipped global example is at
+  ! gamma = 1.053 because the forward run put it there -- so the test is
+  ! agreement with the solver, never |xi| <= 1.
+  if (have_local_ref) then
+    worst = max(abs(loc%xi - xi_ref(1)), &
+                abs(loc%eta - xi_ref(2)), &
+                abs(loc%gamma - xi_ref(3)))
+    call gf_report('xi,eta,gamma vs output_solver     ',worst,TOL_LOCAL_COORD,nfail)
+  else
+    write(*,'(a)') '     no solver xi,eta,gamma for this database: the element'
+    write(*,'(a)') '     choice is not compared'
   endif
 
   call gf_report('Newton closure |mapped-target| km ',loc%distance_km,TOL_CLOSURE_KM,nfail)
