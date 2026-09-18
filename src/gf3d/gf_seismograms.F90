@@ -119,10 +119,10 @@
 
   module gf_seismograms
 
-  ! at module scope because t_gf_seis_geom's components are sized by them;
-  ! the procedures below re-import the same names, which is legal and keeps
-  ! each one's dependencies readable
-  use constants, only: NGLLX,NGLLY,NGLLZ,NDIM
+  ! at module scope because the derived types below are sized by them; the
+  ! procedures re-import the same names, which is legal and keeps each one's
+  ! dependencies readable
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM
 
   use gf_par, only: t_gfdb,t_gf_location,t_gf_source,t_gf_stf,t_gf_taxis,gf_set_error, &
                     gf_is_finite, &
@@ -148,7 +148,7 @@
 
   use gf_source, only: gf_force_direction
 
-  use gf_partials, only: gf_partials_mt,gf_partials_time,gf_partials_loc, &
+  use gf_partials, only: gf_partials_mt,gf_partials_time,gf_partials_loc,gf_partials_ndp, &
                          GF_NDP_MT,GF_NDP_LOC,GF_DP_NAME,GF_DP_UNIT,GF_DP_LAT,GF_DP_TIM
 
   use gf_geo_chain, only: gf_geographic_jacobian
@@ -204,6 +204,30 @@
     double precision, dimension(NDIM,3) :: dxds = 0.d0
     double precision :: dtheta_dlat = 0.d0, dphi_dlon = 0.d0
   end type t_gf_seis_geom
+
+  !-----------------------------------------------------------------
+  ! the per-extraction buffers, allocated once and reused for every station
+  !
+  ! `displ` is the large one -- 21 MB in the shipped global example -- which
+  ! is why the element is read once and the stations looped inside it. It is
+  ! a component rather than a dummy argument so that there is a single place
+  ! for a later element cache to fill instead of reading.
+  !
+  ! Which of the rest exist depends on the extraction: `g` for a force
+  ! source, `eps` for a moment tensor, and `deps`/`dpl`/`dp10` only for the
+  ! centroid partials.
+  !-----------------------------------------------------------------
+
+  type :: t_gf_seis_work
+    real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: displ
+    double precision, dimension(:,:,:), allocatable :: g       ! (3,3,nt_db)      force
+    double precision, dimension(:,:,:), allocatable :: eps     ! (6,3,nt_db)      cmt
+    double precision, dimension(:,:,:,:), allocatable :: deps  ! (6,3,nt_db,NDIM) itypsokern 2
+    double precision, dimension(:,:,:), allocatable :: dpm     ! (6,3,nt)         itypsokern >= 1
+    double precision, dimension(:,:,:), allocatable :: dpl     ! (3,3,nt)         itypsokern 2
+    double precision, dimension(:), allocatable :: dp10        ! (nt)             itypsokern 2
+    type(t_gf_stf_work) :: stfw
+  end type t_gf_seis_work
 
   contains
 
@@ -425,22 +449,247 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine gf_seis_force(db,src,loc,tax,stf,seis,t,onset,ierr)
+  subroutine gf_seis_work_init(db,src,tax,stf,itypsokern,swork,ierr)
 
-! seismograms at every station for a force source
-!
-! `seis` is (nstations, 3 components N/E/Z, tax%nt) in metres, on the
-! output axis `t`, as the response to the source time function specfem
-! would use for this FORCESOLUTION. `onset(ista)` is the worst
-! silence-before-the-record ratio over the station's three components; see
-! gf_stf_onset.
-!
-! The element is read once and the stations looped inside it, because the
-! per-(element,station) array is the large object here -- 21 MB in the
-! shipped global example. Nothing in this routine holds two of them, and raw
-! displacement is never handed back to a caller.
+! the buffers one extraction needs, sized from the plan
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM
+
+  implicit none
+
+  type(t_gfdb), intent(in) :: db
+  type(t_gf_source), intent(in) :: src
+  type(t_gf_taxis), intent(in) :: tax
+  type(t_gf_stf), intent(in) :: stf
+  integer, intent(in) :: itypsokern
+  type(t_gf_seis_work), intent(inout) :: swork
+  integer, intent(out) :: ierr
+
+  ! local parameters
+  integer :: ier,nt_db,nt
+
+  call gf_seis_work_free(swork)
+
+  nt_db = db%nt_subsampled
+  nt = tax%nt
+
+  allocate(swork%displ(GF_NCOMP,GF_NCOMP,NGLLX,NGLLY,NGLLZ,nt_db),stat=ier)
+  if (ier /= 0) then
+    call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate the element displacement buffer')
+    return
+  endif
+
+  if (src%source_type == GF_SRC_FORCE) then
+    allocate(swork%g(GF_NCOMP,GF_NCOMP,nt_db),stat=ier)
+  else
+    allocate(swork%eps(GF_VOIGT,GF_NCOMP,nt_db),stat=ier)
+  endif
+  if (ier /= 0) then
+    call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate the interpolated field buffer')
+    return
+  endif
+
+  if (itypsokern >= 1) then
+    allocate(swork%dpm(GF_NDP_MT,GF_NCOMP,nt),stat=ier)
+    if (ier /= 0) then
+      call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate the moment-tensor partials buffer')
+      return
+    endif
+  endif
+
+  if (itypsokern == 2) then
+    allocate(swork%deps(GF_VOIGT,GF_NCOMP,nt_db,NDIM),swork%dpl(3,GF_NCOMP,nt), &
+             swork%dp10(nt),stat=ier)
+    if (ier /= 0) then
+      call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate the strain gradient buffer')
+      return
+    endif
+  endif
+
+  call gf_stf_work_init(stf,tax,swork%stfw,ierr)
+
+  end subroutine gf_seis_work_init
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_seis_work_free(swork)
+
+! releases the buffers; safe on an object that was never initialised
+
+  implicit none
+
+  type(t_gf_seis_work), intent(inout) :: swork
+
+  if (allocated(swork%displ)) deallocate(swork%displ)
+  if (allocated(swork%g)) deallocate(swork%g)
+  if (allocated(swork%eps)) deallocate(swork%eps)
+  if (allocated(swork%deps)) deallocate(swork%deps)
+  if (allocated(swork%dpm)) deallocate(swork%dpm)
+  if (allocated(swork%dpl)) deallocate(swork%dpl)
+  if (allocated(swork%dp10)) deallocate(swork%dp10)
+  call gf_stf_work_free(swork%stfw)
+
+  end subroutine gf_seis_work_free
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_seis_station(db,src,loc,tax,stf,geom,itypsokern,ista,swork, &
+                             seis,ndp,dp,onset,ierr)
+
+! one station's traces, from the element block already in swork%displ
+!
+! Interpolate or differentiate, contract, convert, and -- when partials are
+! wanted -- the three partial families. The caller has read the block and
+! built `geom`; everything here depends on the station.
+!
+! `seis`, `dp` and `onset` are intent(inout): onset(ista) accumulates the
+! worst component with max(), and the zeroing belongs to gf_seis, which owns
+! the whole array.
+
+  use constants, only: NDIM
+
+  implicit none
+
+  type(t_gfdb), intent(in) :: db
+  type(t_gf_source), intent(in) :: src
+  type(t_gf_location), intent(in) :: loc
+  type(t_gf_taxis), intent(in) :: tax
+  type(t_gf_stf), intent(in) :: stf
+  type(t_gf_seis_geom), intent(in) :: geom
+  integer, intent(in) :: itypsokern,ista,ndp
+  type(t_gf_seis_work), intent(inout) :: swork
+  double precision, dimension(db%nstations,GF_NCOMP,tax%nt), intent(inout) :: seis
+  double precision, dimension(ndp,db%nstations,GF_NCOMP,tax%nt), intent(inout) :: dp
+  double precision, dimension(db%nstations), intent(inout) :: onset
+  integer, intent(out) :: ierr
+
+  ! local parameters
+  double precision :: scale_amp,ratio,wsum_raw
+  integer :: it,icomp,idisp,ip,b,nt_db,nt,nbefore
+
+  nt_db = db%nt_subsampled
+  nt = tax%nt
+
+  !--- the field at the source -------------------------------------------
+
+  if (src%source_type == GF_SRC_FORCE) then
+    ! g(a,d,t): the interpolated field at the source, still carrying both
+    ! the station-force index a and the displacement index d
+    call gf_interp_trace(swork%displ,geom%hxi,geom%heta,geom%hgam,nt_db,swork%g)
+  else
+    call gf_strain_trace(swork%displ,geom%dw,nt_db,swork%eps)
+    if (itypsokern == 2) then
+      ! d eps / d xi_b: the same kernel with the differentiated table
+      do b = 1,NDIM
+        call gf_strain_trace(swork%displ,geom%ddw(:,:,:,:,b),nt_db,swork%deps(:,:,:,b))
+      enddo
+    endif
+  endif
+
+  if (db%stations(ista)%factor_force_source == 0.d0) then
+    call gf_set_error(ierr,GF_ERR_ARG, &
+      'station '//trim(db%stations(ista)%id)//' has factor_force_source = 0')
+    return
+  endif
+
+  ! two derivations, two statements: see the amplitude section of the module
+  ! header. They are not one expression because they are not one idea.
+  if (src%source_type == GF_SRC_FORCE) then
+    scale_amp = src%factor_force_source / db%stations(ista)%factor_force_source
+  else
+    scale_amp = 1.d0 / db%stations(ista)%factor_force_source
+  endif
+
+  !--- the seismogram, component by component ----------------------------
+
+  do icomp = 1,GF_NCOMP
+
+    if (src%source_type == GF_SRC_FORCE) then
+      do it = 1,nt_db
+        swork%stfw%trace(it) = 0.d0
+        do idisp = 1,GF_NCOMP
+          swork%stfw%trace(it) = swork%stfw%trace(it) + geom%fhat(idisp)*swork%g(icomp,idisp,it)
+        enddo
+        swork%stfw%trace(it) = scale_amp * swork%stfw%trace(it)
+      enddo
+    else
+      do it = 1,nt_db
+        call gf_moment_contract(geom%m_cart,swork%eps(:,icomp,it),swork%stfw%trace(it))
+        swork%stfw%trace(it) = scale_amp * swork%stfw%trace(it)
+      enddo
+    endif
+
+    call gf_stf_onset(swork%stfw%trace,nt_db,swork%stfw%tdb,stf%hdur_db,ratio,nbefore)
+    onset(ista) = max(onset(ista),ratio)
+
+    ! extend, then convert: the kernel reaches into the padded region. For a
+    ! moment tensor this is also the Gaussian -> Heaviside step.
+    call gf_stf_convert(stf,tax,swork%stfw,ierr)
+    if (ierr /= GF_OK) return
+
+    do it = 1,nt
+      seis(ista,icomp,it) = swork%stfw%y(it)
+    enddo
+
+    !--- the centroid-time partial, from the same padded trace -----------
+
+    if (itypsokern == 2) then
+      call gf_partials_time(swork%stfw%xpad,nt,tax%dt_sub,stf,swork%dp10,wsum_raw,ierr)
+      if (ierr /= GF_OK) return
+      do it = 1,nt
+        dp(GF_DP_TIM,ista,icomp,it) = swork%dp10(it)
+      enddo
+    endif
+
+  enddo
+
+  !--- the moment-tensor partials, from the same strain -------------------
+
+  if (itypsokern >= 1) then
+    call gf_partials_mt(swork%eps,nt_db,loc%theta,loc%phi,scale_amp/src%scale_moment, &
+                        tax,stf,swork%stfw,swork%dpm,ierr)
+    if (ierr /= GF_OK) return
+
+    do it = 1,nt
+      do icomp = 1,GF_NCOMP
+        do ip = 1,GF_NDP_MT
+          dp(ip,ista,icomp,it) = swork%dpm(ip,icomp,it)
+        enddo
+      enddo
+    enddo
+  endif
+
+  !--- the centroid-position partials --------------------------------------
+
+  if (itypsokern == 2) then
+    call gf_partials_loc(swork%eps,swork%deps,nt_db,geom%m_cart,geom%dm_dtheta,geom%dm_dphi, &
+                         geom%dtheta_dlat,geom%dphi_dlon, &
+                         loc%jinv,geom%dxds,scale_amp,tax,stf,swork%stfw,swork%dpl,ierr)
+    if (ierr /= GF_OK) return
+    do it = 1,nt
+      do icomp = 1,GF_NCOMP
+        do ip = 1,3
+          dp(GF_DP_LAT+ip-1,ista,icomp,it) = swork%dpl(ip,icomp,it)
+        enddo
+      enddo
+    enddo
+  endif
+
+  ierr = GF_OK
+
+  end subroutine gf_seis_station
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_seis_force(db,src,loc,tax,stf,seis,t,onset,ierr)
+
+! seismograms at every station for a force source: gf_seis with no partials
 
   implicit none
 
@@ -455,102 +704,9 @@
   integer, intent(out) :: ierr
 
   ! local parameters
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: displ
-  double precision, dimension(:,:,:), allocatable :: g
-  type(t_gf_stf_work) :: work
-  type(t_gf_seis_geom) :: geom
-  double precision :: scale_amp,ratio
-  integer :: ista,it,icomp,idisp,ier,nt_db,nt,nbefore
+  double precision, dimension(0,db%nstations,GF_NCOMP,tax%nt) :: dp_none
 
-  seis(:,:,:) = 0.d0
-  onset(:) = 0.d0
-
-  if (.not. db%is_open) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_force: database is not open')
-    return
-  endif
-  if (loc%ielem < 1) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_force: the source has not been located')
-    return
-  endif
-  if (db%nstations < 1) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_force: the database holds no stations')
-    return
-  endif
-  if (tax%nt_db /= db%nt_subsampled .or. tax%nt < tax%nt_db) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_force: the time axis was not planned for this database')
-    return
-  endif
-
-  nt_db = db%nt_subsampled
-  nt = tax%nt
-
-  call gf_taxis_times(tax,nt,t)
-
-  call gf_seis_geometry(db,src,loc,0,geom,ierr)
-  if (ierr /= GF_OK) return
-
-  allocate(displ(GF_NCOMP,GF_NCOMP,NGLLX,NGLLY,NGLLZ,nt_db),g(GF_NCOMP,GF_NCOMP,nt_db),stat=ier)
-  if (ier /= 0) then
-    call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate the element displacement buffer')
-    return
-  endif
-
-  ! the conversion scratch, including the kernel, once: neither depends on
-  ! the station
-  call gf_stf_work_init(stf,tax,work,ierr)
-  if (ierr /= GF_OK) goto 99
-
-  ! the database's own axis, for the onset check
-  call gf_time_axis(db,nt_db,work%tdb)
-
-  do ista = 1,db%nstations
-
-    call gf_read_element_displ(db,loc%ielem,ista,displ,ierr)
-    if (ierr /= GF_OK) goto 99
-
-    ! g(a,d,t): the interpolated field at the source, still carrying both
-    ! the station-force index a and the displacement index d
-    call gf_interp_trace(displ,geom%hxi,geom%heta,geom%hgam,nt_db,g)
-
-    if (db%stations(ista)%factor_force_source == 0.d0) then
-      call gf_set_error(ierr,GF_ERR_ARG, &
-        'station '//trim(db%stations(ista)%id)//' has factor_force_source = 0')
-      goto 99
-    endif
-    scale_amp = src%factor_force_source / db%stations(ista)%factor_force_source
-
-    do icomp = 1,GF_NCOMP
-
-      do it = 1,nt_db
-        work%trace(it) = 0.d0
-        do idisp = 1,GF_NCOMP
-          work%trace(it) = work%trace(it) + geom%fhat(idisp)*g(icomp,idisp,it)
-        enddo
-        work%trace(it) = scale_amp * work%trace(it)
-      enddo
-
-      call gf_stf_onset(work%trace,nt_db,work%tdb,stf%hdur_db,ratio,nbefore)
-      onset(ista) = max(onset(ista),ratio)
-
-      ! extend, then convert: the kernel reaches into the padded region
-      call gf_stf_convert(stf,tax,work,ierr)
-      if (ierr /= GF_OK) goto 99
-
-      do it = 1,nt
-        seis(ista,icomp,it) = work%y(it)
-      enddo
-
-    enddo
-
-  enddo
-
-  ierr = GF_OK
-
-99 continue
-  if (allocated(displ)) deallocate(displ)
-  if (allocated(g)) deallocate(g)
-  call gf_stf_work_free(work)
+  call gf_seis(db,src,loc,tax,stf,0,0,seis,dp_none,t,onset,ierr)
 
   end subroutine gf_seis_force
 
@@ -560,27 +716,8 @@
 
   subroutine gf_seis_cmt(db,src,loc,tax,stf,seis,t,onset,ierr)
 
-! seismograms at every station for a moment-tensor source
-!
-! `seis` is (nstations, 3 components N/E/Z, tax%nt) in metres, on the
-! output axis `t`, as the response to specfem's quasi-Heaviside at the
-! CMTSOLUTION's half duration -- what the forward run computes, lowpassed
-! by the database's own Butterworth.
-!
-! Three steps, in this order:
-!
-!   1. the strain of the reciprocal field at the source, eps(6,3,nt);
-!   2. contraction with the Cartesian moment tensor, giving the response to
-!      the reciprocal run's Gaussian source time function;
-!   3. one convolution with the quasi-Heaviside of the corrected width
-!      (gf_stf.F90), which is both the Gaussian -> Heaviside conversion and
-!      the change of half duration.
-!
-! Step 3 replaces Stage 4's cumulative trapezoid, whose integrator error on
-! the 3.4 s regional grid is one percent at a 60 s period. Nothing here
-! integrates.
-
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM
+! seismograms at every station for a moment-tensor source: gf_seis with no
+! partials
 
   implicit none
 
@@ -595,104 +732,9 @@
   integer, intent(out) :: ierr
 
   ! local parameters
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: displ
-  double precision, dimension(:,:,:), allocatable :: eps
-  type(t_gf_stf_work) :: work
-  type(t_gf_seis_geom) :: geom
-  double precision :: scale_amp,ratio
-  integer :: ista,it,icomp,ier,nt_db,nt,nbefore
+  double precision, dimension(0,db%nstations,GF_NCOMP,tax%nt) :: dp_none
 
-  seis(:,:,:) = 0.d0
-  onset(:) = 0.d0
-
-  if (.not. db%is_open) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_cmt: database is not open')
-    return
-  endif
-  if (loc%ielem < 1) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_cmt: the source has not been located')
-    return
-  endif
-  if (db%nstations < 1) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_cmt: the database holds no stations')
-    return
-  endif
-  if (tax%nt_db /= db%nt_subsampled .or. tax%nt < tax%nt_db) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_cmt: the time axis was not planned for this database')
-    return
-  endif
-  if (stf%kind_stf /= GF_STF_HEAVI) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_cmt: the plan is not a Heaviside conversion')
-    return
-  endif
-
-  nt_db = db%nt_subsampled
-  nt = tax%nt
-
-  call gf_taxis_times(tax,nt,t)
-
-  ! basis values and reference derivatives at the source, then the
-  ! physical-space derivatives through the locator's inverse Jacobian
-  ! the weights, the strain table and the rotated moment tensor, once:
-  ! none of them depends on the station
-  call gf_seis_geometry(db,src,loc,0,geom,ierr)
-  if (ierr /= GF_OK) return
-
-  allocate(displ(GF_NCOMP,GF_NCOMP,NGLLX,NGLLY,NGLLZ,nt_db),eps(GF_VOIGT,GF_NCOMP,nt_db),stat=ier)
-  if (ier /= 0) then
-    call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate the element displacement buffer')
-    return
-  endif
-
-  call gf_stf_work_init(stf,tax,work,ierr)
-  if (ierr /= GF_OK) goto 99
-
-  call gf_time_axis(db,nt_db,work%tdb)
-
-  do ista = 1,db%nstations
-
-    call gf_read_element_displ(db,loc%ielem,ista,displ,ierr)
-    if (ierr /= GF_OK) goto 99
-
-    call gf_strain_trace(displ,geom%dw,nt_db,eps)
-
-    ! per unit reciprocal force at the station; see the module header
-    if (db%stations(ista)%factor_force_source == 0.d0) then
-      call gf_set_error(ierr,GF_ERR_ARG, &
-        'station '//trim(db%stations(ista)%id)//' has factor_force_source = 0')
-      goto 99
-    endif
-    scale_amp = 1.d0 / db%stations(ista)%factor_force_source
-
-    do icomp = 1,GF_NCOMP
-
-      do it = 1,nt_db
-        call gf_moment_contract(geom%m_cart,eps(:,icomp,it),work%trace(it))
-        work%trace(it) = scale_amp * work%trace(it)
-      enddo
-
-      call gf_stf_onset(work%trace,nt_db,work%tdb,stf%hdur_db,ratio,nbefore)
-      onset(ista) = max(onset(ista),ratio)
-
-      ! Gaussian response -> Heaviside response at the CMT's half duration,
-      ! in one convolution on the extended axis
-      call gf_stf_convert(stf,tax,work,ierr)
-      if (ierr /= GF_OK) goto 99
-
-      do it = 1,nt
-        seis(ista,icomp,it) = work%y(it)
-      enddo
-
-    enddo
-
-  enddo
-
-  ierr = GF_OK
-
-99 continue
-  if (allocated(displ)) deallocate(displ)
-  if (allocated(eps)) deallocate(eps)
-  call gf_stf_work_free(work)
+  call gf_seis(db,src,loc,tax,stf,0,0,seis,dp_none,t,onset,ierr)
 
   end subroutine gf_seis_cmt
 
@@ -702,33 +744,57 @@
 
   subroutine gf_seis_cmt_partials(db,src,loc,tax,stf,itypsokern,ndp,seis,dp,t,onset,ierr)
 
-! seismograms and their partial derivatives at every station, for a
-! moment-tensor source
-!
-! `seis` is what gf_seis_cmt returns, produced by the same statement
-! sequence on the same arrays, and `dp(ndp,nstations,3,tax%nt)` holds the
-! partials in the order of GF_DP_NAME (gf_partials.F90), `ndp` being what
-! gf_partials_ndp returns for `itypsokern`: 6 for the moment tensor, 10
-! with the centroid position and time.
-!
-! gf_seis_cmt is left untouched on purpose. The comparison gate in
-! EXAMPLES/ rests on its output, and identical statements in different
-! contexts can round differently under a fast floating-point model (the
-! lesson of tests/gf3d/test_gf_shape3D.f90), so the two are pinned equal by
-! tests/gf3d/test_gf_partials_db.f90 rather than assumed equal by
-! construction. Per station the partials come from the *same* strain trace
-! the seismogram was contracted from: one element read, as before.
-!
-! Stage 6 fills slots 1..6; Stage 8 fills 7..10 for itypsokern = 2. The
-! centroid partials (gf_partials_loc) need three more strain traces per
-! station -- the strain kernel run with the differentiated weight table
-! for each reference direction -- the derivative of the moment tensor's
-! rotation, and the derivative of the geographic map with the database's
-! ellipticity and topography (gf_geo_chain), all evaluated once at the
-! located source. The centroid-time partial is gf_partials_time on the
-! same padded trace the seismogram was converted from.
+! seismograms and their partial derivatives: gf_seis with itypsokern >= 1
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM
+  implicit none
+
+  type(t_gfdb), intent(in) :: db
+  type(t_gf_source), intent(in) :: src
+  type(t_gf_location), intent(in) :: loc
+  type(t_gf_taxis), intent(in) :: tax
+  type(t_gf_stf), intent(in) :: stf
+  integer, intent(in) :: itypsokern,ndp
+  double precision, dimension(db%nstations,GF_NCOMP,tax%nt), intent(out) :: seis
+  double precision, dimension(ndp,db%nstations,GF_NCOMP,tax%nt), intent(out) :: dp
+  double precision, dimension(tax%nt), intent(out) :: t
+  double precision, dimension(db%nstations), intent(out) :: onset
+  integer, intent(out) :: ierr
+
+  if (itypsokern < 1) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_cmt_partials: itypsokern must be 1 or 2')
+    return
+  endif
+
+  call gf_seis(db,src,loc,tax,stf,itypsokern,ndp,seis,dp,t,onset,ierr)
+
+  end subroutine gf_seis_cmt_partials
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_seis(db,src,loc,tax,stf,itypsokern,ndp,seis,dp,t,onset,ierr)
+
+! seismograms, and optionally their partial derivatives, for either kind of
+! source on a planned axis
+!
+!   itypsokern = 0   seismograms only; ndp = 0 and dp is a zero-sized array
+!              = 1   plus the six moment-tensor partials
+!              = 2   plus latitude, longitude, depth and centroid time
+!
+! `ndp` must be what gf_partials_ndp returns for `itypsokern`; it is the
+! first extent of `dp` and is checked rather than inferred, so that a caller
+! who sized its array from the wrong kind is told rather than silently given
+! the wrong slots.
+!
+! `seis` is (nstations, 3 components N/E/Z, tax%nt) in metres, on the output
+! axis `t`. `onset(ista)` is the worst silence-before-the-record ratio over
+! the station's three components; see gf_stf_onset.
+!
+! The element is read once and the stations looped inside it, because the
+! per-(element,station) array is the large object here -- 21 MB in the
+! shipped global example. Nothing here holds two of them, and raw
+! displacement is never handed back to a caller.
 
   implicit none
 
@@ -745,70 +811,71 @@
   integer, intent(out) :: ierr
 
   ! local parameters
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: displ
-  double precision, dimension(:,:,:), allocatable :: eps,dpm,dpl
-  double precision, dimension(:,:,:,:), allocatable :: deps
-  double precision, dimension(:), allocatable :: dp10
-  type(t_gf_stf_work) :: work
   type(t_gf_seis_geom) :: geom
-  double precision :: scale_amp,ratio,wsum_raw
-  integer :: ista,it,icomp,ier,nt_db,nt,nbefore,ip,b
-  logical :: want_loc
+  type(t_gf_seis_work) :: swork
+  integer :: ista,nt_db,nt,ndp_want,ier
 
   seis(:,:,:) = 0.d0
   dp(:,:,:,:) = 0.d0
   onset(:) = 0.d0
 
+  !--- what this request must satisfy -------------------------------------
+
   if (.not. db%is_open) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_cmt_partials: database is not open')
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis: database is not open')
     return
   endif
   if (loc%ielem < 1) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_cmt_partials: the source has not been located')
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis: the source has not been located')
     return
   endif
   if (db%nstations < 1) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_cmt_partials: the database holds no stations')
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis: the database holds no stations')
     return
   endif
-  if (src%source_type /= GF_SRC_CMT) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_cmt_partials: partials are defined for moment-tensor sources')
+  if (src%source_type /= GF_SRC_FORCE .and. src%source_type /= GF_SRC_CMT) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis: the source has no type set')
     return
   endif
   if (tax%nt_db /= db%nt_subsampled .or. tax%nt < tax%nt_db) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_cmt_partials: the time axis was not planned for this database')
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis: the time axis was not planned for this database')
     return
   endif
-  if (stf%kind_stf /= GF_STF_HEAVI) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_cmt_partials: the plan is not a Heaviside conversion')
-    return
-  endif
-  select case (itypsokern)
-  case (1)
-    if (ndp /= GF_NDP_MT) then
-      call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_cmt_partials: itypsokern = 1 returns 6 partials')
-      return
-    endif
-    want_loc = .false.
-  case (2)
-    if (ndp /= GF_NDP_LOC) then
-      call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_cmt_partials: itypsokern = 2 returns 10 partials')
-      return
-    endif
-    want_loc = .true.
-  case default
-    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_cmt_partials: itypsokern must be 1 or 2')
-    return
-  end select
-  if (src%scale_moment <= 0.d0) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_cmt_partials: the source carries no moment scale')
-    return
-  endif
-  if (want_loc .and. db%topography .and. .not. db%topo_loaded) then
+
+  ! the kind, and the array size it implies
+  call gf_partials_ndp(itypsokern,ndp_want,ierr)
+  if (ierr /= GF_OK) return
+  if (ndp /= ndp_want) then
     call gf_set_error(ierr,GF_ERR_ARG, &
-      'gf_seis_cmt_partials: the topography grid is not loaded; locate the source first')
+      'gf_seis: dp is not sized for this kind of partial; ask gf_partials_ndp for the count')
     return
   endif
+
+  if (itypsokern > 0) then
+    if (src%source_type /= GF_SRC_CMT) then
+      call gf_set_error(ierr,GF_ERR_ARG, &
+        'gf_seis: partial derivatives are defined for a moment-tensor source only')
+      return
+    endif
+    if (src%scale_moment <= 0.d0) then
+      call gf_set_error(ierr,GF_ERR_ARG,'gf_seis: the source carries no moment scale')
+      return
+    endif
+  endif
+
+  ! a force source plans a Gaussian; only the moment-tensor route integrates
+  if (src%source_type == GF_SRC_CMT .and. stf%kind_stf /= GF_STF_HEAVI) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis: the plan is not a Heaviside conversion')
+    return
+  endif
+
+  if (itypsokern == 2 .and. db%topography .and. .not. db%topo_loaded) then
+    call gf_set_error(ierr,GF_ERR_ARG, &
+      'gf_seis: the topography grid is not loaded; locate the source first')
+    return
+  endif
+
+  !--- everything that does not depend on the station ---------------------
 
   nt_db = db%nt_subsampled
   nt = tax%nt
@@ -818,149 +885,32 @@
   call gf_seis_geometry(db,src,loc,itypsokern,geom,ierr)
   if (ierr /= GF_OK) return
 
-  allocate(displ(GF_NCOMP,GF_NCOMP,NGLLX,NGLLY,NGLLZ,nt_db),eps(GF_VOIGT,GF_NCOMP,nt_db), &
-           dpm(GF_NDP_MT,GF_NCOMP,nt),stat=ier)
-  if (ier /= 0) then
-    call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate the element displacement buffer')
-    return
-  endif
-  if (want_loc) then
-    allocate(deps(GF_VOIGT,GF_NCOMP,nt_db,NDIM),dpl(3,GF_NCOMP,nt),dp10(nt),stat=ier)
-    if (ier /= 0) then
-      call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate the strain gradient buffer')
-      goto 99
-    endif
+  call gf_seis_work_init(db,src,tax,stf,itypsokern,swork,ier)
+  if (ier /= GF_OK) then
+    ierr = ier
+    goto 99
   endif
 
-  call gf_stf_work_init(stf,tax,work,ierr)
-  if (ierr /= GF_OK) goto 99
+  ! the database's own axis, for the onset check
+  call gf_time_axis(db,nt_db,swork%stfw%tdb)
 
-  call gf_time_axis(db,nt_db,work%tdb)
+  !--- and the stations ----------------------------------------------------
 
   do ista = 1,db%nstations
 
-    call gf_read_element_displ(db,loc%ielem,ista,displ,ierr)
+    call gf_read_element_displ(db,loc%ielem,ista,swork%displ,ierr)
     if (ierr /= GF_OK) goto 99
 
-    call gf_strain_trace(displ,geom%dw,nt_db,eps)
-
-    if (want_loc) then
-      ! d eps / d xi_b: the same kernel with the differentiated table
-      do b = 1,NDIM
-        call gf_strain_trace(displ,geom%ddw(:,:,:,:,b),nt_db,deps(:,:,:,b))
-      enddo
-    endif
-
-    if (db%stations(ista)%factor_force_source == 0.d0) then
-      call gf_set_error(ierr,GF_ERR_ARG, &
-        'station '//trim(db%stations(ista)%id)//' has factor_force_source = 0')
-      goto 99
-    endif
-    scale_amp = 1.d0 / db%stations(ista)%factor_force_source
-
-    !--- the seismogram: gf_seis_cmt's statements, verbatim ----------------
-    do icomp = 1,GF_NCOMP
-
-      do it = 1,nt_db
-        call gf_moment_contract(geom%m_cart,eps(:,icomp,it),work%trace(it))
-        work%trace(it) = scale_amp * work%trace(it)
-      enddo
-
-      call gf_stf_onset(work%trace,nt_db,work%tdb,stf%hdur_db,ratio,nbefore)
-      onset(ista) = max(onset(ista),ratio)
-
-      call gf_stf_convert(stf,tax,work,ierr)
-      if (ierr /= GF_OK) goto 99
-
-      do it = 1,nt
-        seis(ista,icomp,it) = work%y(it)
-      enddo
-
-      !--- the centroid-time partial, from the same padded trace -----------
-
-      if (want_loc) then
-        call gf_partials_time(work%xpad,nt,tax%dt_sub,stf,dp10,wsum_raw,ierr)
-        if (ierr /= GF_OK) goto 99
-        do it = 1,nt
-          dp(GF_DP_TIM,ista,icomp,it) = dp10(it)
-        enddo
-      endif
-
-    enddo
-
-    !--- the moment-tensor partials, from the same strain -------------------
-
-    call gf_partials_mt(eps,nt_db,loc%theta,loc%phi,scale_amp/src%scale_moment, &
-                        tax,stf,work,dpm,ierr)
+    call gf_seis_station(db,src,loc,tax,stf,geom,itypsokern,ista,swork, &
+                         seis,ndp,dp,onset,ierr)
     if (ierr /= GF_OK) goto 99
-
-    do it = 1,nt
-      do icomp = 1,GF_NCOMP
-        do ip = 1,GF_NDP_MT
-          dp(ip,ista,icomp,it) = dpm(ip,icomp,it)
-        enddo
-      enddo
-    enddo
-
-    !--- the centroid-position partials --------------------------------------
-
-    if (want_loc) then
-      call gf_partials_loc(eps,deps,nt_db,geom%m_cart,geom%dm_dtheta,geom%dm_dphi, &
-                           geom%dtheta_dlat,geom%dphi_dlon, &
-                           loc%jinv,geom%dxds,scale_amp,tax,stf,work,dpl,ierr)
-      if (ierr /= GF_OK) goto 99
-      do it = 1,nt
-        do icomp = 1,GF_NCOMP
-          do ip = 1,3
-            dp(GF_DP_LAT+ip-1,ista,icomp,it) = dpl(ip,icomp,it)
-          enddo
-        enddo
-      enddo
-    endif
 
   enddo
 
   ierr = GF_OK
 
 99 continue
-  if (allocated(displ)) deallocate(displ)
-  if (allocated(eps)) deallocate(eps)
-  if (allocated(deps)) deallocate(deps)
-  if (allocated(dpm)) deallocate(dpm)
-  if (allocated(dpl)) deallocate(dpl)
-  if (allocated(dp10)) deallocate(dp10)
-  call gf_stf_work_free(work)
-
-  end subroutine gf_seis_cmt_partials
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine gf_seis(db,src,loc,tax,stf,seis,t,onset,ierr)
-
-! seismograms for either kind of source, on a planned axis
-
-  implicit none
-
-  type(t_gfdb), intent(in) :: db
-  type(t_gf_source), intent(in) :: src
-  type(t_gf_location), intent(in) :: loc
-  type(t_gf_taxis), intent(in) :: tax
-  type(t_gf_stf), intent(in) :: stf
-  double precision, dimension(db%nstations,GF_NCOMP,tax%nt), intent(out) :: seis
-  double precision, dimension(tax%nt), intent(out) :: t
-  double precision, dimension(db%nstations), intent(out) :: onset
-  integer, intent(out) :: ierr
-
-  select case (src%source_type)
-  case (GF_SRC_FORCE)
-    call gf_seis_force(db,src,loc,tax,stf,seis,t,onset,ierr)
-  case (GF_SRC_CMT)
-    call gf_seis_cmt(db,src,loc,tax,stf,seis,t,onset,ierr)
-  case default
-    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis: the source has no type set')
-  end select
+  call gf_seis_work_free(swork)
 
   end subroutine gf_seis
 

@@ -395,7 +395,7 @@
 
       else
 
-        call gf_seis(db,src,loc,tax,stf,seis,tsec,onset,ierr)
+        call gf_seis(db,src,loc,tax,stf,0,0,seis,dp,tsec,onset,ierr)
         if (ierr /= GF_OK) then
           write(ISTDERR,'(a)') 'Error computing the seismograms'
           write(ISTDERR,'(a)') '  '//trim(gf_error_string(ierr))//': '//trim(gf_errmsg)

@@ -233,11 +233,7 @@
     return
   endif
 
-  if (itypsokern > 0) then
-    call gf_seis_cmt_partials(db,src,loc,tax,stf,itypsokern,ndp,synt,dp,t,onset,ierr)
-  else
-    call gf_seis(db,src,loc,tax,stf,synt,t,onset,ierr)
-  endif
+  call gf_seis(db,src,loc,tax,stf,itypsokern,ndp,synt,dp,t,onset,ierr)
 
   deallocate(onset)
 
