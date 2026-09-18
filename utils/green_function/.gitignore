@@ -1,2 +1,5 @@
 # an editable install of the gf3d package drops this here
 *.egg-info/
+
+# uv sync
+.venv/

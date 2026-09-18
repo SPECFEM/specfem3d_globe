@@ -27,6 +27,9 @@ built with a module-provided compiler.
 pip install -e utils/green_function          # or set PYTHONPATH
 ```
 
+Or from the lock file: `uv sync --project utils/green_function`, with
+`--group test` to add what `tests/gf3d` needs (obspy, scipy, h5py).
+
 ```python
 import numpy as np
 import gf3d

@@ -957,13 +957,64 @@ jobs:
       run: ./.github/scripts/run_tests.sh
       shell: bash
 
+  linuxTest_19:
+    name: Test 19 - gf3d tests w/ HDF5
+    runs-on: ubuntu-latest
+    needs: [compilationChecks]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install packages
+      env:
+        HDF5: true
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - uses: astral-sh/setup-uv@v10.1.0
+
+    - name: Install h5dump and python test environment
+      run: |
+        sudo apt-get install -yq --no-install-recommends hdf5-tools
+        uv sync --locked --group test --project utils/green_function
+        h5dump --version
+        utils/green_function/.venv/bin/python -c "import numpy, scipy, h5py, obspy; print('numpy', numpy.__version__, 'scipy', scipy.__version__, 'h5py', h5py.__version__, 'obspy', obspy.__version__)"
+      shell: bash
+
+    - name: gf3d tests
+      env:
+        HDF5_INC: /usr/include/hdf5/openmpi
+        HDF5_LIBS: "-L/usr/lib/x86_64-linux-gnu/hdf5/openmpi"
+        GF3D_TEST_STRICT: 1
+        GF3D_PYTHON: ${{ github.workspace }}/utils/green_function/.venv/bin/python
+      run: |
+        cd tests
+        ./run_all_tests.sh gf3d
+      shell: bash
+
+    - name: Summary
+      if: always()
+      run: |
+        grep -nE '^test: |\.sh in: |successful compilation|successfully tested|^[[:space:]]*skipped:|GF3D_TEST_STRICT|tests completed' tests/gf3d/results.log || true
+      shell: bash
+
+    - name: Upload logs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: gf3d-hdf5-test-logs
+        path: |
+          tests/gf3d/results.log
+          tests/gf3d/config.log
+        if-no-files-found: ignore
+
 
   # intermediate workflow check
   exampleChecks:
     needs: [linuxTest_0,linuxTest_1,linuxTest_2,linuxTest_3,linuxTest_4,linuxTest_5,
             linuxTest_6,linuxTest_7,linuxTest_8,linuxTest_9,linuxTest_10,
             linuxTest_11,linuxTest_12,linuxTest_13,linuxTest_14,linuxTest_15,
-            linuxTest_16,linuxTest_17,linuxTest_18]
+            linuxTest_16,linuxTest_17,linuxTest_18,linuxTest_19]
     runs-on: ubuntu-latest
     steps:
     - run: echo "example tests passed"
