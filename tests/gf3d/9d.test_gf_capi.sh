@@ -5,9 +5,10 @@
 # include/gf3d.h, and the assertion that no path through the facade can end
 # the process.
 #
-# Needs the HDF5 build from 5.configure.hdf5_make.sh and one of the example
-# databases, so it skips cleanly on a fresh checkout and in CI, exactly as
-# the other database-backed runners here do.
+# Needs the HDF5 build from 5.configure.hdf5_make.sh and a database, so it
+# skips cleanly on a fresh checkout and in Test 0, exactly as the other
+# database-backed runners here do. Test 19 has HDF5 and runs it with
+# GF3D_TEST_STRICT=1, where a skip fails.
 #
 ###################################################
 

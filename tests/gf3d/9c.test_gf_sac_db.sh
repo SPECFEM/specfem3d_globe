@@ -69,20 +69,19 @@ else
   echo "forward:  (none; SAC headers not compared against a solver run)" >> $testdir/results.log
 fi
 
-# a Python with obspy
+# A Python with obspy -- and with scipy and h5py: gf_sac_check.py imports
+# gf_compare.py, which imports both at module level. Testing for obspy alone
+# let this crash with a ModuleNotFoundError where it meant to skip.
 PY="${GF3D_PYTHON:-python3}"
-if ! "$PY" -c "import obspy, numpy" > /dev/null 2>&1; then
-  echo "skipped: no Python with obspy (set GF3D_PYTHON)" >> $testdir/results.log
-  echo "skipped: no Python with obspy (set GF3D_PYTHON)"
+if ! "$PY" -c "import obspy, numpy, scipy, h5py" > /dev/null 2>&1; then
+  echo "skipped: no Python with obspy, numpy, scipy and h5py (set GF3D_PYTHON)" >> $testdir/results.log
+  echo "skipped: no Python with obspy, numpy, scipy and h5py (set GF3D_PYTHON)"
   exit 0
 fi
 
 echo "python:   $PY" >> $testdir/results.log
 
 OUT="$testdir/OUTPUT_FILES/sac_check"
-
-echo "example:  $EX" >> $testdir/results.log
-echo "python:   $PY" >> $testdir/results.log
 
 rm -rf "$OUT"
 mkdir -p "$OUT"

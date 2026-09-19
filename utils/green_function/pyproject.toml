@@ -16,5 +16,11 @@ dependencies = ["numpy>=1.22"]
 [project.optional-dependencies]
 obspy = ["obspy>=1.4"]
 
+# Not package dependencies: nothing in gf3d/ imports these. They are what
+# tests/gf3d needs -- 9c runs gf_sac_check.py, which imports gf_compare.py,
+# which needs h5py and scipy, and obspy reads the SAC files.
+[dependency-groups]
+test = ["obspy>=1.4", "h5py", "scipy"]
+
 [tool.setuptools]
 packages = ["gf3d"]

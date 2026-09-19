@@ -275,7 +275,7 @@ def main(argv):
     try:
         import obspy  # noqa: F401
     except ImportError:
-        print("       (obspy not installed, skipped)")
+        print("       skipped: obspy not installed")
     else:
         st = r.to_stream()
         ok("one trace per station and component", len(st) == 3 * nsta)

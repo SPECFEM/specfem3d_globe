@@ -4,10 +4,11 @@
 # Reconfigures this test directory with --with-hdf5 and builds
 # lib/libgf3d.a and bin/xgf3d, for the tests that need a real database.
 #
-# Skips cleanly when HDF5 is not available. That is the normal case in CI:
-# `make tests` runs after a bare ./configure with nothing installed
-# (.github/workflows/CI.yml, Test 0), and the example databases are
-# gitignored besides -- the global one is 300 MB to 1.7 GB.
+# Skips cleanly when HDF5 is not available, which is what Test 0, the macOS
+# job and the Intel jobs do: `make tests` runs there after a bare
+# ./configure with no HDF5 installed. Test 19 installs it and runs this tier
+# for real, with GF3D_TEST_STRICT=1, so a skip there is a failure
+# (tests/gf3d/z.strict_no_skips.sh). See .github/workflows/CI.yml.
 #
 # HDF5 is located from, in order:
 #   1. HDF5_INC and HDF5_LIBS in the environment -- the same names
@@ -75,7 +76,8 @@ $srcdir/configure --with-hdf5 HDF5_INC="${HDF5_INC}" HDF5_LIBS="${HDF5_LIBS}" \
 
 if [[ $? -ne 0 ]]; then
   echo >> $testdir/results.log
-  echo "configuration with HDF5 failed, skipping the database-backed tests" >> $testdir/results.log
+  # into results.log too, not stdout only: z.strict_no_skips.sh reads the log
+  echo "skipped: could not configure with HDF5, the database-backed tests will not run" >> $testdir/results.log
   echo "skipped: could not configure with HDF5"
   exit 0
 fi
