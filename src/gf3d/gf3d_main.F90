@@ -51,9 +51,10 @@
 
   use gf_par, only: t_gfdb,t_gf_location,t_gf_source,t_gf_stf,t_gf_taxis, &
                     gf_errmsg,gf_error_string, &
-                    GF_OK,GF3D_VERSION,GF_XI_TOL,GF_ANCHOR_TOL,GF_NCOMP,GF_SRC_CMT
+                    GF_OK,GF3D_VERSION,GF_ANCHOR_TOL,GF_NCOMP,GF_SRC_CMT
   use gf_database, only: gf_open,gf_close,gf_print_info
-  use gf_locate, only: gf_locate_source,gf_locate_release,gf_check_anchors_all
+  use gf_locate, only: gf_locate_source,gf_locate_release,gf_check_anchors_all, &
+                       gf_print_location
   use gf_source, only: gf_read_source,gf_print_source
   use gf_seismograms, only: gf_seis_plan,gf_seis, &
                             gf_write_seis,gf_write_partials,gf_write_dump
@@ -174,7 +175,7 @@
       stop 1
     endif
 
-    call print_location(db,loc,lat,lon,depth_km,6)
+    call gf_print_location(db,loc,lat,lon,depth_km,6)
 
     call gf_locate_release()
     call gf_close(db)
@@ -311,7 +312,7 @@
 
     call gf_print_source(src,6)
     write(*,'(a)') ''
-    call print_location(db,loc,src%latitude,src%longitude,src%depth,6)
+    call gf_print_location(db,loc,src%latitude,src%longitude,src%depth,6)
     write(*,'(a)') ''
 
     if (trim(mode) == '--dump') then
@@ -595,71 +596,5 @@
   endif
 
   end subroutine read_double_arg
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine print_location(db,loc,lat,lon,depth_km,iunit)
-
-! reports a located source
-!
-! The layout follows gf_print_info: 'key = value', one per line, es22.14 for
-! doubles, so the output can be diffed against the solver's own
-! OUTPUT_FILES/output_solver.txt -- which is the only oracle this step has.
-! Note the solver prints its position through sngl(), so a comparison there
-! is bounded by float32 (~3e-8 at these magnitudes), not by our precision.
-
-  use gf_par, only: t_gfdb,t_gf_location
-
-  implicit none
-
-  type(t_gfdb), intent(in) :: db
-  type(t_gf_location), intent(in) :: loc
-  double precision, intent(in) :: lat,lon,depth_km
-  integer, intent(in) :: iunit
-
-  ! local parameters
-  integer :: i
-
-  write(iunit,'(a)')         'source location'
-  write(iunit,'(a,a)')       '  database             = ',trim(db%path)
-  write(iunit,'(a,es22.14)') '  latitude             = ',lat
-  write(iunit,'(a,es22.14)') '  longitude            = ',lon
-  write(iunit,'(a,es22.14)') '  depth, km            = ',depth_km
-  write(iunit,'(a)')         ''
-  write(iunit,'(a,a)')       '  morton_hex           = ',loc%morton_hex
-  write(iunit,'(a,i0,a,i0)') '  element              = ',loc%ielem,' of ',db%nelem
-  write(iunit,'(a)')         ''
-  write(iunit,'(a,es22.14)') '  xi                   = ',loc%xi
-  write(iunit,'(a,es22.14)') '  eta                  = ',loc%eta
-  write(iunit,'(a,es22.14)') '  gamma                = ',loc%gamma
-  write(iunit,'(a,es22.14)') '  max|xi,eta,gamma|    = ',max(abs(loc%xi),abs(loc%eta),abs(loc%gamma))
-  write(iunit,'(a,es22.14)') '  containment tolerance= ',GF_XI_TOL
-  write(iunit,'(a)')         ''
-  write(iunit,'(a,es22.14)') '  x                    = ',loc%xyz(1)
-  write(iunit,'(a,es22.14)') '  y                    = ',loc%xyz(2)
-  write(iunit,'(a,es22.14)') '  z                    = ',loc%xyz(3)
-  write(iunit,'(a,es22.14)') '  x_target             = ',loc%xyz_target(1)
-  write(iunit,'(a,es22.14)') '  y_target             = ',loc%xyz_target(2)
-  write(iunit,'(a,es22.14)') '  z_target             = ',loc%xyz_target(3)
-  write(iunit,'(a,es22.14)') '  location error, km   = ',loc%distance_km
-  write(iunit,'(a)')         ''
-  write(iunit,'(a,es22.14)') '  theta                = ',loc%theta
-  write(iunit,'(a,es22.14)') '  phi                  = ',loc%phi
-  write(iunit,'(a,es22.14)') '  surface radius       = ',loc%r_surface
-  write(iunit,'(a)')         ''
-  do i = 1,3
-    select case (i)
-    case (1) ; write(iunit,'(a,3es22.14)') '  nu(N,:)              = ',loc%nu(i,1),loc%nu(i,2),loc%nu(i,3)
-    case (2) ; write(iunit,'(a,3es22.14)') '  nu(E,:)              = ',loc%nu(i,1),loc%nu(i,2),loc%nu(i,3)
-    case (3) ; write(iunit,'(a,3es22.14)') '  nu(Z,:)              = ',loc%nu(i,1),loc%nu(i,2),loc%nu(i,3)
-    end select
-  enddo
-  write(iunit,'(a)')         ''
-  write(iunit,'(a,es22.14)') '  jacobian             = ',loc%jacobian
-  write(iunit,'(a,es22.14)') '  anchor residual      = ',loc%anchor_err
-
-  end subroutine print_location
 
   end program xgf3d

@@ -106,7 +106,7 @@
   !--- locating a source in the mesh
   use gf_locate, only: &
     gf_locate_source, gf_locate_release, gf_locate_tree_owner, &
-    gf_check_anchors, gf_check_anchors_all
+    gf_check_anchors, gf_check_anchors_all, gf_print_location
 
   !--- the source time function and the output time axis
   use gf_stf, only: &
