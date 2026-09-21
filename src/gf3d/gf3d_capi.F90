@@ -35,6 +35,13 @@
 !----
 !----   * every entry is a *function* returning integer(c_int), one of the
 !----     GF_* codes, and writes its outputs through arguments;
+!----   * no bind(C) function here contains a `return`. Each is a chain of
+!----     `if (ierr == GF_OK) call ...` with the assignment to the result
+!----     name as its last statement, so there is one exit to audit. Where a
+!----     stage is an *expression* over handles(h) rather than a call, the
+!----     chain link has to be an `if (...) then ... endif` block: Fortran's
+!----     .and. is not short-circuiting, so `ierr == GF_OK .and.
+!----     handles(h)%nstations > 0` would index the table anyway;
 !----   * the caller allocates every output array; nothing allocatable
 !----     crosses the boundary;
 !----   * strings come in null-terminated as character(kind=c_char),
@@ -605,42 +612,39 @@
   character(len=MAX_STRING_LEN) :: fpath
   integer :: islot,i,ierr
 
+  ierr = GF_OK
   h = 0
+  islot = 0
 
   call get_string(path,fpath)
 
-  if (len_trim(fpath) == 0) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf3d_open: no database path given')
-    gf3d_open = int(ierr,kind=c_int)
-    return
+  if (len_trim(fpath) == 0) call gf_set_error(ierr,GF_ERR_ARG, &
+    'gf3d_open: no database path given')
+
+  ! islot stays 0 when the table is full, and the error set here is what keeps
+  ! every handles(islot) below out of reach of a zero index
+  if (ierr == GF_OK) then
+    do i = 1,GF3D_MAX_HANDLES
+      if (.not. in_use(i)) then
+        islot = i
+        exit
+      endif
+    enddo
+    if (islot == 0) call gf_set_error(ierr,GF_ERR_ALLOC, &
+      'gf3d_open: too many databases open at once')
   endif
 
-  islot = 0
-  do i = 1,GF3D_MAX_HANDLES
-    if (.not. in_use(i)) then
-      islot = i
-      exit
-    endif
-  enddo
+  ! gf_open closes what it opened, so a failure here leaves the slot free
+  ! and h at 0
+  if (ierr == GF_OK) call gf_open(trim(fpath),handles(islot),ierr, &
+                                  check_completion = (check_completion /= 0))
 
-  if (islot == 0) then
-    call gf_set_error(ierr,GF_ERR_ALLOC,'gf3d_open: too many databases open at once')
-    gf3d_open = int(ierr,kind=c_int)
-    return
+  if (ierr == GF_OK) then
+    in_use(islot) = .true.
+    h = int(islot,kind=c_int)
   endif
 
-  call gf_open(trim(fpath),handles(islot),ierr,check_completion = (check_completion /= 0))
-
-  if (ierr /= GF_OK) then
-    ! gf_open closes what it opened; the slot stays free
-    gf3d_open = int(ierr,kind=c_int)
-    return
-  endif
-
-  in_use(islot) = .true.
-  h = int(islot,kind=c_int)
-
-  gf3d_open = GF_OK
+  gf3d_open = int(ierr,kind=c_int)
 
   end function gf3d_open
 
@@ -665,26 +669,20 @@
   ! local parameters
   integer :: ierr
 
-  if (h < 1 .or. h > GF3D_MAX_HANDLES) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf3d_close: handle out of range')
-    gf3d_close = int(ierr,kind=c_int)
-    return
+  ierr = GF_OK
+
+  call use_handle(h,ierr)
+
+  ! gf_release() is not the pair to reach for here: it releases the tree
+  ! unconditionally. The owner test must come before gf_close, which clears
+  ! open_id.
+  if (ierr == GF_OK) then
+    if (gf_locate_tree_owner() == handles(h)%open_id) call gf_locate_release()
+    call gf_close(handles(h))
+    in_use(h) = .false.
   endif
 
-  if (.not. in_use(h)) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf3d_close: handle is not open')
-    gf3d_close = int(ierr,kind=c_int)
-    return
-  endif
-
-  ! before gf_close, which clears open_id
-  if (gf_locate_tree_owner() == handles(h)%open_id) call gf_locate_release()
-
-  call gf_close(handles(h))
-
-  in_use(h) = .false.
-
-  gf3d_close = GF_OK
+  gf3d_close = int(ierr,kind=c_int)
 
   end function gf3d_close
 
@@ -702,39 +700,44 @@
   ! local parameters
   integer :: ierr
 
+  ierr = GF_OK
+
   call use_handle(h,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_get_info = int(ierr,kind=c_int)
-    return
+
+  ! a block, not one guard per line: every statement below is an expression
+  ! over handles(h), and an expression is evaluated whether or not an .and.
+  ! to its left is false
+  if (ierr == GF_OK) then
+
+    info%nelem          = int(handles(h)%nelem,kind=c_int)
+    info%nstations      = int(handles(h)%nstations,kind=c_int)
+    info%nstep          = int(handles(h)%nstep,kind=c_int)
+    info%nt_subsampled  = int(handles(h)%nt_subsampled,kind=c_int)
+    info%subsample_step = int(handles(h)%subsample_step,kind=c_int)
+    info%ngllx          = int(handles(h)%ngllx,kind=c_int)
+    info%nglly          = int(handles(h)%nglly,kind=c_int)
+    info%ngllz          = int(handles(h)%ngllz,kind=c_int)
+
+    info%topography  = 0 ; if (handles(h)%topography)  info%topography  = 1
+    info%ellipticity = 0 ; if (handles(h)%ellipticity) info%ellipticity = 1
+    info%rotation    = 0 ; if (handles(h)%rotation)    info%rotation    = 1
+    info%attenuation = 0 ; if (handles(h)%attenuation) info%attenuation = 1
+    info%gravity     = 0 ; if (handles(h)%gravity)     info%gravity     = 1
+    info%pad_        = 0
+
+    info%dt          = handles(h)%dt
+    info%t0          = handles(h)%t0
+    info%scale_displ = handles(h)%scale_displ
+
+    ! the handle's own, which gf_open resolved: RHOAV falls back to the build's
+    ! Earth default there when the database does not carry the attribute, so
+    ! this reports what the library uses without reading process-wide state
+    info%r_planet = handles(h)%R_PLANET
+    info%rhoav    = handles(h)%RHOAV
+
   endif
 
-  info%nelem          = int(handles(h)%nelem,kind=c_int)
-  info%nstations      = int(handles(h)%nstations,kind=c_int)
-  info%nstep          = int(handles(h)%nstep,kind=c_int)
-  info%nt_subsampled  = int(handles(h)%nt_subsampled,kind=c_int)
-  info%subsample_step = int(handles(h)%subsample_step,kind=c_int)
-  info%ngllx          = int(handles(h)%ngllx,kind=c_int)
-  info%nglly          = int(handles(h)%nglly,kind=c_int)
-  info%ngllz          = int(handles(h)%ngllz,kind=c_int)
-
-  info%topography  = 0 ; if (handles(h)%topography)  info%topography  = 1
-  info%ellipticity = 0 ; if (handles(h)%ellipticity) info%ellipticity = 1
-  info%rotation    = 0 ; if (handles(h)%rotation)    info%rotation    = 1
-  info%attenuation = 0 ; if (handles(h)%attenuation) info%attenuation = 1
-  info%gravity     = 0 ; if (handles(h)%gravity)     info%gravity     = 1
-  info%pad_        = 0
-
-  info%dt          = handles(h)%dt
-  info%t0          = handles(h)%t0
-  info%scale_displ = handles(h)%scale_displ
-
-  ! the handle's own, which gf_open resolved: RHOAV falls back to the build's
-  ! Earth default there when the database does not carry the attribute, so
-  ! this reports what the library uses without reading process-wide state
-  info%r_planet = handles(h)%R_PLANET
-  info%rhoav    = handles(h)%RHOAV
-
-  gf3d_get_info = GF_OK
+  gf3d_get_info = int(ierr,kind=c_int)
 
   end function gf3d_get_info
 
@@ -755,33 +758,38 @@
   ! local parameters
   integer :: ierr,i
 
+  ierr = GF_OK
+
   call use_handle(h,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_get_station = int(ierr,kind=c_int)
-    return
-  endif
 
   i = int(ista) + 1
 
-  if (i < 1 .or. i > handles(h)%nstations) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf3d_get_station: station index out of range')
-    gf3d_get_station = int(ierr,kind=c_int)
-    return
+  ! the range test reads handles(h)%nstations and the body reads
+  ! handles(h)%stations(i), so both sit inside the handle's own block and the
+  ! second inside the range's
+  if (ierr == GF_OK) then
+    if (i < 1 .or. i > handles(h)%nstations) then
+
+      call gf_set_error(ierr,GF_ERR_ARG,'gf3d_get_station: station index out of range')
+
+    else
+
+      call put_string(handles(h)%stations(i)%id,sta%id,GF3D_STRLEN)
+      call put_string(handles(h)%stations(i)%network,sta%network,GF3D_STRLEN)
+      call put_string(handles(h)%stations(i)%station,sta%station,GF3D_STRLEN)
+
+      sta%latitude            = handles(h)%stations(i)%latitude
+      sta%longitude           = handles(h)%stations(i)%longitude
+      sta%depth_m             = handles(h)%stations(i)%depth
+      sta%hdur                = handles(h)%stations(i)%hdur
+      sta%f_cutoff            = handles(h)%stations(i)%f_cutoff
+      sta%factor_force_source = handles(h)%stations(i)%factor_force_source
+      sta%time_shift          = handles(h)%stations(i)%time_shift
+
+    endif
   endif
 
-  call put_string(handles(h)%stations(i)%id,sta%id,GF3D_STRLEN)
-  call put_string(handles(h)%stations(i)%network,sta%network,GF3D_STRLEN)
-  call put_string(handles(h)%stations(i)%station,sta%station,GF3D_STRLEN)
-
-  sta%latitude            = handles(h)%stations(i)%latitude
-  sta%longitude           = handles(h)%stations(i)%longitude
-  sta%depth_m             = handles(h)%stations(i)%depth
-  sta%hdur                = handles(h)%stations(i)%hdur
-  sta%f_cutoff            = handles(h)%stations(i)%f_cutoff
-  sta%factor_force_source = handles(h)%stations(i)%factor_force_source
-  sta%time_shift          = handles(h)%stations(i)%time_shift
-
-  gf3d_get_station = GF_OK
+  gf3d_get_station = int(ierr,kind=c_int)
 
   end function gf3d_get_station
 
@@ -803,21 +811,15 @@
   type(t_gf_location) :: floc
   integer :: ierr
 
+  ierr = GF_OK
+
   call use_handle(h,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_locate = int(ierr,kind=c_int)
-    return
-  endif
 
-  call gf_locate_source(handles(h),lat,lon,depth_km,floc,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_locate = int(ierr,kind=c_int)
-    return
-  endif
+  if (ierr == GF_OK) call gf_locate_source(handles(h),lat,lon,depth_km,floc,ierr)
 
-  call fill_location(floc,loc)
+  if (ierr == GF_OK) call fill_location(floc,loc)
 
-  gf3d_locate = GF_OK
+  gf3d_locate = int(ierr,kind=c_int)
 
   end function gf3d_locate
 
@@ -841,33 +843,19 @@
   double precision :: t0
   integer :: ierr
 
+  ierr = GF_OK
+
   call use_handle(h,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_get_plan = int(ierr,kind=c_int)
-    return
-  endif
 
-  call build_source(src,handles(h),fsrc,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_get_plan = int(ierr,kind=c_int)
-    return
-  endif
+  if (ierr == GF_OK) call build_source(src,handles(h),fsrc,ierr)
 
-  call resolve_t0(fsrc,t0_req,t0,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_get_plan = int(ierr,kind=c_int)
-    return
-  endif
+  if (ierr == GF_OK) call resolve_t0(fsrc,t0_req,t0,ierr)
 
-  call gf_seis_plan(handles(h),fsrc,t0,tax,stf,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_get_plan = int(ierr,kind=c_int)
-    return
-  endif
+  if (ierr == GF_OK) call gf_seis_plan(handles(h),fsrc,t0,tax,stf,ierr)
 
-  call fill_plan(tax,stf,plan)
+  if (ierr == GF_OK) call fill_plan(tax,stf,plan)
 
-  gf3d_get_plan = GF_OK
+  gf3d_get_plan = int(ierr,kind=c_int)
 
   end function gf3d_get_plan
 
@@ -914,25 +902,30 @@
   character(kind=c_char), dimension(:), pointer :: buf
   integer :: i,ierr
 
+  ierr = GF_OK
+
   i = int(ip) + 1
 
-  if (i < 1 .or. i > GF_NDP_LOC) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf3d_partial_name: partial index out of range')
-    gf3d_partial_name = int(ierr,kind=c_int)
-    return
+  if (i < 1 .or. i > GF_NDP_LOC) call gf_set_error(ierr,GF_ERR_ARG, &
+    'gf3d_partial_name: partial index out of range')
+
+  ! a block: GF_DP_NAME(i) and GF_DP_UNIT(i) are subscripted, so the range
+  ! test has to have kept them out of reach before either is evaluated
+  if (ierr == GF_OK) then
+
+    if (c_associated(name) .and. namelen > 0) then
+      call c_f_pointer(name,buf,(/ int(namelen) /))
+      call put_string(GF_DP_NAME(i),buf,int(namelen))
+    endif
+
+    if (c_associated(unit) .and. unitlen > 0) then
+      call c_f_pointer(unit,buf,(/ int(unitlen) /))
+      call put_string(GF_DP_UNIT(i),buf,int(unitlen))
+    endif
+
   endif
 
-  if (c_associated(name) .and. namelen > 0) then
-    call c_f_pointer(name,buf,(/ int(namelen) /))
-    call put_string(GF_DP_NAME(i),buf,int(namelen))
-  endif
-
-  if (c_associated(unit) .and. unitlen > 0) then
-    call c_f_pointer(unit,buf,(/ int(unitlen) /))
-    call put_string(GF_DP_UNIT(i),buf,int(unitlen))
-  endif
-
-  gf3d_partial_name = GF_OK
+  gf3d_partial_name = int(ierr,kind=c_int)
 
   end function gf3d_partial_name
 
