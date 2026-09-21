@@ -338,7 +338,9 @@ int gf3d_partial_name(int ip, char *name, int namelen, char *unit, int unitlen);
  * Seismograms at every station.
  *
  *   nt      must equal plan.nt from gf3d_get_plan() with the same source
- *           and t0_req
+ *           and t0_req. A wrong nt is refused with GF_ERR_ARG and nothing
+ *           is written to any output buffer -- but the check happens after
+ *           the extraction, so a wrong nt costs the extraction's time.
  *   seis    [nstations][3][nt], metres, N/E/Z          (caller-allocated)
  *   t       [nt], seconds relative to the centroid time
  *   onset   [nstations]; the amplitude just before the record starts,
@@ -356,7 +358,8 @@ int gf3d_seismograms(gf3d_handle h, const gf3d_source *src, double t0_req,
  *
  *   itypsokern  1 for the six moment-tensor partials, 2 for those plus
  *               d/d(latitude), d/d(longitude), d/d(depth), d/d(time)
- *   ndp         must equal gf3d_ndp(itypsokern)
+ *   ndp         must equal gf3d_ndp(itypsokern); refused before any element
+ *               is read, unlike nt
  *   dp          [nstations][ndp][3][nt]                (caller-allocated)
  *
  * The partials are analytic throughout -- no finite differences -- and are

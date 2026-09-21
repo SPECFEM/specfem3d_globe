@@ -33,9 +33,11 @@
 !----     use gf3d
 !----
 !---- and nothing else. Everything below is re-exported from the gf_*
-!---- modules that implement it; the only code here is gf_release() and
-!---- get_seismograms(), both of which exist to spare a caller a sequence it
-!---- would otherwise have to get right itself.
+!---- modules that implement it; the only code here is gf_release() and the
+!---- extraction entry points, which exist to spare a caller a sequence it
+!---- would otherwise have to get right itself. gf_extract() is that
+!---- sequence, and every interface -- the two Fortran entries, the C ABI
+!---- and xgf3d --seis -- runs it rather than a copy of it.
 !----
 !---- Build and link
 !---- --------------
@@ -194,7 +196,7 @@
   ! local parameters
   double precision, dimension(:,:,:,:), allocatable :: dp
 
-  call extract(db,src,t0,0,synt,dp,ierr,t)
+  call gf_extract(db,src,t0,0,synt,dp,ierr,t)
 
   if (allocated(dp)) deallocate(dp)
 
@@ -241,7 +243,7 @@
     return
   endif
 
-  call extract(db,src,t0,itypsokern,synt,dp,ierr,t)
+  call gf_extract(db,src,t0,itypsokern,synt,dp,ierr,t)
 
   end subroutine get_partials
 
@@ -249,13 +251,28 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine extract(db,src,t0,itypsokern,synt,dp,ierr,t)
+  subroutine gf_extract(db,src,t0,itypsokern,synt,dp,ierr,t,onset,loc,tax,stf)
 
-! locate, plan, allocate, extract -- the body both entry points share
+! locate, plan, allocate, extract -- the one sequence, and the general entry
 !
-! `dp` is always allocated, with a first extent of zero when no partials
-! were asked for, because gf_seis takes it by explicit shape. The caller
-! that does not want it throws it away.
+!   synt(nsta, 3, nt)      metres, components N/E/Z
+!   dp(ndp, nsta, 3, nt)   ndp = 0, 6 or 10, by itypsokern
+!   t(nt)                  seconds relative to the centroid time; optional
+!   onset(nsta)            the silence-before-the-record ratio; optional
+!
+! all allocated here. `dp` is allocated even for itypsokern = 0, with a
+! first extent of zero, because gf_seis takes it by explicit shape; a caller
+! that did not ask for partials throws it away.
+!
+! Each optional output is valid for every stage that completed, also when
+! ierr /= GF_OK. So a caller may report where a source was located even
+! though the extraction failed: `loc` still has ielem = 0 when the locate
+! was not reached and `tax` still nt = 0 when the plan was not, which is how
+! the library itself reads those two types. `synt`, `dp`, `t` and `onset`
+! carry an answer only for GF_OK.
+!
+! No I/O. What to print, and where, belongs to the caller -- xgf3d prints
+! `loc` and `stf` after this returns, on its own layout.
 
   implicit none
 
@@ -267,12 +284,16 @@
   double precision, dimension(:,:,:,:), allocatable, intent(out) :: dp
   integer, intent(out) :: ierr
   double precision, dimension(:), allocatable, intent(out), optional :: t
+  double precision, dimension(:), allocatable, intent(out), optional :: onset
+  type(t_gf_location), intent(out), optional :: loc
+  type(t_gf_taxis), intent(out), optional :: tax
+  type(t_gf_stf), intent(out), optional :: stf
 
   ! local parameters
-  type(t_gf_location) :: loc
-  type(t_gf_taxis) :: tax
-  type(t_gf_stf) :: stf
-  double precision, dimension(:), allocatable :: onset,tsec
+  type(t_gf_location) :: floc
+  type(t_gf_taxis) :: ftax
+  type(t_gf_stf) :: fstf
+  double precision, dimension(:), allocatable :: fonset,tsec
   integer :: ndp,ier
 
   if (.not. db%is_open) then
@@ -283,26 +304,38 @@
   call gf_partials_ndp(itypsokern,ndp,ierr)
   if (ierr /= GF_OK) return
 
-  call gf_locate_source(db,src%latitude,src%longitude,src%depth,loc,ierr)
+  ! refused before the locate, so a request that can never be served costs
+  ! no element read. gf_seis keeps the same guard for a caller that reaches
+  ! it directly.
+  if (itypsokern > 0) then
+    if (src%source_type /= GF_SRC_CMT) then
+      call gf_set_error(ierr,GF_ERR_ARG, &
+        'gf_extract: partial derivatives are defined for a moment-tensor source only')
+      return
+    endif
+  endif
+
+  call gf_locate_source(db,src%latitude,src%longitude,src%depth,floc,ierr)
+  if (present(loc)) loc = floc
   if (ierr /= GF_OK) return
 
-  call gf_seis_plan(db,src,t0,tax,stf,ierr)
+  call gf_seis_plan(db,src,t0,ftax,fstf,ierr)
+  if (present(tax)) tax = ftax
+  if (present(stf)) stf = fstf
   if (ierr /= GF_OK) return
 
-  allocate(synt(db%nstations,GF_NCOMP,tax%nt), &
-           dp(ndp,db%nstations,GF_NCOMP,tax%nt), &
-           tsec(tax%nt),onset(db%nstations),stat=ier)
+  allocate(synt(db%nstations,GF_NCOMP,ftax%nt), &
+           dp(ndp,db%nstations,GF_NCOMP,ftax%nt), &
+           tsec(ftax%nt),fonset(db%nstations),stat=ier)
   if (ier /= 0) then
     call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate the output arrays')
     return
   endif
 
-  ! gf_seis refuses a source type that has no partials, so the check the
-  ! facade used to make itself is not repeated here
-  call gf_seis(db,src,loc,tax,stf,itypsokern,ndp,synt,dp,tsec,onset,ierr)
+  call gf_seis(db,src,floc,ftax,fstf,itypsokern,ndp,synt,dp,tsec,fonset,ierr)
 
   if (present(t)) then
-    allocate(t(tax%nt),stat=ier)
+    allocate(t(ftax%nt),stat=ier)
     if (ier /= 0) then
       call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate the time axis')
     else
@@ -310,8 +343,17 @@
     endif
   endif
 
-  deallocate(onset,tsec)
+  if (present(onset)) then
+    allocate(onset(db%nstations),stat=ier)
+    if (ier /= 0) then
+      call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate the onset ratios')
+    else
+      onset(:) = fonset(:)
+    endif
+  endif
 
-  end subroutine extract
+  deallocate(fonset,tsec)
+
+  end subroutine gf_extract
 
   end module gf3d

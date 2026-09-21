@@ -83,29 +83,23 @@
 
   use constants, only: MAX_STRING_LEN
 
+  ! the same module a downstream Fortran caller uses, so that this facade
+  ! cannot reach anything the public surface does not already offer
+  !
   ! GF3D_VERSION is renamed on import: Fortran is case-insensitive, so the
   ! constant and the gf3d_version() entry point below would otherwise be the
   ! same name. Renaming the constant rather than the function keeps every
   ! procedure here spelled exactly like the C symbol it binds.
-  use gf_par, only: t_gfdb, t_gf_source, t_gf_location, t_gf_taxis, t_gf_stf, &
-                    GF_VERSION_STRING => GF3D_VERSION, GF_NCOMP, &
-                    GF_OK, GF_ERR_ARG, GF_ERR_ALLOC, &
-                    GF_SRC_FORCE, GF_SRC_CMT, GF_ANCHOR_TOL, &
-                    gf_set_error, gf_error_string, gf_errmsg
-
-  use gf_shared_params, only: gf_init_shared_params
-
-  use gf_database, only: gf_open, gf_close
-
-  use gf_source, only: gf_source_set_cmt, gf_source_set_force
-
-  use gf_locate, only: gf_locate_source, gf_locate_release, gf_locate_tree_owner
-
-  use gf_seismograms, only: gf_seis_plan, gf_seis
-
-  use gf_stf, only: gf_default_t0
-
-  use gf_partials, only: gf_partials_ndp, GF_NDP_LOC, GF_DP_NAME, GF_DP_UNIT
+  use gf3d, only: t_gfdb, t_gf_source, t_gf_location, t_gf_taxis, t_gf_stf, &
+                  GF_VERSION_STRING => GF3D_VERSION, GF_NCOMP, &
+                  GF_OK, GF_ERR_ARG, GF_ERR_ALLOC, &
+                  GF_SRC_FORCE, GF_SRC_CMT, GF_ANCHOR_TOL, &
+                  gf_set_error, gf_error_string, gf_errmsg, &
+                  gf_open, gf_close, &
+                  gf_source_set_cmt, gf_source_set_force, &
+                  gf_locate_source, gf_locate_release, gf_locate_tree_owner, &
+                  gf_seis_plan, gf_extract, gf_default_t0, &
+                  gf_partials_ndp, GF_NDP_LOC, GF_DP_NAME, GF_DP_UNIT
 
   implicit none
 
@@ -948,13 +942,107 @@
 !===================================================================
 !
 
+  subroutine c_extract(h,src,t0_req,itypsokern,nt,ndp,seis,dp,t,onset,loc,ierr)
+
+! the body the two extraction entries share
+!
+! `dp` is optional -- this is not a bind(C) procedure, so it may be -- and
+! absent for the seismogram-only entry. `loc` is the C ABI's nullable
+! pointer; everything else is a caller-allocated buffer in C order.
+!
+! Written in chain form: each stage runs only while ierr is GF_OK, so there
+! is one exit, and `handles(h)` is reached only inside a call argument or a
+! guarded block -- Fortran's .and. does not short-circuit, so the guard has
+! to be the `if` itself.
+!
+! The nt check is made after the extraction rather than before it, because
+! the plan it checks against is now inside gf_extract. A caller that sized
+! its buffers from a different plan therefore pays for one extraction it
+! cannot have; in exchange, no buffer is ever written at the wrong size.
+
+  implicit none
+
+  integer(c_int), intent(in) :: h
+  type(gf3d_source_t), intent(in) :: src
+  real(c_double), intent(in) :: t0_req
+  integer(c_int), intent(in) :: itypsokern,nt,ndp
+  real(c_double), dimension(*), intent(out) :: seis
+  real(c_double), dimension(*), intent(out), optional :: dp
+  real(c_double), dimension(*), intent(out) :: t
+  real(c_double), dimension(*), intent(out) :: onset
+  type(c_ptr), intent(in) :: loc
+  integer, intent(out) :: ierr
+
+  ! local parameters
+  type(t_gf_source) :: fsrc
+  type(t_gf_location) :: floc
+  type(gf3d_location_t), pointer :: ploc
+  double precision, dimension(:,:,:), allocatable :: fseis
+  double precision, dimension(:,:,:,:), allocatable :: fdp
+  double precision, dimension(:), allocatable :: ft,fonset
+  double precision :: t0
+  integer :: ndp_want,nsta,nt_got,it,ista
+
+  ierr = GF_OK
+
+  call use_handle(h,ierr)
+
+  ! the caller's own arithmetic, so it is checked before anything is read
+  if (ierr == GF_OK) call gf_partials_ndp(int(itypsokern),ndp_want,ierr)
+
+  if (ierr == GF_OK) then
+    if (int(ndp) /= ndp_want) call gf_set_error(ierr,GF_ERR_ARG, &
+      'gf3d: ndp does not match itypsokern; ask gf3d_ndp for it')
+  endif
+
+  if (ierr == GF_OK) call build_source(src,handles(h),fsrc,ierr)
+
+  if (ierr == GF_OK) call resolve_t0(fsrc,t0_req,t0,ierr)
+
+  if (ierr == GF_OK) call gf_extract(handles(h),fsrc,t0,int(itypsokern), &
+                                     fseis,fdp,ierr,t=ft,onset=fonset,loc=floc)
+
+  if (ierr == GF_OK) then
+    nsta = size(fseis,1)
+    nt_got = size(fseis,3)
+    if (int(nt) /= nt_got) then
+      call gf_set_error(ierr,GF_ERR_ARG, &
+        'gf3d: nt does not match the plan; call gf3d_get_plan first')
+    else
+      call pack_seis(nsta,nt_got,fseis,seis)
+      if (present(dp)) call pack_dp(ndp_want,nsta,nt_got,fdp,dp)
+      do it = 1,nt_got
+        t(it) = ft(it)
+      enddo
+      do ista = 1,nsta
+        onset(ista) = fonset(ista)
+      enddo
+      if (c_associated(loc)) then
+        call c_f_pointer(loc,ploc)
+        call fill_location(floc,ploc)
+      endif
+    endif
+  endif
+
+  if (allocated(fseis)) deallocate(fseis)
+  if (allocated(fdp)) deallocate(fdp)
+  if (allocated(ft)) deallocate(ft)
+  if (allocated(fonset)) deallocate(fonset)
+
+  end subroutine c_extract
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   integer(c_int) function gf3d_seismograms(h,src,t0_req,nt,seis,t,onset,loc) &
     bind(C,name='gf3d_seismograms')
 
 ! seismograms at every station, in C order [ista][icomp][it]
 !
-! Mirrors gf3d_main.F90's --seis path exactly: locate (which also loads the
-! topography grid, lazily), plan, extract. `loc` may be NULL.
+! The same gf_extract() call xgf3d --seis and the Fortran API make: locate
+! (which also loads the topography grid, lazily), plan, extract. `loc` may
+! be NULL.
 
   implicit none
 
@@ -968,83 +1056,10 @@
   type(c_ptr), value :: loc
 
   ! local parameters
-  type(t_gf_source) :: fsrc
-  type(t_gf_location) :: floc
-  type(gf3d_location_t), pointer :: ploc
-  type(t_gf_taxis) :: tax
-  type(t_gf_stf) :: stf
-  double precision, dimension(:,:,:), allocatable :: fseis
-  ! gf_seis takes the partials array by explicit shape; this route asks for
-  ! none, so it passes a zero-sized one
-  double precision, dimension(:,:,:,:), allocatable :: fdp_none
-  double precision, dimension(:), allocatable :: ft,fonset
-  double precision :: t0
-  integer :: ierr,ier,nsta,it,ista
+  integer :: ierr
 
-  call use_handle(h,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_seismograms = int(ierr,kind=c_int)
-    return
-  endif
-
-  call build_source(src,handles(h),fsrc,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_seismograms = int(ierr,kind=c_int)
-    return
-  endif
-
-  call gf_locate_source(handles(h),fsrc%latitude,fsrc%longitude,fsrc%depth,floc,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_seismograms = int(ierr,kind=c_int)
-    return
-  endif
-
-  call resolve_t0(fsrc,t0_req,t0,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_seismograms = int(ierr,kind=c_int)
-    return
-  endif
-
-  call gf_seis_plan(handles(h),fsrc,t0,tax,stf,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_seismograms = int(ierr,kind=c_int)
-    return
-  endif
-
-  if (int(nt) /= tax%nt) then
-    call gf_set_error(ierr,GF_ERR_ARG, &
-      'gf3d_seismograms: nt does not match the plan; call gf3d_get_plan first')
-    gf3d_seismograms = int(ierr,kind=c_int)
-    return
-  endif
-
-  nsta = handles(h)%nstations
-
-  allocate(fseis(nsta,GF_NCOMP,tax%nt),ft(tax%nt),fonset(nsta), &
-           fdp_none(0,nsta,GF_NCOMP,tax%nt),stat=ier)
-  if (ier /= 0) then
-    call gf_set_error(ierr,GF_ERR_ALLOC,'gf3d_seismograms: could not allocate the work arrays')
-    gf3d_seismograms = int(ierr,kind=c_int)
-    return
-  endif
-
-  call gf_seis(handles(h),fsrc,floc,tax,stf,0,0,fseis,fdp_none,ft,fonset,ierr)
-
-  if (ierr == GF_OK) then
-    call pack_seis(nsta,tax%nt,fseis,seis)
-    do it = 1,tax%nt
-      t(it) = ft(it)
-    enddo
-    do ista = 1,nsta
-      onset(ista) = fonset(ista)
-    enddo
-    if (c_associated(loc)) then
-      call c_f_pointer(loc,ploc)
-      call fill_location(floc,ploc)
-    endif
-  endif
-
-  deallocate(fseis,fdp_none,ft,fonset)
+  call c_extract(h,src,t0_req,0_c_int,nt,0_c_int,seis, &
+                 t=t,onset=onset,loc=loc,ierr=ierr)
 
   gf3d_seismograms = int(ierr,kind=c_int)
 
@@ -1075,110 +1090,16 @@
   type(c_ptr), value :: loc
 
   ! local parameters
-  type(t_gf_source) :: fsrc
-  type(t_gf_location) :: floc
-  type(gf3d_location_t), pointer :: ploc
-  type(t_gf_taxis) :: tax
-  type(t_gf_stf) :: stf
-  double precision, dimension(:,:,:), allocatable :: fseis
-  double precision, dimension(:,:,:,:), allocatable :: fdp
-  double precision, dimension(:), allocatable :: ft,fonset
-  double precision :: t0
-  integer :: ierr,ier,nsta,ndp_want,it,ista
+  integer :: ierr
 
-  call use_handle(h,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_partials = int(ierr,kind=c_int)
-    return
-  endif
-
+  ! itypsokern 0 has no partials to write into dp, so it is a caller error
+  ! here rather than a zero-sized answer
   if (int(itypsokern) < 1) then
     call gf_set_error(ierr,GF_ERR_ARG, &
       'gf3d_partials: itypsokern must be 1 or 2; use gf3d_seismograms for 0')
-    gf3d_partials = int(ierr,kind=c_int)
-    return
+  else
+    call c_extract(h,src,t0_req,itypsokern,nt,ndp,seis,dp,t,onset,loc,ierr)
   endif
-
-  call gf_partials_ndp(int(itypsokern),ndp_want,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_partials = int(ierr,kind=c_int)
-    return
-  endif
-
-  if (int(ndp) /= ndp_want) then
-    call gf_set_error(ierr,GF_ERR_ARG, &
-      'gf3d_partials: ndp does not match itypsokern; ask gf3d_ndp for it')
-    gf3d_partials = int(ierr,kind=c_int)
-    return
-  endif
-
-  call build_source(src,handles(h),fsrc,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_partials = int(ierr,kind=c_int)
-    return
-  endif
-
-  if (fsrc%source_type /= GF_SRC_CMT) then
-    call gf_set_error(ierr,GF_ERR_ARG, &
-      'gf3d_partials: partial derivatives are defined for a moment-tensor source only')
-    gf3d_partials = int(ierr,kind=c_int)
-    return
-  endif
-
-  call gf_locate_source(handles(h),fsrc%latitude,fsrc%longitude,fsrc%depth,floc,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_partials = int(ierr,kind=c_int)
-    return
-  endif
-
-  call resolve_t0(fsrc,t0_req,t0,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_partials = int(ierr,kind=c_int)
-    return
-  endif
-
-  call gf_seis_plan(handles(h),fsrc,t0,tax,stf,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_partials = int(ierr,kind=c_int)
-    return
-  endif
-
-  if (int(nt) /= tax%nt) then
-    call gf_set_error(ierr,GF_ERR_ARG, &
-      'gf3d_partials: nt does not match the plan; call gf3d_get_plan first')
-    gf3d_partials = int(ierr,kind=c_int)
-    return
-  endif
-
-  nsta = handles(h)%nstations
-
-  allocate(fseis(nsta,GF_NCOMP,tax%nt),fdp(ndp_want,nsta,GF_NCOMP,tax%nt), &
-           ft(tax%nt),fonset(nsta),stat=ier)
-  if (ier /= 0) then
-    call gf_set_error(ierr,GF_ERR_ALLOC,'gf3d_partials: could not allocate the work arrays')
-    gf3d_partials = int(ierr,kind=c_int)
-    return
-  endif
-
-  call gf_seis(handles(h),fsrc,floc,tax,stf,int(itypsokern),ndp_want, &
-                            fseis,fdp,ft,fonset,ierr)
-
-  if (ierr == GF_OK) then
-    call pack_seis(nsta,tax%nt,fseis,seis)
-    call pack_dp(ndp_want,nsta,tax%nt,fdp,dp)
-    do it = 1,tax%nt
-      t(it) = ft(it)
-    enddo
-    do ista = 1,nsta
-      onset(ista) = fonset(ista)
-    enddo
-    if (c_associated(loc)) then
-      call c_f_pointer(loc,ploc)
-      call fill_location(floc,ploc)
-    endif
-  endif
-
-  deallocate(fseis,fdp,ft,fonset)
 
   gf3d_partials = int(ierr,kind=c_int)
 
