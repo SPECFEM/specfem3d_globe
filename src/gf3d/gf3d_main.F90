@@ -64,9 +64,9 @@
                   gf_locate_source,gf_locate_release,gf_check_anchors_all, &
                   gf_print_location, &
                   gf_read_source,gf_print_source, &
-                  gf_seis_plan,gf_seis, &
+                  gf_extract, &
                   gf_write_seis,gf_write_partials,gf_write_dump, &
-                  gf_partials_ndp,gf_write_sac,gf_print_stf,gf_default_t0
+                  gf_write_sac,gf_print_stf,gf_default_t0
 
   use constants, only: MAX_STRING_LEN,NGLLX,NGNOD
 
@@ -173,8 +173,11 @@
     ! xgf3d --seis <GFDB> <FORCESOLUTION> <outdir>
     ! xgf3d --dump <GFDB> <FORCESOLUTION> <outdir> [--station NET.STA]
     !
-    ! Both modes share everything up to the located source; they differ only
-    ! in what they write. --dump exists because the manufactured-solution
+    ! Both modes open the database and read the source the same way; --dump
+    ! then locates it directly and dumps the stored quantities on the
+    ! database's own axis, while --seis calls gf_extract, which locates,
+    ! plans and extracts in one sequence -- the same one gf3d_capi and a
+    ! Fortran caller run. --dump exists because the manufactured-solution
     ! tests pin the operators on synthetic input, but nothing except a
     ! forward comparison can show that the HDF5 layout was read in the right
     ! index order or that the nu convention is right, and those fail
@@ -270,15 +273,20 @@
     call gf_read_source(db,srcfile,src,ierr)
     if (ierr /= GF_OK) call die('Error reading the source',ierr)
 
-    call gf_locate_source(db,src%latitude,src%longitude,src%depth,loc,ierr)
-    if (ierr /= GF_OK) call die('Error locating the source',ierr)
-
     call gf_print_source(src,6)
     write(*,'(a)') ''
-    call gf_print_location(db,loc,src%latitude,src%longitude,src%depth,6)
-    write(*,'(a)') ''
+
+    ! cross-check #5: needs src, so it sits after the read
+    if (itypsokern > 0 .and. src%source_type /= GF_SRC_CMT) call die( &
+      'Error: --partials is defined for a CMTSOLUTION, not a FORCESOLUTION')
 
     if (trim(mode) == '--dump') then
+
+      call gf_locate_source(db,src%latitude,src%longitude,src%depth,loc,ierr)
+      if (ierr /= GF_OK) call die('Error locating the source',ierr)
+
+      call gf_print_location(db,loc,src%latitude,src%longitude,src%depth,6)
+      write(*,'(a)') ''
 
       call gf_write_dump(db,src,loc,outdir,station,ierr)
       if (ierr /= GF_OK) call die('Error writing the dump',ierr)
@@ -293,38 +301,27 @@
         if (ierr /= GF_OK) call die('Error choosing the default start time',ierr)
       endif
 
-      ! the conversion and the axis are decided before any element is read,
-      ! so a bad request fails in milliseconds and the plan is on record
-      call gf_seis_plan(db,src,t0_req,tax,stf,ierr)
-      if (ierr /= GF_OK) call die('Error planning the seismograms',ierr)
+      ! locate, plan and extract in one call -- the same sequence gf3d_capi
+      ! and a Fortran caller run. loc and stf are valid for every stage that
+      ! completed even when ierr /= GF_OK, so a failure inside the
+      ! extraction itself still reports where the source was and what
+      ! conversion was planned.
+      call gf_extract(db,src,t0_req,itypsokern,seis,dp,ierr,t=tsec,onset=onset, &
+                       loc=loc,tax=tax,stf=stf)
 
-      call gf_print_stf(stf,tax,6)
-      write(*,'(a)') ''
-
-      allocate(seis(db%nstations,GF_NCOMP,tax%nt),tsec(tax%nt),onset(db%nstations),stat=ierr)
-      if (ierr /= 0) call die('Error: could not allocate the seismogram array')
+      if (loc%ielem > 0) then
+        call gf_print_location(db,loc,src%latitude,src%longitude,src%depth,6)
+        write(*,'(a)') ''
+      endif
+      if (tax%nt > 0) then
+        call gf_print_stf(stf,tax,6)
+        write(*,'(a)') ''
+      endif
+      if (ierr /= GF_OK) call die('Error computing the seismograms',ierr)
 
       ! the partials array exists in every case (zero-size without
       ! --partials), so that the SAC writer has one interface
-      call gf_partials_ndp(itypsokern,ndp,ierr)
-      allocate(dp(ndp,db%nstations,GF_NCOMP,tax%nt),stat=ierr)
-      if (ierr /= 0) call die('Error: could not allocate the partials array')
-
-      if (itypsokern > 0) then
-
-        ! seismograms and partials from one pass over the elements
-        if (src%source_type /= GF_SRC_CMT) call die( &
-          'Error: --partials is defined for a CMTSOLUTION, not a FORCESOLUTION')
-
-        call gf_seis(db,src,loc,tax,stf,itypsokern,ndp,seis,dp,tsec,onset,ierr)
-        if (ierr /= GF_OK) call die('Error computing the seismograms and partials',ierr)
-
-      else
-
-        call gf_seis(db,src,loc,tax,stf,0,0,seis,dp,tsec,onset,ierr)
-        if (ierr /= GF_OK) call die('Error computing the seismograms',ierr)
-
-      endif
+      ndp = size(dp,1)
 
       !--- the writers: every requested format, every product -------------
 
