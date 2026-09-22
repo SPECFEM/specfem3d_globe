@@ -266,8 +266,10 @@
 !
 ! Each optional output is valid for every stage that completed, also when
 ! ierr /= GF_OK. So a caller may report where a source was located even
-! though the extraction failed: `loc` still has ielem = 0 when the locate
-! was not reached and `tax` still nt = 0 when the plan was not, which is how
+! though the extraction failed: `loc` is assigned only once gf_locate_source
+! itself returns GF_OK, so it keeps ielem = 0 whether the locate was never
+! reached or was reached and failed; `tax`/`stf` are assigned only once
+! gf_seis_plan returns GF_OK, so `tax` keeps nt = 0 the same way. That is how
 ! the library itself reads those two types. `synt`, `dp`, `t` and `onset`
 ! carry an answer only for GF_OK.
 !
@@ -316,13 +318,13 @@
   endif
 
   call gf_locate_source(db,src%latitude,src%longitude,src%depth,floc,ierr)
-  if (present(loc)) loc = floc
   if (ierr /= GF_OK) return
+  if (present(loc)) loc = floc
 
   call gf_seis_plan(db,src,t0,ftax,fstf,ierr)
+  if (ierr /= GF_OK) return
   if (present(tax)) tax = ftax
   if (present(stf)) stf = fstf
-  if (ierr /= GF_OK) return
 
   allocate(synt(db%nstations,GF_NCOMP,ftax%nt), &
            dp(ndp,db%nstations,GF_NCOMP,ftax%nt), &
