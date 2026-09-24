@@ -60,6 +60,10 @@ __all__ = [
 GF3D_STRLEN = 64
 GF3D_MORTON_STRLEN = 24
 
+# GF3D_API_VERSION from include/gf3d.h; checked against the library in
+# _check_layout(), before the struct-size comparison below it.
+API_VERSION = 2
+
 GF_OK = 0
 GF_ERR_NO_HDF5 = 1
 GF_ERR_NO_PATH = 2
@@ -288,6 +292,15 @@ _c_int_p = ctypes.POINTER(_c_int)
 lib.gf3d_version.argtypes = [ctypes.c_char_p, _c_int]
 lib.gf3d_version.restype = _c_int
 
+try:
+    lib.gf3d_api_version.argtypes = []
+    lib.gf3d_api_version.restype = _c_int
+except AttributeError:
+    # a library built before GF3D_API_VERSION 2 has no such symbol;
+    # _check_layout() below reports that the same way it reports any other
+    # version mismatch, rather than letting this surface as an AttributeError
+    lib.gf3d_api_version = None
+
 lib.gf3d_sizeof.argtypes = [_c_int_p] * 5
 lib.gf3d_sizeof.restype = _c_int
 
@@ -355,6 +368,13 @@ lib.gf3d_partials.restype = _c_int
 
 
 def _check_layout():
+    if lib.gf3d_api_version is None or lib.gf3d_api_version() != API_VERSION:
+        raise RuntimeError(
+            f"this package expects API version {API_VERSION} but "
+            f"{library_path} does not provide it: this package and the "
+            "library were built from different versions of include/gf3d.h"
+        )
+
     sizes = [_c_int() for _ in range(5)]
     lib.gf3d_sizeof(*[ctypes.byref(s) for s in sizes])
     expected = [CSource, CInfo, CStation, CLocation, CPlan]

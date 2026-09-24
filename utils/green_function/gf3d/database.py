@@ -358,7 +358,7 @@ class Database:
         default is specfem's own rule for a forward run, 1.5 times the half
         duration for a moment tensor.
         """
-        return self._extract(source, t0, itypsokern=0)
+        return self._extract(source, t0, kind=0)
 
     def partials(self, source, kind: int = 2, t0: float | None = None) -> Result:
         """Seismograms and their partial derivatives.
@@ -369,9 +369,9 @@ class Database:
         """
         if kind not in (1, 2):
             raise ValueError("kind must be 1 (moment tensor) or 2 (and centroid)")
-        return self._extract(source, t0, itypsokern=kind)
+        return self._extract(source, t0, kind=kind)
 
-    def _extract(self, source, t0, itypsokern: int) -> Result:
+    def _extract(self, source, t0, kind: int) -> Result:
         csrc = source._to_struct()
         t0_req = -1.0 if t0 is None else float(t0)
 
@@ -381,10 +381,10 @@ class Database:
         ids = self.station_ids
 
         ndp = 0
-        if itypsokern > 0:
+        if kind > 0:
             n = ctypes.c_int(0)
             with LIBRARY_LOCK:
-                check(lib.gf3d_ndp(itypsokern, ctypes.byref(n)), "gf3d_ndp")
+                check(lib.gf3d_ndp(kind, ctypes.byref(n)), "gf3d_ndp")
             ndp = n.value
 
         seis = np.empty((nsta, GF_NCOMP, nt), dtype=np.float64)
@@ -397,7 +397,7 @@ class Database:
             h = self._h()
             if ndp:
                 code = lib.gf3d_partials(
-                    h, ctypes.byref(csrc), t0_req, itypsokern, nt, ndp,
+                    h, ctypes.byref(csrc), t0_req, kind, nt, ndp,
                     _ptr(seis), _ptr(dp), _ptr(t), _ptr(onset), ctypes.byref(cloc),
                 )
             else:

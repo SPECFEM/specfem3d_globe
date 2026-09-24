@@ -267,7 +267,7 @@
   call banner('4. seismograms and partial derivatives')
 
   ! get_partials() locates, plans and extracts in one call, and allocates
-  ! its own outputs. itypsokern = 2 asks for all ten partials, 1 the six
+  ! its own outputs. kind = 2 asks for all ten partials, 1 the six
   ! moment-tensor ones; get_seismograms() is the same call without them.
   ! gf_default_t0() is the start time specfem's own forward run would use.
   call gf_default_t0(src,t0,ierr)

@@ -206,15 +206,15 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine get_partials(db,src,t0,itypsokern,synt,dp,ierr,t)
+  subroutine get_partials(db,src,t0,kind,synt,dp,ierr,t)
 
 ! seismograms and their partial derivatives for one source
 !
 !   synt(nsta, 3, nt)      metres, components N/E/Z
-!   dp(ndp, nsta, 3, nt)   ndp = 6 for itypsokern = 1, 10 for 2
+!   dp(ndp, nsta, 3, nt)   ndp = 6 for kind = 1, 10 for 2
 !   t(nt)                  seconds relative to the centroid time; optional
 !
-! all allocated here. itypsokern = 1 gives the six moment-tensor partials;
+! all allocated here. kind = 1 gives the six moment-tensor partials;
 ! 2 gives those plus latitude, longitude, depth and centroid time. The
 ! parameter names and units are GF_DP_NAME and GF_DP_UNIT.
 !
@@ -223,27 +223,27 @@
 ! seismogram -- so there is nothing to be saved by asking for one without
 ! the other.
 !
-! Partials are defined for a moment-tensor source only. itypsokern = 3
-! (GF3DF's half-duration partial) is not supported; see gf_partials.
+! Partials are defined for a moment-tensor source only. A half-duration
+! partial (kind 3) is not supported; see gf_partials.
 
   implicit none
 
   type(t_gfdb), intent(inout) :: db
   type(t_gf_source), intent(in) :: src
   double precision, intent(in) :: t0
-  integer, intent(in) :: itypsokern
+  integer, intent(in) :: kind
   double precision, dimension(:,:,:), allocatable, intent(out) :: synt
   double precision, dimension(:,:,:,:), allocatable, intent(out) :: dp
   integer, intent(out) :: ierr
   double precision, dimension(:), allocatable, intent(out), optional :: t
 
-  if (itypsokern < 1) then
+  if (kind < 1) then
     call gf_set_error(ierr,GF_ERR_ARG, &
-      'get_partials: itypsokern must be 1 or 2; use get_seismograms for none')
+      'get_partials: kind must be 1 or 2; use get_seismograms for none')
     return
   endif
 
-  call gf_extract(db,src,t0,itypsokern,synt,dp,ierr,t)
+  call gf_extract(db,src,t0,kind,synt,dp,ierr,t)
 
   end subroutine get_partials
 
@@ -251,16 +251,16 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine gf_extract(db,src,t0,itypsokern,synt,dp,ierr,t,onset,loc,tax,stf)
+  subroutine gf_extract(db,src,t0,kind,synt,dp,ierr,t,onset,loc,tax,stf)
 
 ! locate, plan, allocate, extract -- the one sequence, and the general entry
 !
 !   synt(nsta, 3, nt)      metres, components N/E/Z
-!   dp(ndp, nsta, 3, nt)   ndp = 0, 6 or 10, by itypsokern
+!   dp(ndp, nsta, 3, nt)   ndp = 0, 6 or 10, by kind
 !   t(nt)                  seconds relative to the centroid time; optional
 !   onset(nsta)            the silence-before-the-record ratio; optional
 !
-! all allocated here. `dp` is allocated even for itypsokern = 0, with a
+! all allocated here. `dp` is allocated even for kind = 0, with a
 ! first extent of zero, because gf_seis takes it by explicit shape; a caller
 ! that did not ask for partials throws it away.
 !
@@ -281,7 +281,7 @@
   type(t_gfdb), intent(inout) :: db
   type(t_gf_source), intent(in) :: src
   double precision, intent(in) :: t0
-  integer, intent(in) :: itypsokern
+  integer, intent(in) :: kind
   double precision, dimension(:,:,:), allocatable, intent(out) :: synt
   double precision, dimension(:,:,:,:), allocatable, intent(out) :: dp
   integer, intent(out) :: ierr
@@ -303,13 +303,13 @@
     return
   endif
 
-  call gf_partials_ndp(itypsokern,ndp,ierr)
+  call gf_partials_ndp(kind,ndp,ierr)
   if (ierr /= GF_OK) return
 
   ! refused before the locate, so a request that can never be served costs
   ! no element read. gf_seis keeps the same guard for a caller that reaches
   ! it directly.
-  if (itypsokern > 0) then
+  if (kind > 0) then
     if (src%source_type /= GF_SRC_CMT) then
       call gf_set_error(ierr,GF_ERR_ARG, &
         'gf_extract: partial derivatives are defined for a moment-tensor source only')
@@ -334,7 +334,7 @@
     return
   endif
 
-  call gf_seis(db,src,floc,ftax,fstf,itypsokern,ndp,synt,dp,tsec,fonset,ierr)
+  call gf_seis(db,src,floc,ftax,fstf,kind,ndp,synt,dp,tsec,fonset,ierr)
 
   if (present(t)) then
     allocate(t(ftax%nt),stat=ier)

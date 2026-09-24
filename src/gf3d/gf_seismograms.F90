@@ -194,7 +194,7 @@
     double precision, dimension(NGLLX,NGLLY,NGLLZ,NDIM) :: dw = 0.d0
     double precision, dimension(NDIM,NDIM) :: m_cart = 0.d0
 
-    !--- itypsokern = 2 only ---
+    !--- kind = 2 only ---
     logical :: want_loc = .false.
     double precision, dimension(NGLLX,NGLLY,NGLLZ,NDIM,NDIM) :: ddw = 0.d0
     double precision, dimension(NDIM,NDIM) :: dm_dtheta = 0.d0, dm_dphi = 0.d0
@@ -219,10 +219,10 @@
     real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: displ
     double precision, dimension(:,:,:), allocatable :: g       ! (3,3,nt_db)      force
     double precision, dimension(:,:,:), allocatable :: eps     ! (6,3,nt_db)      cmt
-    double precision, dimension(:,:,:,:), allocatable :: deps  ! (6,3,nt_db,NDIM) itypsokern 2
-    double precision, dimension(:,:,:), allocatable :: dpm     ! (6,3,nt)         itypsokern >= 1
-    double precision, dimension(:,:,:), allocatable :: dpl     ! (3,3,nt)         itypsokern 2
-    double precision, dimension(:), allocatable :: dp10        ! (nt)             itypsokern 2
+    double precision, dimension(:,:,:,:), allocatable :: deps  ! (6,3,nt_db,NDIM) kind 2
+    double precision, dimension(:,:,:), allocatable :: dpm     ! (6,3,nt)         kind >= 1
+    double precision, dimension(:,:,:), allocatable :: dpl     ! (3,3,nt)         kind 2
+    double precision, dimension(:), allocatable :: dp10        ! (nt)             kind 2
     type(t_gf_stf_work) :: stfw
   end type t_gf_seis_work
 
@@ -339,12 +339,12 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine gf_seis_geometry(db,src,loc,itypsokern,geom,ierr)
+  subroutine gf_seis_geometry(db,src,loc,kind,geom,ierr)
 
 ! everything about the source's position that does not depend on the station
 !
 ! The three extraction routines each built their own copy of this, in the
-! same order, from the same inputs. `itypsokern` selects how much is needed:
+! same order, from the same inputs. `kind` selects how much is needed:
 ! 0 gives the interpolation weights and, for a force source, the direction;
 ! 1 adds the strain weights and the rotated moment tensor; 2 adds the
 ! second-derivative tables and the geographic Jacobian.
@@ -370,7 +370,7 @@
   type(t_gfdb), intent(in) :: db
   type(t_gf_source), intent(in) :: src
   type(t_gf_location), intent(in) :: loc
-  integer, intent(in) :: itypsokern
+  integer, intent(in) :: kind
   type(t_gf_seis_geom), intent(out) :: geom
   integer, intent(out) :: ierr
 
@@ -386,7 +386,7 @@
   double precision :: elevation,delev_dlat,delev_dlon
   integer :: nspl_use
 
-  geom%want_loc = (itypsokern == 2)
+  geom%want_loc = (kind == 2)
 
   call gf_interp_weights_deriv(loc%xi,loc%eta,loc%gamma, &
                                geom%hxi,hpxi,geom%heta,hpeta,geom%hgam,hpgam)
@@ -446,7 +446,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine gf_seis_work_init(db,src,tax,stf,itypsokern,swork,ierr)
+  subroutine gf_seis_work_init(db,src,tax,stf,kind,swork,ierr)
 
 ! the buffers one extraction needs, sized from the plan
 
@@ -458,7 +458,7 @@
   type(t_gf_source), intent(in) :: src
   type(t_gf_taxis), intent(in) :: tax
   type(t_gf_stf), intent(in) :: stf
-  integer, intent(in) :: itypsokern
+  integer, intent(in) :: kind
   type(t_gf_seis_work), intent(inout) :: swork
   integer, intent(out) :: ierr
 
@@ -486,7 +486,7 @@
     return
   endif
 
-  if (itypsokern >= 1) then
+  if (kind >= 1) then
     allocate(swork%dpm(GF_NDP_MT,GF_NCOMP,nt),stat=ier)
     if (ier /= 0) then
       call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate the moment-tensor partials buffer')
@@ -494,7 +494,7 @@
     endif
   endif
 
-  if (itypsokern == 2) then
+  if (kind == 2) then
     allocate(swork%deps(GF_VOIGT,GF_NCOMP,nt_db,NDIM),swork%dpl(3,GF_NCOMP,nt), &
              swork%dp10(nt),stat=ier)
     if (ier /= 0) then
@@ -534,7 +534,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine gf_seis_station(db,src,loc,tax,stf,geom,itypsokern,ista,swork, &
+  subroutine gf_seis_station(db,src,loc,tax,stf,geom,kind,ista,swork, &
                              seis,ndp,dp,onset,ierr)
 
 ! one station's traces, from the element block already in swork%displ
@@ -557,7 +557,7 @@
   type(t_gf_taxis), intent(in) :: tax
   type(t_gf_stf), intent(in) :: stf
   type(t_gf_seis_geom), intent(in) :: geom
-  integer, intent(in) :: itypsokern,ista,ndp
+  integer, intent(in) :: kind,ista,ndp
   type(t_gf_seis_work), intent(inout) :: swork
   double precision, dimension(db%nstations,GF_NCOMP,tax%nt), intent(inout) :: seis
   double precision, dimension(ndp,db%nstations,GF_NCOMP,tax%nt), intent(inout) :: dp
@@ -579,7 +579,7 @@
     call gf_interp_trace(swork%displ,geom%hxi,geom%heta,geom%hgam,nt_db,swork%g)
   else
     call gf_strain_trace(swork%displ,geom%dw,nt_db,swork%eps)
-    if (itypsokern == 2) then
+    if (kind == 2) then
       ! d eps / d xi_b: the same kernel with the differentiated table
       do b = 1,NDIM
         call gf_strain_trace(swork%displ,geom%ddw(:,:,:,:,b),nt_db,swork%deps(:,:,:,b))
@@ -634,7 +634,7 @@
 
     !--- the centroid-time partial, from the same padded trace -----------
 
-    if (itypsokern == 2) then
+    if (kind == 2) then
       call gf_partials_time(swork%stfw%xpad,nt,tax%dt_sub,stf,swork%dp10,wsum_raw,ierr)
       if (ierr /= GF_OK) return
       do it = 1,nt
@@ -646,7 +646,7 @@
 
   !--- the moment-tensor partials, from the same strain -------------------
 
-  if (itypsokern >= 1) then
+  if (kind >= 1) then
     call gf_partials_mt(swork%eps,nt_db,loc%theta,loc%phi,scale_amp/src%scale_moment, &
                         tax,stf,swork%stfw,swork%dpm,ierr)
     if (ierr /= GF_OK) return
@@ -662,7 +662,7 @@
 
   !--- the centroid-position partials --------------------------------------
 
-  if (itypsokern == 2) then
+  if (kind == 2) then
     call gf_partials_loc(swork%eps,swork%deps,nt_db,geom%m_cart,geom%dm_dtheta,geom%dm_dphi, &
                          geom%dtheta_dlat,geom%dphi_dlon, &
                          loc%jinv,geom%dxds,scale_amp,tax,stf,swork%stfw,swork%dpl,ierr)
@@ -684,16 +684,16 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine gf_seis(db,src,loc,tax,stf,itypsokern,ndp,seis,dp,t,onset,ierr)
+  subroutine gf_seis(db,src,loc,tax,stf,kind,ndp,seis,dp,t,onset,ierr)
 
 ! seismograms, and optionally their partial derivatives, for either kind of
 ! source on a planned axis
 !
-!   itypsokern = 0   seismograms only; ndp = 0 and dp is a zero-sized array
-!              = 1   plus the six moment-tensor partials
-!              = 2   plus latitude, longitude, depth and centroid time
+!   kind = 0   seismograms only; ndp = 0 and dp is a zero-sized array
+!        = 1   plus the six moment-tensor partials
+!        = 2   plus latitude, longitude, depth and centroid time
 !
-! `ndp` must be what gf_partials_ndp returns for `itypsokern`; it is the
+! `ndp` must be what gf_partials_ndp returns for `kind`; it is the
 ! first extent of `dp` and is checked rather than inferred, so that a caller
 ! who sized its array from the wrong kind is told rather than silently given
 ! the wrong slots.
@@ -714,7 +714,7 @@
   type(t_gf_location), intent(in) :: loc
   type(t_gf_taxis), intent(in) :: tax
   type(t_gf_stf), intent(in) :: stf
-  integer, intent(in) :: itypsokern,ndp
+  integer, intent(in) :: kind,ndp
   double precision, dimension(db%nstations,GF_NCOMP,tax%nt), intent(out) :: seis
   double precision, dimension(ndp,db%nstations,GF_NCOMP,tax%nt), intent(out) :: dp
   double precision, dimension(tax%nt), intent(out) :: t
@@ -754,7 +754,7 @@
   endif
 
   ! the kind, and the array size it implies
-  call gf_partials_ndp(itypsokern,ndp_want,ierr)
+  call gf_partials_ndp(kind,ndp_want,ierr)
   if (ierr /= GF_OK) return
   if (ndp /= ndp_want) then
     call gf_set_error(ierr,GF_ERR_ARG, &
@@ -762,7 +762,7 @@
     return
   endif
 
-  if (itypsokern > 0) then
+  if (kind > 0) then
     if (src%source_type /= GF_SRC_CMT) then
       call gf_set_error(ierr,GF_ERR_ARG, &
         'gf_seis: partial derivatives are defined for a moment-tensor source only')
@@ -780,7 +780,7 @@
     return
   endif
 
-  if (itypsokern == 2 .and. db%topography .and. .not. db%topo_loaded) then
+  if (kind == 2 .and. db%topography .and. .not. db%topo_loaded) then
     call gf_set_error(ierr,GF_ERR_ARG, &
       'gf_seis: the topography grid is not loaded; locate the source first')
     return
@@ -793,10 +793,10 @@
 
   call gf_taxis_times(tax,nt,t)
 
-  call gf_seis_geometry(db,src,loc,itypsokern,geom,ierr)
+  call gf_seis_geometry(db,src,loc,kind,geom,ierr)
   if (ierr /= GF_OK) return
 
-  call gf_seis_work_init(db,src,tax,stf,itypsokern,swork,ier)
+  call gf_seis_work_init(db,src,tax,stf,kind,swork,ier)
   if (ier /= GF_OK) then
     ierr = ier
     goto 99
@@ -812,7 +812,7 @@
     call gf_read_element_displ(db,loc%ielem,ista,swork%displ,ierr)
     if (ierr /= GF_OK) goto 99
 
-    call gf_seis_station(db,src,loc,tax,stf,geom,itypsokern,ista,swork, &
+    call gf_seis_station(db,src,loc,tax,stf,geom,kind,ista,swork, &
                          seis,ndp,dp,onset,ierr)
     if (ierr /= GF_OK) goto 99
 

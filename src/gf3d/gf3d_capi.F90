@@ -119,6 +119,11 @@
   ! the header's GF3D_ANCHOR_TOL: taken from gf_par so that only the C side
   ! of this pair can drift
   double precision, parameter :: GF3D_ANCHOR_TOL = GF_ANCHOR_TOL
+  ! not GF3D_API_VERSION: that name is gf3d.h's #define, and Fortran's
+  ! case-insensitivity would make it the same identifier as the
+  ! gf3d_api_version() entry point below, exactly the trap GF3D_VERSION/
+  ! GF_VERSION_STRING avoids above. Must match gf3d.h's #define.
+  integer(c_int), parameter :: GF_API_VERSION_NUMBER = 2
 
   !-----------------------------------------------------------------
   ! the interoperable mirrors of the library's derived types
@@ -220,7 +225,7 @@
   type(t_gfdb), dimension(GF3D_MAX_HANDLES), save :: handles
   logical, dimension(GF3D_MAX_HANDLES), save :: in_use = .false.
 
-  public :: gf3d_version, gf3d_sizeof, gf3d_last_error, gf3d_error_string
+  public :: gf3d_version, gf3d_api_version, gf3d_sizeof, gf3d_last_error, gf3d_error_string
   public :: gf3d_open, gf3d_close, gf3d_get_info, gf3d_get_station
   public :: gf3d_locate, gf3d_get_plan, gf3d_ndp, gf3d_partial_name
   public :: gf3d_seismograms, gf3d_partials
@@ -515,6 +520,18 @@
   gf3d_version = GF_OK
 
   end function gf3d_version
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  integer(c_int) function gf3d_api_version() bind(C,name='gf3d_api_version')
+
+  implicit none
+
+  gf3d_api_version = GF_API_VERSION_NUMBER
+
+  end function gf3d_api_version
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -863,17 +880,17 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  integer(c_int) function gf3d_ndp(itypsokern,ndp) bind(C,name='gf3d_ndp')
+  integer(c_int) function gf3d_ndp(kind,ndp) bind(C,name='gf3d_ndp')
 
   implicit none
 
-  integer(c_int), value :: itypsokern
+  integer(c_int), value :: kind
   integer(c_int), intent(out) :: ndp
 
   ! local parameters
   integer :: n,ierr
 
-  call gf_partials_ndp(int(itypsokern),n,ierr)
+  call gf_partials_ndp(int(kind),n,ierr)
 
   ndp = int(n,kind=c_int)
 
@@ -935,7 +952,7 @@
 !===================================================================
 !
 
-  subroutine c_extract(h,src,t0_req,itypsokern,nt,ndp,seis,dp,t,onset,loc,ierr)
+  subroutine c_extract(h,src,t0_req,kind,nt,ndp,seis,dp,t,onset,loc,ierr)
 
 ! the body the two extraction entries share
 !
@@ -958,7 +975,7 @@
   integer(c_int), intent(in) :: h
   type(gf3d_source_t), intent(in) :: src
   real(c_double), intent(in) :: t0_req
-  integer(c_int), intent(in) :: itypsokern,nt,ndp
+  integer(c_int), intent(in) :: kind,nt,ndp
   real(c_double), dimension(*), intent(out) :: seis
   real(c_double), dimension(*), intent(out), optional :: dp
   real(c_double), dimension(*), intent(out) :: t
@@ -981,18 +998,18 @@
   call use_handle(h,ierr)
 
   ! the caller's own arithmetic, so it is checked before anything is read
-  if (ierr == GF_OK) call gf_partials_ndp(int(itypsokern),ndp_want,ierr)
+  if (ierr == GF_OK) call gf_partials_ndp(int(kind),ndp_want,ierr)
 
   if (ierr == GF_OK) then
     if (int(ndp) /= ndp_want) call gf_set_error(ierr,GF_ERR_ARG, &
-      'gf3d: ndp does not match itypsokern; ask gf3d_ndp for it')
+      'gf3d: ndp does not match kind; ask gf3d_ndp for it')
   endif
 
   if (ierr == GF_OK) call build_source(src,handles(h),fsrc,ierr)
 
   if (ierr == GF_OK) call resolve_t0(fsrc,t0_req,t0,ierr)
 
-  if (ierr == GF_OK) call gf_extract(handles(h),fsrc,t0,int(itypsokern), &
+  if (ierr == GF_OK) call gf_extract(handles(h),fsrc,t0,int(kind), &
                                      fseis,fdp,ierr,t=ft,onset=fonset,loc=floc)
 
   if (ierr == GF_OK) then
@@ -1062,7 +1079,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  integer(c_int) function gf3d_partials(h,src,t0_req,itypsokern,nt,ndp, &
+  integer(c_int) function gf3d_partials(h,src,t0_req,kind,nt,ndp, &
                                         seis,dp,t,onset,loc) bind(C,name='gf3d_partials')
 
 ! seismograms and their partial derivatives, in C order
@@ -1073,7 +1090,7 @@
   integer(c_int), value :: h
   type(gf3d_source_t), intent(in) :: src
   real(c_double), value :: t0_req
-  integer(c_int), value :: itypsokern
+  integer(c_int), value :: kind
   integer(c_int), value :: nt
   integer(c_int), value :: ndp
   real(c_double), dimension(*), intent(out) :: seis
@@ -1085,13 +1102,13 @@
   ! local parameters
   integer :: ierr
 
-  ! itypsokern 0 has no partials to write into dp, so it is a caller error
+  ! kind 0 has no partials to write into dp, so it is a caller error
   ! here rather than a zero-sized answer
-  if (int(itypsokern) < 1) then
+  if (int(kind) < 1) then
     call gf_set_error(ierr,GF_ERR_ARG, &
-      'gf3d_partials: itypsokern must be 1 or 2; use gf3d_seismograms for 0')
+      'gf3d_partials: kind must be 1 or 2; use gf3d_seismograms for 0')
   else
-    call c_extract(h,src,t0_req,itypsokern,nt,ndp,seis,dp,t,onset,loc,ierr)
+    call c_extract(h,src,t0_req,kind,nt,ndp,seis,dp,t,onset,loc,ierr)
   endif
 
   gf3d_partials = int(ierr,kind=c_int)

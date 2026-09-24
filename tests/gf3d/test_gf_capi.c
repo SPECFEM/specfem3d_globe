@@ -178,6 +178,8 @@ int main(int argc, char **argv)
   ok("version string is not empty", strlen(buf) > 0);
   printf("       library version: %s\n", buf);
 
+  ok("gf3d_api_version agrees with the header", gf3d_api_version() == GF3D_API_VERSION);
+
   /*
    * The struct sizes: this header is transcribed by hand into Fortran
    * bind(C) types and again into Python ctypes.Structures, so the one thing
@@ -376,7 +378,7 @@ int main(int argc, char **argv)
   if (dp == NULL) { fprintf(stderr, "out of memory\n"); return 1; }
 
   ierr = gf3d_partials(h, &src, -1.0, 2, nt, ndp, seis, dp, t, onset, NULL);
-  ok_status("gf3d_partials, itypsokern = 2", ierr, GF_OK);
+  ok_status("gf3d_partials, kind = 2", ierr, GF_OK);
   if (ierr != GF_OK) return 1;
 
   {
@@ -411,7 +413,7 @@ int main(int argc, char **argv)
   ok_status("the wrong ndp refused",
             gf3d_partials(h, &src, -1.0, 2, nt, GF_NDP_MT, seis, dp, t, onset, NULL),
             GF_ERR_ARG);
-  ok_status("itypsokern 0 refused (use gf3d_seismograms)",
+  ok_status("kind 0 refused (use gf3d_seismograms)",
             gf3d_partials(h, &src, -1.0, 0, nt, 0, seis, dp, t, onset, NULL),
             GF_ERR_ARG);
 

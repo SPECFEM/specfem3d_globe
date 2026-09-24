@@ -102,6 +102,8 @@ def main(argv):
     print(f"       library: {gf3d.library_path}")
     print(f"       version: {gf3d.library_version()}")
     ok("a version string came back", len(gf3d.library_version()) > 0)
+    ok("the library's API version agrees with the package's",
+       gf3d._lib.API_VERSION == gf3d._lib.lib.gf3d_api_version())
     # the struct layout check runs at import: a disagreement raises there
 
     # ------------------------------------------------------------------

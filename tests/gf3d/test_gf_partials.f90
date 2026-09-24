@@ -169,16 +169,16 @@
 
   integer :: ndp,ierr
 
-  write(*,'(a)') '1. itypsokern'
+  write(*,'(a)') '1. kind'
 
   call gf_partials_ndp(0,ndp,ierr)
-  call gf_report_true('itypsokern 0: no partials',ierr == GF_OK .and. ndp == 0,nfail)
+  call gf_report_true('kind 0: no partials',ierr == GF_OK .and. ndp == 0,nfail)
   call gf_partials_ndp(1,ndp,ierr)
-  call gf_report_true('itypsokern 1: six',ierr == GF_OK .and. ndp == GF_NDP_MT .and. ndp == 6,nfail)
+  call gf_report_true('kind 1: six',ierr == GF_OK .and. ndp == GF_NDP_MT .and. ndp == 6,nfail)
   call gf_partials_ndp(2,ndp,ierr)
-  call gf_report_true('itypsokern 2: ten',ierr == GF_OK .and. ndp == GF_NDP_LOC .and. ndp == 10,nfail)
+  call gf_report_true('kind 2: ten',ierr == GF_OK .and. ndp == GF_NDP_LOC .and. ndp == 10,nfail)
   call gf_partials_ndp(3,ndp,ierr)
-  call gf_report_true('itypsokern 3 (half duration) is refused',ierr /= GF_OK .and. ndp == 0,nfail)
+  call gf_report_true('kind 3 (half duration) is refused',ierr /= GF_OK .and. ndp == 0,nfail)
   call gf_report_true('slot names in GF3DF order', &
                       GF_DP_NAME(GF_DP_MRR) == 'Mrr' .and. GF_DP_NAME(GF_DP_MTP) == 'Mtp' .and. &
                       GF_DP_NAME(GF_DP_LAT) == 'lat' .and. GF_DP_NAME(GF_DP_DEP) == 'dep' .and. &

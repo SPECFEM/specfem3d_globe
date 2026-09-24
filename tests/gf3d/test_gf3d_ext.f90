@@ -145,13 +145,13 @@
       type(c_ptr), value :: loc
     end function c_gf3d_seismograms
 
-    integer(c_int) function c_gf3d_partials(h,src,t0_req,itypsokern,nt,ndp, &
+    integer(c_int) function c_gf3d_partials(h,src,t0_req,kind,nt,ndp, &
                                             seis,dp,t,onset,loc) bind(C,name='gf3d_partials')
       import :: c_int,c_double,c_ptr,gf3d_source_t
       integer(c_int), value :: h
       type(gf3d_source_t), intent(in) :: src
       real(c_double), value :: t0_req
-      integer(c_int), value :: itypsokern,nt,ndp
+      integer(c_int), value :: kind,nt,ndp
       real(c_double), dimension(*), intent(out) :: seis,dp,t,onset
       type(c_ptr), value :: loc
     end function c_gf3d_partials
@@ -235,7 +235,7 @@
   if (ierr /= GF_OK) stop 1
 
   call get_partials(db,src,t0,2,synt,dp,ierr,t)
-  call report_true('   get_partials, itypsokern 2   ',ierr == GF_OK,nfail)
+  call report_true('   get_partials, kind 2   ',ierr == GF_OK,nfail)
   if (ierr /= GF_OK) then
     write(*,*) '   ',trim(gf_errmsg)
     stop 1
@@ -318,7 +318,7 @@
 
   call gf_extract(db,src,t0,2,synt,dp,ierr,t=t,onset=onset, &
                   loc=locx,tax=taxx,stf=stfx)
-  call report_true('   gf_extract, itypsokern 2',ierr == GF_OK,nfail)
+  call report_true('   gf_extract, kind 2',ierr == GF_OK,nfail)
 
   if (ierr == GF_OK) then
     call report_true('   it reports the element it used',locx%ielem > 0,nfail)

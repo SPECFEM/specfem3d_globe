@@ -83,7 +83,7 @@
   logical :: with_topo,do_check,want_ascii,want_sac,want_sacan
   logical :: have_station,have_t0,have_partials,have_format
   double precision :: lat,lon,depth_km,worst_err,t0_req
-  integer :: ielem_worst,ista,ista_worst,itypsokern,ndp
+  integer :: ielem_worst,ista,ista_worst,kind,ndp
   double precision, dimension(:,:,:), allocatable :: seis
   double precision, dimension(:,:,:,:), allocatable :: dp
   double precision, dimension(:), allocatable :: tsec,onset
@@ -194,7 +194,7 @@
     ! resolved below, once the source is read: absent --t0 means specfem's
     ! own rule for this source
     t0_req = -1.d0
-    itypsokern = 0
+    kind = 0
     ! SAC is the deliverable and the default; the comparison harness asks
     ! for ascii explicitly (the Snakefiles under EXAMPLES/green_function_database)
     format = 'sac'
@@ -232,8 +232,8 @@
           'Error: --partials needs a kernel type: 1 (moment tensor) or 2 (and centroid)')
         iarg = iarg + 1
         call get_command_argument(iarg,arg)
-        read(arg,*,iostat=ios) itypsokern
-        if (ios /= 0 .or. itypsokern < 1 .or. itypsokern > 2) call die( &
+        read(arg,*,iostat=ios) kind
+        if (ios /= 0 .or. kind < 1 .or. kind > 2) call die( &
           'Error: --partials takes 1 (moment tensor) or 2 (and centroid), not '//trim(arg))
         have_partials = .true.
       case default
@@ -277,7 +277,7 @@
     write(*,'(a)') ''
 
     ! cross-check #5: needs src, so it sits after the read
-    if (itypsokern > 0 .and. src%source_type /= GF_SRC_CMT) call die( &
+    if (kind > 0 .and. src%source_type /= GF_SRC_CMT) call die( &
       'Error: --partials is defined for a CMTSOLUTION, not a FORCESOLUTION')
 
     if (trim(mode) == '--dump') then
@@ -306,7 +306,7 @@
       ! completed even when ierr /= GF_OK, so a failure inside the
       ! extraction itself still reports where the source was and what
       ! conversion was planned.
-      call gf_extract(db,src,t0_req,itypsokern,seis,dp,ierr,t=tsec,onset=onset, &
+      call gf_extract(db,src,t0_req,kind,seis,dp,ierr,t=tsec,onset=onset, &
                        loc=loc,tax=tax,stf=stf)
 
       if (loc%ielem > 0) then
@@ -330,7 +330,7 @@
         if (ierr /= GF_OK) call die('Error writing the seismograms',ierr)
         write(*,'(a,i0,a,a)') 'wrote ',db%nstations,' ASCII seismogram files to ',trim(outdir)
 
-        if (itypsokern > 0) then
+        if (kind > 0) then
           call gf_write_partials(db,src,loc,tax,stf,ndp,dp,tsec,outdir,ierr)
           if (ierr /= GF_OK) call die('Error writing the partials',ierr)
           write(*,'(a,i0,a,i0,a,a)') 'wrote ',ndp,' ASCII partials per component for ',db%nstations, &
