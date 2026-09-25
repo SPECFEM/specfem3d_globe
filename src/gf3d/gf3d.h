@@ -92,7 +92,7 @@ extern "C" {
 #endif
 
 /* bumped when anything below changes incompatibly */
-#define GF3D_API_VERSION 1
+#define GF3D_API_VERSION 2
 
 /* fits 'NET.STA': MAX_LENGTH_NETWORK_NAME + 1 + MAX_LENGTH_STATION_NAME */
 #define GF3D_STRLEN 64
@@ -136,8 +136,8 @@ enum gf3d_source_type {
 /* fixed sizes */
 enum {
   GF_NCOMP   = 3,   /* N, E, Z */
-  GF_NDP_MT  = 6,   /* itypsokern = 1: the six moment-tensor partials */
-  GF_NDP_LOC = 10   /* itypsokern = 2: those plus lat, lon, depth, time */
+  GF_NDP_MT  = 6,   /* kind = 1: the six moment-tensor partials */
+  GF_NDP_LOC = 10   /* kind = 2: those plus lat, lon, depth, time */
 };
 
 /*
@@ -263,6 +263,10 @@ typedef struct {
    null-terminated. */
 int gf3d_version(char *buf, int buflen);
 
+/* GF3D_API_VERSION this library was built against, for a caller that loaded
+   it dynamically and cannot read the header's #define. */
+int gf3d_api_version(void);
+
 /* c_sizeof of each struct above, so that a binding written against this
    header can check at load time that it agrees with the library it found.
    Any pointer may be NULL. */
@@ -323,8 +327,8 @@ int gf3d_locate(gf3d_handle h, double lat, double lon, double depth_km,
 int gf3d_get_plan(gf3d_handle h, const gf3d_source *src, double t0_req,
                   gf3d_plan *plan);
 
-/* number of partials for itypsokern = 0, 1 or 2: 0, GF_NDP_MT, GF_NDP_LOC */
-int gf3d_ndp(int itypsokern, int *ndp);
+/* number of partials for kind = 0, 1 or 2: 0, GF_NDP_MT, GF_NDP_LOC */
+int gf3d_ndp(int kind, int *ndp);
 
 /* name ("Mrr" .. "tim") and unit ("m/dyne-cm", "m/deg", "m/km", "m/s") of
    partial ip, 0-based. Either buffer may be NULL. */
@@ -338,7 +342,9 @@ int gf3d_partial_name(int ip, char *name, int namelen, char *unit, int unitlen);
  * Seismograms at every station.
  *
  *   nt      must equal plan.nt from gf3d_get_plan() with the same source
- *           and t0_req
+ *           and t0_req. A wrong nt is refused with GF_ERR_ARG and nothing
+ *           is written to any output buffer -- but the check happens after
+ *           the extraction, so a wrong nt costs the extraction's time.
  *   seis    [nstations][3][nt], metres, N/E/Z          (caller-allocated)
  *   t       [nt], seconds relative to the centroid time
  *   onset   [nstations]; the amplitude just before the record starts,
@@ -354,9 +360,10 @@ int gf3d_seismograms(gf3d_handle h, const gf3d_source *src, double t0_req,
 /*
  * Seismograms and their partial derivatives, for a moment-tensor source.
  *
- *   itypsokern  1 for the six moment-tensor partials, 2 for those plus
+ *   kind        1 for the six moment-tensor partials, 2 for those plus
  *               d/d(latitude), d/d(longitude), d/d(depth), d/d(time)
- *   ndp         must equal gf3d_ndp(itypsokern)
+ *   ndp         must equal gf3d_ndp(kind); refused before any element
+ *               is read, unlike nt
  *   dp          [nstations][ndp][3][nt]                (caller-allocated)
  *
  * The partials are analytic throughout -- no finite differences -- and are
@@ -368,7 +375,7 @@ int gf3d_seismograms(gf3d_handle h, const gf3d_source *src, double t0_req,
  * against a moment tensor.
  */
 int gf3d_partials(gf3d_handle h, const gf3d_source *src, double t0_req,
-                  int itypsokern, int nt, int ndp,
+                  int kind, int nt, int ndp,
                   double *seis, double *dp, double *t, double *onset,
                   gf3d_location *loc);
 

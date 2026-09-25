@@ -124,7 +124,8 @@ echo "exists: include/gf3d.mod" >> $testdir/results.log
 echo "checking the exported C symbols" >> $testdir/results.log
 if command -v nm > /dev/null 2>&1; then
   for sym in gf3d_open gf3d_close gf3d_get_info gf3d_get_station gf3d_locate \
-             gf3d_get_plan gf3d_seismograms gf3d_partials gf3d_last_error gf3d_sizeof; do
+             gf3d_get_plan gf3d_seismograms gf3d_partials gf3d_last_error gf3d_sizeof \
+             gf3d_api_version; do
     if ! nm -D --defined-only ./lib/libgf3d.so 2>/dev/null | grep -q " T $sym$"; then
       echo "libgf3d.so does not export $sym, please check..." >> $testdir/results.log
       exit 1

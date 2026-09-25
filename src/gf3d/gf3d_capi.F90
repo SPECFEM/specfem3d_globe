@@ -35,6 +35,13 @@
 !----
 !----   * every entry is a *function* returning integer(c_int), one of the
 !----     GF_* codes, and writes its outputs through arguments;
+!----   * no bind(C) function here contains a `return`. Each is a chain of
+!----     `if (ierr == GF_OK) call ...` with the assignment to the result
+!----     name as its last statement, so there is one exit to audit. Where a
+!----     stage is an *expression* over handles(h) rather than a call, the
+!----     chain link has to be an `if (...) then ... endif` block: Fortran's
+!----     .and. is not short-circuiting, so `ierr == GF_OK .and.
+!----     handles(h)%nstations > 0` would index the table anyway;
 !----   * the caller allocates every output array; nothing allocatable
 !----     crosses the boundary;
 !----   * strings come in null-terminated as character(kind=c_char),
@@ -83,29 +90,23 @@
 
   use constants, only: MAX_STRING_LEN
 
+  ! the same module a downstream Fortran caller uses, so that this facade
+  ! cannot reach anything the public surface does not already offer
+  !
   ! GF3D_VERSION is renamed on import: Fortran is case-insensitive, so the
   ! constant and the gf3d_version() entry point below would otherwise be the
   ! same name. Renaming the constant rather than the function keeps every
   ! procedure here spelled exactly like the C symbol it binds.
-  use gf_par, only: t_gfdb, t_gf_source, t_gf_location, t_gf_taxis, t_gf_stf, &
-                    GF_VERSION_STRING => GF3D_VERSION, GF_NCOMP, &
-                    GF_OK, GF_ERR_ARG, GF_ERR_ALLOC, &
-                    GF_SRC_FORCE, GF_SRC_CMT, GF_ANCHOR_TOL, &
-                    gf_set_error, gf_error_string, gf_errmsg
-
-  use gf_shared_params, only: gf_init_shared_params
-
-  use gf_database, only: gf_open, gf_close
-
-  use gf_source, only: gf_source_set_cmt, gf_source_set_force
-
-  use gf_locate, only: gf_locate_source, gf_locate_release, gf_locate_tree_owner
-
-  use gf_seismograms, only: gf_seis_plan, gf_seis
-
-  use gf_stf, only: gf_default_t0
-
-  use gf_partials, only: gf_partials_ndp, GF_NDP_LOC, GF_DP_NAME, GF_DP_UNIT
+  use gf3d, only: t_gfdb, t_gf_source, t_gf_location, t_gf_taxis, t_gf_stf, &
+                  GF_VERSION_STRING => GF3D_VERSION, GF_NCOMP, &
+                  GF_OK, GF_ERR_ARG, GF_ERR_ALLOC, &
+                  GF_SRC_FORCE, GF_SRC_CMT, GF_ANCHOR_TOL, &
+                  gf_set_error, gf_error_string, gf_errmsg, &
+                  gf_open, gf_close, &
+                  gf_source_set_cmt, gf_source_set_force, &
+                  gf_locate_source, gf_locate_release, gf_locate_tree_owner, &
+                  gf_seis_plan, gf_extract, gf_default_t0, &
+                  gf_partials_ndp, GF_NDP_LOC, GF_DP_NAME, GF_DP_UNIT
 
   implicit none
 
@@ -118,6 +119,11 @@
   ! the header's GF3D_ANCHOR_TOL: taken from gf_par so that only the C side
   ! of this pair can drift
   double precision, parameter :: GF3D_ANCHOR_TOL = GF_ANCHOR_TOL
+  ! not GF3D_API_VERSION: that name is gf3d.h's #define, and Fortran's
+  ! case-insensitivity would make it the same identifier as the
+  ! gf3d_api_version() entry point below, exactly the trap GF3D_VERSION/
+  ! GF_VERSION_STRING avoids above. Must match gf3d.h's #define.
+  integer(c_int), parameter :: GF_API_VERSION_NUMBER = 2
 
   !-----------------------------------------------------------------
   ! the interoperable mirrors of the library's derived types
@@ -219,7 +225,7 @@
   type(t_gfdb), dimension(GF3D_MAX_HANDLES), save :: handles
   logical, dimension(GF3D_MAX_HANDLES), save :: in_use = .false.
 
-  public :: gf3d_version, gf3d_sizeof, gf3d_last_error, gf3d_error_string
+  public :: gf3d_version, gf3d_api_version, gf3d_sizeof, gf3d_last_error, gf3d_error_string
   public :: gf3d_open, gf3d_close, gf3d_get_info, gf3d_get_station
   public :: gf3d_locate, gf3d_get_plan, gf3d_ndp, gf3d_partial_name
   public :: gf3d_seismograms, gf3d_partials
@@ -519,6 +525,18 @@
 !-------------------------------------------------------------------------------------------------
 !
 
+  integer(c_int) function gf3d_api_version() bind(C,name='gf3d_api_version')
+
+  implicit none
+
+  gf3d_api_version = GF_API_VERSION_NUMBER
+
+  end function gf3d_api_version
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   integer(c_int) function gf3d_sizeof(source,info,station,location,plan) bind(C,name='gf3d_sizeof')
 
 ! the size of each interoperable struct, so that a binding written against
@@ -611,42 +629,39 @@
   character(len=MAX_STRING_LEN) :: fpath
   integer :: islot,i,ierr
 
+  ierr = GF_OK
   h = 0
+  islot = 0
 
   call get_string(path,fpath)
 
-  if (len_trim(fpath) == 0) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf3d_open: no database path given')
-    gf3d_open = int(ierr,kind=c_int)
-    return
+  if (len_trim(fpath) == 0) call gf_set_error(ierr,GF_ERR_ARG, &
+    'gf3d_open: no database path given')
+
+  ! islot stays 0 when the table is full, and the error set here is what keeps
+  ! every handles(islot) below out of reach of a zero index
+  if (ierr == GF_OK) then
+    do i = 1,GF3D_MAX_HANDLES
+      if (.not. in_use(i)) then
+        islot = i
+        exit
+      endif
+    enddo
+    if (islot == 0) call gf_set_error(ierr,GF_ERR_ALLOC, &
+      'gf3d_open: too many databases open at once')
   endif
 
-  islot = 0
-  do i = 1,GF3D_MAX_HANDLES
-    if (.not. in_use(i)) then
-      islot = i
-      exit
-    endif
-  enddo
+  ! gf_open closes what it opened, so a failure here leaves the slot free
+  ! and h at 0
+  if (ierr == GF_OK) call gf_open(trim(fpath),handles(islot),ierr, &
+                                  check_completion = (check_completion /= 0))
 
-  if (islot == 0) then
-    call gf_set_error(ierr,GF_ERR_ALLOC,'gf3d_open: too many databases open at once')
-    gf3d_open = int(ierr,kind=c_int)
-    return
+  if (ierr == GF_OK) then
+    in_use(islot) = .true.
+    h = int(islot,kind=c_int)
   endif
 
-  call gf_open(trim(fpath),handles(islot),ierr,check_completion = (check_completion /= 0))
-
-  if (ierr /= GF_OK) then
-    ! gf_open closes what it opened; the slot stays free
-    gf3d_open = int(ierr,kind=c_int)
-    return
-  endif
-
-  in_use(islot) = .true.
-  h = int(islot,kind=c_int)
-
-  gf3d_open = GF_OK
+  gf3d_open = int(ierr,kind=c_int)
 
   end function gf3d_open
 
@@ -671,26 +686,20 @@
   ! local parameters
   integer :: ierr
 
-  if (h < 1 .or. h > GF3D_MAX_HANDLES) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf3d_close: handle out of range')
-    gf3d_close = int(ierr,kind=c_int)
-    return
+  ierr = GF_OK
+
+  call use_handle(h,ierr)
+
+  ! gf_release() is not the pair to reach for here: it releases the tree
+  ! unconditionally. The owner test must come before gf_close, which clears
+  ! open_id.
+  if (ierr == GF_OK) then
+    if (gf_locate_tree_owner() == handles(h)%open_id) call gf_locate_release()
+    call gf_close(handles(h))
+    in_use(h) = .false.
   endif
 
-  if (.not. in_use(h)) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf3d_close: handle is not open')
-    gf3d_close = int(ierr,kind=c_int)
-    return
-  endif
-
-  ! before gf_close, which clears open_id
-  if (gf_locate_tree_owner() == handles(h)%open_id) call gf_locate_release()
-
-  call gf_close(handles(h))
-
-  in_use(h) = .false.
-
-  gf3d_close = GF_OK
+  gf3d_close = int(ierr,kind=c_int)
 
   end function gf3d_close
 
@@ -708,39 +717,44 @@
   ! local parameters
   integer :: ierr
 
+  ierr = GF_OK
+
   call use_handle(h,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_get_info = int(ierr,kind=c_int)
-    return
+
+  ! a block, not one guard per line: every statement below is an expression
+  ! over handles(h), and an expression is evaluated whether or not an .and.
+  ! to its left is false
+  if (ierr == GF_OK) then
+
+    info%nelem          = int(handles(h)%nelem,kind=c_int)
+    info%nstations      = int(handles(h)%nstations,kind=c_int)
+    info%nstep          = int(handles(h)%nstep,kind=c_int)
+    info%nt_subsampled  = int(handles(h)%nt_subsampled,kind=c_int)
+    info%subsample_step = int(handles(h)%subsample_step,kind=c_int)
+    info%ngllx          = int(handles(h)%ngllx,kind=c_int)
+    info%nglly          = int(handles(h)%nglly,kind=c_int)
+    info%ngllz          = int(handles(h)%ngllz,kind=c_int)
+
+    info%topography  = 0 ; if (handles(h)%topography)  info%topography  = 1
+    info%ellipticity = 0 ; if (handles(h)%ellipticity) info%ellipticity = 1
+    info%rotation    = 0 ; if (handles(h)%rotation)    info%rotation    = 1
+    info%attenuation = 0 ; if (handles(h)%attenuation) info%attenuation = 1
+    info%gravity     = 0 ; if (handles(h)%gravity)     info%gravity     = 1
+    info%pad_        = 0
+
+    info%dt          = handles(h)%dt
+    info%t0          = handles(h)%t0
+    info%scale_displ = handles(h)%scale_displ
+
+    ! the handle's own, which gf_open resolved: RHOAV falls back to the build's
+    ! Earth default there when the database does not carry the attribute, so
+    ! this reports what the library uses without reading process-wide state
+    info%r_planet = handles(h)%R_PLANET
+    info%rhoav    = handles(h)%RHOAV
+
   endif
 
-  info%nelem          = int(handles(h)%nelem,kind=c_int)
-  info%nstations      = int(handles(h)%nstations,kind=c_int)
-  info%nstep          = int(handles(h)%nstep,kind=c_int)
-  info%nt_subsampled  = int(handles(h)%nt_subsampled,kind=c_int)
-  info%subsample_step = int(handles(h)%subsample_step,kind=c_int)
-  info%ngllx          = int(handles(h)%ngllx,kind=c_int)
-  info%nglly          = int(handles(h)%nglly,kind=c_int)
-  info%ngllz          = int(handles(h)%ngllz,kind=c_int)
-
-  info%topography  = 0 ; if (handles(h)%topography)  info%topography  = 1
-  info%ellipticity = 0 ; if (handles(h)%ellipticity) info%ellipticity = 1
-  info%rotation    = 0 ; if (handles(h)%rotation)    info%rotation    = 1
-  info%attenuation = 0 ; if (handles(h)%attenuation) info%attenuation = 1
-  info%gravity     = 0 ; if (handles(h)%gravity)     info%gravity     = 1
-  info%pad_        = 0
-
-  info%dt          = handles(h)%dt
-  info%t0          = handles(h)%t0
-  info%scale_displ = handles(h)%scale_displ
-
-  ! the handle's own, which gf_open resolved: RHOAV falls back to the build's
-  ! Earth default there when the database does not carry the attribute, so
-  ! this reports what the library uses without reading process-wide state
-  info%r_planet = handles(h)%R_PLANET
-  info%rhoav    = handles(h)%RHOAV
-
-  gf3d_get_info = GF_OK
+  gf3d_get_info = int(ierr,kind=c_int)
 
   end function gf3d_get_info
 
@@ -761,33 +775,38 @@
   ! local parameters
   integer :: ierr,i
 
+  ierr = GF_OK
+
   call use_handle(h,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_get_station = int(ierr,kind=c_int)
-    return
-  endif
 
   i = int(ista) + 1
 
-  if (i < 1 .or. i > handles(h)%nstations) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf3d_get_station: station index out of range')
-    gf3d_get_station = int(ierr,kind=c_int)
-    return
+  ! the range test reads handles(h)%nstations and the body reads
+  ! handles(h)%stations(i), so both sit inside the handle's own block and the
+  ! second inside the range's
+  if (ierr == GF_OK) then
+    if (i < 1 .or. i > handles(h)%nstations) then
+
+      call gf_set_error(ierr,GF_ERR_ARG,'gf3d_get_station: station index out of range')
+
+    else
+
+      call put_string(handles(h)%stations(i)%id,sta%id,GF3D_STRLEN)
+      call put_string(handles(h)%stations(i)%network,sta%network,GF3D_STRLEN)
+      call put_string(handles(h)%stations(i)%station,sta%station,GF3D_STRLEN)
+
+      sta%latitude            = handles(h)%stations(i)%latitude
+      sta%longitude           = handles(h)%stations(i)%longitude
+      sta%depth_m             = handles(h)%stations(i)%depth
+      sta%hdur                = handles(h)%stations(i)%hdur
+      sta%f_cutoff            = handles(h)%stations(i)%f_cutoff
+      sta%factor_force_source = handles(h)%stations(i)%factor_force_source
+      sta%time_shift          = handles(h)%stations(i)%time_shift
+
+    endif
   endif
 
-  call put_string(handles(h)%stations(i)%id,sta%id,GF3D_STRLEN)
-  call put_string(handles(h)%stations(i)%network,sta%network,GF3D_STRLEN)
-  call put_string(handles(h)%stations(i)%station,sta%station,GF3D_STRLEN)
-
-  sta%latitude            = handles(h)%stations(i)%latitude
-  sta%longitude           = handles(h)%stations(i)%longitude
-  sta%depth_m             = handles(h)%stations(i)%depth
-  sta%hdur                = handles(h)%stations(i)%hdur
-  sta%f_cutoff            = handles(h)%stations(i)%f_cutoff
-  sta%factor_force_source = handles(h)%stations(i)%factor_force_source
-  sta%time_shift          = handles(h)%stations(i)%time_shift
-
-  gf3d_get_station = GF_OK
+  gf3d_get_station = int(ierr,kind=c_int)
 
   end function gf3d_get_station
 
@@ -809,21 +828,15 @@
   type(t_gf_location) :: floc
   integer :: ierr
 
+  ierr = GF_OK
+
   call use_handle(h,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_locate = int(ierr,kind=c_int)
-    return
-  endif
 
-  call gf_locate_source(handles(h),lat,lon,depth_km,floc,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_locate = int(ierr,kind=c_int)
-    return
-  endif
+  if (ierr == GF_OK) call gf_locate_source(handles(h),lat,lon,depth_km,floc,ierr)
 
-  call fill_location(floc,loc)
+  if (ierr == GF_OK) call fill_location(floc,loc)
 
-  gf3d_locate = GF_OK
+  gf3d_locate = int(ierr,kind=c_int)
 
   end function gf3d_locate
 
@@ -847,33 +860,19 @@
   double precision :: t0
   integer :: ierr
 
+  ierr = GF_OK
+
   call use_handle(h,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_get_plan = int(ierr,kind=c_int)
-    return
-  endif
 
-  call build_source(src,handles(h),fsrc,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_get_plan = int(ierr,kind=c_int)
-    return
-  endif
+  if (ierr == GF_OK) call build_source(src,handles(h),fsrc,ierr)
 
-  call resolve_t0(fsrc,t0_req,t0,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_get_plan = int(ierr,kind=c_int)
-    return
-  endif
+  if (ierr == GF_OK) call resolve_t0(fsrc,t0_req,t0,ierr)
 
-  call gf_seis_plan(handles(h),fsrc,t0,tax,stf,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_get_plan = int(ierr,kind=c_int)
-    return
-  endif
+  if (ierr == GF_OK) call gf_seis_plan(handles(h),fsrc,t0,tax,stf,ierr)
 
-  call fill_plan(tax,stf,plan)
+  if (ierr == GF_OK) call fill_plan(tax,stf,plan)
 
-  gf3d_get_plan = GF_OK
+  gf3d_get_plan = int(ierr,kind=c_int)
 
   end function gf3d_get_plan
 
@@ -881,17 +880,17 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  integer(c_int) function gf3d_ndp(itypsokern,ndp) bind(C,name='gf3d_ndp')
+  integer(c_int) function gf3d_ndp(kind,ndp) bind(C,name='gf3d_ndp')
 
   implicit none
 
-  integer(c_int), value :: itypsokern
+  integer(c_int), value :: kind
   integer(c_int), intent(out) :: ndp
 
   ! local parameters
   integer :: n,ierr
 
-  call gf_partials_ndp(int(itypsokern),n,ierr)
+  call gf_partials_ndp(int(kind),n,ierr)
 
   ndp = int(n,kind=c_int)
 
@@ -920,25 +919,30 @@
   character(kind=c_char), dimension(:), pointer :: buf
   integer :: i,ierr
 
+  ierr = GF_OK
+
   i = int(ip) + 1
 
-  if (i < 1 .or. i > GF_NDP_LOC) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf3d_partial_name: partial index out of range')
-    gf3d_partial_name = int(ierr,kind=c_int)
-    return
+  if (i < 1 .or. i > GF_NDP_LOC) call gf_set_error(ierr,GF_ERR_ARG, &
+    'gf3d_partial_name: partial index out of range')
+
+  ! a block: GF_DP_NAME(i) and GF_DP_UNIT(i) are subscripted, so the range
+  ! test has to have kept them out of reach before either is evaluated
+  if (ierr == GF_OK) then
+
+    if (c_associated(name) .and. namelen > 0) then
+      call c_f_pointer(name,buf,(/ int(namelen) /))
+      call put_string(GF_DP_NAME(i),buf,int(namelen))
+    endif
+
+    if (c_associated(unit) .and. unitlen > 0) then
+      call c_f_pointer(unit,buf,(/ int(unitlen) /))
+      call put_string(GF_DP_UNIT(i),buf,int(unitlen))
+    endif
+
   endif
 
-  if (c_associated(name) .and. namelen > 0) then
-    call c_f_pointer(name,buf,(/ int(namelen) /))
-    call put_string(GF_DP_NAME(i),buf,int(namelen))
-  endif
-
-  if (c_associated(unit) .and. unitlen > 0) then
-    call c_f_pointer(unit,buf,(/ int(unitlen) /))
-    call put_string(GF_DP_UNIT(i),buf,int(unitlen))
-  endif
-
-  gf3d_partial_name = GF_OK
+  gf3d_partial_name = int(ierr,kind=c_int)
 
   end function gf3d_partial_name
 
@@ -948,13 +952,107 @@
 !===================================================================
 !
 
+  subroutine c_extract(h,src,t0_req,kind,nt,ndp,seis,dp,t,onset,loc,ierr)
+
+! the body the two extraction entries share
+!
+! `dp` is optional -- this is not a bind(C) procedure, so it may be -- and
+! absent for the seismogram-only entry. `loc` is the C ABI's nullable
+! pointer; everything else is a caller-allocated buffer in C order.
+!
+! Written in chain form: each stage runs only while ierr is GF_OK, so there
+! is one exit, and `handles(h)` is reached only inside a call argument or a
+! guarded block -- Fortran's .and. does not short-circuit, so the guard has
+! to be the `if` itself.
+!
+! The nt check is made after the extraction rather than before it, because
+! the plan it checks against is now inside gf_extract. A caller that sized
+! its buffers from a different plan therefore pays for one extraction it
+! cannot have; in exchange, no buffer is ever written at the wrong size.
+
+  implicit none
+
+  integer(c_int), intent(in) :: h
+  type(gf3d_source_t), intent(in) :: src
+  real(c_double), intent(in) :: t0_req
+  integer(c_int), intent(in) :: kind,nt,ndp
+  real(c_double), dimension(*), intent(out) :: seis
+  real(c_double), dimension(*), intent(out), optional :: dp
+  real(c_double), dimension(*), intent(out) :: t
+  real(c_double), dimension(*), intent(out) :: onset
+  type(c_ptr), intent(in) :: loc
+  integer, intent(out) :: ierr
+
+  ! local parameters
+  type(t_gf_source) :: fsrc
+  type(t_gf_location) :: floc
+  type(gf3d_location_t), pointer :: ploc
+  double precision, dimension(:,:,:), allocatable :: fseis
+  double precision, dimension(:,:,:,:), allocatable :: fdp
+  double precision, dimension(:), allocatable :: ft,fonset
+  double precision :: t0
+  integer :: ndp_want,nsta,nt_got,it,ista
+
+  ierr = GF_OK
+
+  call use_handle(h,ierr)
+
+  ! the caller's own arithmetic, so it is checked before anything is read
+  if (ierr == GF_OK) call gf_partials_ndp(int(kind),ndp_want,ierr)
+
+  if (ierr == GF_OK) then
+    if (int(ndp) /= ndp_want) call gf_set_error(ierr,GF_ERR_ARG, &
+      'gf3d: ndp does not match kind; ask gf3d_ndp for it')
+  endif
+
+  if (ierr == GF_OK) call build_source(src,handles(h),fsrc,ierr)
+
+  if (ierr == GF_OK) call resolve_t0(fsrc,t0_req,t0,ierr)
+
+  if (ierr == GF_OK) call gf_extract(handles(h),fsrc,t0,int(kind), &
+                                     fseis,fdp,ierr,t=ft,onset=fonset,loc=floc)
+
+  if (ierr == GF_OK) then
+    nsta = size(fseis,1)
+    nt_got = size(fseis,3)
+    if (int(nt) /= nt_got) then
+      call gf_set_error(ierr,GF_ERR_ARG, &
+        'gf3d: nt does not match the plan; call gf3d_get_plan first')
+    else
+      call pack_seis(nsta,nt_got,fseis,seis)
+      if (present(dp)) call pack_dp(ndp_want,nsta,nt_got,fdp,dp)
+      do it = 1,nt_got
+        t(it) = ft(it)
+      enddo
+      do ista = 1,nsta
+        onset(ista) = fonset(ista)
+      enddo
+      if (c_associated(loc)) then
+        call c_f_pointer(loc,ploc)
+        call fill_location(floc,ploc)
+      endif
+    endif
+  endif
+
+  if (allocated(fseis)) deallocate(fseis)
+  if (allocated(fdp)) deallocate(fdp)
+  if (allocated(ft)) deallocate(ft)
+  if (allocated(fonset)) deallocate(fonset)
+
+  end subroutine c_extract
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   integer(c_int) function gf3d_seismograms(h,src,t0_req,nt,seis,t,onset,loc) &
     bind(C,name='gf3d_seismograms')
 
 ! seismograms at every station, in C order [ista][icomp][it]
 !
-! Mirrors gf3d_main.F90's --seis path exactly: locate (which also loads the
-! topography grid, lazily), plan, extract. `loc` may be NULL.
+! The same gf_extract() call xgf3d --seis and the Fortran API make: locate
+! (which also loads the topography grid, lazily), plan, extract. `loc` may
+! be NULL.
 
   implicit none
 
@@ -968,83 +1066,10 @@
   type(c_ptr), value :: loc
 
   ! local parameters
-  type(t_gf_source) :: fsrc
-  type(t_gf_location) :: floc
-  type(gf3d_location_t), pointer :: ploc
-  type(t_gf_taxis) :: tax
-  type(t_gf_stf) :: stf
-  double precision, dimension(:,:,:), allocatable :: fseis
-  ! gf_seis takes the partials array by explicit shape; this route asks for
-  ! none, so it passes a zero-sized one
-  double precision, dimension(:,:,:,:), allocatable :: fdp_none
-  double precision, dimension(:), allocatable :: ft,fonset
-  double precision :: t0
-  integer :: ierr,ier,nsta,it,ista
+  integer :: ierr
 
-  call use_handle(h,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_seismograms = int(ierr,kind=c_int)
-    return
-  endif
-
-  call build_source(src,handles(h),fsrc,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_seismograms = int(ierr,kind=c_int)
-    return
-  endif
-
-  call gf_locate_source(handles(h),fsrc%latitude,fsrc%longitude,fsrc%depth,floc,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_seismograms = int(ierr,kind=c_int)
-    return
-  endif
-
-  call resolve_t0(fsrc,t0_req,t0,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_seismograms = int(ierr,kind=c_int)
-    return
-  endif
-
-  call gf_seis_plan(handles(h),fsrc,t0,tax,stf,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_seismograms = int(ierr,kind=c_int)
-    return
-  endif
-
-  if (int(nt) /= tax%nt) then
-    call gf_set_error(ierr,GF_ERR_ARG, &
-      'gf3d_seismograms: nt does not match the plan; call gf3d_get_plan first')
-    gf3d_seismograms = int(ierr,kind=c_int)
-    return
-  endif
-
-  nsta = handles(h)%nstations
-
-  allocate(fseis(nsta,GF_NCOMP,tax%nt),ft(tax%nt),fonset(nsta), &
-           fdp_none(0,nsta,GF_NCOMP,tax%nt),stat=ier)
-  if (ier /= 0) then
-    call gf_set_error(ierr,GF_ERR_ALLOC,'gf3d_seismograms: could not allocate the work arrays')
-    gf3d_seismograms = int(ierr,kind=c_int)
-    return
-  endif
-
-  call gf_seis(handles(h),fsrc,floc,tax,stf,0,0,fseis,fdp_none,ft,fonset,ierr)
-
-  if (ierr == GF_OK) then
-    call pack_seis(nsta,tax%nt,fseis,seis)
-    do it = 1,tax%nt
-      t(it) = ft(it)
-    enddo
-    do ista = 1,nsta
-      onset(ista) = fonset(ista)
-    enddo
-    if (c_associated(loc)) then
-      call c_f_pointer(loc,ploc)
-      call fill_location(floc,ploc)
-    endif
-  endif
-
-  deallocate(fseis,fdp_none,ft,fonset)
+  call c_extract(h,src,t0_req,0_c_int,nt,0_c_int,seis, &
+                 t=t,onset=onset,loc=loc,ierr=ierr)
 
   gf3d_seismograms = int(ierr,kind=c_int)
 
@@ -1054,7 +1079,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  integer(c_int) function gf3d_partials(h,src,t0_req,itypsokern,nt,ndp, &
+  integer(c_int) function gf3d_partials(h,src,t0_req,kind,nt,ndp, &
                                         seis,dp,t,onset,loc) bind(C,name='gf3d_partials')
 
 ! seismograms and their partial derivatives, in C order
@@ -1065,7 +1090,7 @@
   integer(c_int), value :: h
   type(gf3d_source_t), intent(in) :: src
   real(c_double), value :: t0_req
-  integer(c_int), value :: itypsokern
+  integer(c_int), value :: kind
   integer(c_int), value :: nt
   integer(c_int), value :: ndp
   real(c_double), dimension(*), intent(out) :: seis
@@ -1075,110 +1100,16 @@
   type(c_ptr), value :: loc
 
   ! local parameters
-  type(t_gf_source) :: fsrc
-  type(t_gf_location) :: floc
-  type(gf3d_location_t), pointer :: ploc
-  type(t_gf_taxis) :: tax
-  type(t_gf_stf) :: stf
-  double precision, dimension(:,:,:), allocatable :: fseis
-  double precision, dimension(:,:,:,:), allocatable :: fdp
-  double precision, dimension(:), allocatable :: ft,fonset
-  double precision :: t0
-  integer :: ierr,ier,nsta,ndp_want,it,ista
+  integer :: ierr
 
-  call use_handle(h,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_partials = int(ierr,kind=c_int)
-    return
-  endif
-
-  if (int(itypsokern) < 1) then
+  ! kind 0 has no partials to write into dp, so it is a caller error
+  ! here rather than a zero-sized answer
+  if (int(kind) < 1) then
     call gf_set_error(ierr,GF_ERR_ARG, &
-      'gf3d_partials: itypsokern must be 1 or 2; use gf3d_seismograms for 0')
-    gf3d_partials = int(ierr,kind=c_int)
-    return
+      'gf3d_partials: kind must be 1 or 2; use gf3d_seismograms for 0')
+  else
+    call c_extract(h,src,t0_req,kind,nt,ndp,seis,dp,t,onset,loc,ierr)
   endif
-
-  call gf_partials_ndp(int(itypsokern),ndp_want,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_partials = int(ierr,kind=c_int)
-    return
-  endif
-
-  if (int(ndp) /= ndp_want) then
-    call gf_set_error(ierr,GF_ERR_ARG, &
-      'gf3d_partials: ndp does not match itypsokern; ask gf3d_ndp for it')
-    gf3d_partials = int(ierr,kind=c_int)
-    return
-  endif
-
-  call build_source(src,handles(h),fsrc,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_partials = int(ierr,kind=c_int)
-    return
-  endif
-
-  if (fsrc%source_type /= GF_SRC_CMT) then
-    call gf_set_error(ierr,GF_ERR_ARG, &
-      'gf3d_partials: partial derivatives are defined for a moment-tensor source only')
-    gf3d_partials = int(ierr,kind=c_int)
-    return
-  endif
-
-  call gf_locate_source(handles(h),fsrc%latitude,fsrc%longitude,fsrc%depth,floc,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_partials = int(ierr,kind=c_int)
-    return
-  endif
-
-  call resolve_t0(fsrc,t0_req,t0,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_partials = int(ierr,kind=c_int)
-    return
-  endif
-
-  call gf_seis_plan(handles(h),fsrc,t0,tax,stf,ierr)
-  if (ierr /= GF_OK) then
-    gf3d_partials = int(ierr,kind=c_int)
-    return
-  endif
-
-  if (int(nt) /= tax%nt) then
-    call gf_set_error(ierr,GF_ERR_ARG, &
-      'gf3d_partials: nt does not match the plan; call gf3d_get_plan first')
-    gf3d_partials = int(ierr,kind=c_int)
-    return
-  endif
-
-  nsta = handles(h)%nstations
-
-  allocate(fseis(nsta,GF_NCOMP,tax%nt),fdp(ndp_want,nsta,GF_NCOMP,tax%nt), &
-           ft(tax%nt),fonset(nsta),stat=ier)
-  if (ier /= 0) then
-    call gf_set_error(ierr,GF_ERR_ALLOC,'gf3d_partials: could not allocate the work arrays')
-    gf3d_partials = int(ierr,kind=c_int)
-    return
-  endif
-
-  call gf_seis(handles(h),fsrc,floc,tax,stf,int(itypsokern),ndp_want, &
-                            fseis,fdp,ft,fonset,ierr)
-
-  if (ierr == GF_OK) then
-    call pack_seis(nsta,tax%nt,fseis,seis)
-    call pack_dp(ndp_want,nsta,tax%nt,fdp,dp)
-    do it = 1,tax%nt
-      t(it) = ft(it)
-    enddo
-    do ista = 1,nsta
-      onset(ista) = fonset(ista)
-    enddo
-    if (c_associated(loc)) then
-      call c_f_pointer(loc,ploc)
-      call fill_location(floc,ploc)
-    endif
-  endif
-
-  deallocate(fseis,fdp,ft,fonset)
 
   gf3d_partials = int(ierr,kind=c_int)
 

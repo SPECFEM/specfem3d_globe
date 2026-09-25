@@ -37,8 +37,8 @@
 !----    7..9   lat lon dep                m per degree, per degree, per km
 !----   10      tim                        m per second (centroid time shift)
 !----
-!---- `itypsokern` 1 returns the first six, 2 all ten; GF3DF's 3 (the
-!---- half-duration partial) is dropped. Slots 1..6 and 10 are Stage 6's,
+!---- `kind` 1 returns the first six, 2 all ten; there is no half-duration
+!---- partial. Slots 1..6 and 10 are Stage 6's,
 !---- 7..9 Stage 8's (gf_partials_loc, with the strain gradient from
 !---- gf_strain, the rotation's derivative from gf_moment and the
 !---- geographic map's from gf_geo_chain).
@@ -102,7 +102,7 @@
 
   private
 
-  ! how many partials each itypsokern returns
+  ! how many partials each kind returns
   integer, parameter, public :: GF_NDP_MT  = 6
   integer, parameter, public :: GF_NDP_LOC = 10
 
@@ -130,13 +130,13 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine gf_partials_ndp(itypsokern,ndp,ierr)
+  subroutine gf_partials_ndp(kind,ndp,ierr)
 
 ! the number of partials a kernel type returns: 0, 6 or 10
 
   implicit none
 
-  integer, intent(in) :: itypsokern
+  integer, intent(in) :: kind
   integer, intent(out) :: ndp
   integer, intent(out) :: ierr
 
@@ -144,7 +144,7 @@
   character(len=16) :: tmp
 
   ierr = GF_OK
-  select case (itypsokern)
+  select case (kind)
   case (0)
     ndp = 0
   case (1)
@@ -153,8 +153,8 @@
     ndp = GF_NDP_LOC
   case default
     ndp = 0
-    write(tmp,'(i0)') itypsokern
-    call gf_set_error(ierr,GF_ERR_ARG,'gf_partials_ndp: itypsokern must be 0, 1 or 2, not '//trim(tmp))
+    write(tmp,'(i0)') kind
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_partials_ndp: kind must be 0, 1 or 2, not '//trim(tmp))
   end select
 
   end subroutine gf_partials_ndp

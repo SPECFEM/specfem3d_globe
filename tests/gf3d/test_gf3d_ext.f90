@@ -48,6 +48,11 @@
 !---- a derived tolerance, not equality, because the two paths are separate
 !---- compilation units evaluating the same expressions (testing.md).
 !----
+!---- Both routes are one call to gf_extract, so section 4 asserts the part
+!---- of its contract neither of them exposes: that its optional loc, tax and
+!---- stf outputs describe every stage that completed, including when the
+!---- call failed at a later one.
+!----
 !---- Usage: test_gf3d_ext <GFDB directory> <CMTSOLUTION> [FORCESOLUTION]
 !----
 
@@ -56,13 +61,15 @@
 ! everything below comes from this one module: that is the claim being tested
   use gf3d
 
-  use, intrinsic :: iso_c_binding, only: c_int,c_double,c_char,c_ptr,c_null_char,c_null_ptr
+  use, intrinsic :: iso_c_binding, only: c_int,c_double,c_char,c_ptr,c_null_char, &
+                                         c_null_ptr,c_loc
 
   implicit none
 
   !--- the C ABI, transcribed from include/gf3d.h ---
 
   integer, parameter :: NCOMP_C = 3
+  integer, parameter :: MORTON_STRLEN_C = 24
 
   type, bind(C) :: gf3d_source_t
     integer(c_int) :: source_type
@@ -89,6 +96,15 @@
     integer(c_int) :: topography,ellipticity,rotation,attenuation,gravity,pad_
     real(c_double) :: dt,t0,r_planet,rhoav,scale_displ
   end type gf3d_info_t
+
+  type, bind(C) :: gf3d_location_t
+    integer(c_int) :: ielem
+    character(kind=c_char), dimension(MORTON_STRLEN_C) :: morton_hex
+    real(c_double) :: xi,eta,gamma
+    real(c_double), dimension(3) :: xyz
+    real(c_double), dimension(3) :: xyz_target
+    real(c_double) :: distance_km,anchor_err,theta,phi,r_surface
+  end type gf3d_location_t
 
   interface
 
@@ -129,13 +145,13 @@
       type(c_ptr), value :: loc
     end function c_gf3d_seismograms
 
-    integer(c_int) function c_gf3d_partials(h,src,t0_req,itypsokern,nt,ndp, &
+    integer(c_int) function c_gf3d_partials(h,src,t0_req,kind,nt,ndp, &
                                             seis,dp,t,onset,loc) bind(C,name='gf3d_partials')
       import :: c_int,c_double,c_ptr,gf3d_source_t
       integer(c_int), value :: h
       type(gf3d_source_t), intent(in) :: src
       real(c_double), value :: t0_req
-      integer(c_int), value :: itypsokern,nt,ndp
+      integer(c_int), value :: kind,nt,ndp
       real(c_double), dimension(*), intent(out) :: seis,dp,t,onset
       type(c_ptr), value :: loc
     end function c_gf3d_partials
@@ -151,7 +167,7 @@
   double precision, dimension(:,:,:), allocatable :: synt,synt_ref,synt_again
   double precision, dimension(:,:,:,:), allocatable :: dp
 
-  ! section 6: walk north in these steps until the element changes
+  ! section 7: walk north in these steps until the element changes
   double precision, parameter :: WALK_STEP = 0.25d0
   integer, parameter :: WALK_MAX = 40
   type(t_gf_source) :: far
@@ -166,8 +182,16 @@
   type(gf3d_source_t) :: csrc
   type(gf3d_plan_t) :: cplan
   type(gf3d_info_t) :: cinfo
+  ! target: section 4 hands its address across the C boundary
+  type(gf3d_location_t), target :: cloc
   real(c_double), dimension(:), allocatable :: cseis,cdp,ct,consetd
   integer(c_int) :: ch,cerr
+
+  ! section 4: gf_extract's own outputs
+  type(t_gf_location) :: locx
+  type(t_gf_taxis) :: taxx
+  type(t_gf_stf) :: stfx
+  double precision, dimension(:), allocatable :: onset
 
   character(len=512) :: dbpath,cmtpath,forcepath
   double precision :: t0,worst
@@ -211,7 +235,7 @@
   if (ierr /= GF_OK) stop 1
 
   call get_partials(db,src,t0,2,synt,dp,ierr,t)
-  call report_true('   get_partials, itypsokern 2   ',ierr == GF_OK,nfail)
+  call report_true('   get_partials, kind 2   ',ierr == GF_OK,nfail)
   if (ierr /= GF_OK) then
     write(*,*) '   ',trim(gf_errmsg)
     stop 1
@@ -265,7 +289,7 @@
            ct(int(cplan%nt)),consetd(db%nstations))
 
   cerr = c_gf3d_partials(ch,csrc,-1.0_c_double,2_c_int,cplan%nt, &
-                         int(GF_NDP_LOC,kind=c_int),cseis,cdp,ct,consetd,c_null_ptr)
+                         int(GF_NDP_LOC,kind=c_int),cseis,cdp,ct,consetd,c_loc(cloc))
   call report_true('   gf3d_partials',cerr == GF_OK,nfail)
   if (cerr /= GF_OK) stop 1
 
@@ -277,15 +301,63 @@
   call compare_time(int(cplan%nt),t,ct,nfail)
   call compare_dp(db%nstations,int(cplan%nt),dp,cdp,nfail)
 
-  deallocate(cseis,cdp,ct,consetd)
   allocate(synt_ref,source=synt)
 
   deallocate(synt,dp,t)
 
+  !--- 4. gf_extract, the sequence both routes above run ---
+  !
+  ! get_partials and gf3d_partials are each one call to gf_extract, so the
+  ! numbers already agree by construction. What is asserted here is the part
+  ! of gf_extract's contract that neither entry point exposes: the optional
+  ! loc, tax and onset outputs, and their validity after a failure. That
+  ! contract is what lets xgf3d report a location for an extraction that
+  ! never finished, without a printer inside the compute path.
+
+  write(*,*) '4. gf_extract and its optional outputs'
+
+  call gf_extract(db,src,t0,2,synt,dp,ierr,t=t,onset=onset, &
+                  loc=locx,tax=taxx,stf=stfx)
+  call report_true('   gf_extract, kind 2',ierr == GF_OK,nfail)
+
+  if (ierr == GF_OK) then
+    call report_true('   it reports the element it used',locx%ielem > 0,nfail)
+    call report_true('   and the axis it returned',taxx%nt == size(t),nfail)
+    call report_true('   the conversion plan came back too', &
+                     stfx%kind_stf == GF_STF_HEAVI,nfail)
+    call report_true('   the element is the C route''s', &
+                     locx%ielem == int(cloc%ielem),nfail)
+    call report('   xi,eta,gamma vs the C route   ', &
+      max(abs(locx%xi - cloc%xi),abs(locx%eta - cloc%eta), &
+          abs(locx%gamma - cloc%gamma)),TOL,nfail)
+    worst = 0.d0
+    do ista = 1,db%nstations
+      worst = max(worst,abs(onset(ista) - consetd(ista)))
+    enddo
+    call report('   onset vs the C route          ',worst,TOL,nfail)
+    deallocate(synt,dp,t,onset)
+  endif
+
+  ! a failure after the locate: an unresolved t0 is refused by the plan, so
+  ! the location is complete and the axis is not
+  call gf_extract(db,src,-1.d0,0,synt,dp,ierr,loc=locx,tax=taxx)
+  call report_true('   an unresolved t0 is refused',ierr /= GF_OK,nfail)
+  call report_true('   the location survives the failure',locx%ielem > 0,nfail)
+  call report_true('   and the axis reports none',taxx%nt == 0,nfail)
+
+  ! a failure at the locate: nothing located, so nothing to report
+  far = src
+  far%depth = 1.d6
+  call gf_extract(db,far,t0,0,synt,dp,ierr,loc=locx)
+  call report_true('   a source outside the mesh is refused',ierr /= GF_OK,nfail)
+  call report_true('   with no element to report',locx%ielem < 1,nfail)
+
+  deallocate(cseis,cdp,ct,consetd)
+
   !--- a force source, if the example ships one ---
 
   if (len_trim(forcepath) > 0) then
-    write(*,*) '4. a force source, both routes'
+    write(*,*) '5. a force source, both routes'
     call test_force(db,ch,forcepath,nfail)
   endif
 
@@ -306,7 +378,7 @@
   ! so a tree that was never rebuilt would still give the right answer: only
   ! the owner says whether the mechanism worked.
 
-  write(*,*) '5. a second handle on the same database'
+  write(*,*) '6. a second handle on the same database'
 
   call gf_open(trim(dbpath),db2,ierr,check_completion=.false.)
   call report_true('   a second handle opens',ierr == GF_OK,nfail)
@@ -342,7 +414,7 @@
 
   deallocate(synt_ref)
 
-  !--- 6. a source that leaves its element ---
+  !--- 7. a source that leaves its element ---
   !
   ! Extraction from a neighbouring element must work exactly as from the
   ! first: the element index, the kd-tree and the read path are all shared
@@ -353,7 +425,7 @@
   ! lands between elements is skipped -- a database covers the region its
   ! source needed, not the whole planet.
 
-  write(*,*) '6. a source in a second element'
+  write(*,*) '7. a source in a second element'
 
   call gf_locate_source(db,src%latitude,src%longitude,src%depth,loc_a,ierr)
   call report_true('   the original position locates',ierr == GF_OK,nfail)

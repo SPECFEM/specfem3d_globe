@@ -183,7 +183,7 @@
       cycle
     endif
 
-    ! itypsokern = 0: seismograms only, no partials
+    ! kind = 0: seismograms only, no partials
     call tic()
     call gf_default_t0(event,t0,ierr)
     if (ierr /= GF_OK) cycle

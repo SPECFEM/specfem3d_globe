@@ -190,9 +190,9 @@
   write(*,'(a)') '1. seismograms'
   allocate(dp_none(0,db%nstations,GF_NCOMP,nt))
   call gf_seis(db,src,loc,tax,stf,0,0,seis0,dp_none,t,onset,ierr)
-  call gf_report_true('gf_seis, itypsokern 0             ',ierr == GF_OK,nfail)
+  call gf_report_true('gf_seis, kind 0             ',ierr == GF_OK,nfail)
   call gf_seis(db,src,loc,tax,stf,2,ndp,seis,dp,t,onset,ierr)
-  call gf_report_true('gf_seis, itypsokern 2             ',ierr == GF_OK,nfail)
+  call gf_report_true('gf_seis, kind 2             ',ierr == GF_OK,nfail)
   if (ierr /= GF_OK) write(*,'(a)') '  '//trim(gf_errmsg)
 
   nbad = 0
@@ -206,7 +206,7 @@
       enddo
     enddo
   enddo
-  call gf_report('  seis == itypsokern 0 (rel)        ',worst_bit,1.d-15,nfail)
+  call gf_report('  seis == kind 0 (rel)        ',worst_bit,1.d-15,nfail)
   write(*,'(a,i0,a,i0,a)') '     bitwise mismatches = ',nbad,' of ',db%nstations*GF_NCOMP*nt, &
                            ' (informational: 0 under a value-safe FP model)'
 

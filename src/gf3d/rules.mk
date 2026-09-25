@@ -426,11 +426,13 @@ $O/gf_seismograms.gf3d.o: $O/gf_par.gf3d.o $O/gf_database.gf3d.o $O/gf_element_i
 $O/gf3d.gf3d.o: $O/gf_par.gf3d.o $O/gf_database.gf3d.o $O/gf_locate.gf3d.o \
                 $O/gf_source.gf3d.o $O/gf_seismograms.gf3d.o $O/gf_partials.gf3d.o \
                 $O/gf_sac.gf3d.o $O/gf_shared_params.gf3d.o
-$O/gf3d_capi.gf3d.o: $O/gf_par.gf3d.o $O/gf_database.gf3d.o $O/gf_locate.gf3d.o \
-                     $O/gf_source.gf3d.o $O/gf_seismograms.gf3d.o $O/gf_partials.gf3d.o \
+$O/gf3d_capi.gf3d.o: $O/gf3d.gf3d.o $O/gf_par.gf3d.o $O/gf_database.gf3d.o \
+                     $O/gf_locate.gf3d.o $O/gf_source.gf3d.o \
+                     $O/gf_seismograms.gf3d.o $O/gf_partials.gf3d.o \
                      $O/gf_shared_params.gf3d.o
-$O/gf3d_main.gf3d.o: $O/gf_par.gf3d.o $O/gf_database.gf3d.o $O/gf_locate.gf3d.o \
-                     $O/gf_source.gf3d.o $O/gf_seismograms.gf3d.o $O/gf_partials.gf3d.o \
+$O/gf3d_main.gf3d.o: $O/gf3d.gf3d.o $O/gf_par.gf3d.o $O/gf_database.gf3d.o \
+                     $O/gf_locate.gf3d.o $O/gf_source.gf3d.o \
+                     $O/gf_seismograms.gf3d.o $O/gf_partials.gf3d.o \
                      $O/gf_sac.gf3d.o
 
 ## unique object suffix: every rules.mk writes into the same $O, so the
