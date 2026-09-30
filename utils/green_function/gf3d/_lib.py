@@ -62,7 +62,7 @@ GF3D_MORTON_STRLEN = 24
 
 # GF3D_API_VERSION from include/gf3d.h; checked against the library in
 # _check_layout(), before the struct-size comparison below it.
-API_VERSION = 2
+API_VERSION = 3
 
 GF_OK = 0
 GF_ERR_NO_HDF5 = 1
@@ -152,6 +152,7 @@ class CInfo(ctypes.Structure):
         ("r_planet", _c_double),
         ("rhoav", _c_double),
         ("scale_displ", _c_double),
+        ("bytes_per_element", ctypes.c_longlong),
     ]
 
 
@@ -310,7 +311,7 @@ lib.gf3d_last_error.restype = _c_int
 lib.gf3d_error_string.argtypes = [_c_int, ctypes.c_char_p, _c_int]
 lib.gf3d_error_string.restype = _c_int
 
-lib.gf3d_open.argtypes = [ctypes.c_char_p, _c_int, _c_int_p]
+lib.gf3d_open.argtypes = [ctypes.c_char_p, _c_int, _c_int, _c_int_p]
 lib.gf3d_open.restype = _c_int
 
 lib.gf3d_close.argtypes = [_c_int]
@@ -318,6 +319,16 @@ lib.gf3d_close.restype = _c_int
 
 lib.gf3d_get_info.argtypes = [_c_int, ctypes.POINTER(CInfo)]
 lib.gf3d_get_info.restype = _c_int
+
+try:
+    _c_longlong_p = ctypes.POINTER(ctypes.c_longlong)
+    lib.gf3d_cache_stats.argtypes = [_c_int, _c_longlong_p, _c_longlong_p, _c_longlong_p,
+                                     _c_int_p, _c_longlong_p]
+    lib.gf3d_cache_stats.restype = _c_int
+except AttributeError:
+    # new in GF3D_API_VERSION 3: an older library is refused by
+    # _check_layout() with a version message, not by an AttributeError here
+    lib.gf3d_cache_stats = None
 
 lib.gf3d_get_station.argtypes = [_c_int, _c_int, ctypes.POINTER(CStation)]
 lib.gf3d_get_station.restype = _c_int

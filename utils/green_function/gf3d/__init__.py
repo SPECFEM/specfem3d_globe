@@ -24,6 +24,14 @@ The partials are analytic and linear, so the moment-tensor half satisfies
 
 to round-off, with the CMTSOLUTION's own numbers, in dyne-cm.
 
+Repeated extractions
+--------------------
+``gf3d.Database(path, max_elements=N)`` keeps the N most recently used
+elements in memory, each ``db.info["bytes_per_element"]`` large, so that a
+sampler returning to an element does not read it from disk again. The
+numbers are the same with or without it; ``db.cache_stats`` says what it
+did. The default, 0, keeps nothing.
+
 Finding the library
 -------------------
 ``$GF3D_LIB`` if set, else ``<repo>/lib/libgf3d.so`` relative to this file,

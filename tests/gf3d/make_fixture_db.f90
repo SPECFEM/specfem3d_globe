@@ -26,7 +26,7 @@
 !=====================================================================
 
 !----
-!---- make_fixture_db -- a synthetic Green function database, ~4.5 MB
+!---- make_fixture_db -- a synthetic Green function database, ~7 MB
 !----
 !---- Writes a database that gf_open accepts and that gf_locate_source and
 !---- the extraction path can run against, so that the database-backed tests
@@ -85,7 +85,7 @@
   ! valid database, but REF_DATA/CMTSOLUTION has hdur = 60 s and so asks for
   ! t0 = 90 s: on a 6 s axis the output would be 93 % prepended zeros, and a
   ! test comparing traces would be comparing padding. This keeps the stored
-  ! part the majority of the trace. It costs 4.6 MB in a temp directory.
+  ! part the majority of the trace. It costs 6.9 MB in a temp directory.
   integer, parameter :: NSTEP = 2048
   integer, parameter :: SUBSAMPLE_STEP = 8
   integer, parameter :: NT_SUB = NSTEP / SUBSAMPLE_STEP
@@ -103,16 +103,18 @@
   double precision, parameter :: SRC_DEPTH_KM = 122.6d0
   double precision, parameter :: HALF_WIDTH = 0.05d0        ! ~320 km, non-dimensional
 
-  ! How far north the second element sits, in degrees. The two boxes must be
-  ! DISJOINT: a test that asserts the located element changed proves nothing
-  ! if a point can be inside both. HALF_WIDTH is 0.05 non-dimensional and the
-  ! off-diagonal terms in affine_element widen each box to about +-0.0585, so
-  ! the centres must be more than 0.117 apart -- 8 degrees is about 0.14.
-  ! Latitude rather than a Cartesian offset, because a latitude walk is what
-  ! the tests and the demos use to find a second element.
-  double precision, parameter :: ELEM2_DLAT = 8.0d0
+  ! How far north of the previous element each element sits, in degrees. The
+  ! boxes must be DISJOINT: a test that asserts the located element changed
+  ! proves nothing if a point can be inside both. HALF_WIDTH is 0.05
+  ! non-dimensional and the off-diagonal terms in affine_element widen each box
+  ! to about +-0.0585, so the centres must be more than 0.117 apart -- 8
+  ! degrees is about 0.14. Latitude rather than a Cartesian offset, because a
+  ! latitude walk is what the tests and the demos use to find the next element.
+  double precision, parameter :: ELEM_DLAT = 8.0d0
 
-  integer, parameter :: NELEM = 2
+  ! Three, because an element cache needs three to show its eviction order:
+  ! with room for two, A B C A evicts A.
+  integer, parameter :: NELEM = 3
   integer, parameter :: NSTA = 2
 
   character(len=8), parameter :: NET(NSTA) = (/ 'II      ', 'IU      ' /)
@@ -147,12 +149,13 @@
 
   call sphere_position(SRC_LAT,SRC_LON,SRC_DEPTH_KM,centre)
 
-  ! Two elements, the second ELEM2_DLAT degrees north, so the index has more
-  ! than one entry and the Morton codes have something to order. The codes
-  ! are made up: the library only requires 16 uppercase hex digits, strictly
-  ! ascending.
+  ! A column of elements, each ELEM_DLAT degrees north of the last, so the
+  ! index has more than one entry and the Morton codes have something to
+  ! order. The codes are made up: the library only requires 16 uppercase hex
+  ! digits, strictly ascending.
   hexcode(1) = '0000000000000010'
   hexcode(2) = '00000000000000A0'
+  hexcode(3) = '0000000000000100'
 
   !--- mesh_info.h5 -----------------------------------------------------
 
@@ -167,7 +170,7 @@
     if (ie == 1) then
       centre_e(:) = centre(:)
     else
-      call sphere_position(SRC_LAT + ELEM2_DLAT,SRC_LON,SRC_DEPTH_KM,centre_e)
+      call sphere_position(SRC_LAT + dble(ie-1)*ELEM_DLAT,SRC_LON,SRC_DEPTH_KM,centre_e)
     endif
     call affine_element(centre_e,HALF_WIDTH,xyz,cen(:,ie))
     xyz32(:,:,:,:) = real(xyz(:,:,:,:))
@@ -175,7 +178,7 @@
     call write_coordinates(trim(edir)//'/coordinates.h5',xyz32,cen(:,ie))
 
     do is = 1,NSTA
-      call fill_displacement(xyz,cen(:,ie),is,displ)
+      call fill_displacement(xyz,cen(:,ie),is,element_scale(ie),displ)
       fname = trim(edir)//'/'//trim(NET(is))//'.'//trim(STA(is))//'.h5'
       call write_element_station(trim(fname),displ)
     enddo
@@ -330,7 +333,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine fill_displacement(xyz_in,centroid,ista,d)
+  subroutine fill_displacement(xyz_in,centroid,ista,scale,d)
 
 ! a smooth, finite, causal analytic field -- not a Green function
 !
@@ -349,6 +352,7 @@
   double precision, dimension(3,NG,NG,NG), intent(in) :: xyz_in
   double precision, dimension(3), intent(in) :: centroid
   integer, intent(in) :: ista
+  double precision, intent(in) :: scale
   real, dimension(NCOMP,NCOMP,NG,NG,NG,NT_SUB), intent(out) :: d
 
   ! a fifth of the record, comfortably past the kernel half-length
@@ -386,7 +390,7 @@
           s = shape_factor(xyz_in(:,i,j,k),centroid)
           do b = 1,NCOMP
             do a = 1,NCOMP
-              d(a,b,i,j,k,it) = real(AMPLITUDE*env*(1.d0 + 0.1d0*dble(a) + 0.03d0*dble(b))*s)
+              d(a,b,i,j,k,it) = real(AMPLITUDE*scale*env*(1.d0 + 0.1d0*dble(a) + 0.03d0*dble(b))*s)
             enddo
           enddo
         enddo
@@ -395,6 +399,28 @@
   enddo
 
   end subroutine fill_displacement
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  double precision function element_scale(ie)
+
+! the amplitude of element ie's field, relative to element 1's
+!
+! Without it every element would store the same numbers: the field depends
+! only on the position relative to the element's own centroid, and every
+! element is the same affine box. A test that a cache handed back the right
+! element's block would then pass for the wrong one too. Exactly 1 for
+! element 1, so that the source element's stored bytes, and every test that
+! extracts from it, are what they were.
+
+  implicit none
+  integer, intent(in) :: ie
+
+  element_scale = 1.d0 + 0.5d0*dble(ie-1)
+
+  end function element_scale
 
 !
 !-------------------------------------------------------------------------------------------------

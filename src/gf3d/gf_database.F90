@@ -77,6 +77,7 @@
 
   public :: gf_open
   public :: gf_close
+  public :: gf_cache_stats
   public :: gf_load_topo
   public :: gf_check_completion
   public :: gf_print_info
@@ -103,7 +104,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine gf_open(path,db,ierr,check_completion)
+  subroutine gf_open(path,db,ierr,check_completion,max_elements)
 
 ! opens a Green function database and reads all of its metadata
 !
@@ -116,6 +117,11 @@
 ! element-station file to verify its computed_ALL flag. That is
 ! nelem * nstations file opens; later stages that have already validated a
 ! handle may pass .false.
+!
+! max_elements (default 0) is how many elements the handle keeps in memory
+! between extractions, each gf_element_bytes(db) large, allocated when
+! first used. 0 keeps none, and every extraction reads its element from
+! disk. More than the database holds is the same as all of them.
 
   implicit none
 
@@ -123,13 +129,21 @@
   type(t_gfdb), intent(inout) :: db
   integer, intent(out) :: ierr
   logical, intent(in), optional :: check_completion
+  integer, intent(in), optional :: max_elements
 
   ! local parameters
   logical :: do_check,exists
-  integer :: nincomplete
+  integer :: nincomplete,ier,nkeep
 
   ! starts from a clean handle
   call gf_close(db)
+
+  nkeep = 0
+  if (present(max_elements)) nkeep = max_elements
+  if (nkeep < 0) then
+    call gf_set_error(ierr,GF_ERR_ARG,'max_elements must not be negative')
+    return
+  endif
 
   if (len_trim(path) == 0) then
     call gf_set_error(ierr,GF_ERR_ARG,'empty database path')
@@ -186,6 +200,21 @@
     if (ierr /= GF_OK) goto 99
   endif
 
+  ! last, so that no failure above has a cache to leak. The slots are
+  ! small; what they hold is allocated by the extraction that fills them.
+  allocate(db%cache,stat=ier)
+  if (ier == 0) then
+    db%cache%capacity = min(nkeep,db%nelem)
+    if (db%cache%capacity > 0) then
+      allocate(db%cache%slot(db%cache%capacity),db%cache%xyz_slot(db%nelem),stat=ier)
+      if (ier == 0) db%cache%xyz_slot(:) = 0
+    endif
+  endif
+  if (ier /= 0) then
+    call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate the element cache')
+    goto 99
+  endif
+
   last_open_id = last_open_id + 1
   db%open_id = last_open_id
 
@@ -232,6 +261,10 @@
     deallocate(db%stations)
   endif
 
+  ! deallocating the target frees everything it holds
+  if (associated(db%cache)) deallocate(db%cache)
+  nullify(db%cache)
+
   db%is_open = .false.
   db%open_id = 0
   db%path = ''
@@ -242,6 +275,44 @@
   db%index_source = ''
 
   end subroutine gf_close
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_cache_stats(db,hits,misses,evictions,n_cached,files_read,ierr)
+
+! what the handle's element cache has done since the database was opened
+!
+! See t_gf_cache for what each counter counts.
+
+  implicit none
+
+  type(t_gfdb), intent(in) :: db
+  integer(kind=8), intent(out) :: hits,misses,evictions,files_read
+  integer, intent(out) :: n_cached
+  integer, intent(out) :: ierr
+
+  hits = 0
+  misses = 0
+  evictions = 0
+  files_read = 0
+  n_cached = 0
+
+  if (.not. db%is_open .or. .not. associated(db%cache)) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_cache_stats: database is not open')
+    return
+  endif
+
+  hits = db%cache%hits
+  misses = db%cache%misses
+  evictions = db%cache%evictions
+  files_read = db%cache%files_read
+  n_cached = db%cache%n_cached
+
+  ierr = GF_OK
+
+  end subroutine gf_cache_stats
 
 !
 !-------------------------------------------------------------------------------------------------

@@ -203,7 +203,7 @@ int main(int argc, char **argv)
   /* ---------------------------------------------------------------- */
   printf("\n 2. a database that is not there\n");
 
-  ierr = gf3d_open("/nonexistent/gf3d/database", 0, &h);
+  ierr = gf3d_open("/nonexistent/gf3d/database", 0, 0, &h);
   ok_status("opening a missing database", ierr, GF_ERR_NO_PATH);
   ok("no handle was handed out", h == 0);
   gf3d_last_error(buf, (int)sizeof(buf));
@@ -212,7 +212,7 @@ int main(int argc, char **argv)
   /* ---------------------------------------------------------------- */
   printf("\n 3. opening the example database\n");
 
-  ierr = gf3d_open(dbpath, 0, &h);
+  ierr = gf3d_open(dbpath, 0, 0, &h);
   ok_status("gf3d_open", ierr, GF_OK);
   if (ierr != GF_OK) return 1;
   ok("handle is in range", h >= 1 && h <= GF3D_MAX_HANDLES);
@@ -463,7 +463,7 @@ int main(int argc, char **argv)
    * the second handle is still open, so the extraction below is what
    * proves the tree is rebuilt on demand rather than silently missing.
    */
-  ierr = gf3d_open(dbpath, 0, &h2);
+  ierr = gf3d_open(dbpath, 0, 0, &h2);
   ok_status("a second handle on the same database", ierr, GF_OK);
   ok("the two handles differ", h2 != h);
 
@@ -482,6 +482,104 @@ int main(int argc, char **argv)
     ierr = gf3d_close(h2);
     ok_status("closing the second handle", ierr, GF_OK);
     ok_status("closing it twice is refused", gf3d_close(h2), GF_ERR_ARG);
+  }
+
+  /* ---------------------------------------------------------------- */
+  printf("\n 10. the element cache\n");
+
+  /*
+   * What gf3d_open's max_elements, gf3d_info.bytes_per_element and
+   * gf3d_cache_stats say through the ABI. The eviction order is
+   * test_gf_cache's; this is that the numbers cross the boundary, and that
+   * a caching handle's output is the uncached one's byte for byte.
+   */
+  {
+    gf3d_handle h0 = 0, hc = 0;
+    gf3d_location la, lb;
+    gf3d_source sa = src, sb = src;
+    long long hits = -1, misses = -1, evictions = -1, files = -1, files0 = -1;
+    long long per_station;
+    int n_cached = -1, found = 0, iw, ncmp = 0, same = 1;
+    double *seis0 = NULL, *dp0 = NULL;
+
+    ierr = gf3d_open(dbpath, 0, -1, &hc);
+    ok_status("max_elements = -1 refused", ierr, GF_ERR_ARG);
+    ok("and no handle handed out", hc == 0);
+
+    ierr = gf3d_open(dbpath, 0, 0, &h0);
+    ok_status("a handle keeping nothing", ierr, GF_OK);
+    ierr = gf3d_open(dbpath, 0, 2, &hc);
+    ok_status("a handle keeping two elements", ierr, GF_OK);
+    if (h0 == 0 || hc == 0) return 1;
+
+    /* nstations * 3 * 3 * 125 * nt_subsampled values of CUSTOM_REAL, which
+       is 4 or 8 bytes depending on how the library was built */
+    gf3d_get_info(hc, &info);
+    per_station = (long long)info.nstations * 9 * info.ngllx * info.nglly * info.ngllz
+                  * info.nt_subsampled;
+    printf("       one element takes %lld bytes\n", info.bytes_per_element);
+    ok("bytes_per_element is 4 or 8 bytes per stored value",
+       info.bytes_per_element == 4 * per_station || info.bytes_per_element == 8 * per_station);
+
+    ok_status("stats with every pointer NULL",
+              gf3d_cache_stats(hc, NULL, NULL, NULL, NULL, NULL), GF_OK);
+    ok_status("stats of a bad handle refused",
+              gf3d_cache_stats(99, &hits, NULL, NULL, NULL, NULL), GF_ERR_ARG);
+
+    /* B: walk north from A until the element changes */
+    ierr = gf3d_locate(h0, sa.latitude, sa.longitude, sa.depth_km, &la);
+    for (iw = 1; ierr == GF_OK && iw <= 80 && !found; iw++) {
+      sb.latitude = sa.latitude + 0.25 * iw;
+      if (sb.latitude > 90.0) break;
+      if (gf3d_locate(h0, sb.latitude, sb.longitude, sb.depth_km, &lb) == GF_OK &&
+          lb.ielem != la.ielem) found = 1;
+    }
+    ok("a second element is reachable", found);
+
+    if (!found || 3.0 * (double)info.bytes_per_element > 1073741824.0) {
+      printf("       %s; the comparison is not exercised\n",
+             found ? "two elements of this database exceed 1 GiB" : "no second element");
+    } else {
+      seis0 = (double *)malloc((size_t)nsta * GF_NCOMP * nt * sizeof(double));
+      dp0 = (double *)malloc((size_t)nsta * ndp * GF_NCOMP * nt * sizeof(double));
+      if (seis0 == NULL || dp0 == NULL) { fprintf(stderr, "out of memory\n"); return 1; }
+
+      /* A B A B: two misses, then a hit on each slot */
+      for (k = 0; k < 4; k++) {
+        gf3d_source *s = (k % 2 == 0) ? &sa : &sb;
+        int e0, e1;
+        if (k == 2) gf3d_cache_stats(hc, NULL, NULL, NULL, NULL, &files0);
+        e0 = gf3d_partials(h0, s, -1.0, 2, nt, ndp, seis0, dp0, t, onset, NULL);
+        e1 = gf3d_partials(hc, s, -1.0, 2, nt, ndp, seis, dp, t, onset, NULL);
+        if (k == 2) gf3d_cache_stats(hc, NULL, NULL, NULL, NULL, &files);
+        if (e0 != GF_OK || e1 != GF_OK) { same = 0; break; }
+        ncmp++;
+        if (memcmp(seis, seis0, (size_t)nsta * GF_NCOMP * nt * sizeof(double)) != 0 ||
+            memcmp(dp, dp0, (size_t)nsta * ndp * GF_NCOMP * nt * sizeof(double)) != 0)
+          same = 0;
+      }
+      ok("A B A B: seismograms and ten partials identical to the byte", same && ncmp == 4);
+      ok("returning to A read no element file", files - files0 == 0);
+
+      ierr = gf3d_cache_stats(hc, &hits, &misses, &evictions, &n_cached, &files);
+      ok_status("gf3d_cache_stats", ierr, GF_OK);
+      printf("       hits %lld, misses %lld, evictions %lld, held %d, files read %lld\n",
+             hits, misses, evictions, n_cached, files);
+      ok("2 hits, 2 misses, 0 evictions, 2 held",
+         hits == 2 && misses == 2 && evictions == 0 && n_cached == 2);
+
+      ierr = gf3d_cache_stats(h0, &hits, &misses, NULL, &n_cached, NULL);
+      ok("the uncached handle: 4 misses, nothing held",
+         ierr == GF_OK && hits == 0 && misses == 4 && n_cached == 0);
+
+      free(seis0);
+      free(dp0);
+    }
+
+    ok_status("closing the caching handle", gf3d_close(hc), GF_OK);
+    ok_status("its statistics are gone with it",
+              gf3d_cache_stats(hc, &hits, NULL, NULL, NULL, NULL), GF_ERR_ARG);
+    gf3d_close(h0);
   }
 
   free(seis);

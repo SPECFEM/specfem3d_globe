@@ -21,6 +21,7 @@ Usage: test_gf_python.py <xgf3d> <GFDB> <CMTSOLUTION> [FORCESOLUTION]
 
 from __future__ import annotations
 
+import dataclasses
 import subprocess
 import sys
 import tempfile
@@ -66,6 +67,22 @@ def ok_raises(name, code, fn, *args, **kwargs):
             return
         print(f"  FAIL {name:<40s} -> {exc.name} (wanted code {code})")
         nfail += 1
+        return
+    except Exception as exc:  # noqa: BLE001
+        print(f"  FAIL {name:<40s} -> {type(exc).__name__}: {exc}")
+        nfail += 1
+        return
+    print(f"  FAIL {name:<40s} -> no exception")
+    nfail += 1
+
+
+def ok_raises_py(name, exc_type, fn, *args, **kwargs):
+    """The call must raise this Python exception, before reaching the library."""
+    global nfail
+    try:
+        fn(*args, **kwargs)
+    except exc_type as exc:
+        print(f"  ok   {name:<40s} -> {type(exc).__name__}")
         return
     except Exception as exc:  # noqa: BLE001
         print(f"  FAIL {name:<40s} -> {type(exc).__name__}: {exc}")
@@ -290,7 +307,68 @@ def main(argv):
         ok("the start time is the centroid time plus t[0]", abs(start - expected) < 1e-6)
 
     # ------------------------------------------------------------------
-    print("\n 8. closing, and a second database")
+    print("\n 8. keeping elements between extractions")
+
+    # the eviction order is test_gf_cache's to pin; this is that the
+    # package passes max_elements through, reports what the library counts,
+    # and that a caching handle's arrays are the uncached one's, bitwise
+    info = db.info
+    ok("info reports bytes_per_element", info["bytes_per_element"] > 0)
+    ok("an unnamed max_elements keeps nothing", db.max_elements == 0)
+
+    ok_raises_py("max_elements = -1 refused", ValueError, gf3d.Database, dbpath, max_elements=-1)
+    ok_raises_py("max_elements = 1.5 refused", TypeError, gf3d.Database, dbpath, max_elements=1.5)
+    ok_raises_py("max_elements = True refused", TypeError, gf3d.Database, dbpath, max_elements=True)
+    with gf3d.Database(dbpath, max_elements=2**40) as huge:
+        ok("more than a C int opens, as 'all of them'", not huge.closed)
+
+    # B: walk north from A until the element changes
+    here = db.locate(cmt.latitude, cmt.longitude, cmt.depth)
+    far = None
+    for iw in range(1, 81):
+        cand = dataclasses.replace(cmt, latitude=cmt.latitude + 0.25 * iw)
+        if cand.latitude > 90.0:
+            break
+        try:
+            if db.locate(cand.latitude, cand.longitude, cand.depth).ielem != here.ielem:
+                far = cand
+                break
+        except gf3d.GF3DError:
+            continue
+    ok("a second element is reachable", far is not None)
+
+    if far is not None and 3 * info["bytes_per_element"] < 2**30:
+        dbc = gf3d.Database(dbpath, max_elements=2)
+        ok("max_elements is kept", dbc.max_elements == 2)
+        ok("a fresh cache has done nothing",
+           dbc.cache_stats == dict(hits=0, misses=0, evictions=0, n_cached=0, files_read=0))
+
+        same = True
+        for k, src in enumerate((cmt, far, cmt, far)):
+            if k == 2:
+                files0 = dbc.cache_stats["files_read"]
+            want, got = db.partials(src), dbc.partials(src)
+            same = same and np.array_equal(want.data, got.data) and np.array_equal(want.dp, got.dp)
+            if k == 2:
+                files_hit = dbc.cache_stats["files_read"] - files0
+        ok("A B A B: data and dp identical to the bit, cached or not", same)
+        ok("returning to A read no element file", files_hit == 0)
+
+        st = dbc.cache_stats
+        print(f"       cache_stats: {st}")
+        ok("2 hits, 2 misses, 0 evictions, 2 held",
+           (st["hits"], st["misses"], st["evictions"], st["n_cached"]) == (2, 2, 0, 2))
+
+        with gf3d.Database(dbpath, max_elements=2) as other:
+            ok("another handle has its own cache", other.cache_stats["misses"] == 0)
+
+        dbc.close()
+        ok_raises("cache_stats of a closed database", gf3d.GF_ERR_ARG, lambda: dbc.cache_stats)
+    else:
+        print("       no second element, or two elements exceed 1 GiB: not exercised")
+
+    # ------------------------------------------------------------------
+    print("\n 9. closing, and a second database")
 
     # A second handle on the same directory. Opening it re-installs specfem's
     # process-wide globals and takes the one kd-tree; the library re-installs

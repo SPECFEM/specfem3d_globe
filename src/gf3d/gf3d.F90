@@ -75,6 +75,13 @@
 !---- codes; gf_error_string(code) is a short name and gf_errmsg the message
 !---- from the last failure.
 !----
+!---- Handles
+!---- -------
+!---- A t_gfdb is opened by gf_open and released by gf_close. An open one
+!---- must not be copied by assignment: the copy would share its element
+!---- cache, and closing either would leave the other pointing at freed
+!---- memory.
+!----
 
   module gf3d
 
@@ -88,7 +95,7 @@
     GF_ERR_ALLOC, GF_ERR_ARG, GF_ERR_NO_ELEMENT, GF_ERR_GEOMETRY, &
     GF_SRC_FORCE, GF_SRC_CMT, &
     GF_STF_NONE, GF_STF_GAUSS, GF_STF_HEAVI, GF_STF_TRUNC, &
-    gf_set_error, gf_error_string, gf_errmsg, gf_is_finite
+    gf_set_error, gf_error_string, gf_errmsg, gf_is_finite, gf_element_bytes
 
   !--- GF3DF-compatible aliases, so that `use gf3d, only: t_GF, t_source`
   !--- keeps naming something
@@ -96,7 +103,7 @@
 
   !--- opening and interrogating a database
   use gf_database, only: &
-    gf_open, gf_close, gf_load_topo, gf_check_completion, gf_print_info, &
+    gf_open, gf_close, gf_cache_stats, gf_load_topo, gf_check_completion, gf_print_info, &
     gf_topo_elevation, gf_topo_gradient
 
   !--- sources

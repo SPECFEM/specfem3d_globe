@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ctypes
+import numbers
 import warnings
 from dataclasses import dataclass
 
@@ -27,6 +28,7 @@ from .sources import CMTSource, ForceSource
 __all__ = ["Database", "Result", "Plan", "Location", "Station", "open"]
 
 _ONSET_WARN = 1.0e-3
+_INT_MAX = 2**31 - 1
 _DOUBLE_P = ctypes.POINTER(ctypes.c_double)
 
 
@@ -233,16 +235,40 @@ class Database:
     and two databases of *different planets or topography grids* must not be
     used alternately at all, since specfem's globals hold one set of
     dimensions for the process.
+
+    ``max_elements`` is how many elements the handle keeps in memory between
+    extractions, for a caller that comes back to them -- a sampler walking
+    around one source, say. Each takes ``info["bytes_per_element"]`` (every
+    station's displacement for that element), and the least recently used
+    one is dropped to make room. A handle that keeps elements also keeps
+    the coordinates of every element it has located in (3 kB each), so it
+    opens no element file twice: returning to a position already visited
+    reads nothing from disk. The numbers are the same with or without it,
+    to the bit. ``0``, the default, keeps nothing and reads every
+    extraction's element from disk. :attr:`cache_stats` says what it did.
+
+    The library is not thread-safe; calls are serialised through one lock.
+    Parallel chains belong in separate processes, each with its own cache,
+    so budget ``processes * max_elements * bytes_per_element``.
     """
 
-    def __init__(self, path, check_completion: bool = False):
+    def __init__(self, path, check_completion: bool = False, max_elements: int = 0):
         self.path = str(path)
         self._handle = ctypes.c_int(0)
         self._info = None
 
+        # checked here: ctypes would silently wrap a Python int into a C int
+        if isinstance(max_elements, bool) or not isinstance(max_elements, numbers.Integral):
+            raise TypeError(f"max_elements must be an integer, not {type(max_elements).__name__}")
+        if max_elements < 0:
+            raise ValueError(f"max_elements must not be negative, got {max_elements}")
+        # more than the database holds means all of them, as in the library
+        self._max_elements = int(min(max_elements, _INT_MAX))
+
         with LIBRARY_LOCK:
             code = lib.gf3d_open(
-                self.path.encode(), 1 if check_completion else 0, ctypes.byref(self._handle)
+                self.path.encode(), 1 if check_completion else 0, self._max_elements,
+                ctypes.byref(self._handle),
             )
             check(code, f"opening {self.path}")
 
@@ -253,7 +279,8 @@ class Database:
         return self._handle.value == 0
 
     def close(self) -> None:
-        """Close the database and release the search tree. Idempotent."""
+        """Close the database, freeing its element cache, and release the
+        search tree. Idempotent."""
         if self.closed:
             return
         h, self._handle.value = self._handle.value, 0
@@ -301,6 +328,39 @@ class Database:
                 d[flag] = bool(d[flag])
             self._info = d
         return self._info
+
+    @property
+    def max_elements(self) -> int:
+        """How many elements the handle may keep, as asked for at open."""
+        return self._max_elements
+
+    @property
+    def cache_stats(self) -> dict:
+        """What the element cache has done since the database was opened.
+
+        ``hits``, ``misses``: extractions whose element was, or was not,
+        already in memory; with ``max_elements=0`` every one is a miss.
+        ``evictions``: elements dropped to make room. ``n_cached``: elements
+        held now. ``files_read``: element files, coordinates or
+        displacement, this handle has read by any route.
+        """
+        hits, misses, evictions, files = (ctypes.c_longlong() for _ in range(4))
+        n_cached = ctypes.c_int()
+        with LIBRARY_LOCK:
+            check(
+                lib.gf3d_cache_stats(
+                    self._h(), ctypes.byref(hits), ctypes.byref(misses),
+                    ctypes.byref(evictions), ctypes.byref(n_cached), ctypes.byref(files),
+                ),
+                "gf3d_cache_stats",
+            )
+        return {
+            "hits": hits.value,
+            "misses": misses.value,
+            "evictions": evictions.value,
+            "n_cached": n_cached.value,
+            "files_read": files.value,
+        }
 
     @property
     def stations(self) -> list:
@@ -446,6 +506,6 @@ class Database:
         return names, units
 
 
-def open(path, check_completion: bool = False) -> Database:  # noqa: A001
+def open(path, check_completion: bool = False, max_elements: int = 0) -> Database:  # noqa: A001
     """Open a database. The same as calling :class:`Database`."""
-    return Database(path, check_completion=check_completion)
+    return Database(path, check_completion=check_completion, max_elements=max_elements)

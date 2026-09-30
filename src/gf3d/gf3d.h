@@ -82,6 +82,20 @@
  *                 database, so alternating between two of them is slow, and
  *                 two databases of *different planets or topography grids*
  *                 must not be used alternately at all.
+ * Memory          a handle opened with max_elements > 0 keeps that many
+ *                 elements in memory between extractions, each
+ *                 gf3d_info.bytes_per_element large, and drops the least
+ *                 recently used one to make room. It also keeps the
+ *                 coordinates of every element its locates read (3 kB
+ *                 each). Together: no element file is opened twice by one
+ *                 handle, so returning to a position already visited reads
+ *                 nothing from disk. A new position inside a cached element
+ *                 may still read a neighbour's coordinates once, the first
+ *                 time the locate tries it. Budget max_elements *
+ *                 bytes_per_element per handle, and per process for
+ *                 parallel chains. On Linux an allocation that succeeds can
+ *                 still be killed for lack of memory when first filled;
+ *                 that cannot be reported as an error.
  */
 
 #ifndef GF3D_H
@@ -92,7 +106,7 @@ extern "C" {
 #endif
 
 /* bumped when anything below changes incompatibly */
-#define GF3D_API_VERSION 2
+#define GF3D_API_VERSION 3
 
 /* fits 'NET.STA': MAX_LENGTH_NETWORK_NAME + 1 + MAX_LENGTH_STATION_NAME */
 #define GF3D_STRLEN 64
@@ -186,6 +200,7 @@ typedef struct {
   double r_planet;         /* m; the effective value, see below */
   double rhoav;            /* kg/m^3; likewise */
   double scale_displ;
+  long long bytes_per_element;   /* memory one cached element takes */
 } gf3d_info;
 /*
  * r_planet and rhoav are the values the library is *using*, which come from
@@ -289,14 +304,36 @@ int gf3d_error_string(int code, char *buf, int buflen);
  * check_completion != 0 verifies that every element/station file the index
  * promises is present, which costs one stat() per file; xgf3d --info does
  * this, extraction does not.
+ *
+ * max_elements is how many elements the handle keeps in memory between
+ * extractions (see Memory above); 0 keeps none and every extraction reads
+ * its element from disk. More than the database holds means all of them;
+ * a negative value is GF_ERR_ARG.
  */
-int gf3d_open(const char *path, int check_completion, gf3d_handle *h);
+int gf3d_open(const char *path, int check_completion, int max_elements,
+              gf3d_handle *h);
 
-/* Close a database and release the search tree. Idempotent only in the
-   sense that a second call returns GF_ERR_ARG; it is never an abort. */
+/* Close a database, freeing its element cache, and release the search tree.
+   Idempotent only in the sense that a second call returns GF_ERR_ARG; it is
+   never an abort. */
 int gf3d_close(gf3d_handle h);
 
 int gf3d_get_info(gf3d_handle h, gf3d_info *info);
+
+/*
+ * What the handle's element cache has done since it was opened. Any
+ * pointer may be NULL.
+ *   hits        extractions whose element was already in memory
+ *   misses      extractions that read their element from disk
+ *   evictions   elements dropped to make room for another
+ *   n_cached    elements held now
+ *   files_read  element files (coordinates or displacement) read by this
+ *               handle, by any route
+ * With max_elements = 0 every extraction is a miss.
+ */
+int gf3d_cache_stats(gf3d_handle h, long long *hits, long long *misses,
+                     long long *evictions, int *n_cached,
+                     long long *files_read);
 
 /* ista is 0-based, 0 .. info.nstations-1 */
 int gf3d_get_station(gf3d_handle h, int ista, gf3d_station *sta);
