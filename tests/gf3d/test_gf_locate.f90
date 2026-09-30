@@ -59,7 +59,7 @@
   use gf_par, only: t_gfdb,t_gf_location,gf_errmsg,gf_error_string, &
                     GF_OK,GF_ERR_ARG,GF_ERR_NO_ELEMENT,GF_XI_TOL,GF_ANCHOR_TOL
   use gf_database, only: gf_open,gf_close
-  use gf_locate, only: gf_locate_source,gf_locate_release,gf_locate_tree_owner
+  use gf_locate, only: gf_locate_source,gf_locate_release,gf_locate_tree_owner,gf_check_anchors
 
   use gf_manufactured, only: gf_report,gf_report_true,gf_quiet_nan
 
@@ -219,6 +219,17 @@
                       max(abs(loc%xi),abs(loc%eta),abs(loc%gamma)) <= GF_XI_TOL,nfail)
 
   call gf_report('accepted element anchor residual  ',loc%anchor_err,GF_ANCHOR_TOL,nfail)
+
+  ! The locate checks the anchors on the coordinates it already read rather
+  ! than reading them again. Same routine, same doubles, so bitwise: this is
+  ! what says the check ran on the accepted element and not on another
+  ! candidate the loop had in hand.
+  call gf_check_anchors(db,loc%ielem,err,ierr)
+  call gf_report_true('anchor check read afresh completed',ierr == GF_OK,nfail)
+  call gf_report_true('locate anchor residual == re-read ',loc%anchor_err == err,nfail)
+  if (loc%anchor_err /= err) then
+    write(*,'(a,2es24.16)') '     mismatch: anchor_err, re-read = ',loc%anchor_err,err
+  endif
 
   call gf_report_true('jacobian is positive              ',loc%jacobian > 0.d0,nfail)
 

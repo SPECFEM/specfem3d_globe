@@ -515,7 +515,7 @@
     if (xi_max <= GF_XI_TOL) then
       ! accepted: check the element geometry is the tri-quadratic one this
       ! whole approach assumes, then fill the result
-      call gf_check_anchors(db,ielem,anchor_err,ierr)
+      call gf_check_anchors_xyz(xyz_elem,anchor_err,ierr)
       if (ierr /= GF_OK) return
 
       if (anchor_err > GF_ANCHOR_TOL) then
@@ -640,7 +640,7 @@
 ! gf_par.F90. `max_err` is returned rather than compared here so that
 ! callers can report the measured value; the shipped examples sit at ~6e-8.
 
-  use constants, only: NGNOD,NGLLX,NGLLY,NGLLZ,NDIM,GAUSSALPHA,GAUSSBETA
+  use constants, only: NGLLX,NGLLY,NGLLZ,NDIM
 
   implicit none
 
@@ -651,6 +651,36 @@
 
   ! local parameters
   double precision, dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: xyz_elem
+
+  max_err = 0.d0
+
+  call gf_read_element_coords(db,ielem,xyz_elem,ierr)
+  if (ierr /= GF_OK) return
+
+  call gf_check_anchors_xyz(xyz_elem,max_err,ierr)
+
+  end subroutine gf_check_anchors
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_check_anchors_xyz(xyz_elem,max_err,ierr)
+
+! gf_check_anchors on coordinates already read
+!
+! gf_locate_source has the accepted element's coordinates in hand; reading
+! them again only to check them would open the same file twice per locate.
+
+  use constants, only: NGNOD,NGLLX,NGLLY,NGLLZ,NDIM,GAUSSALPHA,GAUSSBETA
+
+  implicit none
+
+  double precision, dimension(NDIM,NGLLX,NGLLY,NGLLZ), intent(in) :: xyz_elem
+  double precision, intent(out) :: max_err
+  integer, intent(out) :: ierr
+
+  ! local parameters
   double precision, dimension(NGNOD) :: xelm,yelm,zelm
   double precision, dimension(NGLLX) :: xigll,wxgll
   double precision, dimension(NGLLY) :: yigll,wygll
@@ -661,9 +691,6 @@
   integer :: i,j,k,idim
 
   max_err = 0.d0
-
-  call gf_read_element_coords(db,ielem,xyz_elem,ierr)
-  if (ierr /= GF_OK) return
 
   call gf_gather_anchors(xyz_elem,xelm,yelm,zelm)
 
@@ -687,7 +714,7 @@
 
   ierr = GF_OK
 
-  end subroutine gf_check_anchors
+  end subroutine gf_check_anchors_xyz
 
 !
 !-------------------------------------------------------------------------------------------------

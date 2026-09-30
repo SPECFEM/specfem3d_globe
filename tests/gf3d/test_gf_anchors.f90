@@ -143,9 +143,9 @@
   !--------------------------------------------------------------------
   ! the single-element entry point must agree with the sweep
   !
-  ! gf_locate_source() calls gf_check_anchors() on the element it accepts,
-  ! once per locate, rather than sweeping the database at open time. The two
-  ! paths must not drift apart.
+  ! gf_locate_source() checks the element it accepts, once per locate,
+  ! rather than sweeping the database at open time; test_gf_locate pins that
+  ! check against gf_check_anchors(). The two paths must not drift apart.
   !--------------------------------------------------------------------
 
   if (ielem_worst > 0) then
