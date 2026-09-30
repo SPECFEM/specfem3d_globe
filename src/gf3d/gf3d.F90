@@ -95,7 +95,7 @@
     GF_ERR_ALLOC, GF_ERR_ARG, GF_ERR_NO_ELEMENT, GF_ERR_GEOMETRY, &
     GF_SRC_FORCE, GF_SRC_CMT, &
     GF_STF_NONE, GF_STF_GAUSS, GF_STF_HEAVI, GF_STF_TRUNC, &
-    gf_set_error, gf_error_string, gf_errmsg, gf_is_finite
+    gf_set_error, gf_error_string, gf_errmsg, gf_is_finite, gf_element_bytes
 
   !--- GF3DF-compatible aliases, so that `use gf3d, only: t_GF, t_source`
   !--- keeps naming something

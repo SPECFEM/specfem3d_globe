@@ -125,7 +125,7 @@
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM
 
   use gf_par, only: t_gfdb,t_gf_location,t_gf_source,t_gf_stf,t_gf_taxis,gf_set_error, &
-                    gf_is_finite, &
+                    gf_is_finite,gf_cache_enabled, &
                     GF_OK,GF_ERR_ARG,GF_ERR_ALLOC,GF_ERR_IO,GF_ERR_MISMATCH, &
                     GF_NCOMP,GF3D_VERSION,GF_STF_TRUNC,GF_STF_HEAVI, &
                     GF_SRC_FORCE,GF_SRC_CMT
@@ -134,7 +134,7 @@
 
   use gf_shared_params, only: gf_init_shared_params
 
-  use gf_element_io, only: gf_read_element_displ
+  use gf_element_io, only: gf_read_element_displ,gf_element_block
 
   use gf_interp, only: gf_interp_weights,gf_interp_weights_deriv,gf_interp_weights_deriv2, &
                        gf_interp_trace
@@ -206,9 +206,9 @@
   ! the per-extraction buffers, allocated once and reused for every station
   !
   ! `displ` is the large one -- 21 MB in the shipped global example -- which
-  ! is why the element is read once and the stations looped inside it. It is
-  ! a component rather than a dummy argument so that there is a single place
-  ! for a later element cache to fill instead of reading.
+  ! is why the element is read once and the stations looped inside it. It
+  ! is allocated only for a handle that keeps no elements: one that does
+  ! reads straight into its cache and hands gf_seis_station that instead.
   !
   ! Which of the rest exist depends on the extraction: `g` for a force
   ! source, `eps` for a moment tensor, and `deps`/`dpl`/`dp10` only for the
@@ -470,10 +470,13 @@
   nt_db = db%nt_subsampled
   nt = tax%nt
 
-  allocate(swork%displ(GF_NCOMP,GF_NCOMP,NGLLX,NGLLY,NGLLZ,nt_db),stat=ier)
-  if (ier /= 0) then
-    call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate the element displacement buffer')
-    return
+  ! a handle that keeps elements hands out its own copy instead
+  if (.not. gf_cache_enabled(db)) then
+    allocate(swork%displ(GF_NCOMP,GF_NCOMP,NGLLX,NGLLY,NGLLZ,nt_db),stat=ier)
+    if (ier /= 0) then
+      call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate the element displacement buffer')
+      return
+    endif
   endif
 
   if (src%source_type == GF_SRC_FORCE) then
@@ -534,20 +537,20 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine gf_seis_station(db,src,loc,tax,stf,geom,kind,ista,swork, &
+  subroutine gf_seis_station(db,src,loc,tax,stf,geom,kind,ista,displ,swork, &
                              seis,ndp,dp,onset,ierr)
 
-! one station's traces, from the element block already in swork%displ
+! one station's traces, from that station's element block `displ`
 !
 ! Interpolate or differentiate, contract, convert, and -- when partials are
-! wanted -- the three partial families. The caller has read the block and
-! built `geom`; everything here depends on the station.
+! wanted -- the three partial families. The caller has the block, read or
+! cached, and has built `geom`; everything here depends on the station.
 !
 ! `seis`, `dp` and `onset` are intent(inout): onset(ista) accumulates the
 ! worst component with max(), and the zeroing belongs to gf_seis, which owns
 ! the whole array.
 
-  use constants, only: NDIM
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM
 
   implicit none
 
@@ -558,6 +561,8 @@
   type(t_gf_stf), intent(in) :: stf
   type(t_gf_seis_geom), intent(in) :: geom
   integer, intent(in) :: kind,ista,ndp
+  real(kind=CUSTOM_REAL), dimension(GF_NCOMP,GF_NCOMP,NGLLX,NGLLY,NGLLZ,db%nt_subsampled), &
+    intent(in) :: displ
   type(t_gf_seis_work), intent(inout) :: swork
   double precision, dimension(db%nstations,GF_NCOMP,tax%nt), intent(inout) :: seis
   double precision, dimension(ndp,db%nstations,GF_NCOMP,tax%nt), intent(inout) :: dp
@@ -576,13 +581,13 @@
   if (src%source_type == GF_SRC_FORCE) then
     ! g(a,d,t): the interpolated field at the source, still carrying both
     ! the station-force index a and the displacement index d
-    call gf_interp_trace(swork%displ,geom%hxi,geom%heta,geom%hgam,nt_db,swork%g)
+    call gf_interp_trace(displ,geom%hxi,geom%heta,geom%hgam,nt_db,swork%g)
   else
-    call gf_strain_trace(swork%displ,geom%dw,nt_db,swork%eps)
+    call gf_strain_trace(displ,geom%dw,nt_db,swork%eps)
     if (kind == 2) then
       ! d eps / d xi_b: the same kernel with the differentiated table
       do b = 1,NDIM
-        call gf_strain_trace(swork%displ,geom%ddw(:,:,:,:,b),nt_db,swork%deps(:,:,:,b))
+        call gf_strain_trace(displ,geom%ddw(:,:,:,:,b),nt_db,swork%deps(:,:,:,b))
       enddo
     endif
   endif
@@ -704,8 +709,9 @@
 !
 ! The element is read once and the stations looped inside it, because the
 ! per-(element,station) array is the large object here -- 21 MB in the
-! shipped global example. Nothing here holds two of them, and raw
-! displacement is never handed back to a caller.
+! shipped global example. Without a cache nothing here holds two of them;
+! with one, the handle holds whole elements (gf_open's max_elements). Raw
+! displacement is never handed back to a caller either way.
 
   implicit none
 
@@ -723,8 +729,10 @@
 
   ! local parameters
   type(t_gf_seis_geom) :: geom
-  type(t_gf_seis_work) :: swork
-  integer :: ista,nt_db,nt,ndp_want,ier
+  ! target: `displ_sta` points into swork%displ when nothing is cached
+  type(t_gf_seis_work), target :: swork
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), pointer, contiguous :: displ_sta
+  integer :: ista,nt_db,nt,ndp_want,ier,islot
 
   seis(:,:,:) = 0.d0
   dp(:,:,:,:) = 0.d0
@@ -807,15 +815,31 @@
 
   !--- and the stations ----------------------------------------------------
 
-  ! the element is loaded from disk: one miss, however many stations
-  if (associated(db%cache)) db%cache%misses = db%cache%misses + 1
+  ! A handle that keeps elements has every station's block in one slot,
+  ! found or filled here; otherwise each station's is read in turn into
+  ! swork%displ. Either way `displ_sta` points at it and gf_seis_station is
+  ! called from this one place, so the two routes run the same code on the
+  ! same bytes.
+  islot = 0
+  if (gf_cache_enabled(db)) then
+    call gf_element_block(db,loc%ielem,islot,ierr)
+    if (ierr /= GF_OK) goto 99
+  else
+    ! the element is loaded from disk: one miss, however many stations
+    if (associated(db%cache)) db%cache%misses = db%cache%misses + 1
+  endif
 
   do ista = 1,db%nstations
 
-    call gf_read_element_displ(db,loc%ielem,ista,swork%displ,ierr)
-    if (ierr /= GF_OK) goto 99
+    if (islot > 0) then
+      displ_sta => db%cache%slot(islot)%displ(:,:,:,:,:,:,ista)
+    else
+      call gf_read_element_displ(db,loc%ielem,ista,swork%displ,ierr)
+      if (ierr /= GF_OK) goto 99
+      displ_sta => swork%displ
+    endif
 
-    call gf_seis_station(db,src,loc,tax,stf,geom,kind,ista,swork, &
+    call gf_seis_station(db,src,loc,tax,stf,geom,kind,ista,displ_sta,swork, &
                          seis,ndp,dp,onset,ierr)
     if (ierr /= GF_OK) goto 99
 

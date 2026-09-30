@@ -63,8 +63,8 @@
 
   module gf_element_io
 
-  use gf_par, only: t_gfdb,gf_set_error, &
-                    GF_OK,GF_ERR_ARG,GF_ERR_FORMAT,GF_NCOMP
+  use gf_par, only: t_gfdb,t_gf_cache,gf_set_error,gf_cache_enabled,gf_element_bytes, &
+                    GF_OK,GF_ERR_ARG,GF_ERR_ALLOC,GF_ERR_FORMAT,GF_NCOMP
 
   use gf_hdf5_read, only: GF_HID,gf_h5_file_open,gf_h5_file_close, &
                           gf_h5_dset_dims,gf_h5_dset_type_size, &
@@ -77,6 +77,7 @@
   public :: gf_element_path
   public :: gf_read_element_coords
   public :: gf_read_element_displ
+  public :: gf_element_block
   public :: gf_element_type_sizes
 
   contains
@@ -287,6 +288,116 @@
   call gf_h5_file_close(fid,ierr2)
 
   end subroutine gf_element_type_sizes
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_element_block(db,ielem,islot,ierr)
+
+! one element's displacement for every station, from the handle's cache
+!
+! Returns the slot that holds it: db%cache%slot(islot)%displ(:,...,ista) is
+! what gf_read_element_displ would have returned for station ista, byte for
+! byte, because that is what put it there.
+!
+! A hit only marks the element used. A miss takes a free slot, or else the
+! least recently used one, and reads every station into it; the slot is
+! keyed to the element only once all of them have been read, so a read
+! that fails part-way leaves a free slot, not a half-filled element that a
+! later call would take for a hit.
+!
+! Only for a handle with gf_cache_enabled(db); an extraction without a cache
+! reads through gf_read_element_displ as before.
+
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
+
+  implicit none
+
+  type(t_gfdb), intent(in) :: db
+  integer, intent(in) :: ielem
+  integer, intent(out) :: islot
+  integer, intent(out) :: ierr
+
+  ! local parameters
+  type(t_gf_cache), pointer :: c
+  integer :: i,ista,ier
+  integer(kind=8) :: nbytes
+  character(len=24) :: sbytes
+
+  islot = 0
+
+  if (.not. gf_cache_enabled(db)) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_element_block: this handle keeps no elements')
+    return
+  endif
+  if (ielem < 1 .or. ielem > db%nelem) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_element_block: element index out of range')
+    return
+  endif
+
+  ! the handle is intent(in); what changes is the target of its pointer
+  c => db%cache
+  c%tick = c%tick + 1
+
+  !--- a hit -------------------------------------------------------------
+
+  do i = 1,c%capacity
+    if (c%slot(i)%ielem == ielem) then
+      c%slot(i)%last_use = c%tick
+      c%hits = c%hits + 1
+      islot = i
+      ierr = GF_OK
+      return
+    endif
+  enddo
+
+  !--- a miss: a free slot, else the least recently used ---------------------
+
+  c%misses = c%misses + 1
+
+  islot = 1
+  do i = 1,c%capacity
+    if (c%slot(i)%ielem == 0) then
+      islot = i
+      exit
+    endif
+    if (c%slot(i)%last_use < c%slot(islot)%last_use) islot = i
+  enddo
+
+  if (c%slot(islot)%ielem /= 0) then
+    c%slot(islot)%ielem = 0
+    c%n_cached = c%n_cached - 1
+    c%evictions = c%evictions + 1
+  endif
+
+  if (.not. allocated(c%slot(islot)%displ)) then
+    allocate(c%slot(islot)%displ(GF_NCOMP,GF_NCOMP,NGLLX,NGLLY,NGLLZ, &
+                                 db%nt_subsampled,db%nstations),stat=ier)
+    if (ier /= 0) then
+      nbytes = gf_element_bytes(db)
+      write(sbytes,'(i0)') nbytes
+      call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate '//trim(sbytes) &
+                        //' bytes for one element of the element cache')
+      islot = 0
+      return
+    endif
+  endif
+
+  do ista = 1,db%nstations
+    call gf_read_element_displ(db,ielem,ista,c%slot(islot)%displ(:,:,:,:,:,:,ista),ierr)
+    if (ierr /= GF_OK) then
+      islot = 0
+      return
+    endif
+  enddo
+
+  c%slot(islot)%ielem = ielem
+  c%slot(islot)%last_use = c%tick
+  c%n_cached = c%n_cached + 1
+  ierr = GF_OK
+
+  end subroutine gf_element_block
 
 !
 !-------------------------------------------------------------------------------------------------

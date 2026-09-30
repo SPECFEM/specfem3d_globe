@@ -64,7 +64,7 @@ fi
 
 # runs test
 echo "run: `date`" >> $testdir/results.log
-./bin/$var "$GFDB" "$CMT" >> $testdir/results.log 2>$testdir/error.log
+./bin/$var "$GFDB" "$CMT" "$FORCE" >> $testdir/results.log 2>$testdir/error.log
 
 # checks exit code
 if [[ $? -ne 0 ]]; then

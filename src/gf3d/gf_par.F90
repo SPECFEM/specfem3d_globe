@@ -41,7 +41,8 @@
 
   module gf_par
 
-  use constants, only: MAX_STRING_LEN,MAX_LENGTH_STATION_NAME,MAX_LENGTH_NETWORK_NAME,NDIM
+  use constants, only: MAX_STRING_LEN,MAX_LENGTH_STATION_NAME,MAX_LENGTH_NETWORK_NAME,NDIM, &
+                       CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
 
   implicit none
 
@@ -166,11 +167,27 @@
   !               was read through this handle, by any route: extraction,
   !               locate, --dump or an anchor sweep. Not gf_open's
   !               completion scan, which only looks at attributes.
+  !
+  ! What is kept: up to `capacity` elements (gf_open's max_elements, at
+  ! most nelem), each the displacement of every station, exactly as
+  ! gf_read_element_displ returns it. The least recently used element is
+  ! the one dropped. capacity = 0 keeps nothing and allocates no slot.
   !-----------------------------------------------------------------
 
+  type :: t_gf_cache_slot
+    integer :: ielem = 0                        ! 0: holds no element
+    integer(kind=8) :: last_use = 0             ! t_gf_cache%tick when last used
+    ! (3,3,NGLLX,NGLLY,NGLLZ,nt_subsampled,nstations); allocated on first
+    ! use and kept for the next element that takes the slot
+    real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:,:), allocatable :: displ
+  end type t_gf_cache_slot
+
   type :: t_gf_cache
+    integer :: capacity = 0
     integer :: n_cached = 0
+    integer(kind=8) :: tick = 0
     integer(kind=8) :: hits = 0, misses = 0, evictions = 0, files_read = 0
+    type(t_gf_cache_slot), dimension(:), allocatable :: slot
   end type t_gf_cache
 
   !-----------------------------------------------------------------
@@ -561,5 +578,47 @@
   gf_all_finite = .true.
 
   end function gf_all_finite
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  function gf_element_bytes(db) result(nbytes)
+
+! the memory one cached element takes: every station's displacement block
+!
+! In this build's CUSTOM_REAL, which is what the cache holds, not in the
+! type the database was written with. 64-bit throughout: 185 stations at
+! 3725 samples is already 3.1e9 bytes.
+
+  implicit none
+
+  type(t_gfdb), intent(in) :: db
+  integer(kind=8) :: nbytes
+
+  nbytes = int(GF_NCOMP,8) * int(GF_NCOMP,8) * int(NGLLX,8) * int(NGLLY,8) * int(NGLLZ,8) &
+           * int(db%nt_subsampled,8) * int(db%nstations,8) &
+           * int(storage_size(0._CUSTOM_REAL)/8,8)
+
+  end function gf_element_bytes
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  logical function gf_cache_enabled(db)
+
+! true when the handle keeps element blocks between extractions
+
+  implicit none
+
+  type(t_gfdb), intent(in) :: db
+
+  ! two tests, not one .and.: Fortran does not short-circuit, and
+  ! db%cache%capacity must not be evaluated when db%cache is not associated
+  gf_cache_enabled = .false.
+  if (associated(db%cache)) gf_cache_enabled = (db%cache%capacity > 0)
+
+  end function gf_cache_enabled
 
   end module gf_par
