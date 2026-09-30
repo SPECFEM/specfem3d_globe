@@ -78,6 +78,7 @@
   public :: gf_read_element_coords
   public :: gf_read_element_displ
   public :: gf_element_block
+  public :: gf_element_coords
   public :: gf_element_type_sizes
 
   contains
@@ -398,6 +399,76 @@
   ierr = GF_OK
 
   end subroutine gf_element_block
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_element_coords(db,ielem,xyz_elem,ierr)
+
+! gf_read_element_coords, through the handle's coordinate store
+!
+! A handle that keeps elements keeps the coordinates of every element read
+! here, so each coordinates.h5 is opened once per handle; one that keeps
+! none reads every time, as gf_read_element_coords does. What comes back
+! is the same doubles either way: the store holds what the read returned.
+
+  use constants, only: NGLLX,NGLLY,NGLLZ,NDIM
+
+  implicit none
+
+  type(t_gfdb), intent(in) :: db
+  integer, intent(in) :: ielem
+  double precision, dimension(NDIM,NGLLX,NGLLY,NGLLZ), intent(out) :: xyz_elem
+  integer, intent(out) :: ierr
+
+  ! local parameters
+  type(t_gf_cache), pointer :: c
+  double precision, dimension(:,:,:,:,:), allocatable :: grown
+  integer :: k,ncap,ier
+  character(len=24) :: sbytes
+
+  ! out of range is gf_read_element_coords' error to report, and it must be
+  ! caught before xyz_slot(ielem) is indexed
+  if (.not. gf_cache_enabled(db) .or. ielem < 1 .or. ielem > db%nelem) then
+    call gf_read_element_coords(db,ielem,xyz_elem,ierr)
+    return
+  endif
+
+  c => db%cache
+
+  k = c%xyz_slot(ielem)
+  if (k > 0) then
+    xyz_elem(:,:,:,:) = c%xyz_pool(:,:,:,:,k)
+    ierr = GF_OK
+    return
+  endif
+
+  call gf_read_element_coords(db,ielem,xyz_elem,ierr)
+  if (ierr /= GF_OK) return
+
+  ! room for one more: start at 2 and double. Small on purpose, so that the
+  ! regrow below runs on the three-element test fixture too.
+  ncap = 0
+  if (allocated(c%xyz_pool)) ncap = size(c%xyz_pool,5)
+  if (c%nxyz == ncap) then
+    ncap = max(2,2*ncap)
+    allocate(grown(NDIM,NGLLX,NGLLY,NGLLZ,ncap),stat=ier)
+    if (ier /= 0) then
+      write(sbytes,'(i0)') int(NDIM*NGLLX*NGLLY*NGLLZ,8)*int(ncap,8)*8_8
+      call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate '//trim(sbytes) &
+                        //' bytes for the element coordinate store')
+      return
+    endif
+    if (c%nxyz > 0) grown(:,:,:,:,1:c%nxyz) = c%xyz_pool(:,:,:,:,1:c%nxyz)
+    call move_alloc(grown,c%xyz_pool)
+  endif
+
+  c%nxyz = c%nxyz + 1
+  c%xyz_pool(:,:,:,:,c%nxyz) = xyz_elem(:,:,:,:)
+  c%xyz_slot(ielem) = c%nxyz
+
+  end subroutine gf_element_coords
 
 !
 !-------------------------------------------------------------------------------------------------

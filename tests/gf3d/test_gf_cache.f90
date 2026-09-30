@@ -61,7 +61,7 @@
   character(len=512) :: dbpath,cmtpath,forcepath,broken
   type(t_gfdb) :: db,dbc,never_opened
   type(t_gf_source) :: src,force,s
-  type(t_gf_location) :: loc
+  type(t_gf_location) :: loc,loc_c
   double precision, dimension(:,:,:), allocatable :: synt,synt0
   double precision, dimension(:,:,:,:), allocatable :: dp,dp0
   double precision :: t0,t0_force
@@ -267,15 +267,33 @@
     call sequence(2,(/ 1, 2, 1, 3, 1 /),'N=2 A B A C A',3_8,2_8,1_8,2)
   endif
 
-  ! a hit reads no displacement: only the locate's coordinates
-  call gf_open(dbpath,dbc,ierr,check_completion=.false.,max_elements=2)
-  if (ierr /= GF_OK) call die('could not open the database with max_elements = 2')
-  call extract_at(dbc,1)
-  call extract_at(dbc,2)
+  ! What a caching handle reads. The first extraction at A reads what an
+  ! uncached one does; returning to A reads nothing at all -- not the
+  ! displacement, and not the coordinates the locate needs either, which
+  ! the handle kept from the first time. Nor does a bare locate there.
+  ! Through C when there is one: the coordinate store starts with room for
+  ! two elements, so the third makes it grow, and A's coordinates are then
+  ! read back from the grown copy.
+  call gf_open(dbpath,dbc,ierr,check_completion=.false.,max_elements=3)
+  if (ierr /= GF_OK) call die('could not open the database with max_elements = 3')
   call snapshot(dbc,misses0,files0)
   call extract_at(dbc,1)
   call gf_cache_stats(dbc,hits,misses,evictions,n_cached,files_read,ierr)
-  call expect('files read by a hit  ',files_read - files0,nread_locate,nfail)
+  call expect('files, first at A    ',files_read - files0,nread_extract,nfail)
+  call extract_at(dbc,2)
+  if (have_c) call extract_at(dbc,3)
+  call snapshot(dbc,misses0,files0)
+  call extract_at(dbc,1)
+  call gf_cache_stats(dbc,hits,misses,evictions,n_cached,files_read,ierr)
+  call expect('files read by a hit  ',files_read - files0,0_8,nfail)
+  call snapshot(dbc,misses0,files0)
+  call gf_locate_source(dbc,src%latitude,src%longitude,src%depth,loc_c,ierr)
+  call gf_cache_stats(dbc,hits,misses,evictions,n_cached,files_read,ierr)
+  call expect('files, locate again  ',files_read - files0,0_8,nfail)
+  ! and the stored coordinates put the source where a fresh read does
+  call gf_report_true('same element, xi, eta, gamma as uncached', &
+                      loc_c%ielem == loc%ielem .and. loc_c%xi == loc%xi .and. &
+                      loc_c%eta == loc%eta .and. loc_c%gamma == loc%gamma,nfail)
   call gf_close(dbc)
 
   !--------------------------------------------------------------------

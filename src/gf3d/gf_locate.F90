@@ -89,7 +89,7 @@
 
   use gf_shared_params, only: gf_init_shared_params
 
-  use gf_element_io, only: gf_read_element_coords
+  use gf_element_io, only: gf_read_element_coords,gf_element_coords
 
   use gf_geometry, only: gf_geographic_to_cartesian,gf_source_nu, &
                          gf_gather_anchors,gf_find_local_coords
@@ -487,7 +487,7 @@
   do icand = 1,nfound
     ielem = cand(icand)
 
-    call gf_read_element_coords(db,ielem,xyz_elem,ierr)
+    call gf_element_coords(db,ielem,xyz_elem,ierr)
     if (ierr /= GF_OK) return
 
     call gf_gather_anchors(xyz_elem,xelm,yelm,zelm)

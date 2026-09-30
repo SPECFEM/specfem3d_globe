@@ -205,7 +205,10 @@
   allocate(db%cache,stat=ier)
   if (ier == 0) then
     db%cache%capacity = min(nkeep,db%nelem)
-    if (db%cache%capacity > 0) allocate(db%cache%slot(db%cache%capacity),stat=ier)
+    if (db%cache%capacity > 0) then
+      allocate(db%cache%slot(db%cache%capacity),db%cache%xyz_slot(db%nelem),stat=ier)
+      if (ier == 0) db%cache%xyz_slot(:) = 0
+    endif
   endif
   if (ier /= 0) then
     call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate the element cache')

@@ -172,6 +172,12 @@
   ! most nelem), each the displacement of every station, exactly as
   ! gf_read_element_displ returns it. The least recently used element is
   ! the one dropped. capacity = 0 keeps nothing and allocates no slot.
+  !
+  ! With capacity > 0 the handle also keeps the coordinates of every
+  ! element the locate has read, 3 kB each and never dropped: the locate
+  ! tries candidates by nearest centroid, so revisiting a position means
+  ! re-reading its neighbours too, and a bounded store could lose those
+  ! while the element they led to is still cached. Worst case nelem * 3 kB.
   !-----------------------------------------------------------------
 
   type :: t_gf_cache_slot
@@ -188,6 +194,13 @@
     integer(kind=8) :: tick = 0
     integer(kind=8) :: hits = 0, misses = 0, evictions = 0, files_read = 0
     type(t_gf_cache_slot), dimension(:), allocatable :: slot
+
+    ! the coordinate store: xyz_pool(:,:,:,:,xyz_slot(ielem)) holds what
+    ! gf_read_element_coords returned for ielem; xyz_slot(ielem) = 0 when
+    ! it has not been read. nxyz entries of the pool are in use.
+    integer :: nxyz = 0
+    integer, dimension(:), allocatable :: xyz_slot                        ! (nelem)
+    double precision, dimension(:,:,:,:,:), allocatable :: xyz_pool      ! (3,NGLLX,NGLLY,NGLLZ,*)
   end type t_gf_cache
 
   !-----------------------------------------------------------------
