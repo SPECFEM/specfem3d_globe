@@ -73,10 +73,11 @@ if [ -n "${GF3D_TEST_GFDB}" ]; then
 
 else
 
-  # no database given: make one. Tiny (~100 KB) and affine, so gf_open,
+  # no database given: make one. Small (~7 MB) and affine, so gf_open,
   # gf_locate_source, the anchor guard and extraction all run; only the
-  # solver comparisons sit out.
-  if [ ! -e ./bin/make_fixture_db ]; then
+  # solver comparisons sit out. Rebuilt when its source is newer, so that a
+  # runner started on its own does not test yesterday's fixture.
+  if [ ! -e ./bin/make_fixture_db ] || [ make_fixture_db.f90 -nt ./bin/make_fixture_db ]; then
     make -f fixture.makefile make_fixture_db >> $testdir/results.log 2>&1
   fi
   if [ ! -e ./bin/make_fixture_db ]; then
