@@ -79,6 +79,19 @@ is not there, a source outside it, a NaN, a closed handle — raises
 gf3d.GF_ERR_NO_ELEMENT` is the one an inversion should expect: a trial
 source that wandered outside the database.
 
+**A sampler should open with `max_elements`.** An extraction reads its
+element's displacement for every station from disk, and on a large
+database that read is most of the cost: 185 stations × 3725 samples is
+3 GB and five seconds per call, of which the arithmetic is about one. A
+handle opened as `gf3d.Database(path, max_elements=N)` keeps the `N`
+elements it used most recently in memory and drops the least recently used
+one to make room; it also keeps the coordinates of every element it has
+located in, so it never opens an element file twice. Returning to a
+position already visited then reads nothing from disk, and the numbers are
+the same to the bit. Each element costs `db.info["bytes_per_element"]`;
+`db.cache_stats` reports hits, misses, evictions, the elements held and the
+files read. The default, `0`, keeps nothing.
+
 **The library is not thread-safe** and this package serialises calls on a
 module-level lock. The process-wide state is the last error message, the
 search tree, and specfem's own parameter module. Extraction is a C call, so
