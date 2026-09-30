@@ -242,7 +242,7 @@ class Database:
 
         with LIBRARY_LOCK:
             code = lib.gf3d_open(
-                self.path.encode(), 1 if check_completion else 0, ctypes.byref(self._handle)
+                self.path.encode(), 1 if check_completion else 0, 0, ctypes.byref(self._handle)
             )
             check(code, f"opening {self.path}")
 

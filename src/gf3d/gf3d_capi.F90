@@ -86,7 +86,7 @@
   module gf3d_capi
 
   use, intrinsic :: iso_c_binding, only: &
-    c_int, c_double, c_char, c_ptr, c_null_char, c_associated, c_f_pointer, c_sizeof
+    c_int, c_long_long, c_double, c_char, c_ptr, c_null_char, c_associated, c_f_pointer, c_sizeof
 
   use constants, only: MAX_STRING_LEN
 
@@ -102,7 +102,7 @@
                   GF_OK, GF_ERR_ARG, GF_ERR_ALLOC, &
                   GF_SRC_FORCE, GF_SRC_CMT, GF_ANCHOR_TOL, &
                   gf_set_error, gf_error_string, gf_errmsg, &
-                  gf_open, gf_close, &
+                  gf_open, gf_close, gf_cache_stats, gf_element_bytes, &
                   gf_source_set_cmt, gf_source_set_force, &
                   gf_locate_source, gf_locate_release, gf_locate_tree_owner, &
                   gf_seis_plan, gf_extract, gf_default_t0, &
@@ -123,7 +123,7 @@
   ! case-insensitivity would make it the same identifier as the
   ! gf3d_api_version() entry point below, exactly the trap GF3D_VERSION/
   ! GF_VERSION_STRING avoids above. Must match gf3d.h's #define.
-  integer(c_int), parameter :: GF_API_VERSION_NUMBER = 2
+  integer(c_int), parameter :: GF_API_VERSION_NUMBER = 3
 
   !-----------------------------------------------------------------
   ! the interoperable mirrors of the library's derived types
@@ -168,6 +168,7 @@
     real(c_double) :: r_planet
     real(c_double) :: rhoav
     real(c_double) :: scale_displ
+    integer(c_long_long) :: bytes_per_element
   end type gf3d_info_t
 
   type, bind(C) :: gf3d_station_t
@@ -226,7 +227,7 @@
   logical, dimension(GF3D_MAX_HANDLES), save :: in_use = .false.
 
   public :: gf3d_version, gf3d_api_version, gf3d_sizeof, gf3d_last_error, gf3d_error_string
-  public :: gf3d_open, gf3d_close, gf3d_get_info, gf3d_get_station
+  public :: gf3d_open, gf3d_close, gf3d_get_info, gf3d_get_station, gf3d_cache_stats
   public :: gf3d_locate, gf3d_get_plan, gf3d_ndp, gf3d_partial_name
   public :: gf3d_seismograms, gf3d_partials
 
@@ -617,12 +618,13 @@
 !===================================================================
 !
 
-  integer(c_int) function gf3d_open(path,check_completion,h) bind(C,name='gf3d_open')
+  integer(c_int) function gf3d_open(path,check_completion,max_elements,h) bind(C,name='gf3d_open')
 
   implicit none
 
   character(kind=c_char), dimension(*), intent(in) :: path
   integer(c_int), value :: check_completion
+  integer(c_int), value :: max_elements
   integer(c_int), intent(out) :: h
 
   ! local parameters
@@ -654,7 +656,8 @@
   ! gf_open closes what it opened, so a failure here leaves the slot free
   ! and h at 0
   if (ierr == GF_OK) call gf_open(trim(fpath),handles(islot),ierr, &
-                                  check_completion = (check_completion /= 0))
+                                  check_completion = (check_completion /= 0), &
+                                  max_elements = int(max_elements))
 
   if (ierr == GF_OK) then
     in_use(islot) = .true.
@@ -752,11 +755,64 @@
     info%r_planet = handles(h)%R_PLANET
     info%rhoav    = handles(h)%RHOAV
 
+    info%bytes_per_element = int(gf_element_bytes(handles(h)),kind=c_long_long)
+
   endif
 
   gf3d_get_info = int(ierr,kind=c_int)
 
   end function gf3d_get_info
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  integer(c_int) function gf3d_cache_stats(h,hits,misses,evictions,n_cached,files_read) &
+    bind(C,name='gf3d_cache_stats')
+
+! what the handle's element cache has done since it was opened
+!
+! Any pointer may be NULL. See t_gf_cache in gf_par.F90 for what each
+! counter counts.
+
+  implicit none
+
+  integer(c_int), value :: h
+  type(c_ptr), value :: hits,misses,evictions,n_cached,files_read
+
+  ! local parameters
+  integer(kind=8) :: nh,nm,ne,nf
+  integer :: nc,ierr
+  integer(c_long_long), pointer :: p8
+  integer(c_int), pointer :: p4
+
+  ierr = GF_OK
+
+  call use_handle(h,ierr)
+
+  if (ierr == GF_OK) call gf_cache_stats(handles(h),nh,nm,ne,nc,nf,ierr)
+
+  if (ierr == GF_OK) then
+    if (c_associated(hits)) then
+      call c_f_pointer(hits,p8) ; p8 = int(nh,kind=c_long_long)
+    endif
+    if (c_associated(misses)) then
+      call c_f_pointer(misses,p8) ; p8 = int(nm,kind=c_long_long)
+    endif
+    if (c_associated(evictions)) then
+      call c_f_pointer(evictions,p8) ; p8 = int(ne,kind=c_long_long)
+    endif
+    if (c_associated(n_cached)) then
+      call c_f_pointer(n_cached,p4) ; p4 = int(nc,kind=c_int)
+    endif
+    if (c_associated(files_read)) then
+      call c_f_pointer(files_read,p8) ; p8 = int(nf,kind=c_long_long)
+    endif
+  endif
+
+  gf3d_cache_stats = int(ierr,kind=c_int)
+
+  end function gf3d_cache_stats
 
 !
 !-------------------------------------------------------------------------------------------------

@@ -61,7 +61,7 @@
 ! everything below comes from this one module: that is the claim being tested
   use gf3d
 
-  use, intrinsic :: iso_c_binding, only: c_int,c_double,c_char,c_ptr,c_null_char, &
+  use, intrinsic :: iso_c_binding, only: c_int,c_long_long,c_double,c_char,c_ptr,c_null_char, &
                                          c_null_ptr,c_loc
 
   implicit none
@@ -95,6 +95,7 @@
     integer(c_int) :: ngllx,nglly,ngllz
     integer(c_int) :: topography,ellipticity,rotation,attenuation,gravity,pad_
     real(c_double) :: dt,t0,r_planet,rhoav,scale_displ
+    integer(c_long_long) :: bytes_per_element
   end type gf3d_info_t
 
   type, bind(C) :: gf3d_location_t
@@ -108,10 +109,12 @@
 
   interface
 
-    integer(c_int) function c_gf3d_open(path,check_completion,h) bind(C,name='gf3d_open')
+    integer(c_int) function c_gf3d_open(path,check_completion,max_elements,h) &
+      bind(C,name='gf3d_open')
       import :: c_int,c_char
       character(kind=c_char), dimension(*), intent(in) :: path
       integer(c_int), value :: check_completion
+      integer(c_int), value :: max_elements
       integer(c_int), intent(out) :: h
     end function c_gf3d_open
 
@@ -255,14 +258,15 @@
 
   write(*,*) '2. the same source through the C entry points'
 
-  cerr = c_gf3d_open(trim(dbpath)//c_null_char,0_c_int,ch)
+  cerr = c_gf3d_open(trim(dbpath)//c_null_char,0_c_int,0_c_int,ch)
   call report_true('   gf3d_open',cerr == GF_OK,nfail)
   if (cerr /= GF_OK) stop 1
 
   cerr = c_gf3d_get_info(ch,cinfo)
   call report_true('   gf3d_get_info agrees with the handle', &
     cerr == GF_OK .and. int(cinfo%nstations) == db%nstations .and. &
-    int(cinfo%nelem) == db%nelem,nfail)
+    int(cinfo%nelem) == db%nelem .and. &
+    int(cinfo%bytes_per_element,8) == gf_element_bytes(db),nfail)
 
   ! the values a caller would have parsed out of the CMTSOLUTION, recovered
   ! from what the reader produced: the moment tensor is stored
