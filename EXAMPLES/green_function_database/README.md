@@ -105,6 +105,11 @@ with gf3d.Database("global/GFDB") as db:
     r.dp_names    # ['Mrr', ..., 'Mtp', 'lat', 'lon', 'dep', 'tim']
 ```
 
+A loop that comes back to the same elements -- a sampler, say -- should open
+with `gf3d.Database(path, max_elements=N)`: the handle then keeps the `N`
+most recently used elements in memory and reads nothing from disk when it
+returns to one. `utils/green_function/gf3d/README.md` has the details.
+
 `global/api_demos/python/` holds two scripts. Each writes one figure and nothing
 else, and reports how long every call into the library took.
 

@@ -399,42 +399,47 @@ def crossing(db, cmt, step=0.25, nmax=40):
     print(f"    B: {there.morton_hex}  (element {there.ielem})")
     print()
 
-    # A, B, A, B. The third is the measurement that matters and the only
-    # one that does not depend on the machine: if the library kept the
-    # element it just used, returning to A would be cheap.
-    ra, t1 = timed("db.seismograms  1. at A", db.seismograms, cmt)
-    rb, t2 = timed("db.seismograms  2. moved to B", db.seismograms, far)
-    _, t3 = timed("db.seismograms  3. back to A", db.seismograms, cmt)
-    _, t4 = timed("db.seismograms  4. back to B", db.seismograms, far)
+    # A, B, A, B -- once on the handle opened above, which keeps nothing
+    # between calls, and once on a second handle that keeps two elements.
+    # Steps 3 and 4 are the ones that matter: they return to an element the
+    # previous calls already used.
+    order = [("1. at A", here, cmt), ("2. moved to B", there, far),
+             ("3. back to A", here, cmt), ("4. back to B", there, far)]
+    with gf3d.Database(db.path, max_elements=2) as cached:
+        rows = []
+        for label, loc, src in order:
+            r0, t0 = timed(f"db.seismograms      {label}", db.seismograms, src)
+            r2, t2 = timed(f"cached.seismograms  {label}", cached.seismograms, src)
+            rows.append((label, loc.morton_hex, t0, t2, np.array_equal(r0.data, r2.data)))
+        stats = cached.cache_stats
 
-    print("    extraction              element       time")
-    for label, elem, ms in (
-        ("1. at A", here.morton_hex, t1),
-        ("2. moved to B", there.morton_hex, t2),
-        ("3. back to A", here.morton_hex, t3),
-        ("4. back to B", there.morton_hex, t4),
-    ):
-        print(f"    {label:<21s} {elem[-4:]}  {ms:10.1f} ms")
+    print()
+    print("                                         max_elements")
+    print("    extraction              element       0          2")
+    for label, hexcode, t0, t2, _ in rows:
+        print(f"    {label:<21s} {hexcode[-4:]}  {t0:10.1f} {t2:10.1f} ms")
+    print()
+    print(f"  max_elements = 2: {stats['misses']} misses, {stats['hits']} hits, "
+          f"{stats['files_read']} element files read")
     print()
 
-    info = db.info
-    # per station: 3 force directions x 3 components x 125 GLL points x
-    # nt_subsampled samples, float32. NGLL is 5 in every gf3d database.
-    mb = info["nstations"] * info["nt_subsampled"] * 9 * 125 * 4 / 1048576
-    print(f"  Each extraction re-reads its element: {mb:.1f} MB, and puts all")
-    print("  of it back through the interpolation. Step 3 costs what step 1")
-    print("  did even though nothing about element A changed in between --")
-    print("  the library keeps no element between calls, so a sample loop")
-    print("  that wanders in and out of one element pays for it every time.")
+    mb = db.info["bytes_per_element"] / 1048576
+    print(f"  Each element is {mb:.1f} MB: every station's displacement. The")
+    print("  handle that keeps nothing reads it from disk on every call, so")
+    print("  step 3 costs what step 1 did. The one opened with max_elements=2")
+    print("  still holds A and B at steps 3 and 4 and reads nothing: what is")
+    print("  left is the arithmetic. That is the handle a sample loop that")
+    print("  wanders in and out of a few elements should use.")
     print()
-    print("  If one of these four differs by much more than the rest, that is")
-    print("  the operating system's file cache, not the library: the first")
-    print("  read of a file this process has never touched may come from the")
-    print("  storage rather than from RAM. That is a property of the machine")
-    print("  and of what ran before, so it is reported, not asserted.")
+    if all(same for *_, same in rows):
+        print("  Both handles gave the same traces at every step, to the bit.")
+    else:
+        print("  The two handles disagree -- that is a bug.")
     print()
-    print("  The two positions are different sources. Their traces are not")
-    print("  meant to agree and are not compared.")
+    print("  If one time differs by much more than the rest, that is the")
+    print("  operating system's file cache, not the library: the first read")
+    print("  of a file may come from storage rather than RAM. It is")
+    print("  reported, not asserted.")
 
 
 def main(argv=None):

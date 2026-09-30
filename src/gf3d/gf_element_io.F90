@@ -58,7 +58,10 @@
 !----
 !---- Memory: one element-station file is 21 MB in the shipped global
 !---- example (3 x 3 x 125 x 4625 float32). Callers read one element at a
-!---- time and loop stations inside; nothing here holds two.
+!---- time and loop stations inside. A handle opened with max_elements > 0
+!---- keeps that many whole elements (gf_element_block) and the
+!---- coordinates of every element it has read (gf_element_coords); with 0
+!---- nothing is kept and every call reads.
 !----
 
   module gf_element_io
