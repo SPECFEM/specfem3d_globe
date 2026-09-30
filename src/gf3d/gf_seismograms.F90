@@ -807,6 +807,9 @@
 
   !--- and the stations ----------------------------------------------------
 
+  ! the element is loaded from disk: one miss, however many stations
+  if (associated(db%cache)) db%cache%misses = db%cache%misses + 1
+
   do ista = 1,db%nstations
 
     call gf_read_element_displ(db,loc%ielem,ista,swork%displ,ierr)

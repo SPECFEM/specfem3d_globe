@@ -155,11 +155,34 @@
   end type t_gf_station
 
   !-----------------------------------------------------------------
+  ! what a handle keeps between extractions, and what it counts
+  !
+  ! Owned by one open handle: gf_open allocates it, gf_close frees it.
+  ! The counters run whether or not anything is kept:
+  !   misses      element blocks loaded from disk by an extraction
+  !   hits        element blocks an extraction found already in memory
+  !   evictions   elements dropped to make room for another
+  !   files_read  element files (coordinates or displacement) whose data
+  !               was read through this handle, by any route: extraction,
+  !               locate, --dump or an anchor sweep. Not gf_open's
+  !               completion scan, which only looks at attributes.
+  !-----------------------------------------------------------------
+
+  type :: t_gf_cache
+    integer :: n_cached = 0
+    integer(kind=8) :: hits = 0, misses = 0, evictions = 0, files_read = 0
+  end type t_gf_cache
+
+  !-----------------------------------------------------------------
   ! the database handle
   !
   ! Contract: open once, extract many. gf_open() reads all of the
   ! metadata (a few hundred kB) but none of the bulk arrays; the 58 MB
   ! ibathy_topo grid is loaded on demand by gf_load_topo().
+  !
+  ! An open handle must not be copied by assignment: the copy would share
+  ! its cache, and closing either would leave the other pointing at freed
+  ! memory. Pass it by reference, as every routine here does.
   !-----------------------------------------------------------------
 
   type :: t_gfdb
@@ -219,6 +242,11 @@
     !--- stations ---
     integer :: nstations = 0
     type(t_gf_station), dimension(:), allocatable :: stations
+
+    !--- what is kept between extractions ---
+    ! A pointer, so that the routines that fill it can keep taking the
+    ! handle intent(in): what changes is the target, not the handle.
+    type(t_gf_cache), pointer :: cache => null()
   end type t_gfdb
 
   !-----------------------------------------------------------------

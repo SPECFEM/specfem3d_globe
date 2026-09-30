@@ -160,6 +160,7 @@
 
   call gf_h5_file_open(filename,fid,ierr)
   if (ierr /= GF_OK) return
+  call count_file_read(db)
 
   ndims = 4
   call gf_h5_dset_dims(fid,'xyz',ndims,dims,ierr)
@@ -211,6 +212,7 @@
 
   call gf_h5_file_open(filename,fid,ierr)
   if (ierr /= GF_OK) return
+  call count_file_read(db)
 
   ndims = 6
   call gf_h5_dset_dims(fid,'displacement',ndims,dims,ierr)
@@ -285,5 +287,24 @@
   call gf_h5_file_close(fid,ierr2)
 
   end subroutine gf_element_type_sizes
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine count_file_read(db)
+
+! one more element file opened through this handle
+!
+! Guarded because the readers are public and a caller may hand them a
+! handle it built itself rather than one gf_open returned.
+
+  implicit none
+
+  type(t_gfdb), intent(in) :: db
+
+  if (associated(db%cache)) db%cache%files_read = db%cache%files_read + 1
+
+  end subroutine count_file_read
 
   end module gf_element_io
