@@ -71,7 +71,7 @@
 
   use gf_hdf5_read, only: GF_HID,gf_h5_file_open,gf_h5_file_close, &
                           gf_h5_dset_dims,gf_h5_dset_type_size, &
-                          gf_h5_read_4d_d,gf_h5_read_6d_r
+                          gf_h5_read_4d_d,gf_h5_read_displ_chunks,GF_H5_ORDER_DISPL
 
   implicit none
 
@@ -195,6 +195,9 @@
 !
 ! 21 MB in the shipped global example, so the caller owns the buffer and is
 ! expected to reuse it across stations rather than allocate per station.
+!
+! The read is gf_h5_read_displ_chunks's: chunk by chunk on a database the
+! solver wrote, through h5dread_f otherwise, the same numbers either way.
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,MAX_STRING_LEN
 
@@ -211,6 +214,7 @@
   integer(kind=GF_HID) :: fid
   integer(kind=8), dimension(6) :: dims
   integer :: ndims,ierr2
+  logical :: raw
 
   call gf_element_path(db,ielem,ista,filename,ierr)
   if (ierr /= GF_OK) return
@@ -232,8 +236,8 @@
     goto 99
   endif
 
-  call gf_h5_read_6d_r(fid,'displacement',GF_NCOMP,GF_NCOMP,NGLLX,NGLLY,NGLLZ, &
-                       db%nt_subsampled,displ,ierr)
+  call gf_h5_read_displ_chunks(fid,'displacement',db%nt_subsampled,db%nt_subsampled, &
+                               GF_H5_ORDER_DISPL,displ,raw,ierr)
 
 99 continue
   call gf_h5_file_close(fid,ierr2)

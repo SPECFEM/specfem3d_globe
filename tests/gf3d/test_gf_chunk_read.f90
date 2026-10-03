@@ -31,10 +31,14 @@
 !---- gf_h5_read_displ_chunks reads a displacement dataset chunk by chunk
 !---- through H5Dread_chunk when the file is laid out as the solver writes
 !---- it, and through h5dread_f otherwise. Either way it must hand back
-!---- exactly the stored floats, in the order the caller asked for. This
-!---- pins that against gf_read_element_displ, which reads the same file
-!---- through h5dread_f, for every (element, station) of a database:
+!---- exactly the stored floats, in the order the caller asked for. The
+!---- oracle is this program's own h5dread_f of the whole dataset, the way
+!---- the library read every displacement file before this reader existed.
+!---- For every station of the first NELEM_MAX elements of a database (all of
+!---- the fixture's):
 !----
+!----   0. gf_read_element_displ, which every extraction reads through and
+!----      which now goes through gf_h5_read_displ_chunks;
 !----   1. both orders, at time prefixes 1, 7, 8 and nt -- 7 is the fixture's
 !----      chunk length, so these are one row of a chunk, one whole chunk,
 !----      one more than a chunk, and everything including the partial last
@@ -75,15 +79,18 @@
   integer, parameter :: NPREFIX = 4
   real(kind=CUSTOM_REAL), parameter :: SENTINEL = -12345._CUSTOM_REAL
 
-  ! section 3's file: a short record, chunk length 7, so 20 = 2*7 + 6
+  ! a real $GF3D_TEST_GFDB has thousands of elements; the fixture has 3
+  integer, parameter :: NELEM_MAX = 3
+
+  ! section 2's file: a short record, chunk length 7, so 20 = 2*7 + 6
   integer, parameter :: NT3 = 20, NCHUNK3 = 7
 
   character(len=MAX_STRING_LEN) :: dbpath,expect,filename
   type(t_gfdb) :: db
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: ref
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: ref,displ
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: buf
   integer, dimension(NPREFIX) :: prefixes
-  integer :: nt,ip,nt_out,ie,ista,iord,ierr,nfail,nbad,nroute,ncheck
+  integer :: nt,ip,nt_out,ie,ista,iord,ierr,nfail,nbad,nroute,ncheck,nelem
   integer(kind=GF_HID) :: fid
   logical :: raw,want_raw
 
@@ -115,14 +122,39 @@
   nt = db%nt_subsampled
   prefixes = (/ 1, 7, 8, nt /)
 
-  allocate(ref(NC,NC,NGLLX,NGLLY,NGLLZ,nt),buf(NC*NM*nt+1),stat=ierr)
+  nelem = min(db%nelem,NELEM_MAX)
+
+  allocate(ref(NC,NC,NGLLX,NGLLY,NGLLZ,nt),displ(NC,NC,NGLLX,NGLLY,NGLLZ,nt), &
+           buf(NC*NM*nt+1),stat=ierr)
   if (ierr /= 0) call die('could not allocate')
 
   !--------------------------------------------------------------------
-  ! 1. every (element, station), both orders, four prefixes, the route
+  ! 0. the reader every extraction uses
   !--------------------------------------------------------------------
 
-  write(*,'(a)') '1. every element and station against gf_read_element_displ'
+  write(*,'(a)') '0. gf_read_element_displ against h5dread_f'
+
+  nbad = 0
+  ncheck = 0
+  do ie = 1,nelem
+    do ista = 1,db%nstations
+      call reference(ie,ista,ref)
+      call gf_read_element_displ(db,ie,ista,displ,ierr)
+      if (ierr /= GF_OK) call die('gf_read_element_displ failed')
+      ncheck = ncheck + 1
+      if (any(displ /= ref)) then
+        nbad = nbad + 1
+        if (nbad == 1) write(*,'(a,i0,a,i0)') '     mismatch: first at element ',ie,', station ',ista
+      endif
+    enddo
+  enddo
+  call gf_report_true('gf_read_element_displ: bitwise, every station',nbad == 0 .and. ncheck > 0,nfail)
+
+  !--------------------------------------------------------------------
+  ! 1. both orders, four prefixes, the route
+  !--------------------------------------------------------------------
+
+  write(*,'(a)') '1. gf_h5_read_displ_chunks against h5dread_f'
 
   do iord = 1,2
     do ip = 1,NPREFIX
@@ -131,10 +163,9 @@
       nbad = 0
       nroute = 0
       ncheck = 0
-      do ie = 1,db%nelem
+      do ie = 1,nelem
         do ista = 1,db%nstations
-          call gf_read_element_displ(db,ie,ista,ref,ierr)
-          if (ierr /= GF_OK) call die('gf_read_element_displ failed')
+          call reference(ie,ista,ref)
 
           call gf_element_path(db,ie,ista,filename,ierr)
           if (ierr /= GF_OK) call die('gf_element_path failed')
@@ -186,6 +217,44 @@
   write(*,'(a)') '  all checks passed'
 
   contains
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine reference(ie,is,d)
+
+! the oracle: h5dread_f of the whole dataset into the dataset's own order,
+! asking for the buffer's type as the library always has
+
+  implicit none
+  integer, intent(in) :: ie,is
+  real(kind=CUSTOM_REAL), dimension(NC,NC,NGLLX,NGLLY,NGLLZ,nt), intent(out) :: d
+
+  character(len=MAX_STRING_LEN) :: fn
+  integer(kind=HID_T) :: f,ds,mem_type
+  integer(kind=HSIZE_T), dimension(6) :: dims
+  integer :: ier
+
+  call gf_element_path(db,ie,is,fn,ier)
+  if (ier /= GF_OK) call die('gf_element_path failed')
+  if (CUSTOM_REAL == SIZE_REAL) then
+    mem_type = H5T_NATIVE_REAL
+  else
+    mem_type = H5T_NATIVE_DOUBLE
+  endif
+  dims = (/ int(NC,HSIZE_T),int(NC,HSIZE_T),int(NGLLX,HSIZE_T),int(NGLLY,HSIZE_T), &
+            int(NGLLZ,HSIZE_T),int(nt,HSIZE_T) /)
+  call h5fopen_f(trim(fn),H5F_ACC_RDONLY_F,f,ier)
+  if (ier /= 0) call die('could not open '//trim(fn))
+  call h5dopen_f(f,'displacement',ds,ier)
+  if (ier /= 0) call die('no displacement in '//trim(fn))
+  call h5dread_f(ds,mem_type,d,dims,ier)
+  if (ier /= 0) call die('h5dread_f failed on '//trim(fn))
+  call h5dclose_f(ds,ier)
+  call h5fclose_f(f,ier)
+
+  end subroutine reference
 
 !
 !-------------------------------------------------------------------------------------------------

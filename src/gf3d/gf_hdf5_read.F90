@@ -34,11 +34,12 @@
 !---- followed here is src/specfem3D/green_function_io.F90, which is also
 !---- the authoritative description of the on-disk layout.
 !----
-!---- Precision: every floating-point read lands in a `double precision`
-!---- buffer and asks HDF5 for H5T_NATIVE_DOUBLE, so a CUSTOM_REAL = 4
-!---- database is widened by the HDF5 conversion layer on the way in and
-!---- nothing downstream ever sees a float32. Integer reads use
-!---- H5T_NATIVE_INTEGER the same way.
+!---- Precision: every floating-point read but one lands in a `double
+!---- precision` buffer and asks HDF5 for H5T_NATIVE_DOUBLE, so a
+!---- CUSTOM_REAL = 4 database is widened by the HDF5 conversion layer on the
+!---- way in. The exception is the displacement, which stays CUSTOM_REAL (see
+!---- gf_h5_read_displ_chunks). Integer reads use H5T_NATIVE_INTEGER the same
+!---- way.
 !----
 
   module gf_hdf5_read
@@ -98,7 +99,6 @@
   public :: gf_h5_read_1d_d
   public :: gf_h5_read_2d_i
   public :: gf_h5_read_4d_d
-  public :: gf_h5_read_6d_r
   public :: gf_h5_read_displ_chunks
 
   contains
@@ -686,77 +686,6 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine gf_h5_read_6d_r(loc_id,name,n1,n2,n3,n4,n5,n6,arr,ierr)
-
-! reads a rank-6 dataset into a real(CUSTOM_REAL) buffer, in Fortran order
-!
-! This is the bulk array: displacement(3_force,3_disp,NGLLX,NGLLY,NGLLZ,nt),
-! 21 MB per element-station file in the shipped global example.
-!
-! It is the one place the library does *not* widen on read. Asking HDF5 for
-! H5T_NATIVE_DOUBLE here would double the resident footprint of the single
-! largest allocation in the whole extraction, for no gain: the interpolator
-! in gf_interp.F90 widens one 225-element time slice at a time, which is
-! where the double-precision core actually begins.
-!
-! The native type requested matches the *buffer*, not the file, so HDF5
-! converts if the writer used the other CUSTOM_REAL. gf_h5_dset_type_size()
-! lets a caller report when that conversion narrows.
-
-  use constants, only: CUSTOM_REAL,SIZE_REAL
-
-  implicit none
-
-  integer(kind=GF_HID), intent(in) :: loc_id
-  character(len=*), intent(in) :: name
-  integer, intent(in) :: n1,n2,n3,n4,n5,n6
-  real(kind=CUSTOM_REAL), dimension(n1,n2,n3,n4,n5,n6), intent(out) :: arr
-  integer, intent(out) :: ierr
-
-#ifdef USE_HDF5
-  integer(kind=GF_HID) :: dset_id
-  integer(HSIZE_T), dimension(6) :: dims
-  integer :: hdferr
-
-  arr(:,:,:,:,:,:) = 0._CUSTOM_REAL
-  dims(1) = n1
-  dims(2) = n2
-  dims(3) = n3
-  dims(4) = n4
-  dims(5) = n5
-  dims(6) = n6
-
-  call h5dopen_f(loc_id, trim(name), dset_id, hdferr)
-  if (hdferr /= 0) then
-    call gf_set_error(ierr,GF_ERR_FORMAT,'missing dataset: '//trim(name))
-    return
-  endif
-
-  if (CUSTOM_REAL == SIZE_REAL) then
-    call h5dread_f(dset_id, H5T_NATIVE_REAL, arr, dims, hdferr)
-  else
-    call h5dread_f(dset_id, H5T_NATIVE_DOUBLE, arr, dims, hdferr)
-  endif
-  if (hdferr /= 0) then
-    call h5dclose_f(dset_id, hdferr)
-    call gf_set_error(ierr,GF_ERR_HDF5,'could not read dataset: '//trim(name))
-    return
-  endif
-
-  call h5dclose_f(dset_id, hdferr)
-
-  ierr = GF_OK
-#else
-  arr(:,:,:,:,:,:) = 0._CUSTOM_REAL
-  call gf_set_error(ierr,GF_ERR_NO_HDF5,'this build has no HDF5 support')
-#endif
-
-  end subroutine gf_h5_read_6d_r
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
   subroutine gf_h5_read_displ_chunks(loc_id,name,nt,nt_out,order,buf,raw,ierr)
 
 ! reads an element-station displacement dataset, or a time prefix of it,
@@ -791,6 +720,13 @@
 ! The caller has checked the dataset's shape (gf_read_element_displ does), so
 ! nt is the stored length; 1 <= nt_out <= nt, and chunks wholly beyond nt_out
 ! are not read.
+!
+! This is the one read the library does *not* widen to double: asking HDF5 for
+! H5T_NATIVE_DOUBLE here would double the largest allocation of the whole
+! extraction for no gain, since the kernels widen one time slice at a time.
+! The fallback asks for the type of the *buffer*, so HDF5 converts if the
+! writer used the other CUSTOM_REAL; gf_h5_dset_type_size() lets a caller
+! report when that narrows.
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
 
@@ -998,8 +934,8 @@
 
   subroutine read_displ_fallback(dset_id,nt,nt_out,order,buf,hdferr)
 
-! the h5dread_f route of gf_h5_read_displ_chunks: what gf_h5_read_6d_r does,
-! for the first nt_out samples, then transposed if blk(m,t,a) was asked for
+! the h5dread_f route of gf_h5_read_displ_chunks: the dataset read whole, or
+! its first nt_out samples, then transposed if blk(m,t,a) was asked for
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
 
@@ -1036,8 +972,9 @@
 
   subroutine read_displ_slab(dset_id,nt,nt_out,displ,hdferr)
 
-! h5dread_f of displ(:,:,:,:,:,1:nt_out); the whole dataset, as
-! gf_h5_read_6d_r reads it, when nt_out = nt
+! h5dread_f of displ(:,:,:,:,:,1:nt_out); with no selection at all when
+! nt_out = nt, which is how the library read every displacement file before
+! gf_h5_read_displ_chunks
 
   use constants, only: CUSTOM_REAL,SIZE_REAL,NGLLX,NGLLY,NGLLZ
 
