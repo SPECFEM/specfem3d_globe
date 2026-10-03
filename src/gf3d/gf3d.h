@@ -85,13 +85,14 @@
  * Memory          a handle opened with max_elements > 0 keeps that many
  *                 elements in memory between extractions, each
  *                 gf3d_info.bytes_per_element large, and drops the least
- *                 recently used one to make room. It also keeps the
- *                 coordinates of every element its locates read (3 kB
- *                 each). Together: no element file is opened twice by one
- *                 handle, so returning to a position already visited reads
- *                 nothing from disk. A new position inside a cached element
- *                 may still read a neighbour's coordinates once, the first
- *                 time the locate tries it. Budget max_elements *
+ *                 recently used one to make room. A position inside a kept
+ *                 element reads no displacement file. Every handle also
+ *                 keeps the coordinates its locates read, 3 kB per element,
+ *                 for the max(10, max_elements) elements used most recently
+ *                 -- at least one locate's candidates -- so a locate rereads
+ *                 a coordinate file only for an element that has since
+ *                 dropped out of that store, and returning to a position
+ *                 still held reads nothing from disk. Budget max_elements *
  *                 bytes_per_element per handle, and per process for
  *                 parallel chains. On Linux an allocation that succeeds can
  *                 still be killed for lack of memory when first filled;

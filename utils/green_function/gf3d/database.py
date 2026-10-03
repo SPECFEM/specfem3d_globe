@@ -240,12 +240,14 @@ class Database:
     extractions, for a caller that comes back to them -- a sampler walking
     around one source, say. Each takes ``info["bytes_per_element"]`` (every
     station's displacement for that element), and the least recently used
-    one is dropped to make room. A handle that keeps elements also keeps
-    the coordinates of every element it has located in (3 kB each), so it
-    opens no element file twice: returning to a position already visited
-    reads nothing from disk. The numbers are the same with or without it,
-    to the bit. ``0``, the default, keeps nothing and reads every
-    extraction's element from disk. :attr:`cache_stats` says what it did.
+    one is dropped to make room; a position inside a kept element reads no
+    displacement file. Every handle, whatever ``max_elements``, also keeps
+    the coordinates its locates read (3 kB per element) for the
+    ``max(10, max_elements)`` elements used most recently, so returning to a
+    position still held reads nothing from disk. The numbers are the same
+    with or without either, to the bit. ``0``, the default, keeps no
+    elements and reads every extraction's element from disk.
+    :attr:`cache_stats` says what it did.
 
     The library is not thread-safe; calls are serialised through one lock.
     Parallel chains belong in separate processes, each with its own cache,
@@ -342,7 +344,8 @@ class Database:
         already in memory; with ``max_elements=0`` every one is a miss.
         ``evictions``: elements dropped to make room. ``n_cached``: elements
         held now. ``files_read``: element files, coordinates or
-        displacement, this handle has read by any route.
+        displacement, this handle has read by any route. The coordinate
+        store has no counters of its own: its reads show only here.
         """
         hits, misses, evictions, files = (ctypes.c_longlong() for _ in range(4))
         n_cached = ctypes.c_int()

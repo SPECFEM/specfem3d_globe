@@ -59,9 +59,10 @@
 !---- Memory: one element-station file is 21 MB in the shipped global
 !---- example (3 x 3 x 125 x 4625 float32). Callers read one element at a
 !---- time and loop stations inside. A handle opened with max_elements > 0
-!---- keeps that many whole elements (gf_element_block) and the
-!---- coordinates of every element it has read (gf_element_coords); with 0
-!---- nothing is kept and every call reads.
+!---- keeps that many whole elements (gf_element_block); with 0 every
+!---- extraction reads its element. Every handle keeps the coordinates of
+!---- the elements its locates read most recently (gf_element_coords), for
+!---- at least GF_NCOORD_MIN elements.
 !----
 
   module gf_element_io
@@ -415,10 +416,12 @@
 
 ! gf_read_element_coords, through the handle's coordinate store
 !
-! A handle that keeps elements keeps the coordinates of every element read
-! here, so each coordinates.h5 is opened once per handle; one that keeps
-! none reads every time, as gf_read_element_coords does. What comes back
-! is the same doubles either way: the store holds what the read returned.
+! The store holds the coordinates of the xyz_capacity elements used most
+! recently (gf_open; at least GF_NCOORD_MIN, one locate's candidates). A
+! hit reads no file; a miss reads coordinates.h5 and takes a free entry,
+! or else the least recently used one. What comes back is the same doubles
+! either way: the store holds what the read returned. A handle with no
+! store, or one gf_open did not make, reads every time.
 
   use constants, only: NGLLX,NGLLY,NGLLZ,NDIM
 
@@ -431,22 +434,29 @@
 
   ! local parameters
   type(t_gf_cache), pointer :: c
-  double precision, dimension(:,:,:,:,:), allocatable :: grown
-  integer :: k,ncap,ier
-  character(len=24) :: sbytes
+  integer :: i,k
 
   ! out of range is gf_read_element_coords' error to report, and it must be
-  ! caught before xyz_slot(ielem) is indexed
-  if (.not. gf_cache_enabled(db) .or. ielem < 1 .or. ielem > db%nelem) then
+  ! caught before xyz_slot(ielem) is indexed. Two tests, not one .and.:
+  ! Fortran does not short-circuit, and xyz_capacity must not be evaluated
+  ! when db%cache is not associated.
+  if (.not. associated(db%cache) .or. ielem < 1 .or. ielem > db%nelem) then
+    call gf_read_element_coords(db,ielem,xyz_elem,ierr)
+    return
+  endif
+  if (db%cache%xyz_capacity == 0) then
     call gf_read_element_coords(db,ielem,xyz_elem,ierr)
     return
   endif
 
+  ! the handle is intent(in); what changes is the target of its pointer
   c => db%cache
+  c%tick = c%tick + 1
 
   k = c%xyz_slot(ielem)
   if (k > 0) then
     xyz_elem(:,:,:,:) = c%xyz_pool(:,:,:,:,k)
+    c%xyz_last(k) = c%tick
     ierr = GF_OK
     return
   endif
@@ -454,26 +464,21 @@
   call gf_read_element_coords(db,ielem,xyz_elem,ierr)
   if (ierr /= GF_OK) return
 
-  ! room for one more: start at 2 and double. Small on purpose, so that the
-  ! regrow below runs on the three-element test fixture too.
-  ncap = 0
-  if (allocated(c%xyz_pool)) ncap = size(c%xyz_pool,5)
-  if (c%nxyz == ncap) then
-    ncap = max(2,2*ncap)
-    allocate(grown(NDIM,NGLLX,NGLLY,NGLLZ,ncap),stat=ier)
-    if (ier /= 0) then
-      write(sbytes,'(i0)') int(NDIM*NGLLX*NGLLY*NGLLZ,8)*int(ncap,8)*8_8
-      call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate '//trim(sbytes) &
-                        //' bytes for the element coordinate store')
-      return
+  ! a free entry, else the least recently used
+  k = 1
+  do i = 1,c%xyz_capacity
+    if (c%xyz_ielem(i) == 0) then
+      k = i
+      exit
     endif
-    if (c%nxyz > 0) grown(:,:,:,:,1:c%nxyz) = c%xyz_pool(:,:,:,:,1:c%nxyz)
-    call move_alloc(grown,c%xyz_pool)
-  endif
+    if (c%xyz_last(i) < c%xyz_last(k)) k = i
+  enddo
+  if (c%xyz_ielem(k) /= 0) c%xyz_slot(c%xyz_ielem(k)) = 0
 
-  c%nxyz = c%nxyz + 1
-  c%xyz_pool(:,:,:,:,c%nxyz) = xyz_elem(:,:,:,:)
-  c%xyz_slot(ielem) = c%nxyz
+  c%xyz_pool(:,:,:,:,k) = xyz_elem(:,:,:,:)
+  c%xyz_ielem(k) = ielem
+  c%xyz_last(k) = c%tick
+  c%xyz_slot(ielem) = k
 
   end subroutine gf_element_coords
 

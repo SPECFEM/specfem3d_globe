@@ -104,7 +104,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine gf_open(path,db,ierr,check_completion,max_elements)
+  subroutine gf_open(path,db,ierr,check_completion,max_elements,coord_capacity)
 
 ! opens a Green function database and reads all of its metadata
 !
@@ -122,6 +122,15 @@
 ! between extractions, each gf_element_bytes(db) large, allocated when
 ! first used. 0 keeps none, and every extraction reads its element from
 ! disk. More than the database holds is the same as all of them.
+!
+! Whatever max_elements is, the handle keeps the coordinates its locates
+! read, for max(GF_NCOORD_MIN, max_elements) elements (at most nelem, 3 kB
+! each), allocated here. coord_capacity overrides that number; 0 keeps no
+! coordinates. It is for tests and tuning, and deliberately not in the C
+! ABI: the test fixture has fewer elements than GF_NCOORD_MIN, so only an
+! override lets a test see the store evict.
+
+  use constants, only: NDIM,NGLLX,NGLLY,NGLLZ
 
   implicit none
 
@@ -130,10 +139,11 @@
   integer, intent(out) :: ierr
   logical, intent(in), optional :: check_completion
   integer, intent(in), optional :: max_elements
+  integer, intent(in), optional :: coord_capacity
 
   ! local parameters
   logical :: do_check,exists
-  integer :: nincomplete,ier,nkeep
+  integer :: nincomplete,ier,nkeep,ncoord
 
   ! starts from a clean handle
   call gf_close(db)
@@ -142,6 +152,12 @@
   if (present(max_elements)) nkeep = max_elements
   if (nkeep < 0) then
     call gf_set_error(ierr,GF_ERR_ARG,'max_elements must not be negative')
+    return
+  endif
+  ncoord = max(GF_NCOORD_MIN,nkeep)
+  if (present(coord_capacity)) ncoord = coord_capacity
+  if (ncoord < 0) then
+    call gf_set_error(ierr,GF_ERR_ARG,'coord_capacity must not be negative')
     return
   endif
 
@@ -202,12 +218,25 @@
 
   ! last, so that no failure above has a cache to leak. The slots are
   ! small; what they hold is allocated by the extraction that fills them.
+  ! The coordinate store is allocated whole: 3 kB per entry, 30 kB at the
+  ! default, more only for a handle that keeps more elements than that.
   allocate(db%cache,stat=ier)
   if (ier == 0) then
     db%cache%capacity = min(nkeep,db%nelem)
-    if (db%cache%capacity > 0) then
-      allocate(db%cache%slot(db%cache%capacity),db%cache%xyz_slot(db%nelem),stat=ier)
-      if (ier == 0) db%cache%xyz_slot(:) = 0
+    if (db%cache%capacity > 0) allocate(db%cache%slot(db%cache%capacity),stat=ier)
+  endif
+  if (ier == 0) then
+    db%cache%xyz_capacity = min(ncoord,db%nelem)
+    if (db%cache%xyz_capacity > 0) then
+      allocate(db%cache%xyz_slot(db%nelem), &
+               db%cache%xyz_ielem(db%cache%xyz_capacity), &
+               db%cache%xyz_last(db%cache%xyz_capacity), &
+               db%cache%xyz_pool(NDIM,NGLLX,NGLLY,NGLLZ,db%cache%xyz_capacity),stat=ier)
+      if (ier == 0) then
+        db%cache%xyz_slot(:) = 0
+        db%cache%xyz_ielem(:) = 0
+        db%cache%xyz_last(:) = 0
+      endif
     endif
   endif
   if (ier /= 0) then

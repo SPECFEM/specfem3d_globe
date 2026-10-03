@@ -346,13 +346,24 @@ def main(argv):
         same = True
         for k, src in enumerate((cmt, far, cmt, far)):
             if k == 2:
-                files0 = dbc.cache_stats["files_read"]
+                st0 = dbc.cache_stats
             want, got = db.partials(src), dbc.partials(src)
             same = same and np.array_equal(want.data, got.data) and np.array_equal(want.dp, got.dp)
             if k == 2:
-                files_hit = dbc.cache_stats["files_read"] - files0
+                st1 = dbc.cache_stats
+                files_hit = st1["files_read"] - st0["files_read"]
         ok("A B A B: data and dp identical to the bit, cached or not", same)
-        ok("returning to A read no element file", files_hit == 0)
+        ok("returning to A was a hit", st1["hits"] - st0["hits"] == 1)
+        # The handle also keeps the coordinates of the max(10, max_elements)
+        # elements its locates used last (GF_NCOORD_MIN = 10). When that is
+        # every element, as on the fixture, returning to A reads nothing at
+        # all; on a larger database the locates at A and B may have tried
+        # more candidates than it holds, and then only rereads of
+        # coordinates, at most one locate's 10, are allowed.
+        if info["nelem"] <= max(10, dbc.max_elements):
+            ok("returning to A read no element file", files_hit == 0)
+        else:
+            ok("returning to A read no displacement, only coordinates", files_hit <= 10)
 
         st = dbc.cache_stats
         print(f"       cache_stats: {st}")

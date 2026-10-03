@@ -35,7 +35,9 @@
 !---- makes the cache's behaviour testable at all -- and the object's
 !---- lifetime. With max_elements > 0 it also pins that the cache changes
 !---- no number, that it evicts the least recently used element, and that
-!---- a fill that fails part-way leaves nothing behind.
+!---- a fill that fails part-way leaves nothing behind. And it pins the
+!---- coordinate store every handle has: what it saves the locate, its
+!---- bound and its eviction order, and that it changes no location.
 !----
 !---- Elements A, B and C are found by walking north from the CMTSOLUTION,
 !---- as test_gf3d_ext does, so this runs on the fixture (three elements, 8
@@ -49,6 +51,8 @@
                   gf_locate_source,gf_locate_release,get_seismograms,gf_extract, &
                   gf_default_t0,gf_element_bytes, &
                   gf_errmsg,GF_OK,GF_ERR_ARG
+
+  use gf_par, only: GF_NCOORD_MIN
 
   use gf_manufactured, only: gf_report_true
 
@@ -72,8 +76,12 @@
   logical :: have_b,have_c,staged
   integer(kind=8) :: hits,misses,evictions,files_read
   integer(kind=8) :: misses0,files0,nread_locate,nread_extract
-  integer :: n_cached,ierr,nfail,k,nbad
+  integer :: n_cached,ierr,nfail,k,nbad,nloc
   integer, dimension(4) :: seq
+  integer, dimension(5) :: seq5
+  integer(kind=8) :: nread
+  type(t_gf_location), dimension(5) :: locs,locs0
+  logical :: one_each
 
   nfail = 0
 
@@ -120,17 +128,21 @@
   if (ierr /= GF_OK) call die('no default start time for this source')
 
   !--------------------------------------------------------------------
-  ! 2. what the counters count, with nothing kept
+  ! 2. what the counters count, with no element kept
   !
   ! A locate reads coordinates and loads no element block. An extraction
   ! is a locate plus one element block, which is one displacement file per
-  ! station. With no cache, a second identical extraction costs the same
-  ! again. The locate's own count depends on how many candidates it tried,
-  ! so it is measured, then required to be the same inside the extraction.
+  ! station. Every handle keeps the coordinates its locates read (at least
+  ! GF_NCOORD_MIN elements' worth, one locate's candidates), so the
+  ! extraction's own locate, at the position just located, reads none of
+  ! them again: the extraction reads exactly the displacement files. With
+  ! no element cache, a second identical extraction reads them all again --
+  ! the uncached route reads its element every time. The locate's own count
+  ! depends on how many candidates it tried, so it is measured.
   !--------------------------------------------------------------------
 
   write(*,'(a)') ''
-  write(*,'(a)') '2. counters with no cache'
+  write(*,'(a)') '2. counters with no element cache'
 
   call snapshot(db,misses0,files0)
   call gf_locate_source(db,src%latitude,src%longitude,src%depth,loc,ierr)
@@ -141,6 +153,7 @@
   call gf_report_true('a locate reads coordinates             ',nread_locate >= 1,nfail)
   call expect('misses from a locate ',misses - misses0,0_8,nfail)
 
+  ! what the first extraction on a fresh handle reads (section 5)
   nread_extract = nread_locate + int(db%nstations,8)
 
   call snapshot(db,misses0,files0)
@@ -148,14 +161,14 @@
   if (ierr /= GF_OK) call die('the first extraction failed')
   call gf_cache_stats(db,hits,misses,evictions,n_cached,files_read,ierr)
   call expect('misses, extraction 1 ',misses - misses0,1_8,nfail)
-  call expect('files, extraction 1  ',files_read - files0,nread_extract,nfail)
+  call expect('files, extraction 1  ',files_read - files0,int(db%nstations,8),nfail)
 
   call snapshot(db,misses0,files0)
   call get_seismograms(db,src,t0,synt,ierr)
   if (ierr /= GF_OK) call die('the second extraction failed')
   call gf_cache_stats(db,hits,misses,evictions,n_cached,files_read,ierr)
   call expect('misses, extraction 2 ',misses - misses0,1_8,nfail)
-  call expect('files, extraction 2  ',files_read - files0,nread_extract,nfail)
+  call expect('files, extraction 2  ',files_read - files0,int(db%nstations,8),nfail)
   call expect('hits with no cache   ',hits,0_8,nfail)
   call expect('n_cached, no cache   ',int(n_cached,8),0_8,nfail)
   call expect('evictions, no cache  ',evictions,0_8,nfail)
@@ -271,10 +284,12 @@
   ! uncached one does; returning to A reads nothing at all -- not the
   ! displacement, and not the coordinates the locate needs either, which
   ! the handle kept from the first time. Nor does a bare locate there.
-  ! Through C when there is one: the coordinate store starts with room for
-  ! two elements, so the third makes it grow, and A's coordinates are then
-  ! read back from the grown copy.
-  call gf_open(dbpath,dbc,ierr,check_completion=.false.,max_elements=3)
+  ! Through C when there is one. The coordinate store is opened large
+  ! enough for every element: on a real $GF3D_TEST_GFDB three locates may
+  ! try more candidates than the default store holds, and these counts are
+  ! about the element cache. Section 5b is about the store's bound.
+  call gf_open(dbpath,dbc,ierr,check_completion=.false.,max_elements=3, &
+               coord_capacity=huge(1))
   if (ierr /= GF_OK) call die('could not open the database with max_elements = 3')
   call snapshot(dbc,misses0,files0)
   call extract_at(dbc,1)
@@ -295,6 +310,72 @@
                       loc_c%ielem == loc%ielem .and. loc_c%xi == loc%xi .and. &
                       loc_c%eta == loc%eta .and. loc_c%gamma == loc%gamma,nfail)
   call gf_close(dbc)
+
+  !--------------------------------------------------------------------
+  ! 5b. the coordinate store: its bound and its eviction order
+  !
+  ! Every handle keeps the coordinates of the xyz_capacity elements its
+  ! locates used most recently. The default, max(GF_NCOORD_MIN,
+  ! max_elements), is more than the fixture's three elements, so the bound
+  ! is set here through gf_open's coord_capacity. Counted in coordinate
+  ! files over a sequence of bare locates, each on a fresh handle, when
+  ! each of A, B, C costs one file to locate (the fixture: the nearest
+  ! centroid is the right element): at capacity 1, A B A reads A twice; at
+  ! 2, A B A B reads each once. The last sequence tells LRU from FIFO, as
+  ! in section 5: after A B A, C evicts B, and the final A is found.
+  !--------------------------------------------------------------------
+
+  write(*,'(a)') ''
+  write(*,'(a)') '5b. the coordinate store'
+
+  call expect('default capacity     ',int(db%cache%xyz_capacity,8), &
+              int(min(db%nelem,GF_NCOORD_MIN),8),nfail)
+
+  ! what one locate at each of A, B, C reads on a fresh handle
+  one_each = .true.
+  do k = 1,3
+    if (k == 3 .and. .not. have_c) exit
+    call coord_sequence(huge(1),(/ k /),nread,locs(1:1))
+    write(*,'(a,a,a,i0)') '     coordinate files a locate at ',label(k),' reads = ',nread
+    one_each = one_each .and. nread == 1
+  enddo
+
+  if (.not. one_each) then
+    write(*,'(a)') '     a locate here reads more than one candidate: the counts below'
+    write(*,'(a)') '     assume one, and are not exercised on this database'
+  else
+    call coord_sequence(1,(/ 1, 2, 1 /),nread,locs(1:3))
+    call expect('capacity 1, A B A    ',nread,3_8,nfail)
+    call coord_sequence(2,(/ 1, 2, 1, 2 /),nread,locs(1:4))
+    call expect('capacity 2, A B A B  ',nread,2_8,nfail)
+    if (have_c) then
+      call coord_sequence(2,(/ 1, 2, 3, 1 /),nread,locs(1:4))
+      call expect('capacity 2, A B C A  ',nread,4_8,nfail)
+      ! FIFO: 4
+      call coord_sequence(2,(/ 1, 2, 1, 3, 1 /),nread,locs(1:5))
+      call expect('capacity 2, A B A C A',nread,3_8,nfail)
+    endif
+  endif
+
+  ! the store changes no location: none, one entry, and every element
+  nloc = 4
+  if (have_c) nloc = 5
+  seq5 = (/ 1, 2, 1, 3, 1 /)
+  if (.not. have_c) seq5 = (/ 1, 2, 1, 2, 1 /)
+  call coord_sequence(0,seq5(1:nloc),nread,locs0(1:nloc))
+  nbad = 0
+  do k = 1,2
+    if (k == 1) call coord_sequence(1,seq5(1:nloc),nread,locs(1:nloc))
+    if (k == 2) call coord_sequence(huge(1),seq5(1:nloc),nread,locs(1:nloc))
+    nbad = nbad + count(locs(1:nloc)%ielem /= locs0(1:nloc)%ielem .or. &
+                        locs(1:nloc)%xi /= locs0(1:nloc)%xi .or. &
+                        locs(1:nloc)%eta /= locs0(1:nloc)%eta .or. &
+                        locs(1:nloc)%gamma /= locs0(1:nloc)%gamma)
+  enddo
+  call expect('locations differing from no store',int(nbad,8),0_8,nfail)
+
+  call gf_open(dbpath,dbc,ierr,check_completion=.false.,coord_capacity=-1)
+  call gf_report_true('a negative coord_capacity is refused   ',ierr == GF_ERR_ARG,nfail)
 
   !--------------------------------------------------------------------
   ! 6. what max_elements accepts
@@ -552,6 +633,39 @@
   if (ier /= GF_OK) call die('could not open the database')
 
   end subroutine open_or_die
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine coord_sequence(ncap,order,nfiles,locs_out)
+
+! bare locates at the elements `order` names (1 = A, 2 = B, 3 = C), on a
+! fresh handle whose coordinate store holds ncap elements; nfiles is how
+! many element files they read, all of them coordinates
+
+  implicit none
+  integer, intent(in) :: ncap
+  integer, dimension(:), intent(in) :: order
+  integer(kind=8), intent(out) :: nfiles
+  type(t_gf_location), dimension(:), intent(out) :: locs_out
+
+  type(t_gfdb) :: h
+  integer(kind=8) :: m0,f0,m1,f1
+  integer :: i,ier
+
+  call gf_open(dbpath,h,ier,check_completion=.false.,coord_capacity=ncap)
+  if (ier /= GF_OK) call die('could not open the database with a coordinate capacity')
+  call snapshot(h,m0,f0)
+  do i = 1,size(order)
+    call gf_locate_source(h,lat(order(i)),src%longitude,src%depth,locs_out(i),ier)
+    if (ier /= GF_OK) call die('a locate failed')
+  enddo
+  call snapshot(h,m1,f1)
+  nfiles = f1 - f0
+  call gf_close(h)
+
+  end subroutine coord_sequence
 
 !
 !-------------------------------------------------------------------------------------------------

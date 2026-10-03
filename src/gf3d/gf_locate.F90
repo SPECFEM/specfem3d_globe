@@ -636,6 +636,10 @@
 ! USE_GLL = .true. mesh and the whole anchor route -- the coordinate map, the
 ! Jacobian, the strain -- is invalid.
 !
+! It reads the coordinates directly, not through the handle's coordinate
+! store: gf_check_anchors_all visits every element once, which would only
+! push out what the locate keeps there.
+!
 ! The floor is float32 storage, not arithmetic: see GF_ANCHOR_TOL in
 ! gf_par.F90. `max_err` is returned rather than compared here so that
 ! callers can report the measured value; the shipped examples sit at ~6e-8.
