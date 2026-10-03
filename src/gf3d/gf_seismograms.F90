@@ -507,6 +507,12 @@
   endif
 
   call gf_stf_work_init(stf,tax,swork%stfw,ierr)
+  if (ierr /= GF_OK) return
+
+  ! the database's own axis, for the onset check: gf_stf_work_init leaves it
+  ! to the caller (gf_stf.F90), and here, with the database in hand, every
+  ! extraction's buffers get it in the one place
+  call gf_time_axis(db,nt_db,swork%stfw%tdb)
 
   end subroutine gf_seis_work_init
 
@@ -592,11 +598,9 @@
     endif
   endif
 
-  if (db%stations(ista)%factor_force_source == 0.d0) then
-    call gf_set_error(ierr,GF_ERR_ARG, &
-      'station '//trim(db%stations(ista)%id)//' has factor_force_source = 0')
-    return
-  endif
+  ! factor_force_source /= 0 for every station: gf_seis checks it before
+  ! any station runs, so that no station's error is raised from inside its
+  ! threaded loop.
 
   ! two derivations, two statements: see the amplitude section of the module
   ! header. They are not one expression because they are not one idea.
@@ -729,10 +733,8 @@
 
   ! local parameters
   type(t_gf_seis_geom) :: geom
-  ! target: `displ_sta` points into swork%displ when nothing is cached
-  type(t_gf_seis_work), target :: swork
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), pointer, contiguous :: displ_sta
-  integer :: ista,nt_db,nt,ndp_want,ier,islot
+  type(t_gf_seis_work) :: swork
+  integer :: ista,nt,ndp_want,ier,islot
 
   seis(:,:,:) = 0.d0
   dp(:,:,:,:) = 0.d0
@@ -794,9 +796,17 @@
     return
   endif
 
+  ! every station's amplitude factor, before any station runs
+  do ista = 1,db%nstations
+    if (db%stations(ista)%factor_force_source == 0.d0) then
+      call gf_set_error(ierr,GF_ERR_ARG, &
+        'station '//trim(db%stations(ista)%id)//' has factor_force_source = 0')
+      return
+    endif
+  enddo
+
   !--- everything that does not depend on the station ---------------------
 
-  nt_db = db%nt_subsampled
   nt = tax%nt
 
   call gf_taxis_times(tax,nt,t)
@@ -804,45 +814,34 @@
   call gf_seis_geometry(db,src,loc,kind,geom,ierr)
   if (ierr /= GF_OK) return
 
+  !--- and the stations ----------------------------------------------------
+
+  ! Both routes run gf_seis_station on the same bytes. A handle that keeps
+  ! elements has every station's block in one slot, found or filled here,
+  ! and its stations run over threads; otherwise each station's block is
+  ! read in turn into swork%displ, serially.
+  if (gf_cache_enabled(db)) then
+    call gf_element_block(db,loc%ielem,islot,ierr)
+    if (ierr /= GF_OK) return
+    call gf_seis_stations_cached(db,src,loc,tax,stf,geom,kind,islot,seis,ndp,dp,onset,ierr)
+    return
+  endif
+
+  ! the element is loaded from disk: one miss, however many stations
+  if (associated(db%cache)) db%cache%misses = db%cache%misses + 1
+
   call gf_seis_work_init(db,src,tax,stf,kind,swork,ier)
   if (ier /= GF_OK) then
     ierr = ier
     goto 99
   endif
 
-  ! the database's own axis, for the onset check
-  call gf_time_axis(db,nt_db,swork%stfw%tdb)
-
-  !--- and the stations ----------------------------------------------------
-
-  ! A handle that keeps elements has every station's block in one slot,
-  ! found or filled here; otherwise each station's is read in turn into
-  ! swork%displ. Either way `displ_sta` points at it and gf_seis_station is
-  ! called from this one place, so the two routes run the same code on the
-  ! same bytes.
-  islot = 0
-  if (gf_cache_enabled(db)) then
-    call gf_element_block(db,loc%ielem,islot,ierr)
-    if (ierr /= GF_OK) goto 99
-  else
-    ! the element is loaded from disk: one miss, however many stations
-    if (associated(db%cache)) db%cache%misses = db%cache%misses + 1
-  endif
-
   do ista = 1,db%nstations
-
-    if (islot > 0) then
-      displ_sta => db%cache%slot(islot)%displ(:,:,:,:,:,:,ista)
-    else
-      call gf_read_element_displ(db,loc%ielem,ista,swork%displ,ierr)
-      if (ierr /= GF_OK) goto 99
-      displ_sta => swork%displ
-    endif
-
-    call gf_seis_station(db,src,loc,tax,stf,geom,kind,ista,displ_sta,swork, &
+    call gf_read_element_displ(db,loc%ielem,ista,swork%displ,ierr)
+    if (ierr /= GF_OK) goto 99
+    call gf_seis_station(db,src,loc,tax,stf,geom,kind,ista,swork%displ,swork, &
                          seis,ndp,dp,onset,ierr)
     if (ierr /= GF_OK) goto 99
-
   enddo
 
   ierr = GF_OK
@@ -851,6 +850,119 @@
   call gf_seis_work_free(swork)
 
   end subroutine gf_seis
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_seis_stations_cached(db,src,loc,tax,stf,geom,kind,islot,seis,ndp,dp,onset,ierr)
+
+! gf_seis's stations, for a handle whose cache slot `islot` holds the element
+!
+! With every station's block already in memory the stations are
+! independent, so they run over OpenMP threads in a library built with
+! --enable-openmp (OMP_NUM_THREADS sets how many). Each thread has its own
+! work buffers. Each station is one thread's from start to finish, with
+! gf_seis_station's own statement order, and writes only seis(ista,:,:),
+! dp(:,ista,:,:) and onset(ista): every number is the one a serial loop
+! computes, at any thread count.
+!
+! Nothing may branch out of the threaded loop, so a station's error is kept
+! in ierr_sta and the first one, in station order, is returned after it.
+! gf_set_error serialises the message it records (gf_par), but the message
+! is the last one written, which need not be that station's. On an error the
+! other stations are still computed; the outputs are not to be used, as
+! after any error. A thread that gets no station fails nothing, even when it
+! could not allocate its buffers (its message may then remain in gf_errmsg
+! after a call that returns GF_OK, which is not one to read it after).
+!
+! The route without a cache stays serial in gf_seis: it reads HDF5 for each
+! station, and the HDF5 library is not built thread-safe.
+
+  implicit none
+
+  type(t_gfdb), intent(in) :: db
+  type(t_gf_source), intent(in) :: src
+  type(t_gf_location), intent(in) :: loc
+  type(t_gf_taxis), intent(in) :: tax
+  type(t_gf_stf), intent(in) :: stf
+  type(t_gf_seis_geom), intent(in) :: geom
+  integer, intent(in) :: kind,islot,ndp
+  double precision, dimension(db%nstations,GF_NCOMP,tax%nt), intent(inout) :: seis
+  double precision, dimension(ndp,db%nstations,GF_NCOMP,tax%nt), intent(inout) :: dp
+  double precision, dimension(db%nstations), intent(inout) :: onset
+  integer, intent(out) :: ierr
+
+  ! local parameters
+  integer, dimension(db%nstations) :: ierr_sta
+  integer :: ista
+
+  ierr_sta(:) = GF_OK
+
+  !$omp parallel default(shared)
+  call gf_seis_stations_team(db,src,loc,tax,stf,geom,kind,islot,seis,ndp,dp,onset,ierr_sta)
+  !$omp end parallel
+
+  ierr = GF_OK
+  do ista = 1,db%nstations
+    if (ierr_sta(ista) /= GF_OK) then
+      ierr = ierr_sta(ista)
+      return
+    endif
+  enddo
+
+  end subroutine gf_seis_stations_cached
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_seis_stations_team(db,src,loc,tax,stf,geom,kind,islot,seis,ndp,dp,onset,ierr_sta)
+
+! one thread's part of gf_seis_stations_cached: its own work buffers, which
+! are local here and so private to the thread, and the stations the
+! schedule gives it. Without OpenMP, every station.
+
+  use constants, only: CUSTOM_REAL
+
+  implicit none
+
+  type(t_gfdb), intent(in) :: db
+  type(t_gf_source), intent(in) :: src
+  type(t_gf_location), intent(in) :: loc
+  type(t_gf_taxis), intent(in) :: tax
+  type(t_gf_stf), intent(in) :: stf
+  type(t_gf_seis_geom), intent(in) :: geom
+  integer, intent(in) :: kind,islot,ndp
+  double precision, dimension(db%nstations,GF_NCOMP,tax%nt), intent(inout) :: seis
+  double precision, dimension(ndp,db%nstations,GF_NCOMP,tax%nt), intent(inout) :: dp
+  double precision, dimension(db%nstations), intent(inout) :: onset
+  integer, dimension(db%nstations), intent(inout) :: ierr_sta
+
+  ! local parameters
+  type(t_gf_seis_work) :: work
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), pointer, contiguous :: displ_sta
+  integer :: ista,ier_init
+
+  call gf_seis_work_init(db,src,tax,stf,kind,work,ier_init)
+
+  ! every thread reaches the loop, also one whose buffers could not be
+  ! allocated: a worksharing loop must be met by the whole team
+  !$omp do schedule(dynamic)
+  do ista = 1,db%nstations
+    if (ier_init /= GF_OK) then
+      ierr_sta(ista) = ier_init
+    else
+      displ_sta => db%cache%slot(islot)%displ(:,:,:,:,:,:,ista)
+      call gf_seis_station(db,src,loc,tax,stf,geom,kind,ista,displ_sta,work, &
+                           seis,ndp,dp,onset,ierr_sta(ista))
+    endif
+  enddo
+  !$omp end do
+
+  call gf_seis_work_free(work)
+
+  end subroutine gf_seis_stations_team
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -1130,7 +1242,7 @@
       call gf_strain_trace(displ,geom%dw,nt,eps)
 
       ! The seismogram path refuses this rather than dividing by zero
-      ! (gf_seis_station); --dump used to divide anyway.
+      ! (gf_seis); --dump used to divide anyway.
       if (db%stations(ista)%factor_force_source == 0.d0) then
         call gf_set_error(ierr,GF_ERR_ARG, &
           'station '//trim(db%stations(ista)%id)//' has factor_force_source = 0')

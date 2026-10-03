@@ -76,7 +76,18 @@
  * Threads         not thread-safe. The library keeps process-wide state:
  *                 the last error message, the kd-tree that serves whichever
  *                 database located last, and specfem's shared_parameters.
- *                 Serialise calls, as the Python wrapper does.
+ *                 Serialise calls, as the Python wrapper does. Inside one
+ *                 call, a library configured with --enable-openmp computes
+ *                 the stations of an extraction over OMP_NUM_THREADS
+ *                 threads when the handle holds the element (max_elements
+ *                 > 0), with every number what one thread computes; the
+ *                 route that reads from disk stays on one thread. With
+ *                 OMP_NUM_THREADS unset that is every core: set it when
+ *                 several processes (chains) share a node. A program that
+ *                 links libgf3d.a from such a build links with the OpenMP
+ *                 flag too, and the OpenMP runtime does not survive a fork()
+ *                 after the first extraction (Python multiprocessing: use
+ *                 the "spawn" start method).
  * Two databases   supported: each handle owns its own metadata. But the
  *                 search tree is rebuilt whenever a locate switches
  *                 database, so alternating between two of them is slow, and

@@ -510,7 +510,11 @@
   character(len=*), intent(in) :: msg
 
   ierr_out = code
+  ! a station that fails inside gf_seis_stations_cached's threaded loop
+  ! reports from its own thread; one message is written at a time
+  !$omp critical (gf3d_errmsg)
   gf_errmsg = msg
+  !$omp end critical (gf3d_errmsg)
 
   end subroutine gf_set_error
 

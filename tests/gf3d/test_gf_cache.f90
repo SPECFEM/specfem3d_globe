@@ -37,7 +37,9 @@
 !---- no number, that it evicts the least recently used element, and that
 !---- a fill that fails part-way leaves nothing behind. And it pins the
 !---- coordinate store every handle has: what it saves the locate, its
-!---- bound and its eviction order, and that it changes no location.
+!---- bound and its eviction order, and that it changes no location. In a
+!---- library built with --enable-openmp (runner 9i), it pins that the
+!---- stations computed over threads are the serial numbers, bit for bit.
 !----
 !---- Elements A, B and C are found by walking north from the CMTSOLUTION,
 !---- as test_gf3d_ext does, so this runs on the fixture (three elements, 8
@@ -62,12 +64,23 @@
   double precision, parameter :: WALK_STEP = 0.25d0
   integer, parameter :: WALK_MAX = 80
 
+  ! threads for section 9, in an OpenMP build
+  integer, parameter :: NTHREADS = 4
+
+  ! Declared, not taken from omp_lib: the gcc-toolset gfortran on the
+  ! development cluster ships no omp_lib.mod on its module path, and the
+  ! OpenMP standard allows calling its routines this way.
+!$ integer, external :: omp_get_max_threads
+!$ external :: omp_set_num_threads
+
   character(len=512) :: dbpath,cmtpath,forcepath,broken
   type(t_gfdb) :: db,dbc,never_opened
   type(t_gf_source) :: src,force,s
   type(t_gf_location) :: loc,loc_c
   double precision, dimension(:,:,:), allocatable :: synt,synt0
-  double precision, dimension(:,:,:,:), allocatable :: dp,dp0
+  double precision, dimension(:,:,:,:), allocatable :: dp,dp0,dp1
+  double precision, dimension(:,:,:), allocatable :: synt1
+  double precision, dimension(:), allocatable :: onset,onset0,onset1
   double precision :: t0,t0_force
   ! latitudes of elements A, B, C (1..3), and whether each was found
   double precision, dimension(3) :: lat
@@ -81,7 +94,7 @@
   integer, dimension(5) :: seq5
   integer(kind=8) :: nread
   type(t_gf_location), dimension(5) :: locs,locs0
-  logical :: one_each
+  logical :: one_each,openmp
 
   nfail = 0
 
@@ -223,13 +236,13 @@
   do k = 1,4
     s = src
     s%latitude = lat(seq(k))
-    call gf_extract(db,s,t0,2,synt0,dp0,ierr)
+    call gf_extract(db,s,t0,2,synt0,dp0,ierr,onset=onset0)
     if (ierr /= GF_OK) call die('extraction without a cache failed')
-    call gf_extract(dbc,s,t0,2,synt,dp,ierr)
+    call gf_extract(dbc,s,t0,2,synt,dp,ierr,onset=onset)
     if (ierr /= GF_OK) call die('extraction with a cache failed')
-    nbad = count(synt /= synt0) + count(dp /= dp0)
-    call expect('CMT + 10 partials, '//label(seq(k))//' (call '//trim(itoa8(int(k,8)))// &
-                '), differing samples',int(nbad,8),0_8,nfail)
+    nbad = count(synt /= synt0) + count(dp /= dp0) + count(onset /= onset0)
+    call expect('CMT + 10 partials + onset, '//label(seq(k))//' (call '//trim(itoa8(int(k,8)))// &
+                '), differing',int(nbad,8),0_8,nfail)
     if (k == 2) then
       ! synt0 holds B's traces: A's, extracted again, must differ
       s%latitude = lat(1)
@@ -453,6 +466,54 @@
   call gf_cache_stats(db,hits,misses,evictions,n_cached,files_read,ierr)
   call expect('misses after reopen  ',misses,0_8,nfail)
   call expect('files after reopen   ',files_read,0_8,nfail)
+
+  !--------------------------------------------------------------------
+  ! 9. stations over threads
+  !
+  ! A library built with --enable-openmp computes a caching handle's
+  ! stations over threads, each station one thread's from start to finish.
+  ! So every number is the serial one: kind 2 at one thread and at
+  ! NTHREADS, seismograms, all ten partials and the onset ratio, bitwise --
+  ! and against the handle that keeps nothing, whose route stays serial, so
+  ! that a mistake made by every thread alike is caught as well. Runs only
+  ! when this program is compiled with OpenMP, which runner 9i does.
+  !--------------------------------------------------------------------
+
+  write(*,'(a)') ''
+  write(*,'(a)') '9. stations over threads'
+
+  openmp = .false.
+!$ openmp = .true.
+  if (.not. openmp) then
+    write(*,'(a)') '     not compiled with OpenMP: 9i.test_gf_openmp.sh runs this section'
+  else
+    call gf_open(dbpath,dbc,ierr,check_completion=.false.,max_elements=1)
+    if (ierr /= GF_OK) call die('could not open the database with max_elements = 1')
+    write(*,'(a,i0,a,i0,a)') '     ',db%nstations,' stations over 1 and ',NTHREADS,' threads'
+!$  call omp_set_num_threads(1)
+    call gf_extract(dbc,src,t0,2,synt1,dp1,ierr,onset=onset1)
+    if (ierr /= GF_OK) call die('extraction at 1 thread failed')
+!$  call omp_set_num_threads(NTHREADS)
+!$  call gf_report_true('the thread count took                  ', &
+!$                      omp_get_max_threads() == NTHREADS,nfail)
+    call gf_extract(dbc,src,t0,2,synt,dp,ierr,onset=onset)
+    if (ierr /= GF_OK) call die('extraction at several threads failed')
+    nbad = count(synt /= synt1) + count(dp /= dp1) + count(onset /= onset1)
+    call expect('CMT + 10 partials + onset, threads against one, differing', &
+                int(nbad,8),0_8,nfail)
+    call gf_extract(db,src,t0,2,synt0,dp0,ierr,onset=onset0)
+    if (ierr /= GF_OK) call die('extraction without a cache failed')
+    nbad = count(synt /= synt0) + count(dp /= dp0) + count(onset /= onset0)
+    call expect('and against the serial route, differing',int(nbad,8),0_8,nfail)
+    ! the force route: the interpolation and a Gaussian conversion
+    call get_seismograms(dbc,force,t0_force,synt,ierr)
+    if (ierr /= GF_OK) call die('force extraction at several threads failed')
+    call get_seismograms(db,force,t0_force,synt0,ierr)
+    if (ierr /= GF_OK) call die('force extraction without a cache failed')
+    call expect('force, threads against the serial route, differing', &
+                int(count(synt /= synt0),8),0_8,nfail)
+    call gf_close(dbc)
+  endif
 
   call gf_locate_release()
   call gf_close(db)
