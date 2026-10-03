@@ -47,7 +47,8 @@
   use hdf5
 #endif
 
-  use gf_par, only: gf_set_error,GF_OK,GF_ERR_NO_HDF5,GF_ERR_NO_FILE,GF_ERR_HDF5,GF_ERR_FORMAT
+  use gf_par, only: gf_set_error,GF_OK,GF_ERR_NO_HDF5,GF_ERR_NO_FILE,GF_ERR_HDF5,GF_ERR_FORMAT, &
+                    GF_ERR_ARG,GF_ERR_ALLOC,GF_NCOMP
 
   implicit none
 
@@ -59,6 +60,30 @@
   integer, parameter, public :: GF_HID = HID_T
 #else
   integer, parameter, public :: GF_HID = 8
+#endif
+
+  ! the two layouts gf_h5_read_displ_chunks can fill, see there
+  integer, parameter, public :: GF_H5_ORDER_DISPL = 1
+  integer, parameter, public :: GF_H5_ORDER_ATM = 2
+
+#ifdef USE_HDF5
+  ! H5Dread_chunk, from the C API, in HDF5 1.10.3 and later (1.10.2 had it
+  ! only as H5DOread_chunk in the high-level library). The 1.10 and 1.12
+  ! Fortran APIs have no h5dread_chunk_f, and a C source file would need the
+  ! HDF5 include path, which reaches only FCFLAGS (Makefile.in:542). hid_t and
+  ! hsize_t are 64-bit in every HDF5 since 1.10; gf_h5_read_displ_chunks
+  ! checks that this build's HID_T and HSIZE_T agree before it calls this.
+  ! The offset is in C order.
+  interface
+    integer(c_int) function h5dread_chunk_c(dset_id,dxpl_id,offset,filters,buf) &
+        bind(C,name='H5Dread_chunk')
+      use, intrinsic :: iso_c_binding, only: c_int,c_int32_t,c_int64_t,c_ptr
+      integer(c_int64_t), value :: dset_id,dxpl_id
+      integer(c_int64_t), dimension(*), intent(in) :: offset
+      integer(c_int32_t), intent(out) :: filters
+      type(c_ptr), value :: buf
+    end function h5dread_chunk_c
+  end interface
 #endif
 
   public :: gf_h5_init
@@ -74,6 +99,7 @@
   public :: gf_h5_read_2d_i
   public :: gf_h5_read_4d_d
   public :: gf_h5_read_6d_r
+  public :: gf_h5_read_displ_chunks
 
   contains
 
@@ -726,5 +752,363 @@
 #endif
 
   end subroutine gf_h5_read_6d_r
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_h5_read_displ_chunks(loc_id,name,nt,nt_out,order,buf,raw,ierr)
+
+! reads an element-station displacement dataset, or a time prefix of it,
+! chunk by chunk when the file allows it
+!
+! The solver's writer chunks displacement(3_force,3_disp,NGLLX,NGLLY,NGLLZ,nt)
+! as (1,3,NGLLX,NGLLY,NGLLZ,n), n = min(GF_BUFFER_SIZE,nt), with no filter
+! (green_function_io.F90:138-145). In memory order one chunk is n time samples
+! of 3*NGLLX*NGLLY*NGLLZ values for one force component a: p fastest, then i,
+! j, k. H5Dread_chunk hands those bytes over as stored. h5dread_f instead
+! scatters every chunk into the stride-3 force index through HDF5's general
+! selection machinery, which is CPU work, not I/O: for one 185-station
+! element of a real database, 1.4-2.4 s against 3.8-4.5 s (the performance
+! study's read_layout.txt).
+!
+! `order` chooses the layout of `buf`, which holds 3*3*NGLLX*NGLLY*NGLLZ*nt_out
+! values:
+!   GF_H5_ORDER_DISPL  displ(a,p,i,j,k,t), the dataset's own Fortran order
+!   GF_H5_ORDER_ATM    blk(m,t,a), C [a][t][m], with
+!                      m = p + 3*(i-1) + 3*NGLLX*(j-1) + 3*NGLLX*NGLLY*(k-1):
+!                      the chunk's order, so the copy is a plain one
+! The numbers are h5dread_f's, bit for bit; only their placement differs.
+!
+! Whatever is not exactly the writer's layout falls back to h5dread_f:
+! contiguous storage (the test fixture's default), a filter, another chunk
+! shape, an on-disk type other than native float32, or a CUSTOM_REAL = 8
+! build. So does a file with a chunk that was never written -- an incomplete
+! database opened without the completion check -- because H5Dread_chunk
+! refuses such a chunk where h5dread_f returns the fill value. `raw` reports
+! which route was taken.
+!
+! The caller has checked the dataset's shape (gf_read_element_displ does), so
+! nt is the stored length; 1 <= nt_out <= nt, and chunks wholly beyond nt_out
+! are not read.
+
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
+
+#ifdef USE_HDF5
+  use, intrinsic :: iso_c_binding, only: c_int64_t,c_int32_t,c_float,c_loc
+#endif
+
+  implicit none
+
+  integer(kind=GF_HID), intent(in) :: loc_id
+  character(len=*), intent(in) :: name
+  integer, intent(in) :: nt,nt_out,order
+  real(kind=CUSTOM_REAL), dimension(*), intent(out) :: buf
+  logical, intent(out) :: raw
+  integer, intent(out) :: ierr
+
+#ifdef USE_HDF5
+  integer, parameter :: NM = GF_NCOMP*NGLLX*NGLLY*NGLLZ
+  integer(kind=GF_HID) :: dset_id
+  real(kind=c_float), dimension(:,:), allocatable, target :: cbuf
+  integer(c_int64_t), dimension(6) :: coff
+  integer(c_int32_t) :: filters
+  integer :: hdferr,nchunk,ia,t0,nh,ier
+
+  raw = .false.
+
+  if (nt_out < 1 .or. nt_out > nt .or. &
+      (order /= GF_H5_ORDER_DISPL .and. order /= GF_H5_ORDER_ATM)) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_h5_read_displ_chunks: bad nt_out or order')
+    return
+  endif
+
+  call h5dopen_f(loc_id, trim(name), dset_id, hdferr)
+  if (hdferr /= 0) then
+    call gf_set_error(ierr,GF_ERR_FORMAT,'missing dataset: '//trim(name))
+    return
+  endif
+
+  nchunk = raw_chunk_length(dset_id)
+
+  if (nchunk > 0) then
+    allocate(cbuf(NM,nchunk),stat=ier)
+    if (ier /= 0) then
+      call h5dclose_f(dset_id, hdferr)
+      call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate a chunk buffer')
+      return
+    endif
+
+    raw = .true.
+    components: do ia = 1,GF_NCOMP
+      do t0 = 0,nt_out-1,nchunk
+        ! C order: the reverse of the Fortran (a-1,0,0,0,0,t0)
+        coff(:) = 0
+        coff(1) = int(t0,c_int64_t)
+        coff(6) = int(ia-1,c_int64_t)
+        if (h5dread_chunk_c(int(dset_id,c_int64_t),int(H5P_DEFAULT_F,c_int64_t), &
+                            coff,filters,c_loc(cbuf)) < 0 .or. filters /= 0) then
+          raw = .false.
+          exit components
+        endif
+        ! the last chunk is stored at full length; only its first rows are data
+        nh = min(nchunk,nt_out-t0)
+        if (order == GF_H5_ORDER_ATM) then
+          call put_chunk_atm(cbuf,nchunk,nh,ia,t0,nt_out,buf)
+        else
+          call put_chunk_displ(cbuf,nchunk,nh,ia,t0,nt_out,buf)
+        endif
+      enddo
+    enddo components
+
+    deallocate(cbuf)
+  endif
+
+  if (.not. raw) then
+    call read_displ_fallback(dset_id,nt,nt_out,order,buf,hdferr)
+    if (hdferr /= 0) then
+      call h5dclose_f(dset_id, hdferr)
+      call gf_set_error(ierr,GF_ERR_HDF5,'could not read dataset: '//trim(name))
+      return
+    endif
+  endif
+
+  call h5dclose_f(dset_id, hdferr)
+
+  ierr = GF_OK
+#else
+  raw = .false.
+  call gf_set_error(ierr,GF_ERR_NO_HDF5,'this build has no HDF5 support')
+#endif
+
+  end subroutine gf_h5_read_displ_chunks
+
+#ifdef USE_HDF5
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  integer function raw_chunk_length(dset_id)
+
+! the chunk length in time when gf_h5_read_displ_chunks may read the dataset's
+! chunks raw, and 0 when it must use h5dread_f
+
+  use, intrinsic :: iso_c_binding, only: c_int64_t
+  use constants, only: CUSTOM_REAL,SIZE_REAL,NGLLX,NGLLY,NGLLZ
+
+  implicit none
+
+  integer(kind=GF_HID), intent(in) :: dset_id
+
+  integer(kind=GF_HID) :: plist_id,type_id
+  integer(HSIZE_T), dimension(6) :: cdims
+  integer :: layout,nfilters,rank,hdferr,n
+  logical :: native
+
+  raw_chunk_length = 0
+
+  ! the buffer must be float32 to take the stored bytes, and the interface's
+  ! 64-bit hid_t/hsize_t must be what this HDF5 uses
+  if (CUSTOM_REAL /= SIZE_REAL) return
+  if (HID_T /= c_int64_t .or. HSIZE_T /= c_int64_t) return
+
+  n = 0
+  call h5dget_create_plist_f(dset_id, plist_id, hdferr)
+  if (hdferr /= 0) return
+  call h5pget_layout_f(plist_id, layout, hdferr)
+  if (hdferr == 0 .and. layout == H5D_CHUNKED_F) then
+    call h5pget_nfilters_f(plist_id, nfilters, hdferr)
+    if (hdferr == 0 .and. nfilters == 0) then
+      ! note: h5pget_chunk_f returns the chunk rank, not 0, on success
+      call h5pget_chunk_f(plist_id, 6, cdims, rank)
+      if (rank == 6) then
+        if (cdims(1) == 1 .and. cdims(2) == GF_NCOMP .and. cdims(3) == NGLLX .and. &
+            cdims(4) == NGLLY .and. cdims(5) == NGLLZ .and. cdims(6) >= 1) n = int(cdims(6))
+      endif
+    endif
+  endif
+  call h5pclose_f(plist_id, hdferr)
+  if (n == 0) return
+
+  call h5dget_type_f(dset_id, type_id, hdferr)
+  if (hdferr /= 0) return
+  native = .false.
+  call h5tequal_f(type_id, H5T_NATIVE_REAL, native, hdferr)
+  if (hdferr /= 0) native = .false.
+  call h5tclose_f(type_id, hdferr)
+  if (.not. native) return
+
+  raw_chunk_length = n
+
+  end function raw_chunk_length
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine put_chunk_atm(cbuf,nchunk,nh,ia,t0,nt_out,blk)
+
+! one raw chunk into blk(m,t,a): the chunk's own order, a block copy
+
+  use, intrinsic :: iso_c_binding, only: c_float
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
+
+  implicit none
+
+  integer, parameter :: NM = GF_NCOMP*NGLLX*NGLLY*NGLLZ
+  integer, intent(in) :: nchunk,nh,ia,t0,nt_out
+  real(kind=c_float), dimension(NM,nchunk), intent(in) :: cbuf
+  real(kind=CUSTOM_REAL), dimension(NM,nt_out,GF_NCOMP), intent(inout) :: blk
+
+  blk(:,t0+1:t0+nh,ia) = cbuf(:,1:nh)
+
+  end subroutine put_chunk_atm
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine put_chunk_displ(cbuf,nchunk,nh,ia,t0,nt_out,displ)
+
+! one raw chunk into displ(a,p,i,j,k,t), seen here as displ(a,m,t): the
+! transpose that puts the force component first
+
+  use, intrinsic :: iso_c_binding, only: c_float
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
+
+  implicit none
+
+  integer, parameter :: NM = GF_NCOMP*NGLLX*NGLLY*NGLLZ
+  integer, intent(in) :: nchunk,nh,ia,t0,nt_out
+  real(kind=c_float), dimension(NM,nchunk), intent(in) :: cbuf
+  real(kind=CUSTOM_REAL), dimension(GF_NCOMP,NM,nt_out), intent(inout) :: displ
+
+  integer :: it
+
+  do it = 1,nh
+    displ(ia,:,t0+it) = cbuf(:,it)
+  enddo
+
+  end subroutine put_chunk_displ
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine read_displ_fallback(dset_id,nt,nt_out,order,buf,hdferr)
+
+! the h5dread_f route of gf_h5_read_displ_chunks: what gf_h5_read_6d_r does,
+! for the first nt_out samples, then transposed if blk(m,t,a) was asked for
+
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
+
+  implicit none
+
+  integer, parameter :: NM = GF_NCOMP*NGLLX*NGLLY*NGLLZ
+  integer(kind=GF_HID), intent(in) :: dset_id
+  integer, intent(in) :: nt,nt_out,order
+  real(kind=CUSTOM_REAL), dimension(*), intent(inout) :: buf
+  integer, intent(out) :: hdferr
+
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: displ
+  integer :: ier
+
+  if (order == GF_H5_ORDER_DISPL) then
+    call read_displ_slab(dset_id,nt,nt_out,buf,hdferr)
+    return
+  endif
+
+  allocate(displ(GF_NCOMP,NM,nt_out),stat=ier)
+  if (ier /= 0) then
+    hdferr = -1
+    return
+  endif
+  call read_displ_slab(dset_id,nt,nt_out,displ,hdferr)
+  if (hdferr == 0) call displ_to_atm(displ,nt_out,buf)
+  deallocate(displ)
+
+  end subroutine read_displ_fallback
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine read_displ_slab(dset_id,nt,nt_out,displ,hdferr)
+
+! h5dread_f of displ(:,:,:,:,:,1:nt_out); the whole dataset, as
+! gf_h5_read_6d_r reads it, when nt_out = nt
+
+  use constants, only: CUSTOM_REAL,SIZE_REAL,NGLLX,NGLLY,NGLLZ
+
+  implicit none
+
+  integer(kind=GF_HID), intent(in) :: dset_id
+  integer, intent(in) :: nt,nt_out
+  real(kind=CUSTOM_REAL), dimension(GF_NCOMP,GF_NCOMP,NGLLX,NGLLY,NGLLZ,nt_out), &
+    intent(inout) :: displ
+  integer, intent(out) :: hdferr
+
+  integer(kind=GF_HID) :: mem_type,fspace_id,mspace_id
+  integer(HSIZE_T), dimension(6) :: dims,start
+  integer :: ier
+
+  if (CUSTOM_REAL == SIZE_REAL) then
+    mem_type = H5T_NATIVE_REAL
+  else
+    mem_type = H5T_NATIVE_DOUBLE
+  endif
+
+  dims = (/ int(GF_NCOMP,HSIZE_T), int(GF_NCOMP,HSIZE_T), int(NGLLX,HSIZE_T), &
+            int(NGLLY,HSIZE_T), int(NGLLZ,HSIZE_T), int(nt_out,HSIZE_T) /)
+
+  if (nt_out == nt) then
+    call h5dread_f(dset_id, mem_type, displ, dims, hdferr)
+    return
+  endif
+
+  ! a time prefix: the same selection in the file and in memory
+  start(:) = 0
+  call h5dget_space_f(dset_id, fspace_id, hdferr)
+  if (hdferr /= 0) return
+  call h5sselect_hyperslab_f(fspace_id, H5S_SELECT_SET_F, start, dims, hdferr)
+  if (hdferr == 0) call h5screate_simple_f(6, dims, mspace_id, hdferr)
+  if (hdferr == 0) then
+    call h5dread_f(dset_id, mem_type, displ, dims, hdferr, &
+                   mem_space_id=mspace_id, file_space_id=fspace_id)
+    call h5sclose_f(mspace_id, ier)
+  endif
+  call h5sclose_f(fspace_id, ier)
+
+  end subroutine read_displ_slab
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine displ_to_atm(displ,nt_out,blk)
+
+! displ(a,m,t) -> blk(m,t,a)
+
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
+
+  implicit none
+
+  integer, parameter :: NM = GF_NCOMP*NGLLX*NGLLY*NGLLZ
+  integer, intent(in) :: nt_out
+  real(kind=CUSTOM_REAL), dimension(GF_NCOMP,NM,nt_out), intent(in) :: displ
+  real(kind=CUSTOM_REAL), dimension(NM,nt_out,GF_NCOMP), intent(inout) :: blk
+
+  integer :: ia,it
+
+  do ia = 1,GF_NCOMP
+    do it = 1,nt_out
+      blk(:,it,ia) = displ(ia,:,it)
+    enddo
+  enddo
+
+  end subroutine displ_to_atm
+
+#endif
 
   end module gf_hdf5_read

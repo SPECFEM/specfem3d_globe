@@ -35,7 +35,16 @@
 !---- tests/gf3d/gfdb_env.bash builds one into a temporary directory whenever
 !---- GF3D_TEST_GFDB is unset.
 !----
-!---- usage: make_fixture_db <directory>       writes <directory>/GFDB/...
+!---- usage: make_fixture_db <directory> [chunked]
+!----                                        writes <directory>/GFDB/...
+!----
+!---- The displacement datasets are contiguous unless `chunked` is given. With
+!---- it they are chunked as the solver's writer chunks them,
+!---- (1,3,NGLLX,NGLLY,NGLLZ,n) with no filter (green_function_io.F90:138-145),
+!---- with n = NT_CHUNK = 7: NT_SUB = 256 is not a multiple of it, so the last
+!---- chunk is partial, and it is shorter than any realistic GF_BUFFER_SIZE,
+!---- so there are many. The contiguous default keeps the h5dread_f fallback
+!---- of gf_h5_read_displ_chunks covered; the chunked variant, its raw route.
 !----
 !---- What this is NOT
 !---- ----------------
@@ -90,6 +99,9 @@
   integer, parameter :: SUBSAMPLE_STEP = 8
   integer, parameter :: NT_SUB = NSTEP / SUBSAMPLE_STEP
 
+  ! the time length of a chunk in the `chunked` variant, see the header
+  integer, parameter :: NT_CHUNK = 7
+
   double precision, parameter :: DT = 0.1d0
   double precision, parameter :: T0 = 3.0d0
   double precision, parameter :: R_PLANET = 6371000.d0
@@ -120,7 +132,7 @@
   character(len=8), parameter :: NET(NSTA) = (/ 'II      ', 'IU      ' /)
   character(len=8), parameter :: STA(NSTA) = (/ 'FIX1    ', 'FIX2    ' /)
 
-  character(len=512) :: root,gfdb,edir,fname
+  character(len=512) :: root,gfdb,edir,fname,variant
   character(len=16) :: hexcode(NELEM)
   double precision :: centre(3),centre_e(3),cen(3,NELEM)
   double precision :: xyz(3,NG,NG,NG)
@@ -128,13 +140,23 @@
   real :: displ(NCOMP,NCOMP,NG,NG,NG,NT_SUB)
   real :: stf(NSTEP)
   integer :: ie,is,ierr,narg
+  logical :: chunked
 
   narg = command_argument_count()
-  if (narg < 1) then
-    write(*,'(a)') 'usage: make_fixture_db <directory>'
+  if (narg < 1 .or. narg > 2) then
+    write(*,'(a)') 'usage: make_fixture_db <directory> [chunked]'
     stop 1
   endif
   call get_command_argument(1,root)
+  chunked = .false.
+  if (narg == 2) then
+    call get_command_argument(2,variant)
+    if (trim(variant) /= 'chunked') then
+      write(*,'(a)') 'usage: make_fixture_db <directory> [chunked]'
+      stop 1
+    endif
+    chunked = .true.
+  endif
 
   gfdb = trim(root)//'/GFDB'
 
@@ -584,8 +606,8 @@
   character(len=*), intent(in) :: path
   real, dimension(NCOMP,NCOMP,NG,NG,NG,NT_SUB), intent(in) :: d
 
-  integer(kind=HID_T) :: fid,sid,did
-  integer(kind=HSIZE_T) :: dims(6)
+  integer(kind=HID_T) :: fid,sid,did,pid
+  integer(kind=HSIZE_T) :: dims(6),cdims(6)
   integer :: ier
 
   call h5fcreate_f(path,H5F_ACC_TRUNC_F,fid,ier)
@@ -594,7 +616,17 @@
   dims = (/ int(NCOMP,HSIZE_T), int(NCOMP,HSIZE_T), int(NG,HSIZE_T), &
             int(NG,HSIZE_T), int(NG,HSIZE_T), int(NT_SUB,HSIZE_T) /)
   call h5screate_simple_f(6,dims,sid,ier)
-  call h5dcreate_f(fid,'displacement',H5T_NATIVE_REAL,sid,did,ier)
+  if (chunked) then
+    cdims = (/ 1_HSIZE_T, int(NCOMP,HSIZE_T), int(NG,HSIZE_T), &
+               int(NG,HSIZE_T), int(NG,HSIZE_T), int(NT_CHUNK,HSIZE_T) /)
+    call h5pcreate_f(H5P_DATASET_CREATE_F,pid,ier)
+    call h5pset_chunk_f(pid,6,cdims,ier)
+    if (ier /= 0) call die('could not set the chunking of '//path)
+    call h5dcreate_f(fid,'displacement',H5T_NATIVE_REAL,sid,did,ier,dcpl_id=pid)
+    call h5pclose_f(pid,ier)
+  else
+    call h5dcreate_f(fid,'displacement',H5T_NATIVE_REAL,sid,did,ier)
+  endif
   call h5dwrite_f(did,H5T_NATIVE_REAL,d,dims,ier)
   call h5dclose_f(did,ier)
   call h5sclose_f(sid,ier)

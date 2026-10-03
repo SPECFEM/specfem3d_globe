@@ -36,9 +36,13 @@
 ## $O/exit_mpi.shared.o.
 ##
 ## Note $(LDFLAGS) is referenced directly rather than through $(MPILIBS).
-## The HDF5 libraries are appended to LDFLAGS (Makefile.in:528) and LDFLAGS
+## The HDF5 libraries are appended to LDFLAGS (Makefile.in:543) and LDFLAGS
 ## only reaches ordinary links via `MPILIBS += $(LDFLAGS) @LIBS@`
-## (Makefile.in:59), which also drags in @MPILIBS@.
+## (Makefile.in:74), which also drags in @MPILIBS@. -lhdf5 is named there
+## explicitly: gf_hdf5_read calls H5Dread_chunk from the C API, and a link
+## that names only the Fortran libraries fails with "DSO missing from command
+## line" under gfortran 13 and 14, ifort 2021.10 and 2021.13 and ifx 2024.2,
+## with HDF5 1.10.10 and 1.14.4 (GNU ld does not follow their DT_NEEDED).
 ##
 #######################################
 
