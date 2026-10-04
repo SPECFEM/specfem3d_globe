@@ -60,6 +60,19 @@
 !----      steps are chosen well inside a 4-arc-minute cell and the check is
 !----      that the elevation is linear over the stencil).
 !----
+!----   5. the weights (gf_seis_weights): every station's element block,
+!----      contracted with the seismogram's weight vector and with each of
+!----      the nine partial columns, scaled and converted as gf_seis does,
+!----      reproduces gf_seis's seismogram and partials to rounding. The
+!----      derivative weights sum to zero over the element, so a trace is a
+!----      small difference of large terms, and what a different summation
+!----      order moves is measured against the size of those terms, the
+!----      converted SUM|u w|; the error against each trace's own peak is
+!----      printed. 1e-13 of SUM|u w| is a margin over the weights route's
+!----      own worst case, 375 eps; a wrong index or term is ~1e-6 or more.
+!----      kind 0 and 1 must give kind 2's weights, and wrong requests are
+!----      refused.
+!----
 !---- Needs a built example (GFDB with a validation CMTSOLUTION); one
 !---- station is enough for the sweep, every station for the rest.
 !----
@@ -71,14 +84,17 @@
   use gf_database, only: gf_open,gf_close,gf_topo_elevation
   use gf_locate, only: gf_locate_source,gf_locate_release
   use gf_source, only: gf_read_source
-  use gf_seismograms, only: gf_seis_plan,gf_seis
+  use gf_seismograms, only: gf_seis_plan,gf_seis,gf_seis_weights,gf_seis_station_scale
+  use gf_element_io, only: gf_read_element_displ
+  use gf_weights, only: GF_NW_MT,GF_NW_LOC
+  use gf_stf, only: t_gf_stf_work,gf_stf_work_init,gf_stf_convert,gf_stf_work_free
 
   use gf_stf, only: gf_default_t0
   use gf_partials, only: gf_partials_ndp,GF_NDP_LOC,GF_DP_NAME,GF_DP_LAT,GF_DP_LON,GF_DP_DEP,GF_DP_TIM
 
   use gf_manufactured, only: gf_report,gf_report_true,gf_quiet_nan
 
-  use constants, only: MAX_STRING_LEN
+  use constants, only: MAX_STRING_LEN,CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
 
   implicit none
 
@@ -107,6 +123,20 @@
   integer :: nfail,ierr,nargs,ndp,ista,icomp,it,nt,ip,ih,v,nbad,ista_sweep,ncount
   logical :: same_elem,in_db,in_cell
   character(len=8) :: pname
+  ! section 5
+  integer, parameter :: NW = GF_NW_MT + GF_NW_LOC
+  double precision, dimension(GF_NCOMP,NGLLX,NGLLY,NGLLZ) :: w
+  double precision, dimension(GF_NCOMP,NGLLX,NGLLY,NGLLZ,NW) :: wcols
+  double precision, dimension(GF_NCOMP,NGLLX,NGLLY,NGLLZ) :: wv
+  double precision, dimension(NW) :: colscale
+  double precision, dimension(0:NW) :: worst_col,worst_cond,cond_col
+  double precision, dimension(:), allocatable :: y_w
+  double precision, dimension(:,:,:,:,:), allocatable :: wk1
+  double precision :: bound
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: displ
+  type(t_gf_stf_work) :: work
+  double precision :: sta,sc
+  integer :: icol
 
   nfail = 0
 
@@ -376,6 +406,108 @@
   write(*,'(a,i0,a)') '     ',ncount,' of 3 position parameters stayed in-element and in-cell'
 
   !--------------------------------------------------------------------
+  ! 5. the weights: the block contracted, then converted
+  !--------------------------------------------------------------------
+
+  write(*,'(a)') '5. weights'
+
+  ! the source's own position again, and its seismogram and partials
+  call gf_locate_source(db,src%latitude,src%longitude,src%depth,loc,ierr)
+  if (ierr /= GF_OK) call die5('relocating the source')
+  call gf_seis(db,src,loc,tax,stf,2,ndp,seis,dp,t,onset,ierr)
+  if (ierr /= GF_OK) call die5('gf_seis, kind 2')
+
+  call gf_seis_weights(db,src,loc,2,NW,w,wcols,colscale,ierr)
+  call gf_report_true('gf_seis_weights, kind 2           ',ierr == GF_OK,nfail)
+  if (ierr /= GF_OK) call die5('gf_seis_weights')
+
+  allocate(displ(GF_NCOMP,GF_NCOMP,NGLLX,NGLLY,NGLLZ,db%nt_subsampled),y_w(nt))
+  call gf_stf_work_init(stf,tax,work,ierr)
+  if (ierr /= GF_OK) call die5('gf_stf_work_init')
+
+  worst_col(:) = 0.d0
+  worst_cond(:) = 0.d0
+  cond_col(:) = 0.d0
+  do ista = 1,db%nstations
+    call gf_read_element_displ(db,loc%ielem,ista,displ,ierr)
+    if (ierr /= GF_OK) call die5('gf_read_element_displ')
+    sta = gf_seis_station_scale(db,src,ista)
+    do icol = 0,NW
+      if (icol == 0) then
+        wv(:,:,:,:) = w(:,:,:,:)
+        sc = sta
+      else
+        wv(:,:,:,:) = wcols(:,:,:,:,icol)
+        sc = sta*colscale(icol)
+      endif
+      do icomp = 1,GF_NCOMP
+        ! the trace, through the weights
+        do it = 1,db%nt_subsampled
+          work%trace(it) = sc * sum(dble(displ(icomp,:,:,:,:,it))*wv(:,:,:,:))
+        enddo
+        call gf_stf_convert(stf,tax,work,ierr)
+        if (ierr /= GF_OK) call die5('gf_stf_convert')
+        y_w(:) = work%y(1:nt)
+        ! the same with every term made positive: the size of what is summed,
+        ! which bounds what a different summation order can change. The
+        ! conversion's kernel is positive, so this bounds it after conversion
+        ! too.
+        do it = 1,db%nt_subsampled
+          work%trace(it) = abs(sc) * sum(abs(dble(displ(icomp,:,:,:,:,it)))*abs(wv(:,:,:,:)))
+        enddo
+        call gf_stf_convert(stf,tax,work,ierr)
+        if (ierr /= GF_OK) call die5('gf_stf_convert')
+        bound = maxval(abs(work%y(1:nt)))
+        if (icol == 0) then
+          ref = maxval(abs(seis(ista,icomp,:)))
+          err_h(1) = maxval(abs(y_w(:) - seis(ista,icomp,:)))
+        else
+          ref = maxval(abs(dp(icol,ista,icomp,:)))
+          err_h(1) = maxval(abs(y_w(:) - dp(icol,ista,icomp,:)))
+        endif
+        ! gated on the terms, not on the library's trace: a column that came
+        ! back all zeros must fail, not be skipped
+        if (bound > 0.d0) worst_cond(icol) = max(worst_cond(icol),err_h(1)/bound)
+        if (ref > 0.d0) then
+          worst_col(icol) = max(worst_col(icol),err_h(1)/ref)
+          cond_col(icol) = max(cond_col(icol),bound/ref)
+        endif
+      enddo
+    enddo
+  enddo
+  ! The derivative weights sum to zero over the element, so a trace is a
+  ! difference of terms that can be far larger than it: the fixture's field
+  ! has a large smooth part. A different summation order then moves the
+  ! result by rounding of the terms, eps * SUM |u w|, not of the result. The
+  ! assertion is against that size; the error against the trace's own peak
+  ! and the ratio of the two sizes are printed beside it.
+  do icol = 0,NW
+    write(*,'(a,a4,a,es10.3,a,es10.3)') '     ',merge('seis',GF_DP_NAME(max(icol,1))//' ',icol == 0), &
+      ': error / trace peak ',worst_col(icol),'   SUM|u w| / trace peak ',cond_col(icol)
+  enddo
+  call gf_report('weights -> seismogram, / SUM|u w|      ',worst_cond(0),1.d-13,nfail)
+  do icol = 1,NW
+    call gf_report('weights -> partial '//GF_DP_NAME(icol)//', / SUM|u w|',worst_cond(icol),1.d-13,nfail)
+  enddo
+
+  ! the other kinds give the same weights, and wrong requests are refused
+  call gf_seis_weights(db,src,loc,0,0,wv,wcols(:,:,:,:,1:0),colscale(1:0),ierr)
+  call gf_report_true('kind 0: the seismogram weights, bitwise ', &
+                      ierr == GF_OK .and. all(wv == w),nfail)
+  allocate(wk1(GF_NCOMP,NGLLX,NGLLY,NGLLZ,GF_NW_MT))
+  call gf_seis_weights(db,src,loc,1,GF_NW_MT,wv,wk1,colscale(1:GF_NW_MT),ierr)
+  call gf_report_true('kind 1: and the six MT columns, bitwise  ', &
+                      ierr == GF_OK .and. all(wv == w) .and. all(wk1 == wcols(:,:,:,:,1:GF_NW_MT)),nfail)
+  call gf_seis_weights(db,src,loc,1,NW,wv,wcols,colscale,ierr)
+  call gf_report_true('kind 1 with 9 columns is refused        ',ierr == GF_ERR_ARG,nfail)
+  call gf_seis_weights(db,src,loc,3,0,wv,wcols(:,:,:,:,1:0),colscale(1:0),ierr)
+  call gf_report_true('kind 3 is refused                       ',ierr == GF_ERR_ARG,nfail)
+  deallocate(wk1)
+
+  call gf_stf_work_free(work)
+  deallocate(displ,y_w)
+
+  !--------------------------------------------------------------------
 
   call gf_locate_release()
   call gf_close(db)
@@ -389,6 +521,20 @@
   write(*,'(a)') 'test_gf_partials_db: all assertions passed'
 
   contains
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine die5(what)
+
+  implicit none
+  character(len=*), intent(in) :: what
+
+  write(*,'(a,a,a,a)') '  section 5: ',what,' failed: ',trim(gf_errmsg)
+  stop 1
+
+  end subroutine die5
 
 !
 !-------------------------------------------------------------------------------------------------

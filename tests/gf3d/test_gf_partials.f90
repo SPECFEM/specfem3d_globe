@@ -59,6 +59,16 @@
 !---- perturbed positions on a manufactured element, and compares with
 !---- gf_partials_loc.
 !----
+!---- Section 11: the weights (gf_weights). The block contracted with each
+!---- weight vector must give what the strain route gives -- the strain
+!---- traces of gf_strain_trace_d contracted by gf_moment_contract, with the
+!---- moment tensor, each rotated spherical unit tensor, and gf_partials_loc's
+!---- per-sample combination for the position columns; for a force, the
+!---- interpolation of gf_interp_trace_d along the force direction -- to
+!---- rounding, the summation order being different. And the derivative
+!---- weights of a constant field are zero, so every moment-tensor weight
+!---- vector sums to zero over the element.
+!----
 
   program test_gf_partials
 
@@ -73,7 +83,10 @@
 
   use gf_geo_chain, only: gf_spline_derivative,gf_geographic_jacobian
 
-  use gf_interp, only: gf_interp_weights_deriv,gf_interp_weights_deriv2
+  use gf_interp, only: gf_interp_weights_deriv,gf_interp_weights_deriv2,gf_interp_trace_d
+
+  use gf_weights, only: gf_weights_moment,gf_weights_force,gf_weights_mt,gf_weights_loc, &
+                        GF_NW_MT,GF_NW_LOC
 
   use gf_strain, only: GF_VOIGT,GF_XX,GF_YY,GF_ZZ,GF_XY,GF_XZ,GF_YZ, &
                        gf_strain_dweights,gf_strain_ddweights,gf_strain_snapshot,gf_strain_trace_d
@@ -145,6 +158,7 @@
   call test_spline_deriv(nfail)
   call test_geo_jacobian(nfail)
   call test_full_chain(nfail)
+  call test_weights(nfail)
 
   write(*,'(a)') ''
   if (nfail > 0) then
@@ -1391,6 +1405,247 @@
   deallocate(ct_w,eps,deps,seis_p,seis_m,seis_p2,seis_m2,dp,d1,dr)
 
   end subroutine test_full_chain
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine test_weights(nfail)
+
+! 11. the weights against the strain route, on a random block
+!
+! Real interpolation and derivative tables at a random reference point, a
+! random inverse Jacobian and its derivative, a random moment tensor and
+! geographic chain: the identities hold for any of them. Errors are relative
+! to each column's peak over components and samples.
+
+  implicit none
+  integer, intent(inout) :: nfail
+
+  integer, parameter :: NTW = 12
+  double precision, parameter :: TOL = 1.d-13, TOL_SUM = 1.d-14
+
+  double precision, dimension(GF_NCOMP,GF_NCOMP,NGLLX,NGLLY,NGLLZ,NTW) :: u
+  double precision, dimension(GF_VOIGT,GF_NCOMP,NTW) :: eps
+  double precision, dimension(GF_VOIGT,GF_NCOMP,NTW,NDIM) :: deps
+  double precision, dimension(GF_NCOMP,GF_NCOMP,NTW) :: g
+  double precision, dimension(NGLLX,NGLLY,NGLLZ,NDIM) :: dw
+  double precision, dimension(NGLLX,NGLLY,NGLLZ,NDIM,NDIM) :: ddw
+  double precision, dimension(GF_NCOMP,NGLLX,NGLLY,NGLLZ) :: wm,wf,wa
+  double precision, dimension(GF_NCOMP,NGLLX,NGLLY,NGLLZ,GF_NW_MT) :: wmt
+  double precision, dimension(GF_NCOMP,NGLLX,NGLLY,NGLLZ,GF_NW_LOC) :: wloc
+  double precision, dimension(NGLLX) :: hxi,hpxi,hxi2,hpxi2,hppxi
+  double precision, dimension(NGLLY) :: heta,hpeta,heta2,hpeta2,hppeta
+  double precision, dimension(NGLLZ) :: hgam,hpgam,hgam2,hpgam2,hppgam
+  double precision, dimension(NDIM,NDIM,NDIM) :: djinv
+  double precision, dimension(NDIM,NDIM) :: jinv,m_cart,dm_dtheta,dm_dphi,m_unit,m_asym
+  double precision, dimension(NDIM,3) :: dxds
+  double precision, dimension(NDIM) :: xi,fhat,gb,gx
+  double precision, dimension(6) :: msph,e_sph
+  ! ref/got(a,t) for one column at a time
+  double precision, dimension(GF_NCOMP,NTW) :: ref,got
+  double precision :: theta,phi,dtheta_dlat,dphi_dlon,rot,worst_sum
+  integer :: a,t,b,mm,v,ia,p,i,j,k
+  character(len=4), dimension(GF_NW_LOC), parameter :: lname = (/ 'lat ','lon ','dep ' /)
+
+  write(*,'(a)') '11. the weights against the strain route'
+
+  call gf_lcg_seed(5151)
+
+  do i = 1,NDIM
+    xi(i) = gf_rand_range(-0.9d0,0.9d0)
+  enddo
+  do j = 1,NDIM
+    do i = 1,NDIM
+      jinv(i,j) = gf_rand_range(-0.3d0,0.3d0)
+      do k = 1,NDIM
+        djinv(i,j,k) = gf_rand_range(-0.2d0,0.2d0)
+      enddo
+      dxds(i,j) = gf_rand_range(-1.d0,1.d0)
+    enddo
+    jinv(j,j) = jinv(j,j) + 1.d0
+  enddo
+  do i = 1,6
+    msph(i) = gf_rand_range(-1.d0,1.d0)
+  enddo
+  theta = gf_rand_range(0.3d0,2.8d0)
+  phi = gf_rand_range(-3.d0,3.d0)
+  dtheta_dlat = gf_rand_range(-1.d0,1.d0)
+  dphi_dlon = gf_rand_range(-1.d0,1.d0)
+  do i = 1,NDIM
+    fhat(i) = gf_rand_range(-1.d0,1.d0)
+  enddo
+  do t = 1,NTW
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          do p = 1,GF_NCOMP
+            do a = 1,GF_NCOMP
+              u(a,p,i,j,k,t) = gf_rand_range(-1.d0,1.d0)
+            enddo
+          enddo
+        enddo
+      enddo
+    enddo
+  enddo
+
+  ! the tables, as gf_seis_geometry builds them
+  call gf_interp_weights_deriv(xi(1),xi(2),xi(3),hxi,hpxi,heta,hpeta,hgam,hpgam)
+  call gf_strain_dweights(hxi,hpxi,heta,hpeta,hgam,hpgam,jinv,dw)
+  call gf_interp_weights_deriv2(xi(1),xi(2),xi(3),hxi2,hpxi2,hppxi,heta2,hpeta2,hppeta, &
+                                hgam2,hpgam2,hppgam)
+  call gf_strain_ddweights(hxi2,hpxi2,hppxi,heta2,hpeta2,hppeta,hgam2,hpgam2,hppgam,jinv,djinv,ddw)
+  call gf_rotate_moment_tensor(theta,phi,msph,m_cart)
+  call gf_rotate_moment_tensor_deriv(theta,phi,msph,dm_dtheta,dm_dphi)
+
+  ! the strain route
+  call gf_strain_trace_d(u,dw,NTW,eps)
+  do b = 1,NDIM
+    call gf_strain_trace_d(u,ddw(:,:,:,:,b),NTW,deps(:,:,:,b))
+  enddo
+  call gf_interp_trace_d(u,hxi,heta,hgam,NTW,g)
+
+  ! the weights
+  call gf_weights_moment(dw,m_cart,wm)
+  call gf_weights_mt(dw,theta,phi,wmt)
+  call gf_weights_loc(dw,ddw,m_cart,dm_dtheta,dm_dphi,dtheta_dlat,dphi_dlon,jinv,dxds,wloc)
+  call gf_weights_force(hxi,heta,hgam,fhat,wf)
+
+  !--- the seismogram ---
+  do t = 1,NTW
+    do a = 1,GF_NCOMP
+      call gf_moment_contract(m_cart,eps(:,a,t),ref(a,t))
+    enddo
+  enddo
+  call weights_contract(NTW,u,wm,got)
+  call gf_report('moment tensor: block . W vs M : eps         ',maxval(abs(got - ref))/maxval(abs(ref)),TOL,nfail)
+
+  !--- an asymmetric tensor is read as gf_moment_contract reads it: its
+  !--- upper triangle. dM/dtheta and dM/dphi are symmetric only to rounding.
+  do j = 1,NDIM
+    do i = 1,NDIM
+      m_asym(i,j) = gf_rand_range(-1.d0,1.d0)
+    enddo
+  enddo
+  do t = 1,NTW
+    do a = 1,GF_NCOMP
+      call gf_moment_contract(m_asym,eps(:,a,t),ref(a,t))
+    enddo
+  enddo
+  call gf_weights_moment(dw,m_asym,wa)
+  call weights_contract(NTW,u,wa,got)
+  call gf_report('asymmetric M: read by its upper triangle    ', &
+                 maxval(abs(got - ref))/maxval(abs(ref)),TOL,nfail)
+
+  !--- the six moment-tensor columns ---
+  do v = 1,GF_NW_MT
+    e_sph(:) = 0.d0
+    e_sph(v) = 1.d0
+    call gf_rotate_moment_tensor(theta,phi,e_sph,m_unit)
+    do t = 1,NTW
+      do a = 1,GF_NCOMP
+        call gf_moment_contract(m_unit,eps(:,a,t),ref(a,t))
+      enddo
+    enddo
+    call weights_contract(NTW,u,wmt(:,:,:,:,v),got)
+    call gf_report('MT column '//char(ichar('0')+v)//': block . W vs unit tensor : eps ', &
+                   maxval(abs(got - ref))/maxval(abs(ref)),TOL,nfail)
+  enddo
+
+  !--- the three position columns: gf_partials_loc's per-sample sum ---
+  do ia = 1,GF_NW_LOC
+    do t = 1,NTW
+      do a = 1,GF_NCOMP
+        do b = 1,NDIM
+          call gf_moment_contract(m_cart,deps(:,a,t,b),gb(b))
+        enddo
+        do mm = 1,NDIM
+          gx(mm) = jinv(1,mm)*gb(1) + jinv(2,mm)*gb(2) + jinv(3,mm)*gb(3)
+        enddo
+        ref(a,t) = gx(1)*dxds(1,ia) + gx(2)*dxds(2,ia) + gx(3)*dxds(3,ia)
+        if (ia == 1) then
+          call gf_moment_contract(dm_dtheta,eps(:,a,t),rot)
+          ref(a,t) = ref(a,t) + rot*dtheta_dlat
+        else if (ia == 2) then
+          call gf_moment_contract(dm_dphi,eps(:,a,t),rot)
+          ref(a,t) = ref(a,t) + rot*dphi_dlon
+        endif
+      enddo
+    enddo
+    call weights_contract(NTW,u,wloc(:,:,:,:,ia),got)
+    call gf_report('position column '//lname(ia)//': block . W vs strain route ', &
+                   maxval(abs(got - ref))/maxval(abs(ref)),TOL,nfail)
+  enddo
+
+  !--- a force ---
+  do t = 1,NTW
+    do a = 1,GF_NCOMP
+      ref(a,t) = fhat(1)*g(a,1,t) + fhat(2)*g(a,2,t) + fhat(3)*g(a,3,t)
+    enddo
+  enddo
+  call weights_contract(NTW,u,wf,got)
+  call gf_report('force: block . W vs interpolation . fhat    ',maxval(abs(got - ref))/maxval(abs(ref)),TOL,nfail)
+
+  !--- every moment-tensor weight sums to zero over the element ---
+  worst_sum = weights_sum(wm)
+  do v = 1,GF_NW_MT
+    worst_sum = max(worst_sum,weights_sum(wmt(:,:,:,:,v)))
+  enddo
+  do ia = 1,GF_NW_LOC
+    worst_sum = max(worst_sum,weights_sum(wloc(:,:,:,:,ia)))
+  enddo
+  call gf_report('SUM_ijk W(p,ijk) = 0, worst over all columns ',worst_sum,TOL_SUM,nfail)
+
+  end subroutine test_weights
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine weights_contract(nt,u,w,out)
+
+! out(a,t) = SUM_{p,ijk} u(a,p,ijk,t) w(p,ijk), the contraction section 11 tests
+
+  implicit none
+  integer, intent(in) :: nt
+  double precision, dimension(GF_NCOMP,GF_NCOMP,NGLLX,NGLLY,NGLLZ,nt), intent(in) :: u
+  double precision, dimension(GF_NCOMP,NGLLX,NGLLY,NGLLZ), intent(in) :: w
+  double precision, dimension(GF_NCOMP,nt), intent(out) :: out
+
+  integer :: a,t
+
+  do t = 1,nt
+    do a = 1,GF_NCOMP
+      out(a,t) = sum(u(a,:,:,:,:,t)*w(:,:,:,:))
+    enddo
+  enddo
+
+  end subroutine weights_contract
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  double precision function weights_sum(w)
+
+! max over p of |SUM_ijk w(p,ijk)| / SUM_ijk |w(p,ijk)|
+!
+! A row that is zero sums to zero and is skipped: the rotated unit tensor
+! Mpp is phi^ phi^T, and phi^ has no z component.
+
+  implicit none
+  double precision, dimension(GF_NCOMP,NGLLX,NGLLY,NGLLZ), intent(in) :: w
+
+  double precision :: s_abs
+  integer :: p
+
+  weights_sum = 0.d0
+  do p = 1,GF_NCOMP
+    s_abs = sum(abs(w(p,:,:,:)))
+    if (s_abs > 0.d0) weights_sum = max(weights_sum,abs(sum(w(p,:,:,:)))/s_abs)
+  enddo
+
+  end function weights_sum
 
 !
 !-------------------------------------------------------------------------------------------------

@@ -153,6 +153,9 @@
 
   use gf_geo_chain, only: gf_geographic_jacobian
 
+  use gf_weights, only: gf_weights_moment,gf_weights_force,gf_weights_mt,gf_weights_loc, &
+                        GF_NW_MT,GF_NW_LOC
+
   implicit none
 
   private
@@ -160,6 +163,8 @@
   public :: gf_time_axis
   public :: gf_seis_plan
   public :: gf_seis
+  public :: gf_seis_weights
+  public :: gf_seis_station_scale
   public :: gf_write_seis
   public :: gf_write_partials
   public :: gf_write_dump
@@ -543,6 +548,153 @@
 !-------------------------------------------------------------------------------------------------
 !
 
+  double precision function gf_seis_station_scale(db,src,ista)
+
+! the amplitude factor of station ista's traces: what gf_seis_station
+! multiplies the contracted field by, before the source time function
+!
+! Two derivations, two statements: see the amplitude section of the module
+! header. They are not one expression because they are not one idea. The
+! station's factor_force_source must not be 0 (gf_seis refuses that).
+
+  implicit none
+
+  type(t_gfdb), intent(in) :: db
+  type(t_gf_source), intent(in) :: src
+  integer, intent(in) :: ista
+
+  if (src%source_type == GF_SRC_FORCE) then
+    gf_seis_station_scale = src%factor_force_source / db%stations(ista)%factor_force_source
+  else
+    gf_seis_station_scale = 1.d0 / db%stations(ista)%factor_force_source
+  endif
+
+  end function gf_seis_station_scale
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_seis_weights(db,src,loc,kind,ncol,w,wcols,colscale,ierr)
+
+! the weights that make gf_seis's traces from an element block
+!
+! For station ista, force component a and database sample t, with u the
+! station's block (gf_read_element_displ) seen as u(a,m,t), m = 1..375:
+!
+!   seismogram      STF[ sta * SUM_m u(a,m,t) w(m) ]
+!   partial col     STF[ sta * colscale(col) * SUM_m u(a,m,t) wcols(m,col) ]
+!
+! sta = gf_seis_station_scale(db,src,ista), and STF[.] is gf_stf_convert
+! with the plan gf_seis used. The columns are gf_seis's partial slots
+! 1..ncol: kind 0 none (ncol = 0), kind 1 the six moment-tensor ones
+! (ncol = 6), kind 2 those and latitude, longitude, depth (ncol = 9). The
+! centroid-time partial is not a weight: it is a shift of the trace.
+! colscale is 1/scale_moment for the moment-tensor columns and 1 for the
+! position ones: gf_seis's factors, applied here as sta*colscale, which is
+! two roundings where gf_seis has one. It is kept apart from the
+! weights so that the moment-tensor column of a unit tensor and that
+! tensor's seismogram weight are one routine's output on one input.
+!
+! Agrees with gf_seis to rounding: the summation order differs (see
+! gf_weights). A force source has kind 0 only.
+
+  use constants, only: NGLLX,NGLLY,NGLLZ
+
+  implicit none
+
+  type(t_gfdb), intent(in) :: db
+  type(t_gf_source), intent(in) :: src
+  type(t_gf_location), intent(in) :: loc
+  integer, intent(in) :: kind,ncol
+  double precision, dimension(GF_NCOMP,NGLLX,NGLLY,NGLLZ), intent(out) :: w
+  double precision, dimension(GF_NCOMP,NGLLX,NGLLY,NGLLZ,ncol), intent(out) :: wcols
+  double precision, dimension(ncol), intent(out) :: colscale
+  integer, intent(out) :: ierr
+
+  ! local parameters
+  type(t_gf_seis_geom) :: geom
+  integer :: ncol_want
+
+  w(:,:,:,:) = 0.d0
+  wcols(:,:,:,:,:) = 0.d0
+  colscale(:) = 0.d0
+
+  if (.not. db%is_open) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_weights: database is not open')
+    return
+  endif
+  if (loc%ielem < 1) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_weights: the source has not been located')
+    return
+  endif
+  if (src%source_type /= GF_SRC_FORCE .and. src%source_type /= GF_SRC_CMT) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_weights: the source has no type set')
+    return
+  endif
+  select case (kind)
+  case (0) ; ncol_want = 0
+  case (1) ; ncol_want = GF_NW_MT
+  case (2) ; ncol_want = GF_NW_MT + GF_NW_LOC
+  case default
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_weights: kind must be 0, 1 or 2')
+    return
+  end select
+  if (ncol /= ncol_want) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_weights: ncol does not match kind')
+    return
+  endif
+  if (kind > 0) then
+    if (src%source_type /= GF_SRC_CMT) then
+      call gf_set_error(ierr,GF_ERR_ARG, &
+        'gf_seis_weights: partial derivatives are defined for a moment-tensor source only')
+      return
+    endif
+    if (src%scale_moment <= 0.d0) then
+      call gf_set_error(ierr,GF_ERR_ARG,'gf_seis_weights: the source carries no moment scale')
+      return
+    endif
+  endif
+  if (kind == 2 .and. db%topography .and. .not. db%topo_loaded) then
+    call gf_set_error(ierr,GF_ERR_ARG, &
+      'gf_seis_weights: the topography grid is not loaded; locate the source first')
+    return
+  endif
+
+  ! see gf_locate_source: the per-process globals must be this handle's.
+  ! kind 2 reads the topography through them (gf_seis_geometry), and a
+  ! locate or open on another handle since may have left that one's there.
+  call gf_init_shared_params(db,ierr)
+  if (ierr /= GF_OK) return
+
+  call gf_seis_geometry(db,src,loc,kind,geom,ierr)
+  if (ierr /= GF_OK) return
+
+  if (src%source_type == GF_SRC_FORCE) then
+    call gf_weights_force(geom%hxi,geom%heta,geom%hgam,geom%fhat,w)
+  else
+    call gf_weights_moment(geom%dw,geom%m_cart,w)
+  endif
+
+  if (kind >= 1) then
+    call gf_weights_mt(geom%dw,loc%theta,loc%phi,wcols(:,:,:,:,1:GF_NW_MT))
+    colscale(1:GF_NW_MT) = 1.d0/src%scale_moment
+  endif
+  if (kind == 2) then
+    call gf_weights_loc(geom%dw,geom%ddw,geom%m_cart,geom%dm_dtheta,geom%dm_dphi, &
+                        geom%dtheta_dlat,geom%dphi_dlon,loc%jinv,geom%dxds, &
+                        wcols(:,:,:,:,GF_NW_MT+1:GF_NW_MT+GF_NW_LOC))
+    colscale(GF_NW_MT+1:GF_NW_MT+GF_NW_LOC) = 1.d0
+  endif
+
+  ierr = GF_OK
+
+  end subroutine gf_seis_weights
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   subroutine gf_seis_station(db,src,loc,tax,stf,geom,kind,ista,displ,swork, &
                              seis,ndp,dp,onset,ierr)
 
@@ -601,14 +753,7 @@
   ! factor_force_source /= 0 for every station: gf_seis checks it before
   ! any station runs, so that no station's error is raised from inside its
   ! threaded loop.
-
-  ! two derivations, two statements: see the amplitude section of the module
-  ! header. They are not one expression because they are not one idea.
-  if (src%source_type == GF_SRC_FORCE) then
-    scale_amp = src%factor_force_source / db%stations(ista)%factor_force_source
-  else
-    scale_amp = 1.d0 / db%stations(ista)%factor_force_source
-  endif
+  scale_amp = gf_seis_station_scale(db,src,ista)
 
   !--- the seismogram, component by component ----------------------------
 
