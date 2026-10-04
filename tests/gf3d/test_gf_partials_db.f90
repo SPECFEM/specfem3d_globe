@@ -31,17 +31,19 @@
 !---- Stage 7 as the plan finally has it: finite differences are the
 !---- *validation* of the analytic derivative, not a product. This driver
 !---- perturbs the source through the public locate-and-extract routines
-!---- and compares Richardson-extrapolated central differences with
-!---- gf_seis_cmt_partials. Nothing FD-shaped exists in the library.
+!---- and compares Richardson-extrapolated central differences with gf_seis's
+!---- analytic partials. Nothing FD-shaped exists in the library.
 !----
 !---- What is asserted:
 !----
-!----   1. the seismograms gf_seis_cmt_partials writes beside the partials
-!----      are the seismograms of gf_seis_cmt -- bitwise, because the two
-!----      run the same statements on the same arrays, and gf_seis_cmt is the
-!----      routine the comparison gate in EXAMPLES/ rests on;
+!----   1. the seismograms gf_seis writes beside the partials (kind 2) are
+!----      its seismograms alone (kind 0) -- bitwise under a value-safe FP
+!----      model, because both contract the same block with the same weight
+!----      vector and convert it the same way, and the kind 0 seismogram is
+!----      what the comparison gate in EXAMPLES/ rests on;
 !----   2. linearity on real data: SUM_v M_v dp(v) with the CMTSOLUTION's own
-!----      dyne-cm reproduces the seismogram;
+!----      dyne-cm reproduces the seismogram (asserted in section 5, against
+!----      the size of the terms summed);
 !----   3. dp(10) against a central difference of the seismogram: the
 !----      difference's own (w dt)^2/6 error is what is measured, and it is
 !----      reported, not asserted tightly;
@@ -130,6 +132,8 @@
   double precision, dimension(GF_NCOMP,NGLLX,NGLLY,NGLLZ) :: wv
   double precision, dimension(NW) :: colscale
   double precision, dimension(0:NW) :: worst_col,worst_cond,cond_col
+  double precision, dimension(0:NW,GF_NCOMP) :: bound_col
+  double precision :: worst_lin
   double precision, dimension(:), allocatable :: y_w
   double precision, dimension(:,:,:,:,:), allocatable :: wk1
   double precision :: bound
@@ -214,7 +218,7 @@
            dfd(NH,GF_NCOMP,nt))
 
   !--------------------------------------------------------------------
-  ! 1. the seismograms beside the partials are gf_seis_cmt's
+  ! 1. the seismograms beside the partials are the kind 0 ones
   !--------------------------------------------------------------------
 
   write(*,'(a)') '1. seismograms'
@@ -258,7 +262,12 @@
       enddo
     enddo
   enddo
-  call gf_report('SUM_v M_v dp(v) == seismogram, all stations',worst,1.d-12,nfail)
+  ! The seismogram and each partial are contractions with their own weight
+  ! vectors, which are linear in the tensor only to rounding; the traces
+  ! are much smaller than what is summed into them, so the identity is
+  ! asserted in section 5 against that size. Against the peak: printed.
+  write(*,'(a,es10.3,a)') '     SUM_v M_v dp(v) vs seismogram: ',worst, &
+                          ' of the trace peak (asserted in section 5)'
 
   !--------------------------------------------------------------------
   ! 3. dp(10) against a central difference of the seismogram
@@ -428,6 +437,7 @@
   worst_col(:) = 0.d0
   worst_cond(:) = 0.d0
   cond_col(:) = 0.d0
+  worst_lin = 0.d0
   do ista = 1,db%nstations
     call gf_read_element_displ(db,loc%ielem,ista,displ,ierr)
     if (ierr /= GF_OK) call die5('gf_read_element_displ')
@@ -458,6 +468,7 @@
         call gf_stf_convert(stf,tax,work,ierr)
         if (ierr /= GF_OK) call die5('gf_stf_convert')
         bound = maxval(abs(work%y(1:nt)))
+        bound_col(icol,icomp) = bound
         if (icol == 0) then
           ref = maxval(abs(seis(ista,icomp,:)))
           err_h(1) = maxval(abs(y_w(:) - seis(ista,icomp,:)))
@@ -474,6 +485,20 @@
         endif
       enddo
     enddo
+    ! linearity, against the size of every term it sums
+    do icomp = 1,GF_NCOMP
+      bound = bound_col(0,icomp)
+      do v = 1,6
+        bound = bound + abs(m_dynecm(v))*bound_col(v,icomp)
+      enddo
+      do it = 1,nt
+        s0 = 0.d0
+        do v = 1,6
+          s0 = s0 + m_dynecm(v)*dp(v,ista,icomp,it)
+        enddo
+        if (bound > 0.d0) worst_lin = max(worst_lin,abs(s0 - seis(ista,icomp,it))/bound)
+      enddo
+    enddo
   enddo
   ! The derivative weights sum to zero over the element, so a trace is a
   ! difference of terms that can be far larger than it: the fixture's field
@@ -486,6 +511,7 @@
       ': error / trace peak ',worst_col(icol),'   SUM|u w| / trace peak ',cond_col(icol)
   enddo
   call gf_report('weights -> seismogram, / SUM|u w|      ',worst_cond(0),1.d-13,nfail)
+  call gf_report('SUM_v M_v dp(v) == seismogram, / SUM|u w|',worst_lin,1.d-13,nfail)
   do icol = 1,NW
     call gf_report('weights -> partial '//GF_DP_NAME(icol)//', / SUM|u w|',worst_cond(icol),1.d-13,nfail)
   enddo

@@ -393,7 +393,13 @@ int main(int argc, char **argv)
      * The identity of Stage 6: the six moment-tensor partials are per
      * dyne-cm and linear, so contracting them with the CMTSOLUTION's own
      * components must give the seismogram back. It needs no reference file,
-     * and no transposition of the four-dimensional index can survive it.
+     * and no transposition of the four-dimensional index can survive it:
+     * that is an O(1) error. The bound is rounding: the seismogram and each
+     * partial come from their own weight vector, and the fixture's traces
+     * are up to ~5e5 times smaller than what is summed into them on the
+     * generated fixture -- a $GF3D_TEST_GFDB may be worse conditioned
+     * (test_gf_partials_db, section 5, asserts it against that size), so
+     * eps * 5e5 * a few is ~1e-10 of the peak.
      */
     for (i = 0; i < nsta; i++) {
       for (j = 0; j < GF_NCOMP; j++) {
@@ -407,7 +413,7 @@ int main(int argc, char **argv)
         }
       }
     }
-    ok_err("sum(M_v dp_v) reproduces the seismogram", worst / peak, 1.0e-12);
+    ok_err("sum(M_v dp_v) reproduces the seismogram", worst / peak, 1.0e-9);
   }
 
   ok_status("the wrong ndp refused",

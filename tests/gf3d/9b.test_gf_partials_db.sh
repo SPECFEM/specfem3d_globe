@@ -1,19 +1,15 @@
 #!/bin/bash
 ###################################################
 #
-# The partial derivatives on a built example database: the seismograms
-# beside the partials are gf_seis_cmt's, the moment-tensor partials
+# The partial derivatives on a database: the seismograms beside the
+# partials are the kind 0 ones, the weights reproduce gf_seis's traces,
+# the moment-tensor partials
 # reproduce the seismogram by linearity with the CMTSOLUTION's own numbers,
 # and the analytic centroid partials agree with Richardson-extrapolated
 # relocation differences through the public routines -- finite differences
 # as the validation of the analytic derivative, not as a product.
 #
-# Needs, for one example:
-#   <example>/GFDB/mesh_info.h5
-#   <example>/validation_data/CMTSOLUTION
-#
-# The database is gitignored, so this skips cleanly on a fresh checkout and
-# in CI, like its siblings. Override the example with $GF3D_TEST_EXAMPLE.
+# Runs on the fixture database, or on $GF3D_TEST_GFDB (see gfdb_env.bash).
 #
 ###################################################
 

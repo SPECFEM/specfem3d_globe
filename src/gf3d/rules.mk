@@ -423,7 +423,7 @@ $O/gf_strain.gf3d.o: $O/gf_par.gf3d.o
 $O/gf_moment.gf3d.o: $O/gf_par.gf3d.o $O/gf_strain.gf3d.o
 $O/gf_stf.gf3d.o: $O/gf_par.gf3d.o
 $O/gf_source.gf3d.o: $O/gf_par.gf3d.o
-$O/gf_partials.gf3d.o: $O/gf_par.gf3d.o $O/gf_strain.gf3d.o $O/gf_moment.gf3d.o $O/gf_stf.gf3d.o
+$O/gf_partials.gf3d.o: $O/gf_par.gf3d.o $O/gf_stf.gf3d.o
 $O/gf_weights.gf3d.o: $O/gf_par.gf3d.o $O/gf_moment.gf3d.o
 $O/gf_sac.gf3d.o: $O/gf_par.gf3d.o $O/gf_partials.gf3d.o
 $O/gf_seismograms.gf3d.o: $O/gf_par.gf3d.o $O/gf_database.gf3d.o $O/gf_element_io.gf3d.o \

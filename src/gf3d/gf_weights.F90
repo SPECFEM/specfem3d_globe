@@ -57,13 +57,27 @@
 !----
 !---- The partials are weights too: one per spherical unit moment tensor,
 !---- and one per centroid coordinate (lat, lon, depth), the latter the
-!---- weight form of gf_partials_loc. None carries an amplitude scale: the
+!---- weight form of the strain-gradient partials of Stage 8 (the strain
+!---- gradient, the rotation's derivative and the geographic map's, see
+!---- gf_partials). None carries an amplitude scale: the
 !---- caller applies the station's and, for the moment-tensor columns,
 !---- 1/scale_moment, as gf_seis does.
 !----
 !---- Summation order differs from the strain route, so a trace contracted
 !---- here agrees with gf_strain_trace + gf_moment_contract to rounding,
-!---- not bit for bit.
+!---- not bit for bit. The traces are differences of terms far larger than
+!---- themselves (the derivative weights sum to zero over the element), so
+!---- "rounding" is eps times SUM |u w|, not eps times the trace.
+!----
+!---- gf_weights_contract is the extraction's contraction: every weight
+!---- vector of an extraction against one station's block, sample by
+!---- sample, with the force component kept. It reads the block in its
+!---- stored order, the 1125 values of one time sample as one run, against
+!---- each weight vector repeated three times (gf_weights_replicate), so
+!---- that value k of the run meets weight (k-1)/3 + 1 and belongs to force
+!---- component mod(k-1,3) + 1. Accumulating in GF_NLANE lanes, a multiple
+!---- of three, keeps each lane on one component, so the loop vectorises
+!---- without reassociating anything; the lanes are summed at the end.
 !----
 
   module gf_weights
@@ -78,10 +92,19 @@
   integer, parameter, public :: GF_NW_MT = 6
   integer, parameter, public :: GF_NW_LOC = 3
 
+  ! the most weight vectors one extraction uses: the seismogram's, six
+  ! moment-tensor and three position partials
+  integer, parameter, public :: GF_NW_MAX = 1 + GF_NW_MT + GF_NW_LOC
+
+  ! accumulator lanes of gf_weights_contract, a multiple of GF_NCOMP
+  integer, parameter :: GF_NLANE = 48
+
   public :: gf_weights_moment
   public :: gf_weights_force
   public :: gf_weights_mt
   public :: gf_weights_loc
+  public :: gf_weights_replicate
+  public :: gf_weights_contract
 
   contains
 
@@ -198,7 +221,8 @@
   subroutine gf_weights_loc(dw,ddw,m_cart,dm_dtheta,dm_dphi,dtheta_dlat,dphi_dlon,jinv,dxds,wloc)
 
 ! the weights of the three centroid-position partials, lat, lon, depth:
-! gf_partials_loc's per-sample sum with the strain replaced by its weights,
+! the per-sample chain-rule sum of Stage 8 with the strain replaced by its
+! weights,
 !
 !   wloc(ia) = SUM_m dxds(m,ia) SUM_b jinv(b,m) W(ddw(b), M)
 !            + [ia = lat] dtheta/dlat W(dw, dM/dtheta)
@@ -243,5 +267,82 @@
   wloc(:,:,:,:,2) = wloc(:,:,:,:,2) + r(:,:,:,:)*dphi_dlon
 
   end subroutine gf_weights_loc
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_weights_replicate(w,wr)
+
+! a weight vector laid out against one time sample of a block: wr(k) is
+! w(m) for k = 3*(m-1) + a, every force component a
+
+  use constants, only: NGLLX,NGLLY,NGLLZ
+
+  implicit none
+
+  double precision, dimension(GF_NCOMP*NGLLX*NGLLY*NGLLZ), intent(in) :: w
+  double precision, dimension(GF_NCOMP,GF_NCOMP*NGLLX*NGLLY*NGLLZ), intent(out) :: wr
+
+  ! local parameters
+  integer :: m
+
+  do m = 1,GF_NCOMP*NGLLX*NGLLY*NGLLZ
+    wr(:,m) = w(m)
+  enddo
+
+  end subroutine gf_weights_replicate
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_weights_contract(u,nt,wr,nw,x)
+
+! x(t,a,c) = SUM_m u(a,m,t) w_c(m), for every sample t, force component a and
+! weight vector c of wr (each laid out by gf_weights_replicate)
+!
+! u is one station's block, displ(a,p,i,j,k,t) as stored, seen as
+! u(1125,nt). The run of one sample is widened to double once and then met
+! by each weight vector in turn; see the module header for the lanes.
+
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
+
+  implicit none
+
+  integer, parameter :: NRUN = GF_NCOMP*GF_NCOMP*NGLLX*NGLLY*NGLLZ
+  integer, parameter :: NFULL = (NRUN/GF_NLANE)*GF_NLANE
+
+  integer, intent(in) :: nt,nw
+  real(kind=CUSTOM_REAL), dimension(NRUN,nt), intent(in) :: u
+  double precision, dimension(NRUN,nw), intent(in) :: wr
+  double precision, dimension(nt,GF_NCOMP,nw), intent(out) :: x
+
+  ! local parameters
+  double precision, dimension(NRUN) :: ud
+  double precision, dimension(GF_NLANE) :: acc
+  integer :: it,c,k0,l,a
+
+  do it = 1,nt
+    ud(:) = dble(u(:,it))
+    do c = 1,nw
+      acc(:) = 0.d0
+      do k0 = 0,NFULL-GF_NLANE,GF_NLANE
+        do l = 1,GF_NLANE
+          acc(l) = acc(l) + wr(k0+l,c)*ud(k0+l)
+        enddo
+      enddo
+      ! the remainder starts on a multiple of GF_NLANE, hence of three, so
+      ! its lanes keep their components
+      do l = 1,NRUN-NFULL
+        acc(l) = acc(l) + wr(NFULL+l,c)*ud(NFULL+l)
+      enddo
+      do a = 1,GF_NCOMP
+        x(it,a,c) = sum(acc(a:GF_NLANE:GF_NCOMP))
+      enddo
+    enddo
+  enddo
+
+  end subroutine gf_weights_contract
 
   end module gf_weights

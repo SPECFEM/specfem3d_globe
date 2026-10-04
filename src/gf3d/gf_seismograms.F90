@@ -148,13 +148,13 @@
 
   use gf_source, only: gf_force_direction
 
-  use gf_partials, only: gf_partials_mt,gf_partials_time,gf_partials_loc,gf_partials_ndp, &
-                         GF_NDP_MT,GF_NDP_LOC,GF_DP_NAME,GF_DP_UNIT,GF_DP_LAT,GF_DP_TIM
+  use gf_partials, only: gf_partials_time,gf_partials_ndp, &
+                         GF_NDP_LOC,GF_DP_NAME,GF_DP_UNIT,GF_DP_TIM
 
   use gf_geo_chain, only: gf_geographic_jacobian
 
   use gf_weights, only: gf_weights_moment,gf_weights_force,gf_weights_mt,gf_weights_loc, &
-                        GF_NW_MT,GF_NW_LOC
+                        gf_weights_replicate,gf_weights_contract,GF_NW_MT,GF_NW_LOC,GF_NW_MAX
 
   implicit none
 
@@ -180,8 +180,11 @@
   ! direction for a force source, the strain weights and the rotated moment
   ! tensor for a moment tensor, and the second-derivative tables and the
   ! geographic Jacobian only when the centroid partials are wanted.
-  ! Fixed-size rather than allocatable -- ddw is the big one at ~9 kB, which
-  ! gf_seis_cmt_partials already carried as a local.
+  ! Fixed-size rather than allocatable. The weights (gf_weights) are built
+  ! from the rest, last: w(:,:,:,:,1) is the seismogram's, 2..7 the
+  ! moment-tensor partials', 8..10 the position partials'; wscale is each
+  ! one's factor beside the station's (1, 1/scale_moment, 1); wr is w laid
+  ! out for gf_weights_contract. wr is the big one, ~90 kB.
   !-----------------------------------------------------------------
 
   type :: t_gf_seis_geom
@@ -205,6 +208,12 @@
     double precision, dimension(NDIM,NDIM) :: dm_dtheta = 0.d0, dm_dphi = 0.d0
     double precision, dimension(NDIM,3) :: dxds = 0.d0
     double precision :: dtheta_dlat = 0.d0, dphi_dlon = 0.d0
+
+    !--- the weights, every kind: nw = 1, 7 or 10 of them ---
+    integer :: nw = 0
+    double precision, dimension(GF_NCOMP,NGLLX,NGLLY,NGLLZ,GF_NW_MAX) :: w = 0.d0
+    double precision, dimension(GF_NW_MAX) :: wscale = 0.d0
+    double precision, dimension(GF_NCOMP*GF_NCOMP*NGLLX*NGLLY*NGLLZ,GF_NW_MAX) :: wr = 0.d0
   end type t_gf_seis_geom
 
   !-----------------------------------------------------------------
@@ -215,18 +224,14 @@
   ! is allocated only for a handle that keeps no elements: one that does
   ! reads straight into its cache and hands gf_seis_station that instead.
   !
-  ! Which of the rest exist depends on the extraction: `g` for a force
-  ! source, `eps` for a moment tensor, and `deps`/`dpl`/`dp10` only for the
-  ! centroid partials.
+  ! `x` holds one station's block contracted with each of the extraction's
+  ! weight vectors, before any scale; `dp10` the centroid-time partial,
+  ! kind 2 only.
   !-----------------------------------------------------------------
 
   type :: t_gf_seis_work
     real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: displ
-    double precision, dimension(:,:,:), allocatable :: g       ! (3,3,nt_db)      force
-    double precision, dimension(:,:,:), allocatable :: eps     ! (6,3,nt_db)      cmt
-    double precision, dimension(:,:,:,:), allocatable :: deps  ! (6,3,nt_db,NDIM) kind 2
-    double precision, dimension(:,:,:), allocatable :: dpm     ! (6,3,nt)         kind >= 1
-    double precision, dimension(:,:,:), allocatable :: dpl     ! (3,3,nt)         kind 2
+    double precision, dimension(:,:,:), allocatable :: x       ! (nt_db,3,geom%nw)
     double precision, dimension(:), allocatable :: dp10        ! (nt)             kind 2
     type(t_gf_stf_work) :: stfw
   end type t_gf_seis_work
@@ -350,9 +355,12 @@
 !
 ! The three extraction routines each built their own copy of this, in the
 ! same order, from the same inputs. `kind` selects how much is needed:
-! 0 gives the interpolation weights and, for a force source, the direction;
-! 1 adds the strain weights and the rotated moment tensor; 2 adds the
-! second-derivative tables and the geographic Jacobian.
+! every kind gives the interpolation weights, and the force direction or
+! the strain weights and rotated moment tensor; 2 adds the
+! second-derivative tables and the geographic Jacobian. Last, from all of
+! that, the weight vectors the extraction contracts with (geom%w, wscale,
+! wr): the seismogram's, and for a moment tensor at kind 1 and 2 its
+! partials'.
 !
 ! `dw` comes from gf_interp_weights_deriv (lagrange_any, hand-unrolled for
 ! NGLL = 5 with a fixed association order, lagrange_poly.f90:67-81) and `ddw`
@@ -389,7 +397,7 @@
   double precision, dimension(NGLLZ) :: hgam2,hpgam2,hppgam
   double precision, dimension(1) :: no_spline
   double precision :: elevation,delev_dlat,delev_dlon
-  integer :: nspl_use
+  integer :: nspl_use,iw
 
   geom%want_loc = (kind == 2)
 
@@ -443,6 +451,34 @@
     if (ierr /= GF_OK) return
   endif
 
+  !--- the weights: what the above does to a block, as vectors ---------------
+
+  if (src%source_type == GF_SRC_FORCE) then
+    call gf_weights_force(geom%hxi,geom%heta,geom%hgam,geom%fhat,geom%w(:,:,:,:,1))
+  else
+    call gf_weights_moment(geom%dw,geom%m_cart,geom%w(:,:,:,:,1))
+  endif
+  geom%wscale(1) = 1.d0
+  geom%nw = 1
+
+  ! the partials: a moment tensor only, as gf_seis requires
+  if (kind >= 1 .and. src%source_type == GF_SRC_CMT) then
+    call gf_weights_mt(geom%dw,loc%theta,loc%phi,geom%w(:,:,:,:,2:1+GF_NW_MT))
+    geom%wscale(2:1+GF_NW_MT) = 1.d0/src%scale_moment
+    geom%nw = 1 + GF_NW_MT
+    if (geom%want_loc) then
+      call gf_weights_loc(geom%dw,geom%ddw,geom%m_cart,geom%dm_dtheta,geom%dm_dphi, &
+                          geom%dtheta_dlat,geom%dphi_dlon,loc%jinv,geom%dxds, &
+                          geom%w(:,:,:,:,2+GF_NW_MT:GF_NW_MAX))
+      geom%wscale(2+GF_NW_MT:GF_NW_MAX) = 1.d0
+      geom%nw = GF_NW_MAX
+    endif
+  endif
+
+  do iw = 1,geom%nw
+    call gf_weights_replicate(geom%w(:,:,:,:,iw),geom%wr(:,iw))
+  enddo
+
   ierr = GF_OK
 
   end subroutine gf_seis_geometry
@@ -451,16 +487,15 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine gf_seis_work_init(db,src,tax,stf,kind,swork,ierr)
+  subroutine gf_seis_work_init(db,tax,stf,kind,swork,ierr)
 
 ! the buffers one extraction needs, sized from the plan
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
 
   implicit none
 
   type(t_gfdb), intent(in) :: db
-  type(t_gf_source), intent(in) :: src
   type(t_gf_taxis), intent(in) :: tax
   type(t_gf_stf), intent(in) :: stf
   integer, intent(in) :: kind
@@ -468,7 +503,7 @@
   integer, intent(out) :: ierr
 
   ! local parameters
-  integer :: ier,nt_db,nt
+  integer :: ier,nt_db,nt,nw
 
   call gf_seis_work_free(swork)
 
@@ -484,29 +519,22 @@
     endif
   endif
 
-  if (src%source_type == GF_SRC_FORCE) then
-    allocate(swork%g(GF_NCOMP,GF_NCOMP,nt_db),stat=ier)
-  else
-    allocate(swork%eps(GF_VOIGT,GF_NCOMP,nt_db),stat=ier)
-  endif
+  ! the contracted traces: the seismogram's, and one per partial column,
+  ! as many as gf_seis_geometry builds for this kind (gf_seis refuses a
+  ! force source with kind > 0, so kind decides it)
+  nw = 1
+  if (kind >= 1) nw = nw + GF_NW_MT
+  if (kind == 2) nw = nw + GF_NW_LOC
+  allocate(swork%x(nt_db,GF_NCOMP,nw),stat=ier)
   if (ier /= 0) then
-    call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate the interpolated field buffer')
+    call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate the contracted trace buffer')
     return
   endif
 
-  if (kind >= 1) then
-    allocate(swork%dpm(GF_NDP_MT,GF_NCOMP,nt),stat=ier)
-    if (ier /= 0) then
-      call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate the moment-tensor partials buffer')
-      return
-    endif
-  endif
-
   if (kind == 2) then
-    allocate(swork%deps(GF_VOIGT,GF_NCOMP,nt_db,NDIM),swork%dpl(3,GF_NCOMP,nt), &
-             swork%dp10(nt),stat=ier)
+    allocate(swork%dp10(nt),stat=ier)
     if (ier /= 0) then
-      call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate the strain gradient buffer')
+      call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate the centroid-time partial buffer')
       return
     endif
   endif
@@ -534,11 +562,7 @@
   type(t_gf_seis_work), intent(inout) :: swork
 
   if (allocated(swork%displ)) deallocate(swork%displ)
-  if (allocated(swork%g)) deallocate(swork%g)
-  if (allocated(swork%eps)) deallocate(swork%eps)
-  if (allocated(swork%deps)) deallocate(swork%deps)
-  if (allocated(swork%dpm)) deallocate(swork%dpm)
-  if (allocated(swork%dpl)) deallocate(swork%dpl)
+  if (allocated(swork%x)) deallocate(swork%x)
   if (allocated(swork%dp10)) deallocate(swork%dp10)
   call gf_stf_work_free(swork%stfw)
 
@@ -591,13 +615,15 @@
 ! (ncol = 6), kind 2 those and latitude, longitude, depth (ncol = 9). The
 ! centroid-time partial is not a weight: it is a shift of the trace.
 ! colscale is 1/scale_moment for the moment-tensor columns and 1 for the
-! position ones: gf_seis's factors, applied here as sta*colscale, which is
-! two roundings where gf_seis has one. It is kept apart from the
+! position ones, and gf_seis applies it the same way, as sta*colscale. It
+! is kept apart from the
 ! weights so that the moment-tensor column of a unit tensor and that
 ! tensor's seismogram weight are one routine's output on one input.
 !
-! Agrees with gf_seis to rounding: the summation order differs (see
-! gf_weights). A force source has kind 0 only.
+! These are the very vectors gf_seis contracts with (gf_seis_geometry
+! builds them for both); gf_seis's own contraction (gf_weights_contract)
+! sums in a fixed lane order that a caller's need not reproduce. A force
+! source has kind 0 only.
 
   use constants, only: NGLLX,NGLLY,NGLLZ
 
@@ -670,21 +696,11 @@
   call gf_seis_geometry(db,src,loc,kind,geom,ierr)
   if (ierr /= GF_OK) return
 
-  if (src%source_type == GF_SRC_FORCE) then
-    call gf_weights_force(geom%hxi,geom%heta,geom%hgam,geom%fhat,w)
-  else
-    call gf_weights_moment(geom%dw,geom%m_cart,w)
-  endif
-
-  if (kind >= 1) then
-    call gf_weights_mt(geom%dw,loc%theta,loc%phi,wcols(:,:,:,:,1:GF_NW_MT))
-    colscale(1:GF_NW_MT) = 1.d0/src%scale_moment
-  endif
-  if (kind == 2) then
-    call gf_weights_loc(geom%dw,geom%ddw,geom%m_cart,geom%dm_dtheta,geom%dm_dphi, &
-                        geom%dtheta_dlat,geom%dphi_dlon,loc%jinv,geom%dxds, &
-                        wcols(:,:,:,:,GF_NW_MT+1:GF_NW_MT+GF_NW_LOC))
-    colscale(GF_NW_MT+1:GF_NW_MT+GF_NW_LOC) = 1.d0
+  ! the weights gf_seis contracts with, as it builds them
+  w(:,:,:,:) = geom%w(:,:,:,:,1)
+  if (ncol > 0) then
+    wcols(:,:,:,:,1:ncol) = geom%w(:,:,:,:,2:1+ncol)
+    colscale(1:ncol) = geom%wscale(2:1+ncol)
   endif
 
   ierr = GF_OK
@@ -695,26 +711,27 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine gf_seis_station(db,src,loc,tax,stf,geom,kind,ista,displ,swork, &
+  subroutine gf_seis_station(db,src,tax,stf,geom,kind,ista,displ,swork, &
                              seis,ndp,dp,onset,ierr)
 
 ! one station's traces, from that station's element block `displ`
 !
-! Interpolate or differentiate, contract, convert, and -- when partials are
-! wanted -- the three partial families. The caller has the block, read or
-! cached, and has built `geom`; everything here depends on the station.
+! Contract the block with the extraction's weight vectors, scale, convert:
+! the seismogram, then -- when partials are wanted -- each partial column,
+! the centroid-time partial coming from the seismogram's own padded trace.
+! The caller has the block, read or cached, and has built `geom`, weights
+! included; everything here depends on the station.
 !
 ! `seis`, `dp` and `onset` are intent(inout): onset(ista) accumulates the
 ! worst component with max(), and the zeroing belongs to gf_seis, which owns
 ! the whole array.
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
 
   implicit none
 
   type(t_gfdb), intent(in) :: db
   type(t_gf_source), intent(in) :: src
-  type(t_gf_location), intent(in) :: loc
   type(t_gf_taxis), intent(in) :: tax
   type(t_gf_stf), intent(in) :: stf
   type(t_gf_seis_geom), intent(in) :: geom
@@ -728,27 +745,15 @@
   integer, intent(out) :: ierr
 
   ! local parameters
-  double precision :: scale_amp,ratio,wsum_raw
-  integer :: it,icomp,idisp,ip,b,nt_db,nt,nbefore
+  double precision :: scale_amp,sc,ratio,wsum_raw
+  integer :: it,icomp,iw,nt_db,nt,nbefore
 
   nt_db = db%nt_subsampled
   nt = tax%nt
 
-  !--- the field at the source -------------------------------------------
+  !--- the block against every weight vector, once ---------------------------
 
-  if (src%source_type == GF_SRC_FORCE) then
-    ! g(a,d,t): the interpolated field at the source, still carrying both
-    ! the station-force index a and the displacement index d
-    call gf_interp_trace(displ,geom%hxi,geom%heta,geom%hgam,nt_db,swork%g)
-  else
-    call gf_strain_trace(displ,geom%dw,nt_db,swork%eps)
-    if (kind == 2) then
-      ! d eps / d xi_b: the same kernel with the differentiated table
-      do b = 1,NDIM
-        call gf_strain_trace(displ,geom%ddw(:,:,:,:,b),nt_db,swork%deps(:,:,:,b))
-      enddo
-    endif
-  endif
+  call gf_weights_contract(displ,nt_db,geom%wr,geom%nw,swork%x)
 
   ! factor_force_source /= 0 for every station: gf_seis checks it before
   ! any station runs, so that no station's error is raised from inside its
@@ -759,20 +764,9 @@
 
   do icomp = 1,GF_NCOMP
 
-    if (src%source_type == GF_SRC_FORCE) then
-      do it = 1,nt_db
-        swork%stfw%trace(it) = 0.d0
-        do idisp = 1,GF_NCOMP
-          swork%stfw%trace(it) = swork%stfw%trace(it) + geom%fhat(idisp)*swork%g(icomp,idisp,it)
-        enddo
-        swork%stfw%trace(it) = scale_amp * swork%stfw%trace(it)
-      enddo
-    else
-      do it = 1,nt_db
-        call gf_moment_contract(geom%m_cart,swork%eps(:,icomp,it),swork%stfw%trace(it))
-        swork%stfw%trace(it) = scale_amp * swork%stfw%trace(it)
-      enddo
-    endif
+    do it = 1,nt_db
+      swork%stfw%trace(it) = scale_amp * swork%x(it,icomp,1)
+    enddo
 
     call gf_stf_onset(swork%stfw%trace,nt_db,swork%stfw%tdb,stf%hdur_db,ratio,nbefore)
     onset(ista) = max(onset(ista),ratio)
@@ -798,37 +792,23 @@
 
   enddo
 
-  !--- the moment-tensor partials, from the same strain -------------------
+  !--- the moment-tensor and position partials, column by column -----------
 
-  if (kind >= 1) then
-    call gf_partials_mt(swork%eps,nt_db,loc%theta,loc%phi,scale_amp/src%scale_moment, &
-                        tax,stf,swork%stfw,swork%dpm,ierr)
-    if (ierr /= GF_OK) return
-
-    do it = 1,nt
-      do icomp = 1,GF_NCOMP
-        do ip = 1,GF_NDP_MT
-          dp(ip,ista,icomp,it) = swork%dpm(ip,icomp,it)
-        enddo
+  ! weight iw is partial slot iw-1 (GF_DP_MRR .. GF_DP_DEP); each is
+  ! converted exactly as the seismogram is, with its own scale
+  do iw = 2,geom%nw
+    sc = scale_amp * geom%wscale(iw)
+    do icomp = 1,GF_NCOMP
+      do it = 1,nt_db
+        swork%stfw%trace(it) = sc * swork%x(it,icomp,iw)
+      enddo
+      call gf_stf_convert(stf,tax,swork%stfw,ierr)
+      if (ierr /= GF_OK) return
+      do it = 1,nt
+        dp(iw-1,ista,icomp,it) = swork%stfw%y(it)
       enddo
     enddo
-  endif
-
-  !--- the centroid-position partials --------------------------------------
-
-  if (kind == 2) then
-    call gf_partials_loc(swork%eps,swork%deps,nt_db,geom%m_cart,geom%dm_dtheta,geom%dm_dphi, &
-                         geom%dtheta_dlat,geom%dphi_dlon, &
-                         loc%jinv,geom%dxds,scale_amp,tax,stf,swork%stfw,swork%dpl,ierr)
-    if (ierr /= GF_OK) return
-    do it = 1,nt
-      do icomp = 1,GF_NCOMP
-        do ip = 1,3
-          dp(GF_DP_LAT+ip-1,ista,icomp,it) = swork%dpl(ip,icomp,it)
-        enddo
-      enddo
-    enddo
-  endif
+  enddo
 
   ierr = GF_OK
 
@@ -968,14 +948,14 @@
   if (gf_cache_enabled(db)) then
     call gf_element_block(db,loc%ielem,islot,ierr)
     if (ierr /= GF_OK) return
-    call gf_seis_stations_cached(db,src,loc,tax,stf,geom,kind,islot,seis,ndp,dp,onset,ierr)
+    call gf_seis_stations_cached(db,src,tax,stf,geom,kind,islot,seis,ndp,dp,onset,ierr)
     return
   endif
 
   ! the element is loaded from disk: one miss, however many stations
   if (associated(db%cache)) db%cache%misses = db%cache%misses + 1
 
-  call gf_seis_work_init(db,src,tax,stf,kind,swork,ier)
+  call gf_seis_work_init(db,tax,stf,kind,swork,ier)
   if (ier /= GF_OK) then
     ierr = ier
     goto 99
@@ -984,7 +964,7 @@
   do ista = 1,db%nstations
     call gf_read_element_displ(db,loc%ielem,ista,swork%displ,ierr)
     if (ierr /= GF_OK) goto 99
-    call gf_seis_station(db,src,loc,tax,stf,geom,kind,ista,swork%displ,swork, &
+    call gf_seis_station(db,src,tax,stf,geom,kind,ista,swork%displ,swork, &
                          seis,ndp,dp,onset,ierr)
     if (ierr /= GF_OK) goto 99
   enddo
@@ -1000,7 +980,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine gf_seis_stations_cached(db,src,loc,tax,stf,geom,kind,islot,seis,ndp,dp,onset,ierr)
+  subroutine gf_seis_stations_cached(db,src,tax,stf,geom,kind,islot,seis,ndp,dp,onset,ierr)
 
 ! gf_seis's stations, for a handle whose cache slot `islot` holds the element
 !
@@ -1028,7 +1008,6 @@
 
   type(t_gfdb), intent(in) :: db
   type(t_gf_source), intent(in) :: src
-  type(t_gf_location), intent(in) :: loc
   type(t_gf_taxis), intent(in) :: tax
   type(t_gf_stf), intent(in) :: stf
   type(t_gf_seis_geom), intent(in) :: geom
@@ -1045,7 +1024,7 @@
   ierr_sta(:) = GF_OK
 
   !$omp parallel default(shared)
-  call gf_seis_stations_team(db,src,loc,tax,stf,geom,kind,islot,seis,ndp,dp,onset,ierr_sta)
+  call gf_seis_stations_team(db,src,tax,stf,geom,kind,islot,seis,ndp,dp,onset,ierr_sta)
   !$omp end parallel
 
   ierr = GF_OK
@@ -1062,7 +1041,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine gf_seis_stations_team(db,src,loc,tax,stf,geom,kind,islot,seis,ndp,dp,onset,ierr_sta)
+  subroutine gf_seis_stations_team(db,src,tax,stf,geom,kind,islot,seis,ndp,dp,onset,ierr_sta)
 
 ! one thread's part of gf_seis_stations_cached: its own work buffers, which
 ! are local here and so private to the thread, and the stations the
@@ -1074,7 +1053,6 @@
 
   type(t_gfdb), intent(in) :: db
   type(t_gf_source), intent(in) :: src
-  type(t_gf_location), intent(in) :: loc
   type(t_gf_taxis), intent(in) :: tax
   type(t_gf_stf), intent(in) :: stf
   type(t_gf_seis_geom), intent(in) :: geom
@@ -1089,7 +1067,7 @@
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), pointer, contiguous :: displ_sta
   integer :: ista,ier_init
 
-  call gf_seis_work_init(db,src,tax,stf,kind,work,ier_init)
+  call gf_seis_work_init(db,tax,stf,kind,work,ier_init)
 
   ! every thread reaches the loop, also one whose buffers could not be
   ! allocated: a worksharing loop must be met by the whole team
@@ -1099,7 +1077,7 @@
       ierr_sta(ista) = ier_init
     else
       displ_sta => db%cache%slot(islot)%displ(:,:,:,:,:,:,ista)
-      call gf_seis_station(db,src,loc,tax,stf,geom,kind,ista,displ_sta,work, &
+      call gf_seis_station(db,src,tax,stf,geom,kind,ista,displ_sta,work, &
                            seis,ndp,dp,onset,ierr_sta(ista))
     endif
   enddo
@@ -1394,8 +1372,10 @@
         goto 99
       endif
 
-      ! In the seismogram's units, so the dumped trace differs from it only
-      ! by the source time function conversion.
+      ! In the seismogram's units, so the dumped trace differs from it by
+      ! the source time function conversion -- and by rounding: the
+      ! seismogram contracts the block with one weight vector (gf_weights),
+      ! this route forms the strain first.
       !
       ! Note this divides where gf_seis_station multiplies by a reciprocal
       ! it formed once: x/f and x*(1/f) differ in the last bit whenever 1/f

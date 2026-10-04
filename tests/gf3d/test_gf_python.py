@@ -227,10 +227,15 @@ def main(argv):
        and r.dp_units[8] == "m/km" and r.dp_units[9] == "m/s")
 
     # the identity of Stage 6, which no transposition of a four-dimensional
-    # index survives
+    # index survives: that is an O(1) error. The bound is rounding: the
+    # seismogram and each partial come from their own weight vector, and the
+    # generated fixture's traces are up to ~5e5 times smaller than what is
+    # summed into them -- a $GF3D_TEST_GFDB may be worse conditioned
+    # (test_gf_partials_db, section 5, asserts it against that size),
+    # so eps * 5e5 * a few is ~1e-10 of the peak.
     lin = (r.dp[:, :6] * np.asarray(cmt.tensor)[None, :, None, None]).sum(axis=1)
     ok_err("sum(M_v dp_v) reproduces the seismogram",
-           np.abs(lin - r.data).max() / np.abs(r.data).max())
+           np.abs(lin - r.data).max() / np.abs(r.data).max(), tol=1e-9)
 
     ok("trace() and partial() select the same data",
        np.array_equal(r.trace(ids[0], "Z"), r.data[0, 2])
