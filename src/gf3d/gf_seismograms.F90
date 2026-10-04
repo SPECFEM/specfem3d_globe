@@ -180,11 +180,14 @@
   ! direction for a force source, the strain weights and the rotated moment
   ! tensor for a moment tensor, and the second-derivative tables and the
   ! geographic Jacobian only when the centroid partials are wanted.
-  ! Fixed-size rather than allocatable. The weights (gf_weights) are built
-  ! from the rest, last: w(:,:,:,:,1) is the seismogram's, 2..7 the
+  ! Fixed-size, apart from the weights (gf_weights), which are built from
+  ! the rest, last: w(:,:,:,:,1) is the seismogram's, 2..7 the
   ! moment-tensor partials', 8..10 the position partials'; wscale is each
   ! one's factor beside the station's (1, 1/scale_moment, 1); wr is w laid
-  ! out for gf_weights_contract. wr is the big one, ~90 kB.
+  ! out for gf_weights_contract. w and wr are allocatable, sized to the nw
+  ! vectors used: fixed at GF_NW_MAX they made the type ~130 kB, past
+  ! gfortran's stack limit for a local, which then goes to static storage
+  ! with a -Wsurprising warning -- an error in a --enable-debug build.
   !-----------------------------------------------------------------
 
   type :: t_gf_seis_geom
@@ -211,9 +214,9 @@
 
     !--- the weights, every kind: nw = 1, 7 or 10 of them ---
     integer :: nw = 0
-    double precision, dimension(GF_NCOMP,NGLLX,NGLLY,NGLLZ,GF_NW_MAX) :: w = 0.d0
+    double precision, dimension(:,:,:,:,:), allocatable :: w     ! (3,NGLLX,NGLLY,NGLLZ,nw)
     double precision, dimension(GF_NW_MAX) :: wscale = 0.d0
-    double precision, dimension(GF_NCOMP*GF_NCOMP*NGLLX*NGLLY*NGLLZ,GF_NW_MAX) :: wr = 0.d0
+    double precision, dimension(:,:), allocatable :: wr          ! (3*3*NGLLX*NGLLY*NGLLZ,nw)
   end type t_gf_seis_geom
 
   !-----------------------------------------------------------------
@@ -397,7 +400,7 @@
   double precision, dimension(NGLLZ) :: hgam2,hpgam2,hppgam
   double precision, dimension(1) :: no_spline
   double precision :: elevation,delev_dlat,delev_dlon
-  integer :: nspl_use,iw
+  integer :: nspl_use,iw,nw,ier
 
   geom%want_loc = (kind == 2)
 
@@ -452,6 +455,16 @@
   endif
 
   !--- the weights: what the above does to a block, as vectors ---------------
+
+  nw = 1
+  if (kind >= 1 .and. src%source_type == GF_SRC_CMT) nw = 1 + GF_NW_MT
+  if (geom%want_loc .and. src%source_type == GF_SRC_CMT) nw = GF_NW_MAX
+  allocate(geom%w(GF_NCOMP,NGLLX,NGLLY,NGLLZ,nw), &
+           geom%wr(GF_NCOMP*GF_NCOMP*NGLLX*NGLLY*NGLLZ,nw),stat=ier)
+  if (ier /= 0) then
+    call gf_set_error(ierr,GF_ERR_ALLOC,'could not allocate the weight vectors')
+    return
+  endif
 
   if (src%source_type == GF_SRC_FORCE) then
     call gf_weights_force(geom%hxi,geom%heta,geom%hgam,geom%fhat,geom%w(:,:,:,:,1))
