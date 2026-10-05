@@ -36,9 +36,13 @@
 ## $O/exit_mpi.shared.o.
 ##
 ## Note $(LDFLAGS) is referenced directly rather than through $(MPILIBS).
-## The HDF5 libraries are appended to LDFLAGS (Makefile.in:528) and LDFLAGS
+## The HDF5 libraries are appended to LDFLAGS (Makefile.in:543) and LDFLAGS
 ## only reaches ordinary links via `MPILIBS += $(LDFLAGS) @LIBS@`
-## (Makefile.in:59), which also drags in @MPILIBS@.
+## (Makefile.in:74), which also drags in @MPILIBS@. -lhdf5 is named there
+## explicitly: gf_hdf5_read calls H5Dread_chunk from the C API, and a link
+## that names only the Fortran libraries fails with "DSO missing from command
+## line" under gfortran 13 and 14, ifort 2021.10 and 2021.13 and ifx 2024.2,
+## with HDF5 1.10.10 and 1.14.4 (GNU ld does not follow their DT_NEEDED).
 ##
 #######################################
 
@@ -64,6 +68,7 @@ gf3d_KERNEL_OBJECTS = \
 	$O/gf_stf.gf3d.o \
 	$O/gf_source.gf3d.o \
 	$O/gf_partials.gf3d.o \
+	$O/gf_weights.gf3d.o \
 	$O/gf_sac.gf3d.o \
 	$(EMPTY_MACRO)
 
@@ -282,6 +287,7 @@ gf3d_MODULES = \
 	$(FC_MODDIR)/gf_stf.$(FC_MODEXT) \
 	$(FC_MODDIR)/gf_source.$(FC_MODEXT) \
 	$(FC_MODDIR)/gf_partials.$(FC_MODEXT) \
+	$(FC_MODDIR)/gf_weights.$(FC_MODEXT) \
 	$(FC_MODDIR)/gf_sac.$(FC_MODEXT) \
 	$(FC_MODDIR)/gf_seismograms.$(FC_MODEXT) \
 	$(FC_MODDIR)/gf3d.$(FC_MODEXT) \
@@ -417,12 +423,13 @@ $O/gf_strain.gf3d.o: $O/gf_par.gf3d.o
 $O/gf_moment.gf3d.o: $O/gf_par.gf3d.o $O/gf_strain.gf3d.o
 $O/gf_stf.gf3d.o: $O/gf_par.gf3d.o
 $O/gf_source.gf3d.o: $O/gf_par.gf3d.o
-$O/gf_partials.gf3d.o: $O/gf_par.gf3d.o $O/gf_strain.gf3d.o $O/gf_moment.gf3d.o $O/gf_stf.gf3d.o
+$O/gf_partials.gf3d.o: $O/gf_par.gf3d.o $O/gf_stf.gf3d.o
+$O/gf_weights.gf3d.o: $O/gf_par.gf3d.o $O/gf_moment.gf3d.o
 $O/gf_sac.gf3d.o: $O/gf_par.gf3d.o $O/gf_partials.gf3d.o
 $O/gf_seismograms.gf3d.o: $O/gf_par.gf3d.o $O/gf_database.gf3d.o $O/gf_element_io.gf3d.o \
                           $O/gf_interp.gf3d.o $O/gf_source.gf3d.o $O/gf_strain.gf3d.o \
                           $O/gf_moment.gf3d.o $O/gf_stf.gf3d.o $O/gf_partials.gf3d.o \
-                          $O/gf_geo_chain.gf3d.o
+                          $O/gf_weights.gf3d.o $O/gf_geo_chain.gf3d.o
 $O/gf3d.gf3d.o: $O/gf_par.gf3d.o $O/gf_database.gf3d.o $O/gf_locate.gf3d.o \
                 $O/gf_source.gf3d.o $O/gf_seismograms.gf3d.o $O/gf_partials.gf3d.o \
                 $O/gf_sac.gf3d.o $O/gf_shared_params.gf3d.o

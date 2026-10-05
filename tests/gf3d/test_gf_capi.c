@@ -393,7 +393,13 @@ int main(int argc, char **argv)
      * The identity of Stage 6: the six moment-tensor partials are per
      * dyne-cm and linear, so contracting them with the CMTSOLUTION's own
      * components must give the seismogram back. It needs no reference file,
-     * and no transposition of the four-dimensional index can survive it.
+     * and no transposition of the four-dimensional index can survive it:
+     * that is an O(1) error. The bound is rounding: the seismogram and each
+     * partial come from their own weight vector, and the fixture's traces
+     * are up to ~5e5 times smaller than what is summed into them on the
+     * generated fixture -- a $GF3D_TEST_GFDB may be worse conditioned
+     * (test_gf_partials_db, section 5, asserts it against that size), so
+     * eps * 5e5 * a few is ~1e-10 of the peak.
      */
     for (i = 0; i < nsta; i++) {
       for (j = 0; j < GF_NCOMP; j++) {
@@ -407,7 +413,7 @@ int main(int argc, char **argv)
         }
       }
     }
-    ok_err("sum(M_v dp_v) reproduces the seismogram", worst / peak, 1.0e-12);
+    ok_err("sum(M_v dp_v) reproduces the seismogram", worst / peak, 1.0e-9);
   }
 
   ok_status("the wrong ndp refused",
@@ -498,6 +504,7 @@ int main(int argc, char **argv)
     gf3d_location la, lb;
     gf3d_source sa = src, sb = src;
     long long hits = -1, misses = -1, evictions = -1, files = -1, files0 = -1;
+    long long hits0 = -1, hits1 = -1;
     long long per_station;
     int n_cached = -1, found = 0, iw, ncmp = 0, same = 1;
     double *seis0 = NULL, *dp0 = NULL;
@@ -548,10 +555,10 @@ int main(int argc, char **argv)
       for (k = 0; k < 4; k++) {
         gf3d_source *s = (k % 2 == 0) ? &sa : &sb;
         int e0, e1;
-        if (k == 2) gf3d_cache_stats(hc, NULL, NULL, NULL, NULL, &files0);
+        if (k == 2) gf3d_cache_stats(hc, &hits0, NULL, NULL, NULL, &files0);
         e0 = gf3d_partials(h0, s, -1.0, 2, nt, ndp, seis0, dp0, t, onset, NULL);
         e1 = gf3d_partials(hc, s, -1.0, 2, nt, ndp, seis, dp, t, onset, NULL);
-        if (k == 2) gf3d_cache_stats(hc, NULL, NULL, NULL, NULL, &files);
+        if (k == 2) gf3d_cache_stats(hc, &hits1, NULL, NULL, NULL, &files);
         if (e0 != GF_OK || e1 != GF_OK) { same = 0; break; }
         ncmp++;
         if (memcmp(seis, seis0, (size_t)nsta * GF_NCOMP * nt * sizeof(double)) != 0 ||
@@ -559,7 +566,16 @@ int main(int argc, char **argv)
           same = 0;
       }
       ok("A B A B: seismograms and ten partials identical to the byte", same && ncmp == 4);
-      ok("returning to A read no element file", files - files0 == 0);
+      ok("returning to A was a hit", hits1 - hits0 == 1);
+      /* The handle also keeps the coordinates of the max(10, max_elements)
+       * elements its locates used last. When that is every element, as on
+       * the fixture, returning to A reads nothing; on a larger database the
+       * locates at A and B may have tried more candidates than it holds,
+       * and then only coordinate rereads, at most one locate's 10, may. */
+      if (info.nelem <= 10)
+        ok("returning to A read no element file", files - files0 == 0);
+      else
+        ok("returning to A read no displacement, only coordinates", files - files0 <= 10);
 
       ierr = gf3d_cache_stats(hc, &hits, &misses, &evictions, &n_cached, &files);
       ok_status("gf3d_cache_stats", ierr, GF_OK);

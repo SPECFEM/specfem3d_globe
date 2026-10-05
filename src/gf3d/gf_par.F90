@@ -86,6 +86,11 @@
   ! number of candidate elements tried, in centroid-distance order
   integer, parameter :: GF_NCAND = 10
 
+  ! the fewest elements a handle's coordinate store holds (see t_gf_cache):
+  ! one locate's candidates, so that a locate never evicts the coordinates
+  ! of a candidate it has just read and would read again on its next call
+  integer, parameter :: GF_NCOORD_MIN = GF_NCAND
+
   ! Tolerance of the 27-anchor consistency guard, non-dimensional.
   !
   ! With USE_GLL = .false. (setup/constants.h:USE_GLL) the mesher applies
@@ -173,11 +178,17 @@
   ! gf_read_element_displ returns it. The least recently used element is
   ! the one dropped. capacity = 0 keeps nothing and allocates no slot.
   !
-  ! With capacity > 0 the handle also keeps the coordinates of every
-  ! element the locate has read, 3 kB each and never dropped: the locate
-  ! tries candidates by nearest centroid, so revisiting a position means
-  ! re-reading its neighbours too, and a bounded store could lose those
-  ! while the element they led to is still cached. Worst case nelem * 3 kB.
+  ! Every handle also keeps the coordinates the locate reads, 3 kB per
+  ! element, in a store of xyz_capacity elements: max(GF_NCOORD_MIN,
+  ! max_elements), at most nelem, unless gf_open's coord_capacity says
+  ! otherwise. The least recently used entry is the one dropped. The
+  ! locate tries candidates by nearest centroid, so a position is found
+  ! again without reading anything as long as its candidates are still
+  ! held: one locate's GF_NCOORD_MIN always fit, and a handle that keeps
+  ! max_elements elements has as many entries. That is room for each kept
+  ! element's own coordinates, not always for every neighbour its locate
+  ! tried first. Its counters are not the element counters above: a
+  ! coordinate read counts only in files_read.
   !-----------------------------------------------------------------
 
   type :: t_gf_cache_slot
@@ -196,11 +207,16 @@
     type(t_gf_cache_slot), dimension(:), allocatable :: slot
 
     ! the coordinate store: xyz_pool(:,:,:,:,xyz_slot(ielem)) holds what
-    ! gf_read_element_coords returned for ielem; xyz_slot(ielem) = 0 when
-    ! it has not been read. nxyz entries of the pool are in use.
-    integer :: nxyz = 0
+    ! gf_read_element_coords returned for ielem, and xyz_slot(ielem) = 0
+    ! when it holds nothing for ielem. Entry k belongs to element
+    ! xyz_ielem(k) (0: free) and was last used at tick xyz_last(k), on the
+    ! same clock as the element slots. Allocated at open, whole; with
+    ! xyz_capacity = 0 there is no store and every locate reads.
+    integer :: xyz_capacity = 0
     integer, dimension(:), allocatable :: xyz_slot                        ! (nelem)
-    double precision, dimension(:,:,:,:,:), allocatable :: xyz_pool      ! (3,NGLLX,NGLLY,NGLLZ,*)
+    integer, dimension(:), allocatable :: xyz_ielem                       ! (xyz_capacity)
+    integer(kind=8), dimension(:), allocatable :: xyz_last                ! (xyz_capacity)
+    double precision, dimension(:,:,:,:,:), allocatable :: xyz_pool      ! (3,NGLLX,NGLLY,NGLLZ,xyz_capacity)
   end type t_gf_cache
 
   !-----------------------------------------------------------------
@@ -494,7 +510,11 @@
   character(len=*), intent(in) :: msg
 
   ierr_out = code
+  ! a station that fails inside gf_seis_stations_cached's threaded loop
+  ! reports from its own thread; one message is written at a time
+  !$omp critical (gf3d_errmsg)
   gf_errmsg = msg
+  !$omp end critical (gf3d_errmsg)
 
   end subroutine gf_set_error
 

@@ -21,6 +21,17 @@ are baked into the shared object as an rpath, so nothing needs
 `LD_LIBRARY_PATH` — except the compiler's own runtime, if the tree was
 built with a module-provided compiler.
 
+Two configure options make it faster, neither of them a default:
+
+- `--enable-openmp`: a handle that holds its element (`max_elements > 0`)
+  computes the stations over `OMP_NUM_THREADS` threads, every number the
+  same as on one. Set `OMP_NUM_THREADS` when several processes share a
+  node; with it unset, each takes every core.
+- `FCFLAGS="-march=x86-64-v3"` (or the machine's own ISA): about a quarter
+  faster again under gfortran. It applies to the whole build, and fused
+  multiply-adds move the last digits (~1e-13 of a trace). Intel builds
+  already get `-xHost` by default.
+
 ## Using it
 
 ```bash
@@ -82,13 +93,17 @@ source that wandered outside the database.
 **A sampler should open with `max_elements`.** An extraction reads its
 element's displacement for every station from disk, and on a large
 database that read is most of the cost: 185 stations × 3725 samples is
-3 GB and five seconds per call, of which the arithmetic is about one. A
+3 GB, about 2.2 s per call on one core (4.5 s with all ten partials), of
+which the read is 1.8 s. Held in memory, the same calls take 0.5 s and
+2.5 s, or 0.02 s and 0.11 s over 32 threads of a library built with
+OpenMP. A
 handle opened as `gf3d.Database(path, max_elements=N)` keeps the `N`
 elements it used most recently in memory and drops the least recently used
-one to make room; it also keeps the coordinates of every element it has
-located in, so it never opens an element file twice. Returning to a
-position already visited then reads nothing from disk, and the numbers are
-the same to the bit. Each element costs `db.info["bytes_per_element"]`;
+one to make room; a position inside a kept element reads no displacement.
+Every handle also keeps the coordinates its locates read, 3 kB per element,
+for the `max(10, N)` elements used most recently, so returning to a
+position still held reads nothing from disk. The numbers are the same to
+the bit either way. Each element costs `db.info["bytes_per_element"]`;
 `db.cache_stats` reports hits, misses, evictions, the elements held and the
 files read. The default, `0`, keeps nothing.
 

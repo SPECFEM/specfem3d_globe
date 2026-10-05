@@ -29,3 +29,6 @@ loc.log
 core
 core.*
 vgcore.*
+
+# the OpenMP build 9i.test_gf_openmp.sh configures; removed on success
+omp_build/

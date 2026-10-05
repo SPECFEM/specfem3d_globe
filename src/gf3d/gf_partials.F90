@@ -38,10 +38,13 @@
 !----   10      tim                        m per second (centroid time shift)
 !----
 !---- `kind` 1 returns the first six, 2 all ten; there is no half-duration
-!---- partial. Slots 1..6 and 10 are Stage 6's,
-!---- 7..9 Stage 8's (gf_partials_loc, with the strain gradient from
-!---- gf_strain, the rotation's derivative from gf_moment and the
-!---- geographic map's from gf_geo_chain).
+!---- partial. Slots 1..9 are weight vectors (gf_weights_mt, gf_weights_loc:
+!---- the strain gradient from gf_strain, the rotation's derivative from
+!---- gf_moment and the geographic map's from gf_geo_chain, folded into one
+!---- vector each), contracted with the element block and converted by
+!---- gf_seis exactly as the seismogram is. What stays here is the slot
+!---- table and the centroid-time partial, which is not a weight but a
+!---- shift of the converted trace.
 !----
 !---- The moment-tensor partials, and why they are exact
 !---- --------------------------------------------------
@@ -51,10 +54,10 @@
 !----
 !---- with M in Cartesian coordinates, i.e. M_cart = R(theta,phi) M_sph R^T.
 !---- The rotation is linear too, so the partial with respect to the v-th
-!---- *spherical* component is the same strain contracted with the rotated
-!---- unit tensor R e_v R^T, pushed through the same conversion. No finite
-!---- difference and no second element read: the strain trace is the one
-!---- the seismogram was made from. Per dyne-cm means the non-dimensional
+!---- *spherical* component is the same block contracted with the weights
+!---- of the rotated unit tensor R e_v R^T, pushed through the same
+!---- conversion. No finite difference and no second element read. Per
+!---- dyne-cm means the non-dimensional
 !---- scale get_cmt applied is divided out again (src%scale_moment), so that
 !----
 !----   SUM_v M_v(CMTSOLUTION, dyne-cm) * dp(v) == seismogram
@@ -88,15 +91,10 @@
 
   module gf_partials
 
-  use gf_par, only: t_gf_stf,t_gf_taxis,gf_set_error, &
-                    GF_OK,GF_ERR_ARG,GF_ERR_ALLOC,GF_NCOMP,GF_STF_HEAVI
+  use gf_par, only: t_gf_stf,gf_set_error, &
+                    GF_OK,GF_ERR_ARG,GF_ERR_ALLOC,GF_STF_HEAVI
 
-  use gf_strain, only: GF_VOIGT
-
-  use gf_moment, only: gf_rotate_moment_tensor,gf_moment_contract
-
-  use gf_stf, only: gf_stf_kernel_gauss_unit,gf_conv_sym, &
-                    t_gf_stf_work,gf_stf_convert
+  use gf_stf, only: gf_stf_kernel_gauss_unit,gf_conv_sym
 
   implicit none
 
@@ -120,9 +118,7 @@
        'm/deg    ','m/deg    ','m/km     ','m/s      ' /)
 
   public :: gf_partials_ndp
-  public :: gf_partials_mt
   public :: gf_partials_time
-  public :: gf_partials_loc
 
   contains
 
@@ -163,97 +159,12 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine gf_partials_mt(eps,nt_db,theta,phi,scale,tax,stf,work,dp,ierr)
-
-! the six moment-tensor partials from a strain trace
-!
-! `eps(6,3,nt_db)` is the Voigt strain of the reciprocal field at the
-! source on the database axis, as gf_strain_trace returns it; `theta,phi`
-! the source's geocentric colatitude and longitude, about which the
-! spherical unit tensors are rotated exactly as the moment tensor itself
-! is; `scale` the amplitude factor per dyne-cm, i.e. the seismogram's
-! 1/factor_force_source divided by the source's scale_moment; `tax` and
-! `stf` the planned axis and conversion the seismogram used, and `work` its
-! scratch, carrying the same Heaviside kernel. `dp(6,3,tax%nt)` comes back
-! on the output axis.
-!
-! `work` is the caller's, and its trace/xpad/p/y are overwritten here. That
-! is safe wherever the caller has already copied out what it needed, which
-! is the order gf_seis_cmt_partials uses.
-!
-! Everything after the contraction is the seismogram's own statement
-! sequence (gf_seismograms.F90, gf_seis_cmt), so a partial computed for a
-! unit tensor is bitwise the seismogram of that unit tensor.
-
-  implicit none
-
-  integer, intent(in) :: nt_db
-  double precision, dimension(GF_VOIGT,GF_NCOMP,nt_db), intent(in) :: eps
-  double precision, intent(in) :: theta,phi,scale
-  type(t_gf_taxis), intent(in) :: tax
-  type(t_gf_stf), intent(in) :: stf
-  type(t_gf_stf_work), intent(inout) :: work
-  double precision, dimension(GF_NDP_MT,GF_NCOMP,tax%nt), intent(out) :: dp
-  integer, intent(out) :: ierr
-
-  ! local parameters
-  double precision, dimension(6) :: e_sph
-  double precision, dimension(3,3) :: m_unit
-  integer :: v,icomp,it,nt
-
-  dp(:,:,:) = 0.d0
-
-  if (tax%nt_db /= nt_db .or. tax%nt < nt_db) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf_partials_mt: the time axis was not planned for this trace')
-    return
-  endif
-  if (stf%kind_stf /= GF_STF_HEAVI) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf_partials_mt: the plan is not a Heaviside conversion')
-    return
-  endif
-
-  nt = tax%nt
-
-  do v = 1,GF_NDP_MT
-
-    ! the v-th spherical unit tensor, rotated the way the moment tensor is
-    e_sph(:) = 0.d0
-    e_sph(v) = 1.d0
-    call gf_rotate_moment_tensor(theta,phi,e_sph,m_unit)
-
-    do icomp = 1,GF_NCOMP
-
-      do it = 1,nt_db
-        call gf_moment_contract(m_unit,eps(:,icomp,it),work%trace(it))
-        work%trace(it) = scale * work%trace(it)
-      enddo
-
-      ! extend, then convert: the seismogram's own three steps
-      call gf_stf_convert(stf,tax,work,ierr)
-      if (ierr /= GF_OK) return
-
-      do it = 1,nt
-        dp(v,icomp,it) = work%y(it)
-      enddo
-
-    enddo
-
-  enddo
-
-  ierr = GF_OK
-
-  end subroutine gf_partials_mt
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
   subroutine gf_partials_time(xpad,nt,dt_sub,stf,dp10,wsum_raw,ierr)
 
 ! the centroid-time partial, from the padded pre-conversion trace
 !
 ! `xpad(nt)` is the trace the Heaviside conversion was applied to -- the
-! contracted, scaled strain on the extended axis, i.e. gf_seis_cmt's `xpad`
+! contracted, scaled trace on the extended axis, i.e. gf_seis_station's `xpad`
 ! -- and `dp10(nt)` comes back as -(xpad * g_h) with the normalised sampled
 ! Gaussian of the plan's width and half length. `wsum_raw` is the sum of the
 ! sampled Gaussian before normalisation, the aliasing measure, for the
@@ -304,105 +215,5 @@
 
   end subroutine gf_partials_time
 
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine gf_partials_loc(eps,deps,nt_db,m_cart,dm_dtheta,dm_dphi,dtheta_dlat,dphi_dlon, &
-                             jinv,dxds,scale,tax,stf,work,dp,ierr)
-
-! the three centroid-position partials (Stage 8): lat, lon, depth
-!
-! With the seismogram u = STF[ scale SUM_pq M_pq eps_pq ] and the source
-! position s = (lat, lon, depth),
-!
-!   du/ds_a = STF[ scale ( SUM_pq (dM_pq/ds_a) eps_pq
-!                        + SUM_pq M_pq SUM_m (d eps_pq/dx_m) (dx_m/ds_a) ) ]
-!
-! `deps(6,3,nt_db,NDIM)` holds d eps/d xi_b -- gf_strain's kernel run with
-! the differentiated weight table -- so d eps/dx_m = SUM_b jinv(b,m)
-! d eps/d xi_b; `dxds(NDIM,3)` is d(x,y,z)/d(lat,lon,depth) from
-! gf_geo_chain, `dm_dtheta`/`dm_dphi` the rotation's derivative from
-! gf_moment, and dtheta/dlat, dphi/dlon the chain into them (the moment
-! tensor does not depend on depth). `scale` is the seismogram's own
-! 1/factor_force_source. Per sample the Cartesian gradient traces G_m and
-! the rotation traces R_a are formed first, then combined; the conversion
-! is applied once per partial, because it is linear.
-!
-! Units: m per degree, per degree, per km, i.e. the units of dxds.
-
-  use constants, only: NDIM
-
-  implicit none
-
-  integer, intent(in) :: nt_db
-  double precision, dimension(GF_VOIGT,GF_NCOMP,nt_db), intent(in) :: eps
-  double precision, dimension(GF_VOIGT,GF_NCOMP,nt_db,NDIM), intent(in) :: deps
-  double precision, dimension(NDIM,NDIM), intent(in) :: m_cart,dm_dtheta,dm_dphi,jinv
-  double precision, intent(in) :: dtheta_dlat,dphi_dlon
-  double precision, dimension(NDIM,3), intent(in) :: dxds
-  double precision, intent(in) :: scale
-  type(t_gf_taxis), intent(in) :: tax
-  type(t_gf_stf), intent(in) :: stf
-  type(t_gf_stf_work), intent(inout) :: work
-  double precision, dimension(3,GF_NCOMP,tax%nt), intent(out) :: dp
-  integer, intent(out) :: ierr
-
-  ! local parameters
-  double precision, dimension(NDIM) :: g,gx
-  double precision :: r_lat,r_lon
-  integer :: ia,icomp,it,b,m,nt
-
-  dp(:,:,:) = 0.d0
-
-  if (tax%nt_db /= nt_db .or. tax%nt < nt_db) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf_partials_loc: the time axis was not planned for this trace')
-    return
-  endif
-  if (stf%kind_stf /= GF_STF_HEAVI) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf_partials_loc: the plan is not a Heaviside conversion')
-    return
-  endif
-
-  nt = tax%nt
-
-  do ia = 1,3
-    do icomp = 1,GF_NCOMP
-
-      do it = 1,nt_db
-        ! the reference-coordinate gradient of the contracted strain,
-        ! g(b) = SUM_pq M_pq d eps_pq / d xi_b, then physical, gx(m)
-        do b = 1,NDIM
-          call gf_moment_contract(m_cart,deps(:,icomp,it,b),g(b))
-        enddo
-        do m = 1,NDIM
-          gx(m) = jinv(1,m)*g(1) + jinv(2,m)*g(2) + jinv(3,m)*g(3)
-        enddo
-
-        ! the position term, and the rotation term for lat and lon
-        work%trace(it) = gx(1)*dxds(1,ia) + gx(2)*dxds(2,ia) + gx(3)*dxds(3,ia)
-        if (ia == 1) then
-          call gf_moment_contract(dm_dtheta,eps(:,icomp,it),r_lat)
-          work%trace(it) = work%trace(it) + r_lat*dtheta_dlat
-        else if (ia == 2) then
-          call gf_moment_contract(dm_dphi,eps(:,icomp,it),r_lon)
-          work%trace(it) = work%trace(it) + r_lon*dphi_dlon
-        endif
-        work%trace(it) = scale * work%trace(it)
-      enddo
-
-      call gf_stf_convert(stf,tax,work,ierr)
-      if (ierr /= GF_OK) return
-
-      do it = 1,nt
-        dp(ia,icomp,it) = work%y(it)
-      enddo
-
-    enddo
-  enddo
-
-  ierr = GF_OK
-
-  end subroutine gf_partials_loc
 
   end module gf_partials

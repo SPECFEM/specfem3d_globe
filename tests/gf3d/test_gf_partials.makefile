@@ -22,6 +22,7 @@ OBJECTS = \
 	$O/gf_moment.gf3d.o \
 	$O/gf_stf.gf3d.o \
 	$O/gf_partials.gf3d.o \
+	$O/gf_weights.gf3d.o \
 	$O/gf_mpi_stubs.gf3d.o \
 	$O/shared_par.shared_module.o \
 	$O/gll_library.shared.o \

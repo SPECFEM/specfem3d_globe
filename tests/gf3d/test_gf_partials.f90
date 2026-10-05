@@ -29,13 +29,13 @@
 !---- test_gf_partials -- src/gf3d/gf_partials.F90 and the derivative kernel
 !---- in src/gf3d/gf_stf.F90
 !----
-!---- Tier 1: no database, no HDF5, no MPI. The strain traces are
-!---- manufactured, the plan and the axis are the shipped regional example's
-!---- (as in test_gf_stf), and the oracles are identities:
+!---- Tier 1: no database, no HDF5, no MPI. The fields and the strain
+!---- traces are manufactured, the plan and the axis are the shipped
+!---- regional example's (as in test_gf_stf), and the oracles are identities:
 !----
-!----   * linearity -- SUM_v M_v dp(v) reproduces the seismogram assembled
-!----     the production way, and each dp(v) *is* the seismogram of the v-th
-!----     unit tensor, to round-off, because it runs the same routines;
+!----   * linearity -- the six unit-tensor weights, weighted by the moment
+!----     tensor's components, sum to the moment tensor's weights, so that
+!----     SUM_v M_v dp(v) reproduces the seismogram before any trace exists;
 !----   * the derivative kernel sums to one for every width, with the sum
 !----     before normalisation equal to the Poisson-summation closed form
 !----     1 + 2 SUM_k exp(-(pi k h/dt)^2), which is what pins the claim that
@@ -57,12 +57,23 @@
 !---- last section runs the production pipeline itself, from a geographic
 !---- position through location, strain, contraction and conversion, at
 !---- perturbed positions on a manufactured element, and compares with
-!---- gf_partials_loc.
+!---- the position weights contracted with the field and converted.
+!----
+!---- Section 11: the weights (gf_weights). The block contracted with each
+!---- weight vector must give what the strain route gives -- the strain
+!---- traces of gf_strain_trace_d contracted by gf_moment_contract, with the
+!---- moment tensor, each rotated spherical unit tensor, and the per-sample
+!---- combination the position partials were once computed by (written out
+!---- here); for a force, the
+!---- interpolation of gf_interp_trace_d along the force direction -- to
+!---- rounding, the summation order being different. And the derivative
+!---- weights of a constant field are zero, so every moment-tensor weight
+!---- vector sums to zero over the element.
 !----
 
   program test_gf_partials
 
-  use constants, only: PI,NGLLX,NGLLY,NGLLZ,NGNOD,NDIM,GAUSSALPHA,GAUSSBETA
+  use constants, only: PI,NGLLX,NGLLY,NGLLZ,NGNOD,NDIM,GAUSSALPHA,GAUSSBETA,CUSTOM_REAL
 
   use gf_par, only: t_gf_stf,t_gf_taxis,GF_OK,GF_NCOMP, &
                     GF_SRC_CMT,GF_SRC_FORCE,GF_STF_TRUNC,GF_STF_HEAVI,GF_STF_GAUSS
@@ -73,7 +84,10 @@
 
   use gf_geo_chain, only: gf_spline_derivative,gf_geographic_jacobian
 
-  use gf_interp, only: gf_interp_weights_deriv,gf_interp_weights_deriv2
+  use gf_interp, only: gf_interp_weights_deriv,gf_interp_weights_deriv2,gf_interp_trace_d
+
+  use gf_weights, only: gf_weights_moment,gf_weights_force,gf_weights_mt,gf_weights_loc, &
+                        gf_weights_replicate,gf_weights_contract,GF_NW_MT,GF_NW_LOC,GF_NW_MAX
 
   use gf_strain, only: GF_VOIGT,GF_XX,GF_YY,GF_ZZ,GF_XY,GF_XZ,GF_YZ, &
                        gf_strain_dweights,gf_strain_ddweights,gf_strain_snapshot,gf_strain_trace_d
@@ -82,7 +96,7 @@
 
   use gf_stf, only: gf_stf_plan,gf_taxis_plan,gf_stf_kernel,gf_stf_kernel_gauss, &
                     gf_stf_kernel_gauss_unit,gf_stf_khalf,gf_pad_left,gf_cumsum,gf_stf_apply, &
-                    t_gf_stf_work,gf_stf_work_init,gf_stf_work_free
+                    t_gf_stf_work,gf_stf_work_init,gf_stf_work_free,gf_stf_convert
 
   use gf_partials
 
@@ -123,8 +137,8 @@
   type(t_gf_taxis) :: ct_tax
   double precision, dimension(:), allocatable :: ct_w
   ! ct_w stays: the finite-difference pipeline below is the independent
-  ! reference and keeps its own arrays. ct_work is only what gf_partials_loc
-  ! now takes.
+  ! reference and keeps its own arrays. ct_work converts the analytic
+  ! partials, as gf_seis converts every trace.
   type(t_gf_stf_work) :: ct_work
   integer :: ct_nt
 
@@ -145,6 +159,7 @@
   call test_spline_deriv(nfail)
   call test_geo_jacobian(nfail)
   call test_full_chain(nfail)
+  call test_weights(nfail)
 
   write(*,'(a)') ''
   if (nfail > 0) then
@@ -287,28 +302,30 @@
 
   subroutine test_mt_linearity(nfail)
 
-! the six moment-tensor partials against the seismogram assembled the
-! production way, on manufactured strain traces
+! the moment-tensor weights are linear in the tensor: the six spherical
+! unit-tensor weights, weighted by the CMTSOLUTION's components, sum to the
+! weights of the tensor itself. With the conversion linear too, that is
+! SUM_v M_v dp(v) == seismogram before any trace exists; gf_seis's slot
+! order and scale are pinned on a database (test_gf_partials_db, section
+! 5). The plan and axis checks are this section's as well.
 
   implicit none
   integer, intent(inout) :: nfail
 
-  double precision, dimension(:,:,:), allocatable :: eps,dp
-  double precision, dimension(:,:), allocatable :: seis,recon
-  double precision, dimension(:), allocatable :: trace,xpad,p,y,w
-  double precision, dimension(6) :: m_sph,e_sph
-  double precision, dimension(3,3) :: m_cart
-  type(t_gf_stf) :: stf,stf_g
+  double precision, dimension(GF_NCOMP,NGLLX,NGLLY,NGLLZ,GF_NW_MT) :: wmt
+  double precision, dimension(GF_NCOMP,NGLLX,NGLLY,NGLLZ) :: wm,recon
+  double precision, dimension(NGLLX,NGLLY,NGLLZ,NDIM) :: dw
+  double precision, dimension(NGLLX) :: hxi,hpxi
+  double precision, dimension(NGLLY) :: heta,hpeta
+  double precision, dimension(NGLLZ) :: hgam,hpgam
+  double precision, dimension(NDIM,NDIM) :: m_cart,jinv
+  double precision, dimension(6) :: m_sph
+  type(t_gf_stf) :: stf
   type(t_gf_taxis) :: tax
-  ! the scratch gf_partials_mt now takes. The hand-rolled pipeline below
-  ! keeps its own trace/xpad/p/y/w on purpose: it is the independent
-  ! reference the partials are checked against, and routing it through the
-  ! same helper would have it check that helper against itself.
-  type(t_gf_stf_work) :: work
-  double precision :: theta,phi,scale_amp,scale_moment,scale_mt,t,worst,ref
-  integer :: v,icomp,it,ierr,nt
+  double precision :: theta,phi,worst
+  integer :: v,i,j,ierr
 
-  write(*,'(a)') '3. moment-tensor partials: linearity'
+  write(*,'(a)') '3. moment-tensor weights: linearity'
 
   ! the regional CMT plan and axis
   call gf_stf_plan(GF_SRC_CMT,0,HCMT,HDB,DTR,GF_STF_TRUNC,stf,ierr)
@@ -317,115 +334,41 @@
   call gf_taxis_plan(NTDB,0.1d0,SS,T0DB,90.d0,tax,ierr)
   call gf_report_true('regional CMT axis: npad = 18, nt = 562', &
                       ierr == GF_OK .and. tax%npad == 18 .and. tax%nt == 562,nfail)
-  nt = tax%nt
 
-  allocate(eps(GF_VOIGT,GF_NCOMP,NTDB),dp(GF_NDP_MT,GF_NCOMP,nt), &
-           seis(GF_NCOMP,nt),recon(GF_NCOMP,nt), &
-           trace(NTDB),xpad(nt),p(0:nt),y(nt),w(-stf%khalf:stf%khalf))
-
-  ! a smooth, distinct trace per Voigt slot and component: a wave packet
-  ! whose period and centre depend on the slot, so that no two partials
-  ! are proportional and a slot mix-up cannot cancel
+  ! real derivative weights at an off-centre point, a sheared inverse
+  ! Jacobian, a moment tensor with none of its components round
   call gf_lcg_seed(606)
-  do it = 1,NTDB
-    t = (dble(it*SS) - 1.d0)*0.1d0 - T0DB
-    do icomp = 1,GF_NCOMP
-      do v = 1,GF_VOIGT
-        eps(v,icomp,it) = exp(-((t - 600.d0 - 40.d0*v)/150.d0)**2) &
-                          * cos(2.d0*PI*t/(45.d0 + 7.d0*v + 3.d0*icomp)) &
-                          * (1.d0 + 0.1d0*gf_rand_range(-1.d0,1.d0))
-      enddo
+  call gf_interp_weights_deriv(0.31d0,-0.47d0,0.12d0,hxi,hpxi,heta,hpeta,hgam,hpgam)
+  do j = 1,NDIM
+    do i = 1,NDIM
+      jinv(i,j) = gf_rand_range(-0.3d0,0.3d0)
     enddo
+    jinv(j,j) = jinv(j,j) + 1.d0
   enddo
-
-  ! a moment tensor in "non-dimensional" units, its scale, and the station
-  ! amplitude factor: numbers of the shipped example's order, none of them
-  ! round
+  call gf_strain_dweights(hxi,hpxi,heta,hpeta,hgam,hpgam,jinv,dw)
   do v = 1,6
     m_sph(v) = gf_rand_range(-1.d0,1.d0)
   enddo
-  scale_moment = 2.6299730036637251d28 / 0.73d0
-  scale_amp = 1.d0 / 1.0537d15
-  scale_mt = scale_amp / scale_moment
   theta = 1.672d0
   phi = 4.971d0
 
-  call gf_stf_kernel(stf,tax%dt_sub,w)
-
-  call gf_stf_work_init(stf,tax,work,ierr)
-  call gf_report_true('gf_stf_work_init returns GF_OK',ierr == GF_OK,nfail)
-
-  ! the seismogram, the production way (gf_seis_cmt's statements)
   call gf_rotate_moment_tensor(theta,phi,m_sph,m_cart)
-  do icomp = 1,GF_NCOMP
-    do it = 1,NTDB
-      call gf_moment_contract(m_cart,eps(:,icomp,it),trace(it))
-      trace(it) = scale_amp * trace(it)
-    enddo
-    call gf_pad_left(trace,NTDB,tax%npad,xpad)
-    call gf_cumsum(xpad,nt,p)
-    call gf_stf_apply(stf,tax%dt_sub,w,p,xpad,nt,y)
-    seis(icomp,:) = y(:)
-  enddo
+  call gf_weights_moment(dw,m_cart,wm)
+  call gf_weights_mt(dw,theta,phi,wmt)
 
-  ! the partials
-  call gf_partials_mt(eps,NTDB,theta,phi,scale_mt,tax,stf,work,dp,ierr)
-  call gf_report_true('gf_partials_mt returns GF_OK',ierr == GF_OK,nfail)
-
-  ! linearity: the CMTSOLUTION's own numbers times the partials
-  recon(:,:) = 0.d0
-  do it = 1,nt
-    do icomp = 1,GF_NCOMP
-      do v = 1,6
-        recon(icomp,it) = recon(icomp,it) + (m_sph(v)*scale_moment)*dp(v,icomp,it)
-      enddo
-    enddo
-  enddo
-  ref = maxval(abs(seis))
-  worst = maxval(abs(recon - seis))/ref
-  call gf_report('SUM_v M_v dp(v) == seismogram (rel)  ',worst,1.d-12,nfail)
-
-  ! Each partial is the seismogram of its unit tensor. The chain re-run here
-  ! is the library's own, so what this pins is not the physics but the slot
-  ! order of dp and the single scale factor applied between contraction and
-  ! integration: a permuted slot or a scale applied twice fails, a wrong
-  ! Green function does not. The statement is written in both compilation
-  ! units, so the bound is derived rather than equality.
-  worst = 0.d0
-  ref = maxval(abs(dp))
+  recon(:,:,:,:) = 0.d0
   do v = 1,6
-    e_sph(:) = 0.d0
-    e_sph(v) = 1.d0
-    call gf_rotate_moment_tensor(theta,phi,e_sph,m_cart)
-    do icomp = 1,GF_NCOMP
-      do it = 1,NTDB
-        call gf_moment_contract(m_cart,eps(:,icomp,it),trace(it))
-        trace(it) = scale_mt * trace(it)
-      enddo
-      call gf_pad_left(trace,NTDB,tax%npad,xpad)
-      call gf_cumsum(xpad,nt,p)
-      call gf_stf_apply(stf,tax%dt_sub,w,p,xpad,nt,y)
-      do it = 1,nt
-        worst = max(worst,abs(y(it) - dp(v,icomp,it))/ref)
-      enddo
-    enddo
+    recon(:,:,:,:) = recon(:,:,:,:) + m_sph(v)*wmt(:,:,:,:,v)
   enddo
-  call gf_report('dp(v) has the unit-tensor slot order and scale',worst,1.d-14,nfail)
+  worst = maxval(abs(recon - wm))/maxval(abs(wm))
+  call gf_report('SUM_v M_v W(e_v) == W(M) (rel)       ',worst,1.d-14,nfail)
 
-  ! the partials are not degenerate: no two proportional, none zero
+  ! the columns are not degenerate: none zero, none negligible
   worst = 1.d0
   do v = 1,6
-    worst = min(worst,maxval(abs(dp(v,:,:)))/maxval(abs(dp)))
+    worst = min(worst,maxval(abs(wmt(:,:,:,:,v)))/maxval(abs(wmt)))
   enddo
-  call gf_report_true('every partial carries signal (min/max > 1e-3)',worst > 1.d-3,nfail)
-
-  ! a Gaussian plan (a force source) is refused
-  call gf_stf_plan(GF_SRC_FORCE,0,45.d0,HDB,DTR,GF_STF_TRUNC,stf_g,ierr)
-  call gf_partials_mt(eps,NTDB,theta,phi,scale_mt,tax,stf_g,work,dp,ierr)
-  call gf_report_true('a Gaussian plan is refused          ',ierr /= GF_OK,nfail)
-
-  call gf_stf_work_free(work)
-  deallocate(eps,dp,seis,recon,trace,xpad,p,y,w)
+  call gf_report_true('every column carries weight (min/max > 1e-3)',worst > 1.d-3,nfail)
 
   end subroutine test_mt_linearity
 
@@ -1256,7 +1199,8 @@
 ! the whole chain: the production pipeline -- geographic map, Newton
 ! location in a manufactured element, weights, strain, contraction with
 ! the rotated moment tensor, conversion -- run at perturbed positions and
-! Richardson-differenced, against gf_partials_loc at the base position
+! Richardson-differenced, against the position weights (gf_weights_loc)
+! contracted with the field and converted, at the base position
 
   implicit none
   integer, intent(inout) :: nfail
@@ -1267,9 +1211,10 @@
   double precision, dimension(NGLLZ) :: hgam,hpgam,hppgam
   double precision, dimension(NGLLX,NGLLY,NGLLZ,NDIM) :: dw
   double precision, dimension(NGLLX,NGLLY,NGLLZ,NDIM,NDIM) :: ddw
-  double precision, dimension(:,:,:), allocatable :: eps,dp,d1,dr
+  double precision, dimension(:,:,:), allocatable :: dp,d1,dr
   double precision, dimension(:,:), allocatable :: seis_p,seis_m,seis_p2,seis_m2
-  double precision, dimension(:,:,:,:), allocatable :: deps
+  double precision, dimension(GF_NCOMP,NGLLX,NGLLY,NGLLZ,3) :: wloc
+  double precision, dimension(GF_NCOMP,NTC) :: xloc_ia
   double precision, dimension(NDIM,NDIM,NDIM) :: cmat,djinv
   double precision, dimension(NDIM,NDIM) :: amat,jinv,m_cart,dm_dtheta,dm_dphi,hp
   double precision, dimension(NDIM,3) :: dxds
@@ -1278,10 +1223,10 @@
   double precision, dimension(3) :: sp,sm,hs
   double precision :: theta0,phi0,r_surface,scale,val,jacobian,t,q,worst,ref
   double precision :: dtheta_dlat,dphi_dlon,ell_at,dell_at
-  integer :: a,p,i,j,k,it,ia,ierr,b
+  integer :: a,p,i,j,k,it,ia,ierr,nbad
   character(len=8), dimension(3), parameter :: pname = (/ 'lat     ','lon     ','depth   ' /)
 
-  write(*,'(a)') '10. the whole chain: gf_partials_loc vs Richardson FD of the pipeline'
+  write(*,'(a)') '10. the whole chain: position weights vs Richardson FD of the pipeline'
 
   call anchor_reference_coords(xiref)
   call gll_points(ct_xigll,ct_yigll,ct_zigll)
@@ -1338,7 +1283,7 @@
   call gf_stf_plan(GF_SRC_CMT,0,HCMT,HDB,DTR,GF_STF_TRUNC,ct_stf,ierr)
   call gf_taxis_plan(NTC,0.1d0,SS,T0DB,90.d0,ct_tax,ierr)
   ct_nt = ct_tax%nt
-  allocate(ct_w(-ct_stf%khalf:ct_stf%khalf),eps(GF_VOIGT,GF_NCOMP,NTC),deps(GF_VOIGT,GF_NCOMP,NTC,NDIM), &
+  allocate(ct_w(-ct_stf%khalf:ct_stf%khalf), &
            seis_p(GF_NCOMP,ct_nt),seis_m(GF_NCOMP,ct_nt),seis_p2(GF_NCOMP,ct_nt),seis_m2(GF_NCOMP,ct_nt), &
            dp(3,GF_NCOMP,ct_nt),d1(3,GF_NCOMP,ct_nt),dr(3,GF_NCOMP,ct_nt))
   call gf_stf_kernel(ct_stf,ct_tax%dt_sub,ct_w)
@@ -1353,17 +1298,24 @@
   call gf_interp_weights_deriv2(xi0(1),xi0(2),xi0(3),hxi,hpxi,hppxi,heta,hpeta,hppeta,hgam,hpgam,hppgam)
   call gf_strain_dweights(hxi,hpxi,heta,hpeta,hgam,hpgam,jinv,dw)
   call gf_strain_ddweights(hxi,hpxi,hppxi,heta,hpeta,hppeta,hgam,hpgam,hppgam,jinv,djinv,ddw)
-  call gf_strain_trace_d(ct_u,dw,NTC,eps)
-  do b = 1,NDIM
-    call gf_strain_trace_d(ct_u,ddw(:,:,:,:,b),NTC,deps(:,:,:,b))
-  enddo
   call gf_rotate_moment_tensor(theta0,phi0,ct_msph,m_cart)
   call gf_rotate_moment_tensor_deriv(theta0,phi0,ct_msph,dm_dtheta,dm_dphi)
   call gf_geographic_jacobian(ct_s0(1),ct_s0(2),ct_s0(3),.true.,ct_elev0,ct_glat,ct_glon, &
                               NSPL,ct_rspl,ct_ell,ct_ell2,R_EARTH,dxds,dtheta_dlat,dphi_dlon,ierr)
-  call gf_partials_loc(eps,deps,NTC,m_cart,dm_dtheta,dm_dphi,dtheta_dlat,dphi_dlon,jinv,dxds, &
-                       1.d0,ct_tax,ct_stf,ct_work,dp,ierr)
-  call gf_report_true('gf_partials_loc returns GF_OK              ',ierr == GF_OK,nfail)
+  ! the analytic partials: the position weights, contracted with the field
+  ! and converted as gf_seis converts every trace
+  call gf_weights_loc(dw,ddw,m_cart,dm_dtheta,dm_dphi,dtheta_dlat,dphi_dlon,jinv,dxds,wloc)
+  nbad = 0
+  do ia = 1,3
+    call weights_contract(NTC,ct_u,wloc(:,:,:,:,ia),xloc_ia)
+    do a = 1,GF_NCOMP
+      ct_work%trace(1:NTC) = xloc_ia(a,:)
+      call gf_stf_convert(ct_stf,ct_tax,ct_work,ierr)
+      if (ierr /= GF_OK) nbad = nbad + 1
+      dp(ia,a,:) = ct_work%y(1:ct_nt)
+    enddo
+  enddo
+  call gf_report_true('the position weights convert, every trace ',nbad == 0,nfail)
 
   !--- the finite difference of the production pipeline ----------------------
 
@@ -1388,9 +1340,277 @@
   enddo
 
   call gf_stf_work_free(ct_work)
-  deallocate(ct_w,eps,deps,seis_p,seis_m,seis_p2,seis_m2,dp,d1,dr)
+  deallocate(ct_w,seis_p,seis_m,seis_p2,seis_m2,dp,d1,dr)
 
   end subroutine test_full_chain
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine test_weights(nfail)
+
+! 11. the weights against the strain route, on a random block
+!
+! Real interpolation and derivative tables at a random reference point, a
+! random inverse Jacobian and its derivative, a random moment tensor and
+! geographic chain: the identities hold for any of them. Errors are relative
+! to each column's peak over components and samples.
+
+  implicit none
+  integer, intent(inout) :: nfail
+
+  integer, parameter :: NTW = 12
+  double precision, parameter :: TOL = 1.d-13, TOL_SUM = 1.d-14
+
+  double precision, dimension(GF_NCOMP,GF_NCOMP,NGLLX,NGLLY,NGLLZ,NTW) :: u
+  double precision, dimension(GF_VOIGT,GF_NCOMP,NTW) :: eps
+  double precision, dimension(GF_VOIGT,GF_NCOMP,NTW,NDIM) :: deps
+  double precision, dimension(GF_NCOMP,GF_NCOMP,NTW) :: g
+  double precision, dimension(NGLLX,NGLLY,NGLLZ,NDIM) :: dw
+  double precision, dimension(NGLLX,NGLLY,NGLLZ,NDIM,NDIM) :: ddw
+  double precision, dimension(GF_NCOMP,NGLLX,NGLLY,NGLLZ) :: wm,wf,wa
+  double precision, dimension(GF_NCOMP,NGLLX,NGLLY,NGLLZ,GF_NW_MT) :: wmt
+  double precision, dimension(GF_NCOMP,NGLLX,NGLLY,NGLLZ,GF_NW_LOC) :: wloc
+  double precision, dimension(GF_NCOMP,NGLLX,NGLLY,NGLLZ,GF_NW_MAX) :: wall
+  double precision, dimension(GF_NCOMP*GF_NCOMP*NGLLX*NGLLY*NGLLZ,GF_NW_MAX) :: wr
+  real(kind=CUSTOM_REAL), dimension(GF_NCOMP,GF_NCOMP,NGLLX,NGLLY,NGLLZ,NTW) :: ur
+  double precision, dimension(GF_NCOMP,GF_NCOMP,NGLLX,NGLLY,NGLLZ,NTW) :: ud
+  double precision, dimension(NTW,GF_NCOMP,GF_NW_MAX) :: xk
+  double precision, dimension(NGLLX) :: hxi,hpxi,hxi2,hpxi2,hppxi
+  double precision, dimension(NGLLY) :: heta,hpeta,heta2,hpeta2,hppeta
+  double precision, dimension(NGLLZ) :: hgam,hpgam,hgam2,hpgam2,hppgam
+  double precision, dimension(NDIM,NDIM,NDIM) :: djinv
+  double precision, dimension(NDIM,NDIM) :: jinv,m_cart,dm_dtheta,dm_dphi,m_unit,m_asym
+  double precision, dimension(NDIM,3) :: dxds
+  double precision, dimension(NDIM) :: xi,fhat,gb,gx
+  double precision, dimension(6) :: msph,e_sph
+  ! ref/got(a,t) for one column at a time
+  double precision, dimension(GF_NCOMP,NTW) :: ref,got
+  double precision :: theta,phi,dtheta_dlat,dphi_dlon,rot,worst_sum
+  integer :: a,t,b,mm,v,ia,p,i,j,k
+  character(len=4), dimension(GF_NW_LOC), parameter :: lname = (/ 'lat ','lon ','dep ' /)
+
+  write(*,'(a)') '11. the weights against the strain route'
+
+  call gf_lcg_seed(5151)
+
+  do i = 1,NDIM
+    xi(i) = gf_rand_range(-0.9d0,0.9d0)
+  enddo
+  do j = 1,NDIM
+    do i = 1,NDIM
+      jinv(i,j) = gf_rand_range(-0.3d0,0.3d0)
+      do k = 1,NDIM
+        djinv(i,j,k) = gf_rand_range(-0.2d0,0.2d0)
+      enddo
+      dxds(i,j) = gf_rand_range(-1.d0,1.d0)
+    enddo
+    jinv(j,j) = jinv(j,j) + 1.d0
+  enddo
+  do i = 1,6
+    msph(i) = gf_rand_range(-1.d0,1.d0)
+  enddo
+  theta = gf_rand_range(0.3d0,2.8d0)
+  phi = gf_rand_range(-3.d0,3.d0)
+  dtheta_dlat = gf_rand_range(-1.d0,1.d0)
+  dphi_dlon = gf_rand_range(-1.d0,1.d0)
+  do i = 1,NDIM
+    fhat(i) = gf_rand_range(-1.d0,1.d0)
+  enddo
+  do t = 1,NTW
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          do p = 1,GF_NCOMP
+            do a = 1,GF_NCOMP
+              u(a,p,i,j,k,t) = gf_rand_range(-1.d0,1.d0)
+            enddo
+          enddo
+        enddo
+      enddo
+    enddo
+  enddo
+
+  ! the tables, as gf_seis_geometry builds them
+  call gf_interp_weights_deriv(xi(1),xi(2),xi(3),hxi,hpxi,heta,hpeta,hgam,hpgam)
+  call gf_strain_dweights(hxi,hpxi,heta,hpeta,hgam,hpgam,jinv,dw)
+  call gf_interp_weights_deriv2(xi(1),xi(2),xi(3),hxi2,hpxi2,hppxi,heta2,hpeta2,hppeta, &
+                                hgam2,hpgam2,hppgam)
+  call gf_strain_ddweights(hxi2,hpxi2,hppxi,heta2,hpeta2,hppeta,hgam2,hpgam2,hppgam,jinv,djinv,ddw)
+  call gf_rotate_moment_tensor(theta,phi,msph,m_cart)
+  call gf_rotate_moment_tensor_deriv(theta,phi,msph,dm_dtheta,dm_dphi)
+
+  ! the strain route
+  call gf_strain_trace_d(u,dw,NTW,eps)
+  do b = 1,NDIM
+    call gf_strain_trace_d(u,ddw(:,:,:,:,b),NTW,deps(:,:,:,b))
+  enddo
+  call gf_interp_trace_d(u,hxi,heta,hgam,NTW,g)
+
+  ! the weights
+  call gf_weights_moment(dw,m_cart,wm)
+  call gf_weights_mt(dw,theta,phi,wmt)
+  call gf_weights_loc(dw,ddw,m_cart,dm_dtheta,dm_dphi,dtheta_dlat,dphi_dlon,jinv,dxds,wloc)
+  call gf_weights_force(hxi,heta,hgam,fhat,wf)
+
+  !--- the seismogram ---
+  do t = 1,NTW
+    do a = 1,GF_NCOMP
+      call gf_moment_contract(m_cart,eps(:,a,t),ref(a,t))
+    enddo
+  enddo
+  call weights_contract(NTW,u,wm,got)
+  call gf_report('moment tensor: block . W vs M : eps         ',maxval(abs(got - ref))/maxval(abs(ref)),TOL,nfail)
+
+  !--- an asymmetric tensor is read as gf_moment_contract reads it: its
+  !--- upper triangle. dM/dtheta and dM/dphi are symmetric only to rounding.
+  do j = 1,NDIM
+    do i = 1,NDIM
+      m_asym(i,j) = gf_rand_range(-1.d0,1.d0)
+    enddo
+  enddo
+  do t = 1,NTW
+    do a = 1,GF_NCOMP
+      call gf_moment_contract(m_asym,eps(:,a,t),ref(a,t))
+    enddo
+  enddo
+  call gf_weights_moment(dw,m_asym,wa)
+  call weights_contract(NTW,u,wa,got)
+  call gf_report('asymmetric M: read by its upper triangle    ', &
+                 maxval(abs(got - ref))/maxval(abs(ref)),TOL,nfail)
+
+  !--- the six moment-tensor columns ---
+  do v = 1,GF_NW_MT
+    e_sph(:) = 0.d0
+    e_sph(v) = 1.d0
+    call gf_rotate_moment_tensor(theta,phi,e_sph,m_unit)
+    do t = 1,NTW
+      do a = 1,GF_NCOMP
+        call gf_moment_contract(m_unit,eps(:,a,t),ref(a,t))
+      enddo
+    enddo
+    call weights_contract(NTW,u,wmt(:,:,:,:,v),got)
+    call gf_report('MT column '//char(ichar('0')+v)//': block . W vs unit tensor : eps ', &
+                   maxval(abs(got - ref))/maxval(abs(ref)),TOL,nfail)
+  enddo
+
+  !--- the three position columns: the per-sample sum the extraction once ran ---
+  do ia = 1,GF_NW_LOC
+    do t = 1,NTW
+      do a = 1,GF_NCOMP
+        do b = 1,NDIM
+          call gf_moment_contract(m_cart,deps(:,a,t,b),gb(b))
+        enddo
+        do mm = 1,NDIM
+          gx(mm) = jinv(1,mm)*gb(1) + jinv(2,mm)*gb(2) + jinv(3,mm)*gb(3)
+        enddo
+        ref(a,t) = gx(1)*dxds(1,ia) + gx(2)*dxds(2,ia) + gx(3)*dxds(3,ia)
+        if (ia == 1) then
+          call gf_moment_contract(dm_dtheta,eps(:,a,t),rot)
+          ref(a,t) = ref(a,t) + rot*dtheta_dlat
+        else if (ia == 2) then
+          call gf_moment_contract(dm_dphi,eps(:,a,t),rot)
+          ref(a,t) = ref(a,t) + rot*dphi_dlon
+        endif
+      enddo
+    enddo
+    call weights_contract(NTW,u,wloc(:,:,:,:,ia),got)
+    call gf_report('position column '//lname(ia)//': block . W vs strain route ', &
+                   maxval(abs(got - ref))/maxval(abs(ref)),TOL,nfail)
+  enddo
+
+  !--- a force ---
+  do t = 1,NTW
+    do a = 1,GF_NCOMP
+      ref(a,t) = fhat(1)*g(a,1,t) + fhat(2)*g(a,2,t) + fhat(3)*g(a,3,t)
+    enddo
+  enddo
+  call weights_contract(NTW,u,wf,got)
+  call gf_report('force: block . W vs interpolation . fhat    ',maxval(abs(got - ref))/maxval(abs(ref)),TOL,nfail)
+
+  !--- the extraction's contraction kernel, all ten vectors at once ---
+  ! gf_weights_contract reads the block as stored, float, in 48 lanes; the
+  ! reference is the plain sum over the same float values, widened. Every
+  ! column and component, so the remainder lanes (1105..1125) count too.
+  ur(:,:,:,:,:,:) = real(u(:,:,:,:,:,:),CUSTOM_REAL)
+  ud(:,:,:,:,:,:) = dble(ur(:,:,:,:,:,:))
+  wall(:,:,:,:,1) = wm(:,:,:,:)
+  wall(:,:,:,:,2:1+GF_NW_MT) = wmt(:,:,:,:,:)
+  wall(:,:,:,:,2+GF_NW_MT:GF_NW_MAX) = wloc(:,:,:,:,:)
+  do v = 1,GF_NW_MAX
+    call gf_weights_replicate(wall(:,:,:,:,v),wr(:,v))
+  enddo
+  call gf_weights_contract(ur,NTW,wr,GF_NW_MAX,xk)
+  worst_sum = 0.d0
+  do v = 1,GF_NW_MAX
+    call weights_contract(NTW,ud,wall(:,:,:,:,v),ref)
+    do a = 1,GF_NCOMP
+      worst_sum = max(worst_sum,maxval(abs(xk(:,a,v) - ref(a,:)))/maxval(abs(ref)))
+    enddo
+  enddo
+  call gf_report('gf_weights_contract, ten vectors, vs plain sum',worst_sum,TOL,nfail)
+
+  !--- every moment-tensor weight sums to zero over the element ---
+  worst_sum = weights_sum(wm)
+  do v = 1,GF_NW_MT
+    worst_sum = max(worst_sum,weights_sum(wmt(:,:,:,:,v)))
+  enddo
+  do ia = 1,GF_NW_LOC
+    worst_sum = max(worst_sum,weights_sum(wloc(:,:,:,:,ia)))
+  enddo
+  call gf_report('SUM_ijk W(p,ijk) = 0, worst over all columns ',worst_sum,TOL_SUM,nfail)
+
+  end subroutine test_weights
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine weights_contract(nt,u,w,out)
+
+! out(a,t) = SUM_{p,ijk} u(a,p,ijk,t) w(p,ijk), the contraction section 11 tests
+
+  implicit none
+  integer, intent(in) :: nt
+  double precision, dimension(GF_NCOMP,GF_NCOMP,NGLLX,NGLLY,NGLLZ,nt), intent(in) :: u
+  double precision, dimension(GF_NCOMP,NGLLX,NGLLY,NGLLZ), intent(in) :: w
+  double precision, dimension(GF_NCOMP,nt), intent(out) :: out
+
+  integer :: a,t
+
+  do t = 1,nt
+    do a = 1,GF_NCOMP
+      out(a,t) = sum(u(a,:,:,:,:,t)*w(:,:,:,:))
+    enddo
+  enddo
+
+  end subroutine weights_contract
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  double precision function weights_sum(w)
+
+! max over p of |SUM_ijk w(p,ijk)| / SUM_ijk |w(p,ijk)|
+!
+! A row that is zero sums to zero and is skipped: the rotated unit tensor
+! Mpp is phi^ phi^T, and phi^ has no z component.
+
+  implicit none
+  double precision, dimension(GF_NCOMP,NGLLX,NGLLY,NGLLZ), intent(in) :: w
+
+  double precision :: s_abs
+  integer :: p
+
+  weights_sum = 0.d0
+  do p = 1,GF_NCOMP
+    s_abs = sum(abs(w(p,:,:,:)))
+    if (s_abs > 0.d0) weights_sum = max(weights_sum,abs(sum(w(p,:,:,:)))/s_abs)
+  enddo
+
+  end function weights_sum
 
 !
 !-------------------------------------------------------------------------------------------------

@@ -37,6 +37,11 @@
 #                         `uv sync --group test --project
 #                         utils/green_function` builds one at
 #                         utils/green_function/.venv/bin/python.
+#   GF3D_FIXTURE_CHUNKED  =1 makes the fixture's displacement datasets chunked
+#                         as the solver's writer chunks them, rather than
+#                         contiguous (see make_fixture_db.f90). The contiguous
+#                         default exercises the h5dread_f route of the chunk
+#                         reader; 9h builds both variants itself.
 #   GF3D_TEST_STRICT      =1 makes a skip a failure: z.strict_no_skips.sh
 #                         then fails the run if any runner here wrote a
 #                         `skipped:` line. Not read by this file; set by the
@@ -44,6 +49,7 @@
 #                         cannot silently go unrun again.
 #
 # Exports: GFDB, CMT, FORCE, REFERENCE, FIXTURE_DIR (empty unless we made one).
+# Defines gfdb_make_fixture [chunked], for a runner that needs another fixture.
 # Returns non-zero when it cannot produce a database, so the caller keeps its
 # own "skipped: ...; exit 0" idiom rather than exiting from inside a source.
 #
@@ -61,7 +67,51 @@ FORCE="$testdir/REF_DATA/FORCESOLUTION"
 
 REFERENCE="${GF3D_TEST_REFERENCE:-}"
 FIXTURE_DIR=""
+FIXTURE_DIRS=()
 GFDB=""
+
+# gfdb_make_fixture [chunked] -> FIXTURE_MADE, the GFDB of a new fixture.
+# Every fixture made goes on the FIXTURE_DIRS array, which the EXIT trap
+# below removes; an array, so that a $TMPDIR with a space in it cannot split
+# an rm -rf argument in two.
+# A variable rather than stdout, because $(...) would run this in a subshell
+# and the directory would never reach FIXTURE_DIRS.
+gfdb_make_fixture() {
+  local d
+  FIXTURE_MADE=""
+  # Small (~7 MB) and affine, so gf_open, gf_locate_source, the anchor guard
+  # and extraction all run; only the solver comparisons sit out. Rebuilt when
+  # its source is newer, so that a runner started on its own does not test
+  # yesterday's fixture.
+  if [ ! -e ./bin/make_fixture_db ] || [ make_fixture_db.f90 -nt ./bin/make_fixture_db ]; then
+    make -f fixture.makefile make_fixture_db >> $testdir/results.log 2>&1
+  fi
+  if [ ! -e ./bin/make_fixture_db ]; then
+    echo "could not build make_fixture_db; see above" >> $testdir/results.log
+    return 1
+  fi
+  d=`mktemp -d "${TMPDIR:-/tmp}/gf3d_fixture.XXXXXX"` || return 1
+  FIXTURE_DIRS+=("$d")
+  if ! ./bin/make_fixture_db "$d" $1 >> $testdir/results.log 2>&1; then
+    echo "make_fixture_db failed" >> $testdir/results.log
+    return 1
+  fi
+  FIXTURE_MADE="$d/GFDB"
+  return 0
+}
+
+gfdb_cleanup() {
+  local d
+  for d in "${FIXTURE_DIRS[@]}"; do rm -rf "$d"; done
+  return 0
+}
+
+# Installed here rather than left to each runner: a fixture is a few megabytes
+# in $TMPDIR and every runner has half a dozen exit paths, so relying on each
+# of them to remember is relying on the one that does not. Sourced, so this
+# trap belongs to the runner's own shell. Installed before the first fixture
+# is made, so that a failed build is cleaned up too.
+trap gfdb_cleanup EXIT
 
 if [ -n "${GF3D_TEST_GFDB}" ]; then
 
@@ -73,26 +123,14 @@ if [ -n "${GF3D_TEST_GFDB}" ]; then
 
 else
 
-  # no database given: make one. Small (~7 MB) and affine, so gf_open,
-  # gf_locate_source, the anchor guard and extraction all run; only the
-  # solver comparisons sit out. Rebuilt when its source is newer, so that a
-  # runner started on its own does not test yesterday's fixture.
-  if [ ! -e ./bin/make_fixture_db ] || [ make_fixture_db.f90 -nt ./bin/make_fixture_db ]; then
-    make -f fixture.makefile make_fixture_db >> $testdir/results.log 2>&1
+  # no database given: make one
+  if [ "${GF3D_FIXTURE_CHUNKED}" = "1" ]; then
+    gfdb_make_fixture chunked || return 1
+  else
+    gfdb_make_fixture || return 1
   fi
-  if [ ! -e ./bin/make_fixture_db ]; then
-    echo "could not build make_fixture_db; see above" >> $testdir/results.log
-    return 1
-  fi
-
-  FIXTURE_DIR=`mktemp -d "${TMPDIR:-/tmp}/gf3d_fixture.XXXXXX"` || return 1
-  if ! ./bin/make_fixture_db "$FIXTURE_DIR" >> $testdir/results.log 2>&1; then
-    echo "make_fixture_db failed" >> $testdir/results.log
-    rm -rf "$FIXTURE_DIR"
-    return 1
-  fi
-
-  GFDB="$FIXTURE_DIR/GFDB"
+  GFDB="$FIXTURE_MADE"
+  FIXTURE_DIR=`dirname "$GFDB"`
 fi
 
 # read_reference <key> -> the value, or empty when there is no reference file.
@@ -101,17 +139,6 @@ read_reference() {
   [ -n "$REFERENCE" ] && [ -e "$REFERENCE" ] || return 0
   awk -v k="$1" '$1 == k { print $2; exit }' "$REFERENCE"
 }
-
-gfdb_cleanup() {
-  [ -n "$FIXTURE_DIR" ] && rm -rf "$FIXTURE_DIR"
-  return 0
-}
-
-# Installed here rather than left to each runner: a fixture is a few megabytes
-# in $TMPDIR and every runner has half a dozen exit paths, so relying on each
-# of them to remember is relying on the one that does not. Sourced, so this
-# trap belongs to the runner's own shell.
-trap gfdb_cleanup EXIT
 
 export GFDB CMT FORCE REFERENCE FIXTURE_DIR
 

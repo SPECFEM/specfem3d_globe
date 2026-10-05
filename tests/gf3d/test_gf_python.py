@@ -227,10 +227,15 @@ def main(argv):
        and r.dp_units[8] == "m/km" and r.dp_units[9] == "m/s")
 
     # the identity of Stage 6, which no transposition of a four-dimensional
-    # index survives
+    # index survives: that is an O(1) error. The bound is rounding: the
+    # seismogram and each partial come from their own weight vector, and the
+    # generated fixture's traces are up to ~5e5 times smaller than what is
+    # summed into them -- a $GF3D_TEST_GFDB may be worse conditioned
+    # (test_gf_partials_db, section 5, asserts it against that size),
+    # so eps * 5e5 * a few is ~1e-10 of the peak.
     lin = (r.dp[:, :6] * np.asarray(cmt.tensor)[None, :, None, None]).sum(axis=1)
     ok_err("sum(M_v dp_v) reproduces the seismogram",
-           np.abs(lin - r.data).max() / np.abs(r.data).max())
+           np.abs(lin - r.data).max() / np.abs(r.data).max(), tol=1e-9)
 
     ok("trace() and partial() select the same data",
        np.array_equal(r.trace(ids[0], "Z"), r.data[0, 2])
@@ -346,13 +351,24 @@ def main(argv):
         same = True
         for k, src in enumerate((cmt, far, cmt, far)):
             if k == 2:
-                files0 = dbc.cache_stats["files_read"]
+                st0 = dbc.cache_stats
             want, got = db.partials(src), dbc.partials(src)
             same = same and np.array_equal(want.data, got.data) and np.array_equal(want.dp, got.dp)
             if k == 2:
-                files_hit = dbc.cache_stats["files_read"] - files0
+                st1 = dbc.cache_stats
+                files_hit = st1["files_read"] - st0["files_read"]
         ok("A B A B: data and dp identical to the bit, cached or not", same)
-        ok("returning to A read no element file", files_hit == 0)
+        ok("returning to A was a hit", st1["hits"] - st0["hits"] == 1)
+        # The handle also keeps the coordinates of the max(10, max_elements)
+        # elements its locates used last (GF_NCOORD_MIN = 10). When that is
+        # every element, as on the fixture, returning to A reads nothing at
+        # all; on a larger database the locates at A and B may have tried
+        # more candidates than it holds, and then only rereads of
+        # coordinates, at most one locate's 10, are allowed.
+        if info["nelem"] <= max(10, dbc.max_elements):
+            ok("returning to A read no element file", files_hit == 0)
+        else:
+            ok("returning to A read no displacement, only coordinates", files_hit <= 10)
 
         st = dbc.cache_stats
         print(f"       cache_stats: {st}")

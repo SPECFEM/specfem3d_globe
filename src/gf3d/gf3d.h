@@ -76,7 +76,18 @@
  * Threads         not thread-safe. The library keeps process-wide state:
  *                 the last error message, the kd-tree that serves whichever
  *                 database located last, and specfem's shared_parameters.
- *                 Serialise calls, as the Python wrapper does.
+ *                 Serialise calls, as the Python wrapper does. Inside one
+ *                 call, a library configured with --enable-openmp computes
+ *                 the stations of an extraction over OMP_NUM_THREADS
+ *                 threads when the handle holds the element (max_elements
+ *                 > 0), with every number what one thread computes; the
+ *                 route that reads from disk stays on one thread. With
+ *                 OMP_NUM_THREADS unset that is every core: set it when
+ *                 several processes (chains) share a node. A program that
+ *                 links libgf3d.a from such a build links with the OpenMP
+ *                 flag too, and the OpenMP runtime does not survive a fork()
+ *                 after the first extraction (Python multiprocessing: use
+ *                 the "spawn" start method).
  * Two databases   supported: each handle owns its own metadata. But the
  *                 search tree is rebuilt whenever a locate switches
  *                 database, so alternating between two of them is slow, and
@@ -85,17 +96,30 @@
  * Memory          a handle opened with max_elements > 0 keeps that many
  *                 elements in memory between extractions, each
  *                 gf3d_info.bytes_per_element large, and drops the least
- *                 recently used one to make room. It also keeps the
- *                 coordinates of every element its locates read (3 kB
- *                 each). Together: no element file is opened twice by one
- *                 handle, so returning to a position already visited reads
- *                 nothing from disk. A new position inside a cached element
- *                 may still read a neighbour's coordinates once, the first
- *                 time the locate tries it. Budget max_elements *
+ *                 recently used one to make room. A position inside a kept
+ *                 element reads no displacement file. Every handle also
+ *                 keeps the coordinates its locates read, 3 kB per element,
+ *                 for the max(10, max_elements) elements used most recently
+ *                 -- at least one locate's candidates -- so a locate rereads
+ *                 a coordinate file only for an element that has since
+ *                 dropped out of that store, and returning to a position
+ *                 still held reads nothing from disk. Budget max_elements *
  *                 bytes_per_element per handle, and per process for
  *                 parallel chains. On Linux an allocation that succeeds can
  *                 still be killed for lack of memory when first filled;
  *                 that cannot be reported as an error.
+ * Performance     measured on a 185-station database (nt 3725, 3.1 GB per
+ *                 element), one core: an extraction whose element comes
+ *                 from disk takes ~2.2 s for the seismograms and ~4.5 s
+ *                 with the ten partials, ~1.8 s of it reading; one whose
+ *                 element the handle holds takes 0.50 s and 2.5 s, and
+ *                 over 32 OpenMP threads of one socket 0.020 s and 0.11 s.
+ *                 Configuring with FCFLAGS="-march=x86-64-v3" (or the
+ *                 machine's own ISA) makes a gfortran build a further
+ *                 quarter faster on one core (0.38 s, 1.6 s). That flag is
+ *                 never the default, applies to the whole build, and moves
+ *                 last digits through fused multiply-adds (~1e-13 of a
+ *                 trace); Intel builds already get -xHost from flags.guess.
  */
 
 #ifndef GF3D_H

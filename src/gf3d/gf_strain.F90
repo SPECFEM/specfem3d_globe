@@ -39,9 +39,11 @@
 !----   seis(a,t) = SUM_pq M_pq eps^a_pq(x_s,t)
 !----
 !---- which gf_moment.F90 performs. This module produces the strain and
-!---- stops there, deliberately: Stage 6's moment-tensor partial derivatives
-!---- are the *same* strain re-contracted with six unit tensors, so it must
-!---- be possible to re-contract without recomputing.
+!---- stops there. The extraction no longer forms strain traces: it folds
+!---- the derivative weights and the moment tensor into one weight vector
+!---- per trace (gf_weights) and contracts the displacement with that. The
+!---- strain traces here serve --dump, which writes them, and the tests,
+!---- where they are the route the weights are checked against.
 !----
 !---- The chain rule, and why the weights are precomputed
 !---- --------------------------------------------------

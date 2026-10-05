@@ -63,12 +63,12 @@
 !---- contraction wrong, so gf_moment_contract_full() exists beside it: it
 !---- performs the plain 3x3 double sum with no Voigt packing at all, and
 !---- tests/gf3d/test_gf_strain.f90 asserts the two agree. One of them is
-!---- obviously right; the other is the one production uses.
+!---- obviously right; the other is the one --dump uses, and the reading of
+!---- M by its upper triangle that gf_weights_moment reproduces.
 !----
 !---- Linearity is also what makes Stage 6 nearly free: the partials with
-!---- respect to the six moment-tensor components are the same strain
-!---- contracted with six unit tensors, which is why nothing here recomputes
-!---- a strain.
+!---- respect to the six moment-tensor components are the same block
+!---- contracted with the weights of six unit tensors (gf_weights_mt).
 !----
 !---- No `use hdf5`, no `use specfem_par`: this is a kernel module.
 !----

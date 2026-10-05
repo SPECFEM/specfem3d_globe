@@ -35,7 +35,11 @@
 !---- makes the cache's behaviour testable at all -- and the object's
 !---- lifetime. With max_elements > 0 it also pins that the cache changes
 !---- no number, that it evicts the least recently used element, and that
-!---- a fill that fails part-way leaves nothing behind.
+!---- a fill that fails part-way leaves nothing behind. And it pins the
+!---- coordinate store every handle has: what it saves the locate, its
+!---- bound and its eviction order, and that it changes no location. In a
+!---- library built with --enable-openmp (runner 9i), it pins that the
+!---- stations computed over threads are the serial numbers, bit for bit.
 !----
 !---- Elements A, B and C are found by walking north from the CMTSOLUTION,
 !---- as test_gf3d_ext does, so this runs on the fixture (three elements, 8
@@ -50,6 +54,8 @@
                   gf_default_t0,gf_element_bytes, &
                   gf_errmsg,GF_OK,GF_ERR_ARG
 
+  use gf_par, only: GF_NCOORD_MIN
+
   use gf_manufactured, only: gf_report_true
 
   implicit none
@@ -58,12 +64,23 @@
   double precision, parameter :: WALK_STEP = 0.25d0
   integer, parameter :: WALK_MAX = 80
 
+  ! threads for section 9, in an OpenMP build
+  integer, parameter :: NTHREADS = 4
+
+  ! Declared, not taken from omp_lib: the gcc-toolset gfortran on the
+  ! development cluster ships no omp_lib.mod on its module path, and the
+  ! OpenMP standard allows calling its routines this way.
+!$ integer, external :: omp_get_max_threads
+!$ external :: omp_set_num_threads
+
   character(len=512) :: dbpath,cmtpath,forcepath,broken
   type(t_gfdb) :: db,dbc,never_opened
   type(t_gf_source) :: src,force,s
   type(t_gf_location) :: loc,loc_c
   double precision, dimension(:,:,:), allocatable :: synt,synt0
-  double precision, dimension(:,:,:,:), allocatable :: dp,dp0
+  double precision, dimension(:,:,:,:), allocatable :: dp,dp0,dp1
+  double precision, dimension(:,:,:), allocatable :: synt1
+  double precision, dimension(:), allocatable :: onset,onset0,onset1
   double precision :: t0,t0_force
   ! latitudes of elements A, B, C (1..3), and whether each was found
   double precision, dimension(3) :: lat
@@ -72,8 +89,12 @@
   logical :: have_b,have_c,staged
   integer(kind=8) :: hits,misses,evictions,files_read
   integer(kind=8) :: misses0,files0,nread_locate,nread_extract
-  integer :: n_cached,ierr,nfail,k,nbad
+  integer :: n_cached,ierr,nfail,k,nbad,nloc
   integer, dimension(4) :: seq
+  integer, dimension(5) :: seq5
+  integer(kind=8) :: nread
+  type(t_gf_location), dimension(5) :: locs,locs0
+  logical :: one_each,openmp
 
   nfail = 0
 
@@ -120,17 +141,21 @@
   if (ierr /= GF_OK) call die('no default start time for this source')
 
   !--------------------------------------------------------------------
-  ! 2. what the counters count, with nothing kept
+  ! 2. what the counters count, with no element kept
   !
   ! A locate reads coordinates and loads no element block. An extraction
   ! is a locate plus one element block, which is one displacement file per
-  ! station. With no cache, a second identical extraction costs the same
-  ! again. The locate's own count depends on how many candidates it tried,
-  ! so it is measured, then required to be the same inside the extraction.
+  ! station. Every handle keeps the coordinates its locates read (at least
+  ! GF_NCOORD_MIN elements' worth, one locate's candidates), so the
+  ! extraction's own locate, at the position just located, reads none of
+  ! them again: the extraction reads exactly the displacement files. With
+  ! no element cache, a second identical extraction reads them all again --
+  ! the uncached route reads its element every time. The locate's own count
+  ! depends on how many candidates it tried, so it is measured.
   !--------------------------------------------------------------------
 
   write(*,'(a)') ''
-  write(*,'(a)') '2. counters with no cache'
+  write(*,'(a)') '2. counters with no element cache'
 
   call snapshot(db,misses0,files0)
   call gf_locate_source(db,src%latitude,src%longitude,src%depth,loc,ierr)
@@ -141,6 +166,7 @@
   call gf_report_true('a locate reads coordinates             ',nread_locate >= 1,nfail)
   call expect('misses from a locate ',misses - misses0,0_8,nfail)
 
+  ! what the first extraction on a fresh handle reads (section 5)
   nread_extract = nread_locate + int(db%nstations,8)
 
   call snapshot(db,misses0,files0)
@@ -148,14 +174,14 @@
   if (ierr /= GF_OK) call die('the first extraction failed')
   call gf_cache_stats(db,hits,misses,evictions,n_cached,files_read,ierr)
   call expect('misses, extraction 1 ',misses - misses0,1_8,nfail)
-  call expect('files, extraction 1  ',files_read - files0,nread_extract,nfail)
+  call expect('files, extraction 1  ',files_read - files0,int(db%nstations,8),nfail)
 
   call snapshot(db,misses0,files0)
   call get_seismograms(db,src,t0,synt,ierr)
   if (ierr /= GF_OK) call die('the second extraction failed')
   call gf_cache_stats(db,hits,misses,evictions,n_cached,files_read,ierr)
   call expect('misses, extraction 2 ',misses - misses0,1_8,nfail)
-  call expect('files, extraction 2  ',files_read - files0,nread_extract,nfail)
+  call expect('files, extraction 2  ',files_read - files0,int(db%nstations,8),nfail)
   call expect('hits with no cache   ',hits,0_8,nfail)
   call expect('n_cached, no cache   ',int(n_cached,8),0_8,nfail)
   call expect('evictions, no cache  ',evictions,0_8,nfail)
@@ -210,13 +236,13 @@
   do k = 1,4
     s = src
     s%latitude = lat(seq(k))
-    call gf_extract(db,s,t0,2,synt0,dp0,ierr)
+    call gf_extract(db,s,t0,2,synt0,dp0,ierr,onset=onset0)
     if (ierr /= GF_OK) call die('extraction without a cache failed')
-    call gf_extract(dbc,s,t0,2,synt,dp,ierr)
+    call gf_extract(dbc,s,t0,2,synt,dp,ierr,onset=onset)
     if (ierr /= GF_OK) call die('extraction with a cache failed')
-    nbad = count(synt /= synt0) + count(dp /= dp0)
-    call expect('CMT + 10 partials, '//label(seq(k))//' (call '//trim(itoa8(int(k,8)))// &
-                '), differing samples',int(nbad,8),0_8,nfail)
+    nbad = count(synt /= synt0) + count(dp /= dp0) + count(onset /= onset0)
+    call expect('CMT + 10 partials + onset, '//label(seq(k))//' (call '//trim(itoa8(int(k,8)))// &
+                '), differing',int(nbad,8),0_8,nfail)
     if (k == 2) then
       ! synt0 holds B's traces: A's, extracted again, must differ
       s%latitude = lat(1)
@@ -271,10 +297,12 @@
   ! uncached one does; returning to A reads nothing at all -- not the
   ! displacement, and not the coordinates the locate needs either, which
   ! the handle kept from the first time. Nor does a bare locate there.
-  ! Through C when there is one: the coordinate store starts with room for
-  ! two elements, so the third makes it grow, and A's coordinates are then
-  ! read back from the grown copy.
-  call gf_open(dbpath,dbc,ierr,check_completion=.false.,max_elements=3)
+  ! Through C when there is one. The coordinate store is opened large
+  ! enough for every element: on a real $GF3D_TEST_GFDB three locates may
+  ! try more candidates than the default store holds, and these counts are
+  ! about the element cache. Section 5b is about the store's bound.
+  call gf_open(dbpath,dbc,ierr,check_completion=.false.,max_elements=3, &
+               coord_capacity=huge(1))
   if (ierr /= GF_OK) call die('could not open the database with max_elements = 3')
   call snapshot(dbc,misses0,files0)
   call extract_at(dbc,1)
@@ -295,6 +323,72 @@
                       loc_c%ielem == loc%ielem .and. loc_c%xi == loc%xi .and. &
                       loc_c%eta == loc%eta .and. loc_c%gamma == loc%gamma,nfail)
   call gf_close(dbc)
+
+  !--------------------------------------------------------------------
+  ! 5b. the coordinate store: its bound and its eviction order
+  !
+  ! Every handle keeps the coordinates of the xyz_capacity elements its
+  ! locates used most recently. The default, max(GF_NCOORD_MIN,
+  ! max_elements), is more than the fixture's three elements, so the bound
+  ! is set here through gf_open's coord_capacity. Counted in coordinate
+  ! files over a sequence of bare locates, each on a fresh handle, when
+  ! each of A, B, C costs one file to locate (the fixture: the nearest
+  ! centroid is the right element): at capacity 1, A B A reads A twice; at
+  ! 2, A B A B reads each once. The last sequence tells LRU from FIFO, as
+  ! in section 5: after A B A, C evicts B, and the final A is found.
+  !--------------------------------------------------------------------
+
+  write(*,'(a)') ''
+  write(*,'(a)') '5b. the coordinate store'
+
+  call expect('default capacity     ',int(db%cache%xyz_capacity,8), &
+              int(min(db%nelem,GF_NCOORD_MIN),8),nfail)
+
+  ! what one locate at each of A, B, C reads on a fresh handle
+  one_each = .true.
+  do k = 1,3
+    if (k == 3 .and. .not. have_c) exit
+    call coord_sequence(huge(1),(/ k /),nread,locs(1:1))
+    write(*,'(a,a,a,i0)') '     coordinate files a locate at ',label(k),' reads = ',nread
+    one_each = one_each .and. nread == 1
+  enddo
+
+  if (.not. one_each) then
+    write(*,'(a)') '     a locate here reads more than one candidate: the counts below'
+    write(*,'(a)') '     assume one, and are not exercised on this database'
+  else
+    call coord_sequence(1,(/ 1, 2, 1 /),nread,locs(1:3))
+    call expect('capacity 1, A B A    ',nread,3_8,nfail)
+    call coord_sequence(2,(/ 1, 2, 1, 2 /),nread,locs(1:4))
+    call expect('capacity 2, A B A B  ',nread,2_8,nfail)
+    if (have_c) then
+      call coord_sequence(2,(/ 1, 2, 3, 1 /),nread,locs(1:4))
+      call expect('capacity 2, A B C A  ',nread,4_8,nfail)
+      ! FIFO: 4
+      call coord_sequence(2,(/ 1, 2, 1, 3, 1 /),nread,locs(1:5))
+      call expect('capacity 2, A B A C A',nread,3_8,nfail)
+    endif
+  endif
+
+  ! the store changes no location: none, one entry, and every element
+  nloc = 4
+  if (have_c) nloc = 5
+  seq5 = (/ 1, 2, 1, 3, 1 /)
+  if (.not. have_c) seq5 = (/ 1, 2, 1, 2, 1 /)
+  call coord_sequence(0,seq5(1:nloc),nread,locs0(1:nloc))
+  nbad = 0
+  do k = 1,2
+    if (k == 1) call coord_sequence(1,seq5(1:nloc),nread,locs(1:nloc))
+    if (k == 2) call coord_sequence(huge(1),seq5(1:nloc),nread,locs(1:nloc))
+    nbad = nbad + count(locs(1:nloc)%ielem /= locs0(1:nloc)%ielem .or. &
+                        locs(1:nloc)%xi /= locs0(1:nloc)%xi .or. &
+                        locs(1:nloc)%eta /= locs0(1:nloc)%eta .or. &
+                        locs(1:nloc)%gamma /= locs0(1:nloc)%gamma)
+  enddo
+  call expect('locations differing from no store',int(nbad,8),0_8,nfail)
+
+  call gf_open(dbpath,dbc,ierr,check_completion=.false.,coord_capacity=-1)
+  call gf_report_true('a negative coord_capacity is refused   ',ierr == GF_ERR_ARG,nfail)
 
   !--------------------------------------------------------------------
   ! 6. what max_elements accepts
@@ -372,6 +466,54 @@
   call gf_cache_stats(db,hits,misses,evictions,n_cached,files_read,ierr)
   call expect('misses after reopen  ',misses,0_8,nfail)
   call expect('files after reopen   ',files_read,0_8,nfail)
+
+  !--------------------------------------------------------------------
+  ! 9. stations over threads
+  !
+  ! A library built with --enable-openmp computes a caching handle's
+  ! stations over threads, each station one thread's from start to finish.
+  ! So every number is the serial one: kind 2 at one thread and at
+  ! NTHREADS, seismograms, all ten partials and the onset ratio, bitwise --
+  ! and against the handle that keeps nothing, whose route stays serial, so
+  ! that a mistake made by every thread alike is caught as well. Runs only
+  ! when this program is compiled with OpenMP, which runner 9i does.
+  !--------------------------------------------------------------------
+
+  write(*,'(a)') ''
+  write(*,'(a)') '9. stations over threads'
+
+  openmp = .false.
+!$ openmp = .true.
+  if (.not. openmp) then
+    write(*,'(a)') '     not compiled with OpenMP: 9i.test_gf_openmp.sh runs this section'
+  else
+    call gf_open(dbpath,dbc,ierr,check_completion=.false.,max_elements=1)
+    if (ierr /= GF_OK) call die('could not open the database with max_elements = 1')
+    write(*,'(a,i0,a,i0,a)') '     ',db%nstations,' stations over 1 and ',NTHREADS,' threads'
+!$  call omp_set_num_threads(1)
+    call gf_extract(dbc,src,t0,2,synt1,dp1,ierr,onset=onset1)
+    if (ierr /= GF_OK) call die('extraction at 1 thread failed')
+!$  call omp_set_num_threads(NTHREADS)
+!$  call gf_report_true('the thread count took                  ', &
+!$                      omp_get_max_threads() == NTHREADS,nfail)
+    call gf_extract(dbc,src,t0,2,synt,dp,ierr,onset=onset)
+    if (ierr /= GF_OK) call die('extraction at several threads failed')
+    nbad = count(synt /= synt1) + count(dp /= dp1) + count(onset /= onset1)
+    call expect('CMT + 10 partials + onset, threads against one, differing', &
+                int(nbad,8),0_8,nfail)
+    call gf_extract(db,src,t0,2,synt0,dp0,ierr,onset=onset0)
+    if (ierr /= GF_OK) call die('extraction without a cache failed')
+    nbad = count(synt /= synt0) + count(dp /= dp0) + count(onset /= onset0)
+    call expect('and against the serial route, differing',int(nbad,8),0_8,nfail)
+    ! the force route: the interpolation and a Gaussian conversion
+    call get_seismograms(dbc,force,t0_force,synt,ierr)
+    if (ierr /= GF_OK) call die('force extraction at several threads failed')
+    call get_seismograms(db,force,t0_force,synt0,ierr)
+    if (ierr /= GF_OK) call die('force extraction without a cache failed')
+    call expect('force, threads against the serial route, differing', &
+                int(count(synt /= synt0),8),0_8,nfail)
+    call gf_close(dbc)
+  endif
 
   call gf_locate_release()
   call gf_close(db)
@@ -552,6 +694,39 @@
   if (ier /= GF_OK) call die('could not open the database')
 
   end subroutine open_or_die
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine coord_sequence(ncap,order,nfiles,locs_out)
+
+! bare locates at the elements `order` names (1 = A, 2 = B, 3 = C), on a
+! fresh handle whose coordinate store holds ncap elements; nfiles is how
+! many element files they read, all of them coordinates
+
+  implicit none
+  integer, intent(in) :: ncap
+  integer, dimension(:), intent(in) :: order
+  integer(kind=8), intent(out) :: nfiles
+  type(t_gf_location), dimension(:), intent(out) :: locs_out
+
+  type(t_gfdb) :: h
+  integer(kind=8) :: m0,f0,m1,f1
+  integer :: i,ier
+
+  call gf_open(dbpath,h,ier,check_completion=.false.,coord_capacity=ncap)
+  if (ier /= GF_OK) call die('could not open the database with a coordinate capacity')
+  call snapshot(h,m0,f0)
+  do i = 1,size(order)
+    call gf_locate_source(h,lat(order(i)),src%longitude,src%depth,locs_out(i),ier)
+    if (ier /= GF_OK) call die('a locate failed')
+  enddo
+  call snapshot(h,m1,f1)
+  nfiles = f1 - f0
+  call gf_close(h)
+
+  end subroutine coord_sequence
 
 !
 !-------------------------------------------------------------------------------------------------
