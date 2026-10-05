@@ -108,6 +108,18 @@
  *                 parallel chains. On Linux an allocation that succeeds can
  *                 still be killed for lack of memory when first filled;
  *                 that cannot be reported as an error.
+ * Performance     measured on a 185-station database (nt 3725, 3.1 GB per
+ *                 element), one core: an extraction whose element comes
+ *                 from disk takes ~2.2 s for the seismograms and ~4.5 s
+ *                 with the ten partials, ~1.8 s of it reading; one whose
+ *                 element the handle holds takes 0.50 s and 2.5 s, and
+ *                 over 32 OpenMP threads of one socket 0.020 s and 0.11 s.
+ *                 Configuring with FCFLAGS="-march=x86-64-v3" (or the
+ *                 machine's own ISA) makes a gfortran build a further
+ *                 quarter faster on one core (0.38 s, 1.6 s). That flag is
+ *                 never the default, applies to the whole build, and moves
+ *                 last digits through fused multiply-adds (~1e-13 of a
+ *                 trace); Intel builds already get -xHost from flags.guess.
  */
 
 #ifndef GF3D_H
