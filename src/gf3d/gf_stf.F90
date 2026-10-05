@@ -688,35 +688,7 @@
   double precision, dimension(-khalf:khalf), intent(in) :: w
   double precision, dimension(n), intent(out) :: y
 
-  ! local parameters
-  integer :: i,j,jlo,jhi
-  double precision :: s,c
-  ! the compensated two-sum on volatile temporaries, for the reason given
-  ! at gf_cumsum; `v` is volatile as well so that the product cannot be
-  ! fused with the following addition into an FMA, which would make t
-  ! something other than the rounded sum the correction is derived from
-  double precision, volatile :: t,v,e1,e2
-
-  do i = 1,n
-    jlo = max(-khalf,i-n)
-    jhi = min(khalf,i-1)
-    s = 0.d0
-    c = 0.d0
-    do j = jlo,jhi
-      v = w(j)*x(i-j)
-      t = s + v
-      if (abs(s) >= abs(v)) then
-        e1 = s - t
-        e2 = e1 + v
-      else
-        e1 = v - t
-        e2 = e1 + s
-      endif
-      c = c + e2
-      s = t
-    enddo
-    y(i) = s + c
-  enddo
+  call gf_window_sum(x,n,khalf,w,y)
 
   end subroutine gf_conv_sym
 
@@ -745,35 +717,63 @@
   double precision, dimension(n), intent(out) :: y
 
   ! local parameters
-  integer :: i,j,jlo,jhi,m
-  double precision :: s,c
-  ! volatile two-sum temporaries, as in gf_conv_sym
-  double precision, volatile :: t,v,e1,e2
+  integer :: i,m
+
+  call gf_window_sum(x,n,khalf,w,y)
 
   do i = 1,n
-    jlo = max(-khalf,i-n)
-    jhi = min(khalf,i-1)
-    s = 0.d0
-    c = 0.d0
-    do j = jlo,jhi
-      v = w(j)*x(i-j)
-      t = s + v
-      if (abs(s) >= abs(v)) then
-        e1 = s - t
-        e2 = e1 + v
-      else
-        e1 = v - t
-        e2 = e1 + s
-      endif
-      c = c + e2
-      s = t
-    enddo
     ! the samples the kernel has already saturated over
     m = max(i-khalf-1,0)
-    y(i) = dt*(p(m) + (s + c))
+    y(i) = dt*(p(m) + y(i))
   enddo
 
   end subroutine gf_conv_heavi
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_window_sum(x,n,khalf,w,y)
+
+! y(i) = SUM_{j=-khalf..khalf} w(j) x(i-j), x taken as zero outside 1..n:
+! the kernel window of gf_conv_sym and gf_conv_heavi, one implementation
+!
+! A plain sum. A window is at most 2*khalf+1 terms of a smooth kernel, a
+! short sum that needs no compensation; the long one, the running sum over
+! the whole record, keeps it (gf_cumsum). Measured against the compensated
+! window it replaced, on both shipped examples: at most 7.6e-15 of a
+! trace's energy (allowed_output_changes, PR 1 / 7).
+!
+! The loop over the taps j is the outer one. Each y(i) therefore still
+! accumulates its taps in ascending j, the same order as a loop over j
+! inside a loop over i. The inner loop runs over the samples i and
+! carries no reduction, so the compiler can vectorise it without
+! reordering any sum, and the result does not depend on the vector width.
+! Whether y + w*x is fused into one multiply-add is left to the compiler,
+! as in the rest of the library. In either case, padding the record with
+! zeros changes none of the shared samples, bit for bit: each extra tap
+! adds w*0, and both y + 0 and fma(w,0,y) return y exactly. (y starts at
+! +0, so no -0 can appear.)
+
+  implicit none
+
+  integer, intent(in) :: n,khalf
+  double precision, dimension(n), intent(in) :: x
+  double precision, dimension(-khalf:khalf), intent(in) :: w
+  double precision, dimension(n), intent(out) :: y
+
+  ! local parameters
+  integer :: i,j
+
+  y(:) = 0.d0
+  do j = -khalf,khalf
+    ! the samples i whose tap j reads inside the record, 1 <= i-j <= n
+    do i = max(1,1+j),min(n,n+j)
+      y(i) = y(i) + w(j)*x(i-j)
+    enddo
+  enddo
+
+  end subroutine gf_window_sum
 
 !
 !-------------------------------------------------------------------------------------------------
