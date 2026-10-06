@@ -16,7 +16,12 @@ and units of the partials, the linearity identity the moment-tensor
 partials satisfy, and -- the reason the facade exists -- that every
 mistake raises a Python exception instead of ending the interpreter.
 
-Usage: test_gf_python.py <xgf3d> <GFDB> <CMTSOLUTION> [FORCESOLUTION]
+Usage: test_gf_python.py <xgf3d> <GFDB> <CMTSOLUTION> [FORCESOLUTION [block]]
+
+With "block" as the fifth argument only section 10, element_block, is run.
+The runner does that on the fixture layout the full run did not use (the
+contiguous fixture reads through the h5dread_f fallback, the chunked one
+through the raw H5Dread_chunk route).
 """
 
 from __future__ import annotations
@@ -98,6 +103,172 @@ def read_ascii(path):
     return data[:, 0], data[:, 1:4]
 
 
+def element_block_section(dbpath, cmt):
+    """Database.element_block: against the station files, itself, and the cache.
+
+    The oracle for the values is h5py reading the station files directly:
+    the same stored numbers through a second reader, with no arithmetic in
+    between, so equality is bitwise and the reference is never recomputed.
+    Everything else compares a selection or a prefix with the full read.
+    """
+    try:
+        import h5py
+    except ImportError:
+        h5py = None
+
+    # two elements: the extraction below leaves one in the cache
+    db = gf3d.Database(dbpath, max_elements=2)
+    info = db.info
+    ids = db.station_ids
+    nsta = len(ids)
+    loc = db.locate(cmt.latitude, cmt.longitude, cmt.depth)
+    ielem = loc.ielem
+    nt_all = info["nt_subsampled"]
+
+    # the whole record of every station is 3 GB on a real database: a prefix
+    # of at most 256 MB there, everything on the fixture
+    ntf = max(1, min(nt_all, int(256e6 // (nsta * 3 * 375 * 4))))
+    if ntf < nt_all:
+        print(f"       a large database: the full read is the first {ntf} of {nt_all} samples")
+    nt7 = min(7, ntf)
+    # the fixture's first stored samples are all zero, so a comparison over a
+    # short prefix compares zeros: ntp ends past the onset, inside a chunk
+    # (the chunked fixture's are 7 samples), and its last sample is checked
+    # to be nonzero below
+    ntp = max(1, ntf // 2 + 1)
+
+    r = db.seismograms(cmt)
+    ok("an extraction fills the cache", db.cache_stats["n_cached"] == 1)
+
+    full = db.element_block(ielem, nt=ntf)
+    ok("the block is float32, C-contiguous, (nstations, 3, nt, 375)",
+       full.dtype == np.float32 and full.flags["C_CONTIGUOUS"]
+       and full.shape == (nsta, 3, ntf, 375))
+    ok("every value is finite and not all zero", np.isfinite(full).all() and np.any(full != 0))
+    ok(f"sample {ntp} of {ntf}, the last of the test prefix, is not all zero",
+       np.any(full[:, :, ntp - 1, :] != 0))
+    ok("nt=None reads every stored sample",
+       ntf < nt_all or db.element_block(ielem).shape == (nsta, 3, nt_all, 375))
+
+    # ------------------------------------------------------------------
+    # against the station files
+    if h5py is None:
+        print("       skipped: h5py not installed")
+    else:
+        # the library's own index is ascending Morton code; the directory
+        # scan is an independent way to the same order
+        dirs = sorted(p.name for p in (dbpath / "elements").iterdir() if p.is_dir())
+        ok("the element directories are the index, in order",
+           len(dirs) == info["nelem"] and dirs[ielem - 1] == loc.morton_hex)
+
+        def reference(el, nt):
+            """[s, a, t, m] from the files: h5py's (t, k, j, i, p, a)."""
+            out = np.empty((nsta, 3, nt, 375), dtype=np.float32)
+            for s, sid in enumerate(ids):
+                with h5py.File(dbpath / "elements" / dirs[el - 1] / f"{sid}.h5", "r") as f:
+                    d = f["displacement"][:nt]
+                out[s] = np.transpose(d, (5, 0, 1, 2, 3, 4)).reshape(3, nt, 375)
+            return out
+
+        ok("the located element, every station, bitwise equal to the files",
+           np.array_equal(full, reference(ielem, ntf)))
+
+        # every element when the database is small, else the first few
+        others = [e for e in range(1, info["nelem"] + 1) if e != ielem][:7]
+        same = True
+        for e in others:
+            same = same and np.array_equal(db.element_block(e, nt=ntp), reference(e, ntp))
+        ok(f"{len(others)} other elements, a prefix, bitwise equal to the files", same)
+
+    # ------------------------------------------------------------------
+    # prefixes and refusals
+    print()
+    same = True
+    for n in sorted({1, nt7, ntp, ntf}):
+        same = same and np.array_equal(db.element_block(ielem, nt=n), full[:, :, :n, :])
+    ok(f"nt = 1, 7, {ntp} and the full length are prefixes of the full read, bitwise", same)
+
+    ok_raises("nt = nt_subsampled + 1", gf3d.GF_ERR_ARG, db.element_block, ielem, nt=nt_all + 1)
+    ok_raises("nt = 0", gf3d.GF_ERR_ARG, db.element_block, ielem, nt=0)
+    ok_raises("nt = -1", gf3d.GF_ERR_ARG, db.element_block, ielem, nt=-1)
+    ok_raises("ielem = 0", gf3d.GF_ERR_ARG, db.element_block, 0)
+    ok_raises("ielem = nelem + 1", gf3d.GF_ERR_ARG, db.element_block, info["nelem"] + 1)
+    ok_raises("ielem = 2**40", gf3d.GF_ERR_ARG, db.element_block, 2**40)
+
+    # ------------------------------------------------------------------
+    # stations
+    if nsta >= 2:
+        want = full[[1, 0]]
+        ok("stations=[1, 0] is full[[1, 0]]",
+           np.array_equal(db.element_block(ielem, stations=[1, 0], nt=ntf), want))
+        ok("stations by id, reversed, is the same",
+           np.array_equal(db.element_block(ielem, stations=[ids[1], ids[0]], nt=ntf), want))
+        ok("stations mixed, id and index, is the same",
+           np.array_equal(db.element_block(ielem, stations=[ids[1], 0], nt=ntf), want))
+        ok("a repeated station is read twice",
+           np.array_equal(db.element_block(ielem, stations=[0, 0], nt=ntp),
+                          full[[0, 0], :, :ntp, :]))
+        ok("a tuple and a numpy array select the same",
+           np.array_equal(db.element_block(ielem, stations=(1, 0), nt=ntp),
+                          db.element_block(ielem, stations=np.array([1, 0]), nt=ntp)))
+    ok_raises_py("an unknown station id", ValueError,
+                 db.element_block, ielem, stations=["XX.NOPE"])
+    try:
+        db.element_block(ielem, stations=["XX.NOPE"])
+    except ValueError as exc:
+        ok("the message names the id", "XX.NOPE" in str(exc))
+    ok_raises(f"station index {nsta}", gf3d.GF_ERR_ARG,
+              db.element_block, ielem, stations=[nsta])
+    ok_raises("station index -1", gf3d.GF_ERR_ARG, db.element_block, ielem, stations=[-1])
+    ok_raises("station index 2**40", gf3d.GF_ERR_ARG,
+              db.element_block, ielem, stations=[2**40])
+    ok_raises("no stations", gf3d.GF_ERR_ARG, db.element_block, ielem, stations=[])
+
+    # ------------------------------------------------------------------
+    # out=
+    print()
+    buf = np.empty((nsta, 3, ntp, 375), dtype=np.float32)
+    got = db.element_block(ielem, nt=ntp, out=buf)
+    ok("out= is returned itself", got is buf)
+    ok("and filled", np.array_equal(buf, full[:, :, :ntp, :]))
+    ok_raises_py("out= of the wrong shape", ValueError, db.element_block, ielem, nt=nt7,
+                 out=np.empty((nsta, 3, nt7 + 1, 375), dtype=np.float32))
+    ok_raises_py("out= of float64", ValueError, db.element_block, ielem, nt=nt7,
+                 out=np.empty((nsta, 3, nt7, 375), dtype=np.float64))
+    ok_raises_py("out= not contiguous (a slice)", ValueError, db.element_block, ielem, nt=nt7,
+                 out=np.empty((nsta, 3, nt7, 376), dtype=np.float32)[..., :375])
+    ok_raises_py("out= not contiguous (a transposed view)", ValueError,
+                 db.element_block, ielem, nt=nt7,
+                 out=np.empty((375, nt7, 3, nsta), dtype=np.float32).transpose(3, 2, 1, 0))
+    ok_raises_py("out= not an ndarray", ValueError, db.element_block, ielem, nt=nt7,
+                 out=buf.tolist())
+
+    # ------------------------------------------------------------------
+    # the cache is neither used nor filled, and files_read counts each file
+    print()
+    st0 = db.cache_stats
+    db.element_block(ielem, stations=[0, 1] if nsta >= 2 else [0], nt=nt7)
+    st1 = db.cache_stats
+    nread = 2 if nsta >= 2 else 1
+    ok("hits, misses, evictions and n_cached did not move",
+       all(st1[k] == st0[k] for k in ("hits", "misses", "evictions", "n_cached")))
+    ok(f"files_read grew by {nread}, one per station",
+       st1["files_read"] - st0["files_read"] == nread)
+    db.element_block(ielem, stations=[0], nt=nt7)
+    st2 = db.cache_stats
+    ok("one station: files_read grew by 1", st2["files_read"] - st1["files_read"] == 1)
+    ok("and the cache still holds its element and counts",
+       all(st2[k] == st0[k] for k in ("hits", "misses", "evictions", "n_cached")))
+    try:
+        db.element_block(0)
+    except gf3d.GF3DError:
+        pass
+    ok("a refused call read no file", db.cache_stats["files_read"] == st2["files_read"])
+
+    db.close()
+    ok_raises("a closed database", gf3d.GF_ERR_ARG, db.element_block, ielem)
+
+
 def main(argv):
     if len(argv) < 4:
         print(__doc__)
@@ -113,6 +284,17 @@ def main(argv):
     print(" test_gf_python")
     print(" ******************************")
     print()
+
+    # the element block alone, on a database the full run did not use
+    if len(argv) > 5 and argv[5] == "block":
+        print(f" 10. element_block, on {dbpath}")
+        element_block_section(dbpath, gf3d.CMTSource.read(cmtpath))
+        print()
+        if nfail == 0:
+            print(" test_gf_python: all assertions passed\n")
+            return 0
+        print(f" test_gf_python: {nfail} assertion(s) FAILED\n")
+        return 1
 
     # ------------------------------------------------------------------
     print(" 1. the package and the library it found")
@@ -412,6 +594,11 @@ def main(argv):
     with gf3d.Database(dbpath) as ctx:
         ok("the context manager opens", not ctx.closed)
     ok("and closes on the way out", ctx.closed)
+
+    # ------------------------------------------------------------------
+    print("\n 10. element_block")
+
+    element_block_section(dbpath, cmt)
 
     print()
     if nfail == 0:

@@ -122,6 +122,10 @@
     gf_stf_plan, gf_taxis_plan, gf_taxis_times, gf_stf_kind_name, gf_print_stf, &
     gf_hdur_gaussian, gf_default_t0
 
+  !--- one element's data, contraction-ready, for a caller that contracts
+  !--- and processes outside the library
+  use gf_element_io, only: gf_element_export
+
   !--- extraction
   use gf_seismograms, only: &
     gf_time_axis, gf_seis_plan, gf_seis, &

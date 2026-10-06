@@ -130,7 +130,7 @@ extern "C" {
 #endif
 
 /* bumped when anything below changes incompatibly */
-#define GF3D_API_VERSION 3
+#define GF3D_API_VERSION 4
 
 /* fits 'NET.STA': MAX_LENGTH_NETWORK_NAME + 1 + MAX_LENGTH_STATION_NAME */
 #define GF3D_STRLEN 64
@@ -439,6 +439,44 @@ int gf3d_partials(gf3d_handle h, const gf3d_source *src, double t0_req,
                   int kind, int nt, int ndp,
                   double *seis, double *dp, double *t, double *onset,
                   gf3d_location *loc);
+
+/* ------------------------------------------------------------------ */
+/* one element's raw data                                             */
+/* ------------------------------------------------------------------ */
+
+/*
+ * One element's displacement for a set of stations, in the order a
+ * contraction with weights wants it, for a caller that contracts and
+ * processes outside the library.
+ *
+ *   ielem     1..info.nelem, as gf3d_location.ielem
+ *   nsel      1..info.nstations
+ *   ista_sel  nsel station indices, 0-based, in any order, repeats allowed;
+ *             NULL means every station in order, and then nsel must equal
+ *             info.nstations
+ *   nt_out    1..info.nt_subsampled
+ *   buf       [nsel][3][nt_out][375], float32       (caller-allocated)
+ *
+ * buf[s][a][t][m] is the displacement of station ista_sel[s] along the
+ * force component a (0,1,2 = N,E,Z) at stored sample t, with
+ *     m = p + 3*(i + 5*j + 25*k)
+ * where p is the displacement component at the source and i,j,k the 0-based
+ * GLL indices of the point in the element. The numbers are the stored ones,
+ * unchanged.
+ *
+ * The nt_out samples are the first stored ones, so only the chunks that hold
+ * them are read. The trace a contraction gives from a prefix is the full
+ * read's on every sample; but after the library's STF conversion the last
+ * khalf samples differ, so a consumer converting with the STF needs khalf
+ * more samples than it keeps.
+ *
+ * The file is read from disk on every call: the handle's element cache is
+ * neither used nor filled, and cache_stats.files_read counts each file.
+ * Anything out of range, a NULL buf, or a build whose reals are not single
+ * precision is GF_ERR_ARG, refused before any file is opened.
+ */
+int gf3d_element_block(gf3d_handle h, int ielem, int nsel, const int *ista_sel,
+                       int nt_out, float *buf);
 
 #ifdef __cplusplus
 }

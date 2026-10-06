@@ -88,7 +88,7 @@
   use, intrinsic :: iso_c_binding, only: &
     c_int, c_long_long, c_double, c_char, c_ptr, c_null_char, c_associated, c_f_pointer, c_sizeof
 
-  use constants, only: MAX_STRING_LEN
+  use constants, only: MAX_STRING_LEN, CUSTOM_REAL, NGLLX, NGLLY, NGLLZ
 
   ! the same module a downstream Fortran caller uses, so that this facade
   ! cannot reach anything the public surface does not already offer
@@ -105,7 +105,7 @@
                   gf_open, gf_close, gf_cache_stats, gf_element_bytes, &
                   gf_source_set_cmt, gf_source_set_force, &
                   gf_locate_source, gf_locate_release, gf_locate_tree_owner, &
-                  gf_seis_plan, gf_extract, gf_default_t0, &
+                  gf_seis_plan, gf_extract, gf_default_t0, gf_element_export, &
                   gf_partials_ndp, GF_NDP_LOC, GF_DP_NAME, GF_DP_UNIT
 
   implicit none
@@ -123,7 +123,7 @@
   ! case-insensitivity would make it the same identifier as the
   ! gf3d_api_version() entry point below, exactly the trap GF3D_VERSION/
   ! GF_VERSION_STRING avoids above. Must match gf3d.h's #define.
-  integer(c_int), parameter :: GF_API_VERSION_NUMBER = 3
+  integer(c_int), parameter :: GF_API_VERSION_NUMBER = 4
 
   !-----------------------------------------------------------------
   ! the interoperable mirrors of the library's derived types
@@ -229,7 +229,7 @@
   public :: gf3d_version, gf3d_api_version, gf3d_sizeof, gf3d_last_error, gf3d_error_string
   public :: gf3d_open, gf3d_close, gf3d_get_info, gf3d_get_station, gf3d_cache_stats
   public :: gf3d_locate, gf3d_get_plan, gf3d_ndp, gf3d_partial_name
-  public :: gf3d_seismograms, gf3d_partials
+  public :: gf3d_seismograms, gf3d_partials, gf3d_element_block
 
   contains
 
@@ -1170,5 +1170,96 @@
   gf3d_partials = int(ierr,kind=c_int)
 
   end function gf3d_partials
+
+!
+!===================================================================
+! one element's raw data
+!===================================================================
+!
+
+  integer(c_int) function gf3d_element_block(h,ielem,nsel,ista_sel,nt_out,buf) &
+    bind(C,name='gf3d_element_block')
+
+! one element's displacement for a set of stations, buf[nsel][3][nt_out][375]
+!
+! ielem is 1-based, as gf3d_location.ielem; ista_sel holds nsel 0-based
+! station indices, or is NULL for every station in order (then nsel must be
+! nstations). buf is caller-allocated and may not be NULL.
+!
+! Every size is checked against the handle before the pointer of that size
+! is formed, so that a negative or oversized count never reaches
+! c_f_pointer. buf is formed as real(CUSTOM_REAL), which is a float in the
+! one build gf_element_export accepts: a CUSTOM_REAL = 8 build compiles here
+! and is refused by that routine before it reads anything or touches buf.
+
+  implicit none
+
+  integer(c_int), value :: h
+  integer(c_int), value :: ielem
+  integer(c_int), value :: nsel
+  type(c_ptr), value :: ista_sel
+  integer(c_int), value :: nt_out
+  type(c_ptr), value :: buf
+
+  ! local parameters
+  integer(c_int), dimension(:), pointer :: psel
+  ! contiguous, so that the explicit-shape dummy gets buf itself and the
+  ! compiler adds no pack/unpack copy of a buffer that can be gigabytes
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), pointer, contiguous :: fbuf
+  integer, dimension(:), allocatable :: isel
+  integer :: ierr,i
+
+  ierr = GF_OK
+
+  call use_handle(h,ierr)
+
+  ! the range tests read handles(h), so they sit inside the handle's own block
+  if (ierr == GF_OK) then
+    if (nsel < 1 .or. nsel > handles(h)%nstations) then
+      call gf_set_error(ierr,GF_ERR_ARG,'gf3d_element_block: nsel must be 1..nstations')
+    else if (nt_out < 1 .or. nt_out > handles(h)%nt_subsampled) then
+      call gf_set_error(ierr,GF_ERR_ARG,'gf3d_element_block: nt_out must be 1..nt_subsampled')
+    else if (.not. c_associated(buf)) then
+      call gf_set_error(ierr,GF_ERR_ARG,'gf3d_element_block: buf is NULL')
+    else if (.not. c_associated(ista_sel) .and. nsel /= handles(h)%nstations) then
+      call gf_set_error(ierr,GF_ERR_ARG, &
+        'gf3d_element_block: a NULL station selection needs nsel = nstations')
+    endif
+  endif
+
+  if (ierr == GF_OK) then
+    allocate(isel(nsel),stat=i)
+    if (i /= 0) call gf_set_error(ierr,GF_ERR_ALLOC,'gf3d_element_block: cannot allocate')
+  endif
+
+  if (ierr == GF_OK) then
+    if (c_associated(ista_sel)) then
+      call c_f_pointer(ista_sel,psel,[int(nsel)])
+      do i = 1,nsel
+        ! 0-based in C. A value outside the range becomes 0 rather than
+        ! being incremented, which could wrap; gf_element_export refuses it
+        if (psel(i) < 0 .or. psel(i) >= handles(h)%nstations) then
+          isel(i) = 0
+        else
+          isel(i) = int(psel(i)) + 1
+        endif
+      enddo
+    else
+      do i = 1,nsel
+        isel(i) = i
+      enddo
+    endif
+  endif
+
+  if (ierr == GF_OK) then
+    call c_f_pointer(buf,fbuf,[GF_NCOMP*NGLLX*NGLLY*NGLLZ,int(nt_out),GF_NCOMP,int(nsel)])
+    call gf_element_export(handles(h),int(ielem),int(nsel),isel,int(nt_out),fbuf,ierr)
+  endif
+
+  if (allocated(isel)) deallocate(isel)
+
+  gf3d_element_block = int(ierr,kind=c_int)
+
+  end function gf3d_element_block
 
   end module gf3d_capi

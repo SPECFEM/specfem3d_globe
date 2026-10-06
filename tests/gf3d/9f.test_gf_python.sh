@@ -8,6 +8,13 @@
 # so all three are skips rather than failures. Test 19 supplies all three
 # and runs with GF3D_TEST_STRICT=1, where a skip fails.
 #
+# The main run covers $GFDB. Its last section, Database.element_block, is then
+# run again alone ("block") on each fixture layout $GFDB is not -- see
+# gfdb_extra_variants in gfdb_env.bash -- so that the contiguous layout (the
+# h5dread_f route) and the chunked one (the raw H5Dread_chunk route) are both
+# read. Its bitwise comparison with the station files needs h5py and is
+# skipped without it.
+#
 # Note the Python step is judged by its exit code alone, not by whether it
 # wrote to stderr: numpy and obspy warn there routinely, and the test itself
 # provokes a RuntimeWarning or two on purpose. The compile-time checks in
@@ -61,6 +68,13 @@ if [ $? -ne 0 ]; then
   exit 0
 fi
 
+# the layouts the main run does not cover, for the element block section
+gfdb_extra_variants
+if [ $? -ne 0 ]; then
+  echo "could not build the other fixture layout" >> $testdir/results.log
+  exit 1
+fi
+
 # runs test
 echo "run: `date`" >> $testdir/results.log
 PYTHONPATH="$srcdir/utils/green_function" \
@@ -81,6 +95,25 @@ if [[ -s $testdir/error.log ]]; then
   cat $testdir/error.log >> $testdir/results.log
 fi
 rm -f $testdir/error.log
+
+# the element block alone, on the other layouts
+for db in "${EXTRA_GFDBS[@]}"; do
+  echo "run: $db (element block only) `date`" >> $testdir/results.log
+  PYTHONPATH="$srcdir/utils/green_function" \
+  GF3D_LIB="$testdir/lib/libgf3d.so" \
+    "$PY" "$testdir/$var.py" "$testdir/bin/xgf3d" "$db" "$CMT" "$FORCE" block \
+    >> $testdir/results.log 2>$testdir/error.log
+  if [[ $? -ne 0 ]]; then
+    echo "test failed"; echo "error log:"; cat $testdir/error.log; echo ""
+    echo "results:"; tail -n 40 $testdir/results.log
+    exit 1
+  fi
+  if [[ -s $testdir/error.log ]]; then
+    echo "stderr (not a failure):" >> $testdir/results.log
+    cat $testdir/error.log >> $testdir/results.log
+  fi
+  rm -f $testdir/error.log
+done
 
 #cleanup
 rm -rf $srcdir/utils/green_function/gf3d/__pycache__

@@ -432,7 +432,7 @@ $O/gf_seismograms.gf3d.o: $O/gf_par.gf3d.o $O/gf_database.gf3d.o $O/gf_element_i
                           $O/gf_weights.gf3d.o $O/gf_geo_chain.gf3d.o
 $O/gf3d.gf3d.o: $O/gf_par.gf3d.o $O/gf_database.gf3d.o $O/gf_locate.gf3d.o \
                 $O/gf_source.gf3d.o $O/gf_seismograms.gf3d.o $O/gf_partials.gf3d.o \
-                $O/gf_sac.gf3d.o $O/gf_shared_params.gf3d.o
+                $O/gf_sac.gf3d.o $O/gf_shared_params.gf3d.o $O/gf_element_io.gf3d.o
 $O/gf3d_capi.gf3d.o: $O/gf3d.gf3d.o $O/gf_par.gf3d.o $O/gf_database.gf3d.o \
                      $O/gf_locate.gf3d.o $O/gf_source.gf3d.o \
                      $O/gf_seismograms.gf3d.o $O/gf_partials.gf3d.o \

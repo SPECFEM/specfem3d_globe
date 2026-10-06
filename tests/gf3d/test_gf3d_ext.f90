@@ -62,7 +62,7 @@
   use gf3d
 
   use, intrinsic :: iso_c_binding, only: c_int,c_long_long,c_double,c_char,c_ptr,c_null_char, &
-                                         c_null_ptr,c_loc
+                                         c_null_ptr,c_loc,c_float
 
   implicit none
 
@@ -159,6 +159,17 @@
       type(c_ptr), value :: loc
     end function c_gf3d_partials
 
+    integer(c_int) function c_gf3d_element_block(h,ielem,nsel,ista_sel,nt_out,buf) &
+      bind(C,name='gf3d_element_block')
+      import :: c_int,c_float
+      integer(c_int), value :: h
+      integer(c_int), value :: ielem
+      integer(c_int), value :: nsel
+      integer(c_int), dimension(*), intent(in) :: ista_sel
+      integer(c_int), value :: nt_out
+      real(c_float), dimension(*), intent(out) :: buf
+    end function c_gf3d_element_block
+
   end interface
 
   !--- the test ---
@@ -181,6 +192,14 @@
   double precision, dimension(:), allocatable :: t,t_again
   type(t_gfdb) :: db2
   type(t_gf_location) :: loc2
+
+  ! section 8: one element's block, both routes. A single-precision build:
+  ! gf_element_export's buffer is CUSTOM_REAL, which this program cannot
+  ! name (gf3d does not re-export it), and the routine refuses any other.
+  integer, dimension(2), parameter :: SEL_BLK = (/ 2, 1 /)
+  real(c_float), dimension(:,:,:,:), allocatable :: blk_f,blk_c
+  integer :: nt_blk
+  integer(c_int), dimension(2) :: csel
 
   type(gf3d_source_t) :: csrc
   type(gf3d_plan_t) :: cplan
@@ -471,6 +490,44 @@
     call gf_locate_source(db,src%latitude,src%longitude,src%depth,loc_back,ierr)
     call report_true('   moving back recovers element A   ', &
                      ierr == GF_OK .and. loc_back%ielem == loc_a%ielem,nfail)
+  endif
+
+  !--- one element's raw block, both routes ---
+  !
+  ! The same stored numbers, read by the library routine and by the C entry
+  ! point, so bitwise. Stations 2 and 1 (1-based) in that order, the element
+  ! the source sits in, and a prefix of half the record: the fixture's first
+  ! samples are all zero, so a short prefix would compare zeros.
+
+  write(*,*) '8. one element block, both routes'
+
+  if (db%nstations >= 2) then
+
+    nt_blk = db%nt_subsampled/2 + 1
+    allocate(blk_f(375,nt_blk,GF_NCOMP,2),blk_c(375,nt_blk,GF_NCOMP,2))
+
+    call gf_element_export(db,loc_a%ielem,2,SEL_BLK,nt_blk,blk_f,ierr)
+    call report_true('   gf_element_export',ierr == GF_OK,nfail)
+    call report_true('   its last sample is not all zero',any(blk_f(:,nt_blk,:,:) /= 0.0),nfail)
+
+    cerr = c_gf3d_open(trim(dbpath)//c_null_char,0_c_int,0_c_int,ch)
+    call report_true('   gf3d_open',cerr == GF_OK,nfail)
+    if (cerr == GF_OK) then
+      csel = int(SEL_BLK - 1,kind=c_int)
+      cerr = c_gf3d_element_block(ch,int(loc_a%ielem,kind=c_int),2_c_int,csel, &
+                                  int(nt_blk,kind=c_int),blk_c)
+      call report_true('   gf3d_element_block',cerr == GF_OK,nfail)
+      if (cerr == GF_OK .and. ierr == GF_OK) then
+        call report_true('   the two blocks are bitwise equal',all(blk_f == blk_c),nfail)
+      endif
+      cerr = c_gf3d_close(ch)
+      call report_true('   gf3d_close',cerr == GF_OK,nfail)
+    endif
+
+    deallocate(blk_f,blk_c)
+
+  else
+    write(*,*) '   (fewer than two stations; not exercised)'
   endif
 
   ! the pair a long-lived caller must use: gf_close alone leaves the

@@ -30,10 +30,22 @@ __all__ = ["Database", "Result", "Plan", "Location", "Station", "open"]
 _ONSET_WARN = 1.0e-3
 _INT_MAX = 2**31 - 1
 _DOUBLE_P = ctypes.POINTER(ctypes.c_double)
+_FLOAT_P = ctypes.POINTER(ctypes.c_float)
+_INT_P = ctypes.POINTER(ctypes.c_int)
+_NGLL3 = 125
 
 
 def _ptr(a: np.ndarray):
     return a.ctypes.data_as(_DOUBLE_P)
+
+
+def _cint(n) -> int:
+    """An int clipped to the C int range, so that a silly one stays silly."""
+    return min(max(int(n), -_INT_MAX - 1), _INT_MAX)
+
+
+def _fptr(a: np.ndarray):
+    return a.ctypes.data_as(_FLOAT_P)
 
 
 def _s(b: bytes) -> str:
@@ -491,6 +503,98 @@ class Database:
             location=Location._from_c(cloc), dp=dp, dp_names=names,
             dp_units=units, source=source,
         )
+
+    # -- one element's raw data --------------------------------------------
+
+    def _station_indices(self, stations) -> np.ndarray:
+        """0-based station indices from ids (``'NET.STA'``) and/or ints.
+
+        An id that is not in the database is a ValueError naming it. An int
+        is passed on as it is, clipped to the C int range only so that it
+        arrives as an out-of-range index rather than as an OverflowError:
+        the library does the range check.
+        """
+        ids = None
+        out = []
+        for s in stations:
+            if isinstance(s, str):
+                if ids is None:
+                    ids = self.station_ids
+                try:
+                    out.append(ids.index(s))
+                except ValueError:
+                    raise ValueError(f"no station {s!r} in this database") from None
+            else:
+                out.append(_cint(s))
+        return np.array(out, dtype=np.intc)
+
+    def element_block(self, ielem: int, stations=None, nt: int | None = None,
+                      out: np.ndarray | None = None) -> np.ndarray:
+        """One element's raw displacement for a set of stations.
+
+        Returns a C-contiguous float32 array of shape ``(nsel, 3, nt, 375)``:
+        ``block[s, a, t, m]`` is the displacement of station ``s`` along the
+        force component ``a`` (N, E, Z) at stored sample ``t``, with
+        ``m = p + 3*(i + 5*j + 25*k)``, ``p`` the displacement component at
+        the source and ``i, j, k`` the 0-based GLL indices. The numbers are
+        the stored ones, unchanged: contract them with weights outside the
+        library.
+
+        ``ielem`` is 1-based, as :attr:`Location.ielem`. ``stations`` is
+        ``None`` for every station, or a sequence of indices (0-based) and/or
+        ids (``'NET.STA'``), in any order, repeats allowed. ``nt`` is how many
+        samples from the first stored one to read, 1 to ``nt_subsampled``
+        (default all); only the chunks that hold them are read. A trace
+        contracted from a prefix is the full read's on every sample, but one
+        converted with the source time function afterwards differs in its
+        last ``plan.khalf`` samples, so read that many more than are kept.
+
+        ``out``, if given, receives the block and is returned: a float32
+        C-contiguous ndarray of exactly that shape.
+
+        The element is read from disk on every call. The handle's element
+        cache is neither used nor filled (``hits``, ``misses``, ``evictions``
+        and ``n_cached`` do not move); ``files_read`` grows by one per
+        station.
+        """
+        if nt is None:
+            nt = self.info["nt_subsampled"]
+        nt = _cint(nt)
+
+        if stations is None:
+            sel = None
+            nsel = self.info["nstations"]
+        else:
+            sel = self._station_indices(stations)
+            nsel = len(sel)
+
+        # the library refuses a size it does not accept before the shape
+        # below is allocated or indexed with it
+        if nsel < 1 or nt < 1:
+            shape = None
+        else:
+            shape = (nsel, GF_NCOMP, nt, GF_NCOMP * _NGLL3)
+
+        if out is not None:
+            if not (isinstance(out, np.ndarray) and out.dtype == np.float32
+                    and out.flags["C_CONTIGUOUS"] and out.flags["WRITEABLE"]
+                    and out.shape == shape):
+                raise ValueError(
+                    f"out must be a writeable C-contiguous float32 ndarray of shape {shape}"
+                )
+        elif shape is not None and nt <= self.info["nt_subsampled"]:
+            out = np.empty(shape, dtype=np.float32)
+
+        with LIBRARY_LOCK:
+            check(
+                lib.gf3d_element_block(
+                    self._h(), _cint(ielem), nsel,
+                    None if sel is None else sel.ctypes.data_as(_INT_P),
+                    nt, None if out is None else _fptr(out),
+                ),
+                "gf3d_element_block",
+            )
+        return out
 
     @staticmethod
     def partial_names(ndp: int = GF_NDP_LOC):

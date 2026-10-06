@@ -52,7 +52,12 @@
  * that lets this library be loaded into a Python interpreter, and the only
  * way to test it is to try each one and still reach the end.
  *
- * Usage: test_gf_capi <GFDB directory> <CMTSOLUTION>
+ * Usage: test_gf_capi <GFDB directory> <CMTSOLUTION> [block]
+ *
+ * With a third argument "block" only section 11, gf3d_element_block, is run
+ * (on its own handle). The runner does that on the fixture layout the full
+ * run did not use: the contiguous fixture reads through the h5dread_f
+ * fallback, the chunked one through the raw H5Dread_chunk route.
  */
 
 #include <stdio.h>
@@ -145,6 +150,187 @@ static int read_cmtsolution(const char *path, gf3d_source *src)
   return (iline >= 13) ? 0 : 3;
 }
 
+/* floats of one (station, force component, sample): 3 displacement
+   components * 5^3 points, the m of the header */
+#define NM (GF_NCOMP * 125)
+
+/*
+ * gf3d_element_block against itself and against the cache counters.
+ *
+ * The oracle is a copy: a selection or a prefix of the all-stations,
+ * all-samples read is the same stored numbers placed elsewhere, so every
+ * comparison is memcmp, never a tolerance. (The test_gf_python.sh section of
+ * the same name checks the full read against the station files themselves.)
+ */
+static void element_block_tests(const char *dbpath, const gf3d_source *src)
+{
+  gf3d_handle h = 0;
+  gf3d_info info;
+  gf3d_location loc;
+  gf3d_plan plan;
+  float *full = NULL, *sel = NULL;
+  double *seis = NULL, *t = NULL, *onset = NULL;
+  long long hits0, misses0, evict0, files0, hits1, misses1, evict1, files1;
+  int nc0, nc1, ierr, nsta, ntf, ntp, a, s, same, ielem;
+  int pick[2] = {1, 0};
+  int rep[2] = {0, 0};
+  size_t row;
+
+  /* two elements: the extraction below leaves one in the cache */
+  ierr = gf3d_open(dbpath, 0, 2, &h);
+  ok_status("gf3d_open for the element block", ierr, GF_OK);
+  if (ierr != GF_OK) return;
+  gf3d_get_info(h, &info);
+  nsta = info.nstations;
+
+  ierr = gf3d_locate(h, src->latitude, src->longitude, src->depth_km, &loc);
+  ok_status("gf3d_locate", ierr, GF_OK);
+  if (ierr != GF_OK) { gf3d_close(h); return; }
+  ielem = loc.ielem;
+
+  /* the whole record of every station is 3 GB on a real database: a prefix
+     of at most 256 MB there, everything on the fixture */
+  ntf = info.nt_subsampled;
+  if ((double)nsta * GF_NCOMP * NM * ntf * sizeof(float) > 256.0e6) {
+    ntf = (int)(256.0e6 / ((double)nsta * GF_NCOMP * NM * sizeof(float)));
+    if (ntf < 1) ntf = 1;
+    printf("       a large database: the full read is the first %d of %d samples\n",
+           ntf, info.nt_subsampled);
+  }
+  /* the fixture's first stored samples are all zero, so a comparison over a
+     short prefix compares zeros: ntp ends past the onset, inside a chunk (the
+     chunked fixture's are 7 samples), and its last sample is checked to be
+     nonzero below */
+  ntp = ntf / 2 + 1;
+
+  full = (float *)malloc((size_t)nsta * GF_NCOMP * NM * ntf * sizeof(float));
+  sel = (float *)malloc((size_t)2 * GF_NCOMP * NM * ntp * sizeof(float));
+  if (full == NULL || sel == NULL) { fprintf(stderr, "out of memory\n"); exit(1); }
+
+  /* one extraction, so that the cache holds something to leave alone */
+  ierr = gf3d_get_plan(h, src, -1.0, &plan);
+  seis = (double *)malloc((size_t)nsta * GF_NCOMP * plan.nt * sizeof(double));
+  t = (double *)malloc((size_t)plan.nt * sizeof(double));
+  onset = (double *)malloc((size_t)nsta * sizeof(double));
+  if (seis == NULL || t == NULL || onset == NULL) { fprintf(stderr, "out of memory\n"); exit(1); }
+  if (ierr == GF_OK)
+    ierr = gf3d_seismograms(h, src, -1.0, plan.nt, seis, t, onset, NULL);
+  ok_status("an extraction fills the cache", ierr, GF_OK);
+
+  gf3d_cache_stats(h, &hits0, &misses0, &evict0, &nc0, &files0);
+  ok("the cache holds one element", nc0 == 1);
+
+  /* all stations: NULL selection */
+  ierr = gf3d_element_block(h, ielem, nsta, NULL, ntf, full);
+  ok_status("all stations, NULL selection", ierr, GF_OK);
+  if (ierr == GF_OK) {
+    int finite = 1, nonzero = 0;
+    size_t n = (size_t)nsta * GF_NCOMP * NM * ntf, i;
+    for (i = 0; i < n; i++) {
+      if (!isfinite(full[i])) finite = 0;
+      if (full[i] != 0.0f) nonzero = 1;
+    }
+    ok("every value is finite", finite);
+    ok("the block is not all zero", nonzero);
+    nonzero = 0;
+    for (s = 0; s < nsta; s++)
+      for (a = 0; a < GF_NCOMP; a++)
+        for (i = 0; i < NM; i++)
+          if (full[(((size_t)s * GF_NCOMP + a) * ntf + (ntp - 1)) * NM + i] != 0.0f)
+            nonzero = 1;
+    ok("the last sample of the test prefix is not all zero", nonzero);
+  }
+
+  gf3d_cache_stats(h, &hits1, &misses1, &evict1, &nc1, &files1);
+  ok("the cache is untouched: hits, misses, evictions, held",
+     hits1 == hits0 && misses1 == misses0 && evict1 == evict0 && nc1 == nc0);
+  ok("files_read grew by one per station", files1 - files0 == nsta);
+
+  /* a selection, in another order, and a prefix: copies of the full read */
+  row = (size_t)ntp * NM;
+  if (nsta >= 2) {
+    ierr = gf3d_element_block(h, ielem, 2, pick, ntp, sel);
+    ok_status("stations {1, 0}, a prefix", ierr, GF_OK);
+    same = (ierr == GF_OK);
+    for (s = 0; same && s < 2; s++)
+      for (a = 0; a < GF_NCOMP; a++)
+        if (memcmp(sel + ((size_t)s * GF_NCOMP + a) * row,
+                   full + ((size_t)pick[s] * GF_NCOMP + a) * (size_t)ntf * NM,
+                   row * sizeof(float)) != 0)
+          same = 0;
+    ok("the selection and prefix equal the full read, bitwise", same);
+
+    ierr = gf3d_element_block(h, ielem, 2, rep, ntp, sel);
+    ok_status("station 0 twice", ierr, GF_OK);
+    same = (ierr == GF_OK);
+    for (s = 0; same && s < 2; s++)
+      for (a = 0; a < GF_NCOMP; a++)
+        if (memcmp(sel + ((size_t)s * GF_NCOMP + a) * row,
+                   full + ((size_t)0 * GF_NCOMP + a) * (size_t)ntf * NM,
+                   row * sizeof(float)) != 0)
+          same = 0;
+    ok("a repeated station is read twice, equal to the full read", same);
+  }
+
+  ierr = gf3d_element_block(h, ielem, 1, pick, 1, sel);
+  ok_status("one station, one sample", ierr, GF_OK);
+  same = (ierr == GF_OK);
+  for (a = 0; same && a < GF_NCOMP; a++)
+    if (memcmp(sel + (size_t)a * NM,
+               full + ((size_t)pick[0] * GF_NCOMP + a) * (size_t)ntf * NM,
+               NM * sizeof(float)) != 0)
+      same = 0;
+  ok("its first sample equals the full read's, bitwise", same);
+
+  /* the three calls above read 2 + 2 + 1 files and nothing else */
+  gf3d_cache_stats(h, &hits1, &misses1, &evict1, &nc1, &files1);
+  ok("files_read grew by nsel for each call",
+     files1 - files0 == (long long)nsta + (nsta >= 2 ? 4 : 0) + 1);
+  ok("the cache is still untouched",
+     hits1 == hits0 && misses1 == misses0 && evict1 == evict0 && nc1 == nc0);
+
+  /* refusals, before any file is opened */
+  files0 = files1;
+  ok_status("ielem 0 refused",
+            gf3d_element_block(h, 0, nsta, NULL, ntf, full), GF_ERR_ARG);
+  ok_status("ielem nelem+1 refused",
+            gf3d_element_block(h, info.nelem + 1, nsta, NULL, ntf, full), GF_ERR_ARG);
+  ok_status("nt_out 0 refused",
+            gf3d_element_block(h, ielem, nsta, NULL, 0, full), GF_ERR_ARG);
+  ok_status("nt_out nt_subsampled+1 refused",
+            gf3d_element_block(h, ielem, nsta, NULL, info.nt_subsampled + 1, full),
+            GF_ERR_ARG);
+  ok_status("nsel 0 refused",
+            gf3d_element_block(h, ielem, 0, pick, 1, sel), GF_ERR_ARG);
+  ok_status("nsel nstations+1 refused",
+            gf3d_element_block(h, ielem, nsta + 1, pick, 1, sel), GF_ERR_ARG);
+  if (nsta >= 2)
+    ok_status("a NULL selection with nsel != nstations refused",
+              gf3d_element_block(h, ielem, nsta - 1, NULL, 1, sel), GF_ERR_ARG);
+  {
+    int bad[1] = {-1};
+    ok_status("station index -1 refused",
+              gf3d_element_block(h, ielem, 1, bad, 1, sel), GF_ERR_ARG);
+    bad[0] = nsta;
+    ok_status("station index nstations refused",
+              gf3d_element_block(h, ielem, 1, bad, 1, sel), GF_ERR_ARG);
+  }
+  ok_status("a NULL buf refused",
+            gf3d_element_block(h, ielem, 1, pick, 1, NULL), GF_ERR_ARG);
+  ok_status("a bad handle refused",
+            gf3d_element_block(99, ielem, 1, pick, 1, sel), GF_ERR_ARG);
+
+  gf3d_cache_stats(h, NULL, NULL, NULL, NULL, &files1);
+  ok("no refused call read a file", files1 == files0);
+
+  free(full);
+  free(sel);
+  free(seis);
+  free(t);
+  free(onset);
+  ok_status("closing the handle", gf3d_close(h), GF_OK);
+}
+
 int main(int argc, char **argv)
 {
   const char *dbpath, *cmtpath;
@@ -169,6 +355,23 @@ int main(int argc, char **argv)
   printf("\n ******************************\n");
   printf(" test_gf_capi\n");
   printf(" ******************************\n\n");
+
+  /* the element block alone, on a database the full run did not use */
+  if (argc >= 4 && strcmp(argv[3], "block") == 0) {
+    printf(" 11. one element's raw data, on %s\n", dbpath);
+    if (read_cmtsolution(cmtpath, &src) != 0) {
+      fprintf(stderr, "cannot read %s\n", cmtpath);
+      return 1;
+    }
+    element_block_tests(dbpath, &src);
+    printf("\n");
+    if (nfail == 0) {
+      printf(" test_gf_capi: all assertions passed\n\n");
+      return 0;
+    }
+    printf(" test_gf_capi: %d assertion(s) FAILED\n\n", nfail);
+    return 1;
+  }
 
   /* ---------------------------------------------------------------- */
   printf(" 1. version, sizes and error strings\n");
@@ -597,6 +800,11 @@ int main(int argc, char **argv)
               gf3d_cache_stats(hc, &hits, NULL, NULL, NULL, NULL), GF_ERR_ARG);
     gf3d_close(h0);
   }
+
+  /* ---------------------------------------------------------------- */
+  printf("\n 11. one element's raw data\n");
+
+  element_block_tests(dbpath, &src);
 
   free(seis);
   free(dp);
