@@ -42,6 +42,9 @@ __all__ = [
     "GF_NCOMP",
     "GF_NDP_MT",
     "GF_NDP_LOC",
+    "GF_STF_NONE",
+    "GF_STF_GAUSS",
+    "GF_STF_HEAVI",
     "CSource",
     "CInfo",
     "CStation",
@@ -84,6 +87,11 @@ GF_SRC_CMT = 2
 GF_NCOMP = 3
 GF_NDP_MT = 6
 GF_NDP_LOC = 10
+
+# gf3d_plan.kind_stf, the source time function conversion
+GF_STF_NONE = 0
+GF_STF_GAUSS = 1
+GF_STF_HEAVI = 2
 
 _c_double = ctypes.c_double
 _c_int = ctypes.c_int
@@ -384,6 +392,28 @@ lib.gf3d_element_block.argtypes = [
     _c_float_p,
 ]
 lib.gf3d_element_block.restype = _c_int
+
+lib.gf3d_weights.argtypes = [
+    _c_int,
+    ctypes.POINTER(CSource),
+    _c_int,
+    _c_int,
+    _c_double_p,
+    _c_double_p,
+    _c_double_p,
+    ctypes.POINTER(CLocation),
+]
+lib.gf3d_weights.restype = _c_int
+
+lib.gf3d_stf_kernel_size.argtypes = [
+    _c_int, _c_double, _c_double, _c_double, _c_int_p,
+]
+lib.gf3d_stf_kernel_size.restype = _c_int
+
+lib.gf3d_stf_kernel.argtypes = [
+    _c_int, _c_double, _c_double, _c_double, _c_int, _c_double_p,
+]
+lib.gf3d_stf_kernel.restype = _c_int
 
 
 # ---------------------------------------------------------------------------

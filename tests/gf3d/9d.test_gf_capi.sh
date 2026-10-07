@@ -10,11 +10,11 @@
 # database-backed runners here do. Test 19 has HDF5 and runs it with
 # GF3D_TEST_STRICT=1, where a skip fails.
 #
-# The main run covers $GFDB. Its last section, gf3d_element_block, is then run
-# again alone ("block") on each fixture layout $GFDB is not -- see
-# gfdb_extra_variants in gfdb_env.bash -- so that the contiguous layout (the
-# h5dread_f route) and the chunked one (the raw H5Dread_chunk route) are both
-# read through the C ABI.
+# The main run covers $GFDB. Its last two sections, gf3d_element_block and
+# gf3d_weights, are then run again alone ("block") on each fixture layout
+# $GFDB is not -- see gfdb_extra_variants in gfdb_env.bash -- so that the
+# contiguous layout (the h5dread_f route) and the chunked one (the raw
+# H5Dread_chunk route) are both read through the C ABI.
 #
 ###################################################
 
@@ -50,7 +50,7 @@ if [ $? -ne 0 ]; then
   exit 0
 fi
 
-# the layouts the main run does not cover, for the element block section
+# the layouts the main run does not cover, for the element block sections
 gfdb_extra_variants
 if [ $? -ne 0 ]; then
   echo "could not build the other fixture layout" >> $testdir/results.log
@@ -91,7 +91,7 @@ if [[ -s $testdir/error.log ]]; then
 fi
 rm -f $testdir/error.log
 
-# the element block alone, on the other layouts
+# the element block sections alone, on the other layouts
 for db in "${EXTRA_GFDBS[@]}"; do
   echo "run: $db (element block only) `date`" >> $testdir/results.log
   ./bin/$var "$db" "$CMT" block >> $testdir/results.log 2>$testdir/error.log

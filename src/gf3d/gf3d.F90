@@ -120,7 +120,7 @@
   !--- the source time function and the output time axis
   use gf_stf, only: &
     gf_stf_plan, gf_taxis_plan, gf_taxis_times, gf_stf_kind_name, gf_print_stf, &
-    gf_hdur_gaussian, gf_default_t0
+    gf_hdur_gaussian, gf_default_t0, gf_stf_taps_size, gf_stf_taps
 
   !--- one element's data, contraction-ready, for a caller that contracts
   !--- and processes outside the library
@@ -129,7 +129,8 @@
   !--- extraction
   use gf_seismograms, only: &
     gf_time_axis, gf_seis_plan, gf_seis, &
-    gf_write_seis, gf_write_partials, gf_write_dump
+    gf_write_seis, gf_write_partials, gf_write_dump, &
+    gf_seis_weights, gf_seis_station_scale
 
   !--- partial derivatives: the count, the slot order, the names and units
   use gf_partials, only: &
@@ -146,6 +147,9 @@
   implicit none
 
   public
+
+  ! what gf_source_weights is built from; a caller wants that, not its parts
+  private :: gf_seis_weights, gf_seis_station_scale
 
   contains
 
@@ -368,5 +372,102 @@
   deallocate(fonset,tsec)
 
   end subroutine gf_extract
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_source_weights(db,src,kind,ndw,w,dw,scale,loc,ierr)
+
+! locate, then the weights that make the source's traces from an element's
+! raw data -- gf_element_export's -- for a caller that contracts and
+! applies the source time function itself
+!
+! For station ista, force component a and stored sample t, with u(a,m,t)
+! the block of the element loc%ielem (m = p + 3*(i-1) + 15*(j-1) + 75*(k-1)):
+!
+!   seismogram   STF[ scale(ista) * SUM_m u(a,m,t) w(m) ]
+!   partial c    STF[ scale(ista) * SUM_m u(a,m,t) dw(m,c) ]
+!
+! STF[.] is the conversion gf_seis_plan chose for the source (gf_stf.F90).
+! The columns are gf_seis's partial slots 1..ndw: kind 0 none (ndw = 0),
+! kind 1 the six moment-tensor ones (ndw = 6), kind 2 those and latitude,
+! longitude, depth (ndw = 9), in GF_DP_UNIT's units -- gf_seis_weights's
+! columns with their column scale folded in. The centroid time has no
+! column: it shifts the trace. A force source has kind 0 only.
+!
+! `loc` is assigned once the locate has succeeded, as in gf_extract.
+
+  use constants, only: NGLLX,NGLLY,NGLLZ
+
+  implicit none
+
+  type(t_gfdb), intent(inout) :: db          ! inout: the topography grid loads lazily
+  type(t_gf_source), intent(in) :: src
+  integer, intent(in) :: kind,ndw
+  double precision, dimension(GF_NCOMP*NGLLX*NGLLY*NGLLZ), intent(out) :: w
+  double precision, dimension(GF_NCOMP*NGLLX*NGLLY*NGLLZ,ndw), intent(out) :: dw
+  double precision, dimension(db%nstations), intent(out) :: scale
+  type(t_gf_location), intent(out) :: loc
+  integer, intent(out) :: ierr
+
+  ! local parameters
+  type(t_gf_location) :: floc
+  double precision, dimension(ndw) :: colscale
+  integer :: ndw_want,ista,c
+
+  w(:) = 0.d0
+  dw(:,:) = 0.d0
+  scale(:) = 0.d0
+
+  if (.not. db%is_open) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_source_weights: database is not open')
+    return
+  endif
+
+  ! refused before the locate, as gf_extract does, so a request that can
+  ! never be served costs no file read
+  select case (kind)
+  case (0) ; ndw_want = 0
+  case (1) ; ndw_want = GF_NDP_MT
+  case (2) ; ndw_want = GF_NDP_LOC - 1
+  case default
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_source_weights: kind must be 0, 1 or 2')
+    return
+  end select
+  if (ndw /= ndw_want) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_source_weights: ndw does not match kind')
+    return
+  endif
+  if (kind > 0 .and. src%source_type /= GF_SRC_CMT) then
+    call gf_set_error(ierr,GF_ERR_ARG, &
+      'gf_source_weights: partial derivatives are defined for a moment-tensor source only')
+    return
+  endif
+  ! gf_seis's check: the station scale divides by it
+  do ista = 1,db%nstations
+    if (db%stations(ista)%factor_force_source == 0.d0) then
+      call gf_set_error(ierr,GF_ERR_ARG, &
+        'station '//trim(db%stations(ista)%id)//' has factor_force_source = 0')
+      return
+    endif
+  enddo
+
+  call gf_locate_source(db,src%latitude,src%longitude,src%depth,floc,ierr)
+  if (ierr /= GF_OK) return
+  loc = floc
+
+  call gf_seis_weights(db,src,floc,kind,ndw,w,dw,colscale,ierr)
+  if (ierr /= GF_OK) return
+
+  do c = 1,ndw
+    dw(:,c) = dw(:,c) * colscale(c)
+  enddo
+
+  do ista = 1,db%nstations
+    scale(ista) = gf_seis_station_scale(db,src,ista)
+  enddo
+
+  end subroutine gf_source_weights
 
   end module gf3d

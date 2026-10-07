@@ -170,6 +170,33 @@
       real(c_float), dimension(*), intent(out) :: buf
     end function c_gf3d_element_block
 
+    integer(c_int) function c_gf3d_weights(h,src,kind,ndw,w,dw,scale,loc) &
+      bind(C,name='gf3d_weights')
+      import :: c_int,c_double,c_ptr,gf3d_source_t
+      integer(c_int), value :: h
+      type(gf3d_source_t), intent(in) :: src
+      integer(c_int), value :: kind,ndw
+      real(c_double), dimension(*), intent(out) :: w,dw,scale
+      type(c_ptr), value :: loc
+    end function c_gf3d_weights
+
+    integer(c_int) function c_gf3d_stf_kernel_size(kind,hdur,dt,trunc,nk) &
+      bind(C,name='gf3d_stf_kernel_size')
+      import :: c_int,c_double
+      integer(c_int), value :: kind
+      real(c_double), value :: hdur,dt,trunc
+      integer(c_int), intent(out) :: nk
+    end function c_gf3d_stf_kernel_size
+
+    integer(c_int) function c_gf3d_stf_kernel(kind,hdur,dt,trunc,nk,kernel) &
+      bind(C,name='gf3d_stf_kernel')
+      import :: c_int,c_double
+      integer(c_int), value :: kind
+      real(c_double), value :: hdur,dt,trunc
+      integer(c_int), value :: nk
+      real(c_double), dimension(*), intent(out) :: kernel
+    end function c_gf3d_stf_kernel
+
   end interface
 
   !--- the test ---
@@ -200,6 +227,14 @@
   real(c_float), dimension(:,:,:,:), allocatable :: blk_f,blk_c
   integer :: nt_blk
   integer(c_int), dimension(2) :: csel
+
+  ! section 9: the weights and the kernel, both routes
+  double precision, dimension(375) :: w_f,w_c
+  double precision, dimension(375,9) :: dw_f,dw_c
+  double precision, dimension(:), allocatable :: scale_f,scale_c,k_f,k_c
+  type(t_gf_location) :: loc_w
+  integer :: nk_f
+  integer(c_int) :: nk_c
 
   type(gf3d_source_t) :: csrc
   type(gf3d_plan_t) :: cplan
@@ -529,6 +564,55 @@
   else
     write(*,*) '   (fewer than two stations; not exercised)'
   endif
+
+  !--- the weights and the kernel, both routes ---
+  !
+  ! Both are the one Fortran routine, once called directly and once through
+  ! the facade, which only copies: so bitwise.
+
+  write(*,*) '9. the weights and the kernel, both routes'
+
+  allocate(scale_f(db%nstations),scale_c(db%nstations))
+
+  call gf_source_weights(db,src,2,9,w_f,dw_f,scale_f,loc_w,ierr)
+  call report_true('   gf_source_weights, kind 2',ierr == GF_OK,nfail)
+
+  cerr = c_gf3d_open(trim(dbpath)//c_null_char,0_c_int,0_c_int,ch)
+  call report_true('   gf3d_open',cerr == GF_OK,nfail)
+  if (cerr == GF_OK) then
+    cerr = c_gf3d_weights(ch,csrc,2_c_int,9_c_int,w_c,dw_c,scale_c,c_loc(cloc))
+    call report_true('   gf3d_weights, kind 2',cerr == GF_OK,nfail)
+    if (cerr == GF_OK .and. ierr == GF_OK) then
+      call report_true('   w equal',all(w_f == w_c),nfail)
+      call report_true('   dw equal, and not all zero',all(dw_f == dw_c) .and. any(dw_f /= 0.d0),nfail)
+      call report_true('   scale equal',all(scale_f == scale_c),nfail)
+      call report_true('   the location equal',cloc%ielem == loc_w%ielem .and. &
+                       cloc%xi == loc_w%xi .and. cloc%eta == loc_w%eta .and. &
+                       cloc%gamma == loc_w%gamma,nfail)
+    endif
+    cerr = c_gf3d_close(ch)
+    call report_true('   gf3d_close',cerr == GF_OK,nfail)
+  endif
+
+  ! the kernel at the plan section 3 got through the C route
+  call gf_stf_taps_size(cplan%kind_stf,cplan%hdur_corr,cplan%dt_sub,cplan%trunc,nk_f,ierr)
+  call report_true('   gf_stf_taps_size',ierr == GF_OK,nfail)
+  cerr = c_gf3d_stf_kernel_size(cplan%kind_stf,cplan%hdur_corr,cplan%dt_sub,cplan%trunc,nk_c)
+  call report_true('   gf3d_stf_kernel_size',cerr == GF_OK,nfail)
+  if (cerr == GF_OK .and. ierr == GF_OK) then
+    call report_true('   the lengths agree, 2*khalf+1',nk_f == nk_c .and. nk_f == 2*cplan%khalf+1,nfail)
+    allocate(k_f(nk_f),k_c(nk_f))
+    call gf_stf_taps(cplan%kind_stf,cplan%hdur_corr,cplan%dt_sub,cplan%trunc,nk_f,k_f,ierr)
+    call report_true('   gf_stf_taps',ierr == GF_OK,nfail)
+    cerr = c_gf3d_stf_kernel(cplan%kind_stf,cplan%hdur_corr,cplan%dt_sub,cplan%trunc, &
+                             int(nk_f,kind=c_int),k_c)
+    call report_true('   gf3d_stf_kernel',cerr == GF_OK,nfail)
+    if (cerr == GF_OK .and. ierr == GF_OK) &
+      call report_true('   the taps equal',all(k_f == k_c),nfail)
+    deallocate(k_f,k_c)
+  endif
+
+  deallocate(scale_f,scale_c)
 
   ! the pair a long-lived caller must use: gf_close alone leaves the
   ! kd-tree allocated

@@ -25,7 +25,7 @@ from ._lib import (
 )
 from .sources import CMTSource, ForceSource
 
-__all__ = ["Database", "Result", "Plan", "Location", "Station", "open"]
+__all__ = ["Database", "Result", "Plan", "Location", "Station", "Weights", "stf_kernel", "open"]
 
 _ONSET_WARN = 1.0e-3
 _INT_MAX = 2**31 - 1
@@ -149,6 +149,31 @@ class Plan:
     def times(self) -> np.ndarray:
         """The axis, as the library builds it."""
         return self.t_first + np.arange(self.nt) * self.dt_sub
+
+
+@dataclass(frozen=True, eq=False)
+class Weights:
+    """The weights that make a source's traces from an element's raw data.
+
+    ``location.ielem`` is the element: ``db.element_block(ielem)`` is its
+    data, ``block[s, a, t, m]``. In numpy terms, with ``blk = block[s, a]``
+    of shape ``(nt, 375)``, the trace of station ``s``, force component
+    ``a`` on the stored grid is ``scale[s] * blk @ w`` and partial ``c`` is
+    ``scale[s] * blk @ dw[c]``; the library's seismograms and partials are
+    the source time function conversion of these (:func:`stf_kernel`).
+
+    ``w`` is ``(375,)``, ``dw`` is ``(ndw, 375)`` with ``dw_names`` and
+    ``dw_units`` its rows' names and units (the first ``ndw`` of
+    :meth:`Database.partial_names`), ``scale`` is ``(nstations,)``. The
+    centroid time has no row: it shifts the trace. The arrays are read-only.
+    """
+
+    location: Location
+    w: np.ndarray
+    dw: np.ndarray
+    dw_names: tuple
+    dw_units: tuple
+    scale: np.ndarray
 
 
 @dataclass
@@ -596,6 +621,37 @@ class Database:
             )
         return out
 
+    # -- the weights -------------------------------------------------------
+
+    def weights(self, source, kind: int = 2) -> Weights:
+        """The weights that make ``source``'s traces from an element's raw data.
+
+        Locates the source; see :class:`Weights` and :meth:`element_block`.
+        ``kind`` 0 gives ``w`` only, 1 adds the six moment-tensor partials
+        and 2 latitude, longitude and depth (a force source allows 0 only).
+        """
+        ndw = {0: 0, 1: GF_NDP_MT, 2: GF_NDP_LOC - 1}.get(kind, 0)
+        csrc = source._to_struct()
+        c = CLocation()
+        w = np.empty(GF_NCOMP * _NGLL3, dtype=np.float64)
+        dw = np.empty((ndw, GF_NCOMP * _NGLL3), dtype=np.float64)
+        scale = np.empty(self.info["nstations"], dtype=np.float64)
+        with LIBRARY_LOCK:
+            check(
+                lib.gf3d_weights(
+                    self._h(), ctypes.byref(csrc), _cint(kind), ndw,
+                    _ptr(w), _ptr(dw) if ndw else None, _ptr(scale), ctypes.byref(c),
+                ),
+                "gf3d_weights",
+            )
+        names, units = self.partial_names(ndw)
+        for a in (w, dw, scale):
+            a.flags.writeable = False
+        return Weights(
+            location=Location._from_c(c), w=w, dw=dw,
+            dw_names=tuple(names), dw_units=tuple(units), scale=scale,
+        )
+
     @staticmethod
     def partial_names(ndp: int = GF_NDP_LOC):
         """``(names, units)`` of the first ``ndp`` partials."""
@@ -611,6 +667,52 @@ class Database:
                 names.append(_s(nbuf.value))
                 units.append(_s(ubuf.value))
         return names, units
+
+
+def stf_kernel(kind: int, hdur: float, dt: float, trunc: float) -> np.ndarray:
+    """The source time function's conversion kernel, from its parameters alone.
+
+    Returns the float64 taps ``w(-khalf..khalf)``, length ``2*khalf + 1``,
+    ``khalf = ceil(trunc*hdur/dt)`` (0 for ``GF_STF_NONE`` or ``hdur <= 0``):
+    ``kind`` is ``GF_STF_NONE``, ``GF_STF_GAUSS`` or ``GF_STF_HEAVI``.
+
+    The library's conversion of a trace ``x`` on the stored grid (a
+    :class:`Weights` contraction), with ``npad``, ``dt_sub`` and ``t_first``
+    from :meth:`Database.plan`::
+
+        xpad = np.concatenate([np.zeros(npad), x])
+        win  = np.convolve(xpad, k)[khalf:khalf + len(xpad)]   # zero outside
+        GF_STF_HEAVI:  P = np.cumsum(xpad)
+                       y[i] = dt_sub * (P[i - khalf - 1] + win[i])   # P[<0] = 0
+        GF_STF_GAUSS:  y = win
+        GF_STF_NONE:   y = xpad
+
+    ``y[i]`` is at ``t_first + i*dt_sub``. From a time prefix of ``nt``
+    samples the last ``khalf`` outputs differ from the whole record's.
+
+    The library's own choice for a source:
+
+        p = db.plan(src)
+        k = gf3d.stf_kernel(p.kind_stf, p.hdur_corr, p.dt_sub, p.trunc)
+
+    but the parameters are the caller's to choose.
+    """
+    nk = ctypes.c_int(0)
+    with LIBRARY_LOCK:
+        check(
+            lib.gf3d_stf_kernel_size(
+                _cint(kind), float(hdur), float(dt), float(trunc), ctypes.byref(nk)
+            ),
+            "gf3d_stf_kernel_size",
+        )
+        kernel = np.empty(nk.value, dtype=np.float64)
+        check(
+            lib.gf3d_stf_kernel(
+                _cint(kind), float(hdur), float(dt), float(trunc), nk.value, _ptr(kernel)
+            ),
+            "gf3d_stf_kernel",
+        )
+    return kernel
 
 
 def open(path, check_completion: bool = False, max_elements: int = 0) -> Database:  # noqa: A001

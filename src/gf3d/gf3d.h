@@ -478,6 +478,78 @@ int gf3d_partials(gf3d_handle h, const gf3d_source *src, double t0_req,
 int gf3d_element_block(gf3d_handle h, int ielem, int nsel, const int *ista_sel,
                        int nt_out, float *buf);
 
+/* ------------------------------------------------------------------ */
+/* the weights, and the source time function's kernel                */
+/* ------------------------------------------------------------------ */
+
+/*
+ * The weights that make a source's traces from gf3d_element_block's data,
+ * for a caller that contracts and applies the source time function itself.
+ * Locates the source first; the weights belong to the element loc.ielem.
+ *
+ * For station s, force component a and stored sample t, with u the block
+ * of element loc.ielem (u[s][a][t][m], m = p + 3*(i + 5*j + 25*k)):
+ *
+ *   x[t]  = scale[s] * SUM_m u[s][a][t][m] * w[m]          the seismogram
+ *   x_c[t] = scale[s] * SUM_m u[s][a][t][m] * dw[c][m]     partial c
+ *
+ * and gf3d_seismograms / gf3d_partials return STF(x), STF(x_c), the
+ * conversion below. The columns are gf3d_partials' first ndw, in its
+ * order and its units (per dyne-cm, per degree, per degree, per km):
+ *   kind 0: none, ndw = 0 (dw may be NULL)
+ *   kind 1: Mrr Mtt Mpp Mrt Mrp Mtp, ndw = 6
+ *   kind 2: those, latitude, longitude, depth, ndw = 9
+ * The centroid time has no column: it shifts the trace. A force source
+ * allows kind 0 only.
+ *
+ *   w      [375]
+ *   dw     [ndw][375]
+ *   scale  [info.nstations], per station
+ *   loc    may be NULL; set when the call succeeds
+ *
+ * No element data is read; the locate reads coordinates only, and a handle
+ * keeps those of the elements it used last.
+ */
+int gf3d_weights(gf3d_handle h, const gf3d_source *src, int kind, int ndw,
+                 double *w, double *dw, double *scale, gf3d_location *loc);
+
+/*
+ * The source time function's conversion kernel, from its parameters alone:
+ * no handle, no source. The conversion is the caller's to choose;
+ * gf3d_get_plan says which parameters the library itself uses for a source
+ * (plan.kind_stf, plan.hdur_corr, plan.dt_sub, plan.trunc).
+ *
+ *   kind   0 none, 1 Gaussian, 2 Heaviside (gf3d_plan.kind_stf)
+ *   hdur   the kernel's width, s; <= 0 is the guard's kernel ([1/2] for a
+ *          Heaviside, the trapezoid rule; [1] for a Gaussian)
+ *   dt     the sample spacing, s
+ *   trunc  where the kernel is cut, in widths
+ *
+ * gf3d_stf_kernel_size sets nk = 2*khalf+1, khalf = ceil(trunc*hdur/dt)
+ * (0 for kind 0 or hdur <= 0); gf3d_stf_kernel fills kernel[nk] =
+ * w(-khalf..khalf) and refuses any other nk.
+ *
+ * The conversion the library applies with it, to a trace x[0..nt_db-1] on
+ * the stored grid (from gf3d_weights above), with kind, khalf, npad and
+ * dt_sub from gf3d_get_plan for the source:
+ *
+ *   xpad[i]  = 0 for i < npad, x[i - npad] after;  i = 0..n-1, n = npad + nt_db
+ *   win[i]   = SUM_{j=-khalf..khalf} w(j) * xpad[i - j], xpad = 0 outside 0..n-1
+ *   kind 2:  P[i] = xpad[0] + ... + xpad[i]  (P = 0 for i < 0)
+ *            y[i] = dt_sub * ( P[i - khalf - 1] + win[i] )
+ *   kind 1:  y[i] = win[i]
+ *   kind 0:  y[i] = xpad[i]
+ *
+ * and y[i] is at time plan.t_first + i*dt_sub. (The library sums P with
+ * compensation; a plain sum differs by rounding.) From a time prefix of
+ * nt_out samples (gf3d_element_block) the same formula gives y[0..npad +
+ * nt_out - khalf - 1] exactly as from the whole record; the last khalf
+ * samples read past the prefix and differ.
+ */
+int gf3d_stf_kernel_size(int kind, double hdur, double dt, double trunc, int *nk);
+int gf3d_stf_kernel(int kind, double hdur, double dt, double trunc, int nk,
+                    double *kernel);
+
 #ifdef __cplusplus
 }
 #endif

@@ -54,8 +54,8 @@
  *
  * Usage: test_gf_capi <GFDB directory> <CMTSOLUTION> [block]
  *
- * With a third argument "block" only section 11, gf3d_element_block, is run
- * (on its own handle). The runner does that on the fixture layout the full
+ * With a third argument "block" only sections 11 and 12, gf3d_element_block
+ * and gf3d_weights, are run (each on its own handle). The runner does that on the fixture layout the full
  * run did not use: the contiguous fixture reads through the h5dread_f
  * fallback, the chunked one through the raw H5Dread_chunk route.
  */
@@ -331,6 +331,199 @@ static void element_block_tests(const char *dbpath, const gf3d_source *src)
   ok_status("closing the handle", gf3d_close(h), GF_OK);
 }
 
+/*
+ * gf3d_weights and the kernel: the header's formula, written out in plain C.
+ *
+ * The identity is gf3d.h's, literally: the block of station 0 contracted in
+ * double with w and scale, padded, summed plainly, windowed, times dt_sub,
+ * against gf3d_seismograms. The error is relative to the same conversion of
+ * SUM|u w|, the scale a rounding error has, so that the bound does not depend
+ * on how well conditioned the fixture is.
+ */
+static void stf_plain(const double *x, int nd, int npad, int khalf, const double *k,
+                      int kind, double dt_sub, double *y)
+{
+  int n = npad + nd, i, j;
+  double *xpad = (double *)calloc((size_t)n, sizeof(double));
+  double *p = (double *)calloc((size_t)n, sizeof(double));
+  double acc = 0.0, win;
+
+  if (xpad == NULL || p == NULL) { fprintf(stderr, "out of memory\n"); exit(1); }
+  for (i = 0; i < nd; i++) xpad[npad + i] = x[i];
+  for (i = 0; i < n; i++) { acc += xpad[i]; p[i] = acc; }
+
+  for (i = 0; i < n; i++) {
+    if (kind == 0) { y[i] = xpad[i]; continue; }
+    win = 0.0;
+    for (j = -khalf; j <= khalf; j++)
+      if (i - j >= 0 && i - j < n) win += k[j + khalf] * xpad[i - j];
+    if (kind == 1) y[i] = win;
+    else y[i] = dt_sub * ((i - khalf - 1 >= 0 ? p[i - khalf - 1] : 0.0) + win);
+  }
+  free(xpad);
+  free(p);
+}
+
+static void weights_tests(const char *dbpath, const gf3d_source *src)
+{
+  gf3d_handle h = 0;
+  gf3d_info info;
+  gf3d_location loc, locw;
+  gf3d_plan plan;
+  float *blk = NULL;
+  double w[NM], dw[9 * NM], *scale = NULL, *k = NULL, *kbuf = NULL;
+  double *seis = NULL, *t = NULL, *onset = NULL, *x, *xa, *y, *ya;
+  double e, d, den, worst = 0.0, ssum = 0.0;
+  char msg[512];
+  int ierr, nsta, nk, a, m, i, nt, n;
+  int pick[1] = {0};
+
+  ierr = gf3d_open(dbpath, 0, 0, &h);
+  ok_status("gf3d_open for the weights", ierr, GF_OK);
+  if (ierr != GF_OK) return;
+  gf3d_get_info(h, &info);
+  nsta = info.nstations;
+  nt = info.nt_subsampled;
+
+  scale = (double *)malloc((size_t)nsta * sizeof(double));
+  if (scale == NULL) { fprintf(stderr, "out of memory\n"); exit(1); }
+
+  ierr = gf3d_locate(h, src->latitude, src->longitude, src->depth_km, &loc);
+  ok_status("gf3d_locate", ierr, GF_OK);
+  ierr = gf3d_get_plan(h, src, -1.0, &plan);
+  ok_status("gf3d_get_plan", ierr, GF_OK);
+  if (ierr != GF_OK) { gf3d_close(h); free(scale); return; }
+
+  memset(&locw, 0, sizeof(locw));
+  ierr = gf3d_weights(h, src, 0, 0, w, NULL, scale, &locw);
+  ok_status("gf3d_weights, kind 0, dw NULL", ierr, GF_OK);
+  ok("loc is the locate's: ielem, xi, eta, gamma exactly",
+     locw.ielem == loc.ielem && locw.xi == loc.xi && locw.eta == loc.eta
+     && locw.gamma == loc.gamma);
+  ok_status("loc NULL allowed", gf3d_weights(h, src, 0, 0, w, NULL, scale, NULL), GF_OK);
+  ok_status("kind 2, ndw 9",
+            gf3d_weights(h, src, 2, 9, w, dw, scale, NULL), GF_OK);
+  ok_status("kind 1, ndw 6",
+            gf3d_weights(h, src, 1, 6, w, dw, scale, NULL), GF_OK);
+
+  /* the kernel at the plan's parameters */
+  ierr = gf3d_stf_kernel_size(plan.kind_stf, plan.hdur_corr, plan.dt_sub, plan.trunc, &nk);
+  ok_status("gf3d_stf_kernel_size", ierr, GF_OK);
+  ok("2*khalf + 1 taps", ierr == GF_OK && nk == 2 * plan.khalf + 1);
+  if (ierr != GF_OK) { gf3d_close(h); free(scale); return; }
+  k = (double *)malloc((size_t)nk * sizeof(double));
+  kbuf = (double *)malloc((size_t)(nk + 2) * sizeof(double));
+  ierr = gf3d_stf_kernel(plan.kind_stf, plan.hdur_corr, plan.dt_sub, plan.trunc, nk, k);
+  ok_status("gf3d_stf_kernel", ierr, GF_OK);
+
+  /* the identity, station 0, the three force components */
+  n = plan.nt;
+  blk = (float *)malloc((size_t)GF_NCOMP * nt * NM * sizeof(float));
+  seis = (double *)malloc((size_t)nsta * GF_NCOMP * n * sizeof(double));
+  t = (double *)malloc((size_t)n * sizeof(double));
+  onset = (double *)malloc((size_t)nsta * sizeof(double));
+  x = (double *)malloc((size_t)nt * sizeof(double));
+  xa = (double *)malloc((size_t)nt * sizeof(double));
+  y = (double *)malloc((size_t)n * sizeof(double));
+  ya = (double *)malloc((size_t)n * sizeof(double));
+  if (blk == NULL || seis == NULL || t == NULL || onset == NULL || x == NULL
+      || xa == NULL || y == NULL || ya == NULL) {
+    fprintf(stderr, "out of memory\n"); exit(1);
+  }
+
+  ierr = gf3d_weights(h, src, 0, 0, w, NULL, scale, NULL);
+  if (ierr == GF_OK) ierr = gf3d_element_block(h, loc.ielem, 1, pick, nt, blk);
+  ok_status("the block of station 0", ierr, GF_OK);
+  if (ierr == GF_OK) ierr = gf3d_seismograms(h, src, -1.0, n, seis, t, onset, NULL);
+  ok_status("gf3d_seismograms", ierr, GF_OK);
+
+  if (ierr == GF_OK) {
+    for (a = 0; a < GF_NCOMP; a++) {
+      for (i = 0; i < nt; i++) {
+        const float *u = blk + ((size_t)a * nt + i) * NM;
+        double sum = 0.0, suma = 0.0;
+        for (m = 0; m < NM; m++) {
+          sum += (double)u[m] * w[m];
+          suma += fabs((double)u[m] * w[m]);
+        }
+        x[i] = scale[0] * sum;
+        xa[i] = fabs(scale[0]) * suma;
+      }
+      stf_plain(x, nt, plan.npad, plan.khalf, k, plan.kind_stf, plan.dt_sub, y);
+      stf_plain(xa, nt, plan.npad, plan.khalf, k, plan.kind_stf, plan.dt_sub, ya);
+      e = 0.0;
+      den = 0.0;
+      for (i = 0; i < n; i++) {
+        d = fabs(y[i] - seis[(size_t)a * n + i]);
+        if (d > e) e = d;
+        if (fabs(ya[i]) > den) den = fabs(ya[i]);
+      }
+      ssum += den;
+      if (e / den > worst || isnan(e / den)) worst = e / den;
+    }
+    ok("the sum of |terms| is not zero", ssum > 0.0);
+    ok_err("STF(scale * block . w) is the seismogram", worst, 1.0e-13);
+  }
+
+  /* refusals */
+  ok_status("kind 1, ndw 9",
+            gf3d_weights(h, src, 1, 9, w, dw, scale, NULL), GF_ERR_ARG);
+  ok_status("kind 2, ndw 6",
+            gf3d_weights(h, src, 2, 6, w, dw, scale, NULL), GF_ERR_ARG);
+  ok_status("kind 0, ndw 6",
+            gf3d_weights(h, src, 0, 6, w, dw, scale, NULL), GF_ERR_ARG);
+  ok_status("kind 3",
+            gf3d_weights(h, src, 3, 0, w, dw, scale, NULL), GF_ERR_ARG);
+  ok_status("a NULL w",
+            gf3d_weights(h, src, 0, 0, NULL, NULL, scale, NULL), GF_ERR_ARG);
+  ok_status("a NULL scale",
+            gf3d_weights(h, src, 0, 0, w, NULL, NULL, NULL), GF_ERR_ARG);
+  ok_status("a NULL dw with ndw 9",
+            gf3d_weights(h, src, 2, 9, w, NULL, scale, NULL), GF_ERR_ARG);
+  ok_status("ndw -1",
+            gf3d_weights(h, src, 0, -1, w, dw, scale, NULL), GF_ERR_ARG);
+  ok_status("a bad handle",
+            gf3d_weights(99, src, 0, 0, w, NULL, scale, NULL), GF_ERR_ARG);
+
+  ok_status("kernel_size: a NULL nk",
+            gf3d_stf_kernel_size(2, 1.0, 0.5, 4.0, NULL), GF_ERR_ARG);
+  gf3d_last_error(msg, (int)sizeof(msg));
+  ok("and the message names the routine", strstr(msg, "gf3d_stf_kernel_size") != NULL);
+  ok_status("kernel_size: dt 0",
+            gf3d_stf_kernel_size(2, 1.0, 0.0, 4.0, &nk), GF_ERR_ARG);
+  ok_status("kernel_size: trunc -1",
+            gf3d_stf_kernel_size(2, 1.0, 0.5, -1.0, &nk), GF_ERR_ARG);
+  ok_status("kernel_size: kind 3",
+            gf3d_stf_kernel_size(3, 1.0, 0.5, 4.0, &nk), GF_ERR_ARG);
+  gf3d_last_error(msg, (int)sizeof(msg));
+  ok("and the message names the routine", strstr(msg, "gf_stf_taps") != NULL);
+
+  ierr = gf3d_stf_kernel_size(plan.kind_stf, plan.hdur_corr, plan.dt_sub, plan.trunc, &nk);
+  ok_status("kernel: nk = size - 1",
+            gf3d_stf_kernel(plan.kind_stf, plan.hdur_corr, plan.dt_sub, plan.trunc,
+                            nk - 1, kbuf), GF_ERR_ARG);
+  gf3d_last_error(msg, (int)sizeof(msg));
+  ok("and the message names the routine", strstr(msg, "gf_stf_taps") != NULL);
+  ok_status("kernel: nk = size + 1",
+            gf3d_stf_kernel(plan.kind_stf, plan.hdur_corr, plan.dt_sub, plan.trunc,
+                            nk + 1, kbuf), GF_ERR_ARG);
+  ok_status("kernel: a NULL kernel",
+            gf3d_stf_kernel(plan.kind_stf, plan.hdur_corr, plan.dt_sub, plan.trunc,
+                            nk, NULL), GF_ERR_ARG);
+  ok_status("kernel: nk 0",
+            gf3d_stf_kernel(plan.kind_stf, plan.hdur_corr, plan.dt_sub, plan.trunc,
+                            0, kbuf), GF_ERR_ARG);
+  ok_status("kernel: nk -1",
+            gf3d_stf_kernel(plan.kind_stf, plan.hdur_corr, plan.dt_sub, plan.trunc,
+                            -1, kbuf), GF_ERR_ARG);
+  ok_status("kernel: kind 3",
+            gf3d_stf_kernel(3, 1.0, 0.5, 4.0, 1, kbuf), GF_ERR_ARG);
+
+  free(scale); free(k); free(kbuf); free(blk); free(seis); free(t); free(onset);
+  free(x); free(xa); free(y); free(ya);
+  ok_status("closing the handle", gf3d_close(h), GF_OK);
+}
+
 int main(int argc, char **argv)
 {
   const char *dbpath, *cmtpath;
@@ -364,6 +557,8 @@ int main(int argc, char **argv)
       return 1;
     }
     element_block_tests(dbpath, &src);
+    printf("\n 12. the weights, on %s\n", dbpath);
+    weights_tests(dbpath, &src);
     printf("\n");
     if (nfail == 0) {
       printf(" test_gf_capi: all assertions passed\n\n");
@@ -805,6 +1000,11 @@ int main(int argc, char **argv)
   printf("\n 11. one element's raw data\n");
 
   element_block_tests(dbpath, &src);
+
+  /* ---------------------------------------------------------------- */
+  printf("\n 12. the weights, and the source time function's kernel\n");
+
+  weights_tests(dbpath, &src);
 
   free(seis);
   free(dp);

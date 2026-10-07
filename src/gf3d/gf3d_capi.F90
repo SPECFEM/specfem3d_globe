@@ -106,6 +106,7 @@
                   gf_source_set_cmt, gf_source_set_force, &
                   gf_locate_source, gf_locate_release, gf_locate_tree_owner, &
                   gf_seis_plan, gf_extract, gf_default_t0, gf_element_export, &
+                  gf_source_weights, gf_stf_taps_size, gf_stf_taps, &
                   gf_partials_ndp, GF_NDP_LOC, GF_DP_NAME, GF_DP_UNIT
 
   implicit none
@@ -230,6 +231,7 @@
   public :: gf3d_open, gf3d_close, gf3d_get_info, gf3d_get_station, gf3d_cache_stats
   public :: gf3d_locate, gf3d_get_plan, gf3d_ndp, gf3d_partial_name
   public :: gf3d_seismograms, gf3d_partials, gf3d_element_block
+  public :: gf3d_weights, gf3d_stf_kernel_size, gf3d_stf_kernel
 
   contains
 
@@ -1261,5 +1263,178 @@
   gf3d_element_block = int(ierr,kind=c_int)
 
   end function gf3d_element_block
+
+!
+!===================================================================
+! the weights, and the source time function's kernel
+!===================================================================
+!
+
+  integer(c_int) function gf3d_weights(h,src,kind,ndw,w,dw,scale,loc) &
+    bind(C,name='gf3d_weights')
+
+! the weights that make a source's traces from gf3d_element_block's data:
+! w[375], dw[ndw][375], scale[nstations]; see gf_source_weights
+!
+! `dw` may be NULL when ndw is 0, `loc` may be NULL, w and scale may not.
+! ndw is checked against kind by gf_source_weights; a negative ndw is
+! refused here, before any array of that size exists, and the arrays are
+! local, so that nothing is formed from a caller's pointer until the
+! library has succeeded.
+
+  implicit none
+
+  integer(c_int), value :: h
+  type(gf3d_source_t), intent(in) :: src
+  integer(c_int), value :: kind,ndw
+  type(c_ptr), value :: w,dw,scale
+  type(c_ptr), value :: loc
+
+  ! local parameters
+  type(t_gf_source) :: fsrc
+  type(t_gf_location) :: floc
+  type(gf3d_location_t), pointer :: ploc
+  real(c_double), dimension(:), pointer :: pw,pscale
+  real(c_double), dimension(:,:), pointer :: pdw
+  double precision, dimension(:), allocatable :: fw,fscale
+  double precision, dimension(:,:), allocatable :: fdw
+  integer :: ierr,nm,nsta,c
+
+  ierr = GF_OK
+  nm = GF_NCOMP*NGLLX*NGLLY*NGLLZ
+
+  call use_handle(h,ierr)
+
+  if (ierr == GF_OK) then
+    if (.not. c_associated(w)) then
+      call gf_set_error(ierr,GF_ERR_ARG,'gf3d_weights: w is NULL')
+    else if (.not. c_associated(scale)) then
+      call gf_set_error(ierr,GF_ERR_ARG,'gf3d_weights: scale is NULL')
+    else if (ndw < 0) then
+      call gf_set_error(ierr,GF_ERR_ARG,'gf3d_weights: ndw must not be negative')
+    else if (ndw > 0 .and. .not. c_associated(dw)) then
+      call gf_set_error(ierr,GF_ERR_ARG,'gf3d_weights: dw is NULL')
+    endif
+  endif
+
+  if (ierr == GF_OK) call build_source(src,handles(h),fsrc,ierr)
+
+  if (ierr == GF_OK) then
+    nsta = handles(h)%nstations
+    allocate(fw(nm),fdw(nm,ndw),fscale(nsta),stat=c)
+    if (c /= 0) call gf_set_error(ierr,GF_ERR_ALLOC,'gf3d_weights: cannot allocate')
+  endif
+
+  if (ierr == GF_OK) call gf_source_weights(handles(h),fsrc,int(kind),int(ndw), &
+                                            fw,fdw,fscale,floc,ierr)
+
+  if (ierr == GF_OK) then
+    call c_f_pointer(w,pw,[nm])
+    call c_f_pointer(scale,pscale,[nsta])
+    pw(1:nm) = fw(1:nm)
+    pscale(1:nsta) = fscale(1:nsta)
+    if (ndw > 0) then
+      call c_f_pointer(dw,pdw,[nm,int(ndw)])
+      do c = 1,ndw
+        pdw(1:nm,c) = fdw(1:nm,c)
+      enddo
+    endif
+    if (c_associated(loc)) then
+      call c_f_pointer(loc,ploc)
+      call fill_location(floc,ploc)
+    endif
+  endif
+
+  if (allocated(fw)) deallocate(fw)
+  if (allocated(fdw)) deallocate(fdw)
+  if (allocated(fscale)) deallocate(fscale)
+
+  gf3d_weights = int(ierr,kind=c_int)
+
+  end function gf3d_weights
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  integer(c_int) function gf3d_stf_kernel_size(kind,hdur,dt,trunc,nk) &
+    bind(C,name='gf3d_stf_kernel_size')
+
+! no handle: the kernel is a function of its parameters alone, and the error
+! message (gf_errmsg) is global
+
+  implicit none
+
+  integer(c_int), value :: kind
+  real(c_double), value :: hdur,dt,trunc
+  type(c_ptr), value :: nk
+
+  ! local parameters
+  integer(c_int), pointer :: pnk
+  integer :: ierr,fnk
+
+  ierr = GF_OK
+
+  if (.not. c_associated(nk)) &
+    call gf_set_error(ierr,GF_ERR_ARG,'gf3d_stf_kernel_size: nk is NULL')
+
+  if (ierr == GF_OK) call gf_stf_taps_size(int(kind),hdur,dt,trunc,fnk,ierr)
+
+  if (ierr == GF_OK) then
+    call c_f_pointer(nk,pnk)
+    pnk = int(fnk,kind=c_int)
+  endif
+
+  gf3d_stf_kernel_size = int(ierr,kind=c_int)
+
+  end function gf3d_stf_kernel_size
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  integer(c_int) function gf3d_stf_kernel(kind,hdur,dt,trunc,nk,kernel) &
+    bind(C,name='gf3d_stf_kernel')
+
+! kernel[nk] = w(-khalf..khalf); nk must be what gf3d_stf_kernel_size gives,
+! and is checked before the pointer is formed, into a local array
+
+  implicit none
+
+  integer(c_int), value :: kind
+  real(c_double), value :: hdur,dt,trunc
+  integer(c_int), value :: nk
+  type(c_ptr), value :: kernel
+
+  ! local parameters
+  real(c_double), dimension(:), pointer :: pk
+  double precision, dimension(:), allocatable :: fk
+  integer :: ierr,i
+
+  ierr = GF_OK
+
+  if (.not. c_associated(kernel)) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf3d_stf_kernel: kernel is NULL')
+  else if (nk < 1) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf3d_stf_kernel: nk must be at least 1')
+  endif
+
+  if (ierr == GF_OK) then
+    allocate(fk(nk),stat=i)
+    if (i /= 0) call gf_set_error(ierr,GF_ERR_ALLOC,'gf3d_stf_kernel: cannot allocate')
+  endif
+
+  if (ierr == GF_OK) call gf_stf_taps(int(kind),hdur,dt,trunc,int(nk),fk,ierr)
+
+  if (ierr == GF_OK) then
+    call c_f_pointer(kernel,pk,[int(nk)])
+    pk(1:nk) = fk(1:nk)
+  endif
+
+  if (allocated(fk)) deallocate(fk)
+
+  gf3d_stf_kernel = int(ierr,kind=c_int)
+
+  end function gf3d_stf_kernel
 
   end module gf3d_capi

@@ -18,8 +18,8 @@ mistake raises a Python exception instead of ending the interpreter.
 
 Usage: test_gf_python.py <xgf3d> <GFDB> <CMTSOLUTION> [FORCESOLUTION [block]]
 
-With "block" as the fifth argument only section 10, element_block, is run.
-The runner does that on the fixture layout the full run did not use (the
+With "block" as the fifth argument only sections 10 and 11, element_block and
+the weights, are run. The runner does that on the fixture layout the full run did not use (the
 contiguous fixture reads through the h5dread_f fallback, the chunked one
 through the raw H5Dread_chunk route).
 """
@@ -27,6 +27,7 @@ through the raw H5Dread_chunk route).
 from __future__ import annotations
 
 import dataclasses
+import math
 import subprocess
 import sys
 import tempfile
@@ -39,6 +40,8 @@ import numpy as np
 import gf3d
 
 TOL = 1.0e-12
+# the weights against the library, relative to the sum of |terms| of a trace
+TOLW = 1.0e-13
 
 nfail = 0
 
@@ -269,6 +272,200 @@ def element_block_section(dbpath, cmt):
     ok_raises("a closed database", gf3d.GF_ERR_ARG, db.element_block, ielem)
 
 
+def stf_conv(x, k, kind, npad, dt_sub):
+    """gf3d.h's conversion, vectorised, in float64: x (..., nt_db) -> (..., npad + nt_db)."""
+    khalf = (len(k) - 1) // 2
+    nd = x.shape[-1]
+    n = npad + nd
+    xpad = np.zeros(x.shape[:-1] + (n,))
+    xpad[..., npad:] = x
+    if kind == gf3d.GF_STF_NONE:
+        return xpad
+    win = np.zeros_like(xpad)
+    for j in range(-khalf, khalf + 1):
+        if abs(j) >= n:
+            continue
+        if j >= 0:
+            win[..., j:] += k[j + khalf] * xpad[..., : n - j]
+        else:
+            win[..., : n + j] += k[j + khalf] * xpad[..., -j:]
+    if kind == gf3d.GF_STF_GAUSS:
+        return win
+    cs = np.cumsum(xpad, axis=-1)
+    shifted = np.zeros_like(xpad)
+    if n > khalf + 1:
+        shifted[..., khalf + 1:] = cs[..., : n - khalf - 1]
+    return dt_sub * (shifted + win)
+
+
+def trace_errors(y, yabs, ref):
+    """Per trace: max|y - ref| relative to max of the sum of |terms|, and to the peak."""
+    d = np.abs(y - ref).max(axis=-1)
+    den = yabs.max(axis=-1)
+    peak = np.abs(ref).max(axis=-1)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        e_abs = np.where(den > 0, d / den, np.where(d > 0, np.inf, 0.0))
+        e_peak = np.where(peak > 0, d / peak, np.where(d > 0, np.inf, 0.0))
+    return e_abs.max(), e_peak.max(), den.max()
+
+
+def weights_identity(db, src, kind, label):
+    """STF(scale * block @ w) is the library's trace, for w and each dw column.
+
+    Through public calls only, on a float64 contraction of the float32 block,
+    so the error is rounding in the library's own contraction, not a layout.
+    """
+    nsta = db.info["nstations"]
+    W = db.weights(src, kind)
+    p = db.plan(src)
+    r = db.seismograms(src) if kind == 0 else db.partials(src, kind=kind)
+    nd = p.nt_db
+    # the whole record of every station is 3 GB on a real database: the
+    # stations that fit in 16 MB of float32, at least one
+    nsel = max(1, min(nsta, int(16e6 // (3 * nd * 375 * 4))))
+    sel = list(range(nsel))
+    blk = db.element_block(W.location.ielem, stations=sel).astype(np.float64)
+    k = gf3d.stf_kernel(p.kind_stf, p.hdur_corr, p.dt_sub, p.trunc)
+    ok(f"{label}: the kernel has the plan's length", len(k) == 2 * p.khalf + 1)
+
+    sc = W.scale[sel][:, None, None]
+    cols = [(None, W.w, r.data[sel])]
+    for c in range(W.dw.shape[0]):
+        cols.append((c, W.dw[c], r.dp[sel, c]))
+    for c, wv, ref in cols:
+        x = sc * (blk @ wv)
+        xa = np.abs(sc) * (np.abs(blk) @ np.abs(wv))
+        y = stf_conv(x, k, p.kind_stf, p.npad, p.dt_sub)
+        ya = stf_conv(xa, k, p.kind_stf, p.npad, p.dt_sub)
+        e_abs, e_peak, den = trace_errors(y, ya, ref)
+        name = "seismogram" if c is None else W.dw_names[c]
+        ok(f"{label} {name}: the sum of |terms| is not zero", den > 0)
+        ok_err(f"{label} {name}", e_abs, tol=TOLW)
+        print(f"       {'':<10s} relative to the trace peak: {e_peak:12.5e}")
+    return W, p, r, sel, blk, k
+
+
+def weights_section(dbpath, cmt, force):
+    """Database.weights and stf_kernel: the contraction identity, and the contract."""
+    db = gf3d.Database(dbpath)
+    info = db.info
+    nsta = info["nstations"]
+
+    # ------------------------------------------------------------------
+    # moment tensor, kind 2: the seismogram and nine columns
+    W, p, r, sel, blk, k = weights_identity(db, cmt, 2, "cmt")
+    print("       the centroid time: a shift, not a weight; the library's column uses a second kernel")
+    ok("w is (375,), dw (9, 375), scale (nstations,), float64",
+       W.w.shape == (375,) and W.dw.shape == (9, 375) and W.scale.shape == (nsta,)
+       and W.w.dtype == W.dw.dtype == W.scale.dtype == np.float64)
+    ok("the partial names are the first nine",
+       list(W.dw_names) == db.partial_names(10)[0][:9]
+       and list(W.dw_units) == db.partial_names(10)[1][:9])
+    ok("the names are tuples", isinstance(W.dw_names, tuple) and isinstance(W.dw_units, tuple))
+
+    # the located element and the block are the library's own
+    ok("the location is db.locate's, exactly", (W.location.ielem, W.location.xi,
+       W.location.eta, W.location.gamma) == tuple(
+           getattr(db.locate(cmt.latitude, cmt.longitude, cmt.depth), a)
+           for a in ("ielem", "xi", "eta", "gamma")))
+
+    # a time prefix gives the whole record's conversion on all but the last
+    # khalf samples. The fixture's own kernel is wider than its record, so the
+    # prefix is tried on the widest source of a shorter half duration whose
+    # kernel leaves room for it.
+    nd = p.nt_db
+    ntp = nd // 2 + 1
+    cs = cmt
+    for h in cmt.hdur * np.geomspace(1.0, 0.02, 60):
+        cs = dataclasses.replace(cmt, hdur=float(h))
+        ps = db.plan(cs)
+        if ps.npad + ntp - ps.khalf >= (ps.npad + ntp) // 2:
+            break
+    ps = db.plan(cs)
+    nuse = ps.npad + ntp - ps.khalf
+    print(f"       prefix: hdur {cs.hdur:.4g}, nt_db {nd}, npad {ps.npad}, khalf {ps.khalf}, "
+          f"prefix {ntp}, {nuse} samples compared")
+    ok("the prefix reaches past the kernel's half width, which is not zero",
+       nuse >= (ps.npad + ntp) // 2 and ps.khalf >= 1)
+    Ws = db.weights(cs, 0)
+    rs = db.seismograms(cs)
+    ks = gf3d.stf_kernel(ps.kind_stf, ps.hdur_corr, ps.dt_sub, ps.trunc)
+    bp = db.element_block(Ws.location.ielem, stations=sel, nt=ntp).astype(np.float64)
+    xp = Ws.scale[sel][:, None, None] * (bp @ Ws.w)
+    xpa = np.abs(Ws.scale[sel])[:, None, None] * (np.abs(bp) @ np.abs(Ws.w))
+    yp = stf_conv(xp, ks, ps.kind_stf, ps.npad, ps.dt_sub)[..., :nuse]
+    ypa = stf_conv(xpa, ks, ps.kind_stf, ps.npad, ps.dt_sub)[..., :nuse]
+    e_abs, e_peak, den = trace_errors(yp, ypa, rs.data[sel][..., :nuse])
+    ok_err("prefix conversion, the whole record's samples", e_abs, tol=TOLW)
+    print(f"       {'':<10s} relative to the trace peak: {e_peak:12.5e}")
+    ok(f"sample {nuse - 1}, the prefix's last, is not all zero", np.any(yp[..., nuse - 1] != 0))
+
+    # kind 1 and kind 0 are the leading part of kind 2
+    W1 = db.weights(cmt, 1)
+    W0 = db.weights(cmt, 0)
+    ok("kind 1 is the first six columns of kind 2",
+       W1.dw.shape == (6, 375) and np.array_equal(W1.dw, W.dw[:6])
+       and list(W1.dw_names) == list(W.dw_names[:6]))
+    ok("kind 0: w and scale the same, dw is (0, 375), no names",
+       np.array_equal(W0.w, W.w) and np.array_equal(W0.scale, W.scale)
+       and W0.dw.shape == (0, 375) and W0.dw_names == () and W0.dw_units == ())
+
+    # frozen means frozen
+    def assign(a):
+        a[0] = 1.0
+    ok_raises_py("w is read-only", ValueError, assign, W.w)
+    ok_raises_py("dw is read-only", ValueError, assign, W.dw)
+    ok_raises_py("scale is read-only", ValueError, assign, W.scale)
+    ok_raises_py("the fields are frozen", dataclasses.FrozenInstanceError,
+                 setattr, W, "w", W.w)
+
+    ok_raises("kind 3", gf3d.GF_ERR_ARG, db.weights, cmt, 3)
+    ok_raises("kind -1", gf3d.GF_ERR_ARG, db.weights, cmt, -1)
+
+    # ------------------------------------------------------------------
+    # a force source, kind 0
+    if force is not None:
+        print()
+        Wf = weights_identity(db, force, 0, "force")[0]
+        ok("force: dw is (0, 375)", Wf.dw.shape == (0, 375))
+        ok("force: the location is db.locate's, exactly", (Wf.location.ielem, Wf.location.xi,
+           Wf.location.eta, Wf.location.gamma) == tuple(
+               getattr(db.locate(force.latitude, force.longitude, force.depth), a)
+               for a in ("ielem", "xi", "eta", "gamma")))
+        ok_raises("kind 1 for a force source", gf3d.GF_ERR_ARG, db.weights, force, 1)
+        ok_raises("kind 2 for a force source", gf3d.GF_ERR_ARG, db.weights, force, 2)
+    else:
+        print("       (no FORCESOLUTION in this example, the force source skipped)")
+
+    # ------------------------------------------------------------------
+    # stf_kernel
+    print()
+    pc = p
+    kp = gf3d.stf_kernel(pc.kind_stf, pc.hdur_corr, pc.dt_sub, pc.trunc)
+    ok("at the plan's parameters: 2*khalf + 1 taps", kp.dtype == np.float64 and kp.shape == (2 * pc.khalf + 1,))
+    hd = pc.hdur_corr if pc.hdur_corr > 0 else 8.0 * pc.dt_sub
+    kh = gf3d.stf_kernel(gf3d.GF_STF_HEAVI, hd, pc.dt_sub, pc.trunc)
+    m = (len(kh) - 1) // 2
+    ok("a Heaviside kernel is wider than one tap", m > 0)
+    ok("w(0) = 1/2", kh[m] == 0.5)
+    ok("w(j) + w(-j) = 1, bitwise", all(kh[m + j] + kh[m - j] == 1.0 for j in range(1, m + 1)))
+    kd = gf3d.stf_kernel(pc.kind_stf, 2.0 * pc.hdur_corr, pc.dt_sub, pc.trunc)
+    ok("any parameters: twice the width, its own length",
+       pc.hdur_corr <= 0
+       or len(kd) == 2 * math.ceil(pc.trunc * (2.0 * pc.hdur_corr) / pc.dt_sub) + 1)
+    ok("none is [1]", np.array_equal(gf3d.stf_kernel(gf3d.GF_STF_NONE, 3.0, 0.5, 4.0), [1.0]))
+    ok("hdur 0, Heaviside: [1/2], the trapezoid",
+       np.array_equal(gf3d.stf_kernel(gf3d.GF_STF_HEAVI, 0.0, 0.5, 4.0), [0.5]))
+    ok("hdur 0, Gaussian: [1]",
+       np.array_equal(gf3d.stf_kernel(gf3d.GF_STF_GAUSS, 0.0, 0.5, 4.0), [1.0]))
+    ok_raises("dt 0", gf3d.GF_ERR_ARG, gf3d.stf_kernel, gf3d.GF_STF_HEAVI, 1.0, 0.0, 4.0)
+    ok_raises("trunc 0", gf3d.GF_ERR_ARG, gf3d.stf_kernel, gf3d.GF_STF_HEAVI, 1.0, 0.5, 0.0)
+    ok_raises("kind 5", gf3d.GF_ERR_ARG, gf3d.stf_kernel, 5, 1.0, 0.5, 4.0)
+
+    db.close()
+    ok_raises("a closed database", gf3d.GF_ERR_ARG, db.weights, cmt)
+
+
 def main(argv):
     if len(argv) < 4:
         print(__doc__)
@@ -285,10 +482,15 @@ def main(argv):
     print(" ******************************")
     print()
 
-    # the element block alone, on a database the full run did not use
+    # the element block and the weights alone, on a database the full run did not use
     if len(argv) > 5 and argv[5] == "block":
+        cmt = gf3d.CMTSource.read(cmtpath)
+        force = (gf3d.ForceSource.read(forcepath)
+                 if forcepath is not None and forcepath.exists() else None)
         print(f" 10. element_block, on {dbpath}")
-        element_block_section(dbpath, gf3d.CMTSource.read(cmtpath))
+        element_block_section(dbpath, cmt)
+        print(f"\n 11. weights, on {dbpath}")
+        weights_section(dbpath, cmt, force)
         print()
         if nfail == 0:
             print(" test_gf_python: all assertions passed\n")
@@ -599,6 +801,10 @@ def main(argv):
     print("\n 10. element_block")
 
     element_block_section(dbpath, cmt)
+
+    print("\n 11. weights")
+
+    weights_section(dbpath, cmt, force if forcepath is not None and forcepath.exists() else None)
 
     print()
     if nfail == 0:
