@@ -55,11 +55,14 @@ from ._lib import (
     GF_ERR_INCOMPLETE,
     GF_ERR_NO_ELEMENT,
     GF_ERR_NO_PATH,
+    GF_STF_NONE,
+    GF_STF_GAUSS,
+    GF_STF_HEAVI,
     GF3DError,
     library_path,
     version as library_version,
 )
-from .database import Database, Location, Plan, Result, Station, open
+from .database import Database, Location, Plan, Result, Station, Weights, open, stf_kernel
 from .sources import CMTSource, ForceSource
 
 __all__ = [
@@ -71,12 +74,17 @@ __all__ = [
     "Plan",
     "Location",
     "Station",
+    "Weights",
+    "stf_kernel",
     "GF3DError",
     "library_version",
     "library_path",
     "GF_NCOMP",
     "GF_NDP_MT",
     "GF_NDP_LOC",
+    "GF_STF_NONE",
+    "GF_STF_GAUSS",
+    "GF_STF_HEAVI",
     "GF_OK",
     "GF_ERR_ARG",
     "GF_ERR_NO_PATH",

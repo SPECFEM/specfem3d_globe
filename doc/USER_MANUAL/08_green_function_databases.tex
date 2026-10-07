@@ -352,6 +352,58 @@ print(r.t[:3])         # time in s, t = 0 at the centroid time
 \url{utils/green_function/gf3d/README.md} and
 \url{EXAMPLES/green_function_database/global/api_demos/python/} for more.
 
+\subsection{Element data and weights}\label{sec:gf-weights-api}
+
+A sampler, for example Markov chain Monte Carlo or Hamiltonian Monte Carlo,
+evaluates many sources in the same element. It can be faster to do the sum of
+Equation~(\ref{eq:gf-weights}) yourself, on a GPU for example, and call the
+library only for the two ingredients:
+\begin{itemize}
+\item \texttt{element\_block}: the stored displacement of one element for a set
+  of stations, in the order the sum reads it. It is read once per element.
+\item \texttt{weights}: the weights $w$ of a source, the weights of its partial
+  derivatives, and an amplitude factor per station. It is called once per
+  source and reads no displacement.
+\end{itemize}
+For station $s$, force component $a$ and stored sample $t$, the trace before
+the source time function is
+\begin{equation}
+x_{s,a}(t) = \mathrm{scale}_s \sum_{m} u_{s,a}(t,m)\, w_m,
+\qquad m = p + 3\,(i + 5j + 25k),
+\end{equation}
+and a partial derivative is the same sum with its own weights. In Python:
+\begin{verbatim}
+import numpy as np
+import gf3d
+
+db = gf3d.Database("GFDB")
+cmt = gf3d.CMTSource.read("CMTSOLUTION")
+
+W = db.weights(cmt, kind=2)                # W.w (375,), W.dw (9, 375), W.scale
+u = db.element_block(W.location.ielem)     # (stations, 3, time, 375), float32
+x = W.scale[:, None, None] * (u @ W.w)     # (stations, 3, time)
+\end{verbatim}
+The result $x$ does not contain the source time function yet. This is on
+purpose: you choose the source time function. \texttt{gf3d.stf\_kernel(kind,
+hdur, dt, trunc)} returns the kernel the library uses, and \texttt{db.plan(cmt)}
+gives the values the library would use for this source. The header file
+\texttt{include/gf3d.h} gives the exact formula of the convolution. With the
+library's own kernel, the result is \texttt{db.seismograms(cmt)} up to
+rounding. The time derivative has no weight: a change of the centroid time is
+a shift of the trace.
+
+\texttt{element\_block(ielem, nt=n)} reads only the first $n$ samples. The
+source time function at the last \texttt{plan.khalf} samples needs data after
+them, so read that many more samples than you keep. One element needs
+$n_{\mathrm{sta}}\cdot 3\cdot n\cdot 375\cdot 4$ bytes; for 142 stations and
+917 samples that is 0.59~GB, read in about 0.4~s. A call of \texttt{weights}
+takes less than 0.1~ms. The function \texttt{element\_block} does not use the
+element cache. The same calls exist in C (\texttt{gf3d\_element\_block},
+\texttt{gf3d\_weights}, \texttt{gf3d\_stf\_kernel}) and in Fortran
+(\texttt{gf\_element\_export}, \texttt{gf\_source\_weights},
+\texttt{gf\_stf\_taps}). A complete example is
+\url{EXAMPLES/green_function_database/global/api_demos/python/gf3d_sampler_demo.py}.
+
 
 \section{Examples}\label{sec:gf-examples}
 

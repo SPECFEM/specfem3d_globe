@@ -157,6 +157,8 @@
   public :: gf_stf_kernel_heavi
   public :: gf_stf_kernel_gauss_unit
   public :: gf_stf_kernel
+  public :: gf_stf_taps_size
+  public :: gf_stf_taps
   public :: gf_cumsum
   public :: gf_conv_sym
   public :: gf_conv_heavi
@@ -612,6 +614,105 @@
   end select
 
   end subroutine gf_stf_kernel
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_stf_taps_size(kind_stf,hdur,dt,trunc,nk,ierr)
+
+! the length of the kernel gf_stf_taps returns: nk = 2*khalf+1, with khalf
+! = gf_stf_khalf(hdur,dt,trunc) for GF_STF_GAUSS and GF_STF_HEAVI and 0 for
+! GF_STF_NONE
+!
+! The checks gf_stf_plan makes on the same numbers: dt and trunc positive,
+! and no kernel past GF_STF_KHALF_MAX. hdur <= 0 is allowed, and is the
+! guard's kernel (see gf_stf_taps).
+
+  implicit none
+
+  integer, intent(in) :: kind_stf
+  double precision, intent(in) :: hdur,dt,trunc
+  integer, intent(out) :: nk
+  integer, intent(out) :: ierr
+
+  nk = 0
+
+  if (kind_stf /= GF_STF_NONE .and. kind_stf /= GF_STF_GAUSS .and. &
+      kind_stf /= GF_STF_HEAVI) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_stf_taps: kind_stf must be 0, 1 or 2')
+    return
+  endif
+  if (dt <= 0.d0 .or. trunc <= 0.d0) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_stf_taps: dt and trunc must be positive')
+    return
+  endif
+
+  if (kind_stf == GF_STF_NONE) then
+    nk = 1
+  else
+    if (trunc*hdur/dt > dble(GF_STF_KHALF_MAX)) then
+      call gf_set_error(ierr,GF_ERR_ARG,'gf_stf_taps: the kernel would exceed 1e8 samples; check dt and hdur')
+      return
+    endif
+    nk = 2*gf_stf_khalf(hdur,dt,trunc) + 1
+  endif
+
+  ierr = GF_OK
+
+  end subroutine gf_stf_taps_size
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_stf_taps(kind_stf,hdur,dt,trunc,nk,kernel,ierr)
+
+! the conversion kernel from its parameters alone, for a caller that
+! applies the source time function itself
+!
+! kernel(1:nk) = w(-khalf:khalf), nk from gf_stf_taps_size: the taps
+! gf_stf_kernel builds for a plan with these fields, by the same two
+! routines, so a caller's kernel and the library's cannot differ.
+! gf_seis_plan's choice for a source is its t_gf_stf's kind_stf, hdur_corr
+! and trunc, and its time axis's dt_sub; any other values are allowed, and
+! that is the point -- the source time function is the caller's to choose.
+! hdur <= 0 is the guard's kernel: the trapezoid [1/2] for GF_STF_HEAVI, the
+! identity [1] for GF_STF_GAUSS. GF_STF_NONE is [1].
+!
+! How the taps are applied differs by kind: see gf_stf_apply.
+
+  implicit none
+
+  integer, intent(in) :: kind_stf,nk
+  double precision, intent(in) :: hdur,dt,trunc
+  double precision, dimension(nk), intent(out) :: kernel
+  integer, intent(out) :: ierr
+
+  ! local parameters
+  integer :: nk_want,khalf
+
+  if (nk > 0) kernel(:) = 0.d0
+
+  call gf_stf_taps_size(kind_stf,hdur,dt,trunc,nk_want,ierr)
+  if (ierr /= GF_OK) return
+  if (nk /= nk_want) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_stf_taps: nk must be 2*khalf+1 (gf_stf_taps_size)')
+    return
+  endif
+
+  khalf = (nk - 1)/2
+
+  select case (kind_stf)
+  case (GF_STF_GAUSS)
+    call gf_stf_kernel_gauss(hdur,dt,khalf,kernel)
+  case (GF_STF_HEAVI)
+    call gf_stf_kernel_heavi(hdur,dt,khalf,kernel)
+  case default
+    kernel(1) = 1.d0
+  end select
+
+  end subroutine gf_stf_taps
 
 !
 !-------------------------------------------------------------------------------------------------

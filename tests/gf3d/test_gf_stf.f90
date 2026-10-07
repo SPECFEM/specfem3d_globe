@@ -95,6 +95,7 @@
   call test_neumaier(nfail)
   call test_onset(nfail)
   call test_errors(nfail)
+  call test_taps(nfail)
 
   write(*,'(a)') ''
   if (nfail > 0) then
@@ -1146,6 +1147,96 @@
   call gf_report_true('dt = 0 -> GF_ERR_ARG',ierr == GF_ERR_ARG,nfail)
 
   end subroutine test_errors
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine check_taps(name,source_type,force_stf,hdur_src,dt_sub,nfail)
+
+! gf_stf_taps at the plan's own parameters, against the kernel the plan asks for
+
+  implicit none
+  character(len=*), intent(in) :: name
+  integer, intent(in) :: source_type,force_stf
+  double precision, intent(in) :: hdur_src,dt_sub
+  integer, intent(inout) :: nfail
+
+  type(t_gf_stf) :: stf
+  double precision, dimension(:), allocatable :: w,k
+  integer :: ierr,nk,j
+
+  call gf_stf_plan(source_type,force_stf,hdur_src,HDB,dt_sub,GF_STF_TRUNC,stf,ierr)
+  call gf_report_true(name//': plan returns GF_OK',ierr == GF_OK,nfail)
+  if (ierr /= GF_OK) return
+
+  allocate(w(-stf%khalf:stf%khalf))
+  call gf_stf_kernel(stf,dt_sub,w)
+
+  call gf_stf_taps_size(stf%kind_stf,stf%hdur_corr,dt_sub,stf%trunc,nk,ierr)
+  call gf_report_true(name//': taps_size is 2 khalf + 1, exactly', &
+                      ierr == GF_OK .and. nk == 2*stf%khalf + 1,nfail)
+  if (ierr == GF_OK .and. nk == 2*stf%khalf + 1) then
+    allocate(k(nk))
+    call gf_stf_taps(stf%kind_stf,stf%hdur_corr,dt_sub,stf%trunc,nk,k,ierr)
+    call gf_report_true(name//': taps returns GF_OK',ierr == GF_OK,nfail)
+    if (ierr == GF_OK) then
+      ! a derived tolerance, not equality: two call sites of one routine
+      call gf_report(name//': taps are the kernel',maxval(abs(k - (/ (w(j), j = -stf%khalf,stf%khalf) /))), &
+                     4.d0*epsilon(1.d0)*maxval(abs(w)),nfail)
+    endif
+    deallocate(k)
+  endif
+  deallocate(w)
+
+  end subroutine check_taps
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine test_taps(nfail)
+
+! gf_stf_taps: the kernel from parameters alone, and its refusals
+
+  implicit none
+  integer, intent(inout) :: nfail
+
+  double precision, dimension(:), allocatable :: k
+  integer :: ierr,nk
+
+  write(*,'(a)') '17. the kernel from its parameters'
+
+  call check_taps('CMT 60 s, global grid',GF_SRC_CMT,0,HCMT,DTG,nfail)
+  call check_taps('force_stf 0',GF_SRC_FORCE,0,45.d0,DTG,nfail)
+  call check_taps('force_stf 4',GF_SRC_FORCE,4,45.d0,DTG,nfail)
+  call check_taps('force_stf 1',GF_SRC_FORCE,1,45.d0,DTG,nfail)
+  call check_taps('Heaviside guard',GF_SRC_CMT,0,5.d0,DTR,nfail)
+  call check_taps('Gaussian guard',GF_SRC_FORCE,0,7.d0*SOURCE_DECAY_MIMIC_TRIANGLE,DTR,nfail)
+
+  ! the kernel's length is the caller's arithmetic, so a wrong one is refused
+  call gf_stf_taps_size(GF_STF_HEAVI,10.d0,DTG,GF_STF_TRUNC,nk,ierr)
+  call gf_report_true('size of a 10 s Heaviside: ceiling(6*10/0.4) = 150 per side', &
+                      ierr == GF_OK .and. nk == 301,nfail)
+  allocate(k(nk+1))
+  call gf_stf_taps(GF_STF_HEAVI,10.d0,DTG,GF_STF_TRUNC,nk+1,k,ierr)
+  call gf_report_true('nk = size + 1 -> GF_ERR_ARG',ierr == GF_ERR_ARG,nfail)
+  call gf_stf_taps(GF_STF_HEAVI,10.d0,DTG,GF_STF_TRUNC,nk-1,k,ierr)
+  call gf_report_true('nk = size - 1 -> GF_ERR_ARG',ierr == GF_ERR_ARG,nfail)
+  call gf_stf_taps(GF_STF_HEAVI,10.d0,DTG,GF_STF_TRUNC,0,k,ierr)
+  call gf_report_true('nk = 0 -> GF_ERR_ARG',ierr == GF_ERR_ARG,nfail)
+  deallocate(k)
+
+  call gf_stf_taps_size(3,10.d0,DTG,GF_STF_TRUNC,nk,ierr)
+  call gf_report_true('kind 3 -> GF_ERR_ARG',ierr == GF_ERR_ARG,nfail)
+  call gf_stf_taps_size(GF_STF_HEAVI,10.d0,0.d0,GF_STF_TRUNC,nk,ierr)
+  call gf_report_true('dt 0 -> GF_ERR_ARG',ierr == GF_ERR_ARG,nfail)
+  call gf_stf_taps_size(GF_STF_HEAVI,10.d0,DTG,0.d0,nk,ierr)
+  call gf_report_true('trunc 0 -> GF_ERR_ARG',ierr == GF_ERR_ARG,nfail)
+  call gf_stf_taps_size(GF_STF_HEAVI,1.d9,0.1d0,GF_STF_TRUNC,nk,ierr)
+  call gf_report_true('a kernel past 1e8 samples -> GF_ERR_ARG',ierr == GF_ERR_ARG,nfail)
+
+  end subroutine test_taps
 
 !
 !-------------------------------------------------------------------------------------------------

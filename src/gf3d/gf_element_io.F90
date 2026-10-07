@@ -72,7 +72,8 @@
 
   use gf_hdf5_read, only: GF_HID,gf_h5_file_open,gf_h5_file_close, &
                           gf_h5_dset_dims,gf_h5_dset_type_size, &
-                          gf_h5_read_4d_d,gf_h5_read_displ_chunks,GF_H5_ORDER_DISPL
+                          gf_h5_read_4d_d,gf_h5_read_displ_chunks,GF_H5_ORDER_DISPL, &
+                          GF_H5_ORDER_ATM
 
   implicit none
 
@@ -82,6 +83,7 @@
   public :: gf_read_element_coords
   public :: gf_read_element_displ
   public :: gf_element_block
+  public :: gf_element_export
   public :: gf_element_coords
   public :: gf_element_type_sizes
 
@@ -200,7 +202,7 @@
 ! The read is gf_h5_read_displ_chunks's: chunk by chunk on a database the
 ! solver wrote, through h5dread_f otherwise, the same numbers either way.
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,MAX_STRING_LEN
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
 
   implicit none
 
@@ -211,39 +213,100 @@
   integer, intent(out) :: ierr
 
   ! local parameters
-  character(len=MAX_STRING_LEN) :: filename
   integer(kind=GF_HID) :: fid
-  integer(kind=8), dimension(6) :: dims
-  integer :: ndims,ierr2
+  integer :: ierr2
   logical :: raw
 
-  call gf_element_path(db,ielem,ista,filename,ierr)
+  call open_displ(db,ielem,ista,fid,ierr)
   if (ierr /= GF_OK) return
-
-  call gf_h5_file_open(filename,fid,ierr)
-  if (ierr /= GF_OK) return
-  call count_file_read(db)
-
-  ndims = 6
-  call gf_h5_dset_dims(fid,'displacement',ndims,dims,ierr)
-  if (ierr /= GF_OK) goto 99
-
-  if (ndims /= 6 .or. dims(1) /= GF_NCOMP .or. dims(2) /= GF_NCOMP .or. &
-      dims(3) /= NGLLX .or. dims(4) /= NGLLY .or. dims(5) /= NGLLZ .or. &
-      dims(6) /= db%nt_subsampled) then
-    call gf_set_error(ierr,GF_ERR_FORMAT, &
-      'unexpected shape for displacement, expected (3,3,NGLLX,NGLLY,NGLLZ,nt_subsampled), in ' &
-      //trim(filename))
-    goto 99
-  endif
 
   call gf_h5_read_displ_chunks(fid,'displacement',db%nt_subsampled,db%nt_subsampled, &
                                GF_H5_ORDER_DISPL,displ,raw,ierr)
 
-99 continue
   call gf_h5_file_close(fid,ierr2)
 
   end subroutine gf_read_element_displ
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gf_element_export(db,ielem,nsel,ista_sel,nt_out,buf,ierr)
+
+! one element's displacement for a set of stations, in the order a
+! contraction with weights wants, read from disk on every call
+!
+! buf(m,t,a,s) holds station ista_sel(s), force component a, the first
+! nt_out stored samples t, and m = p + 3*(i-1) + 15*(j-1) + 75*(k-1) (the
+! m of gf_weights.F90); in C that is buf[s][a][t][m]. The numbers are
+! gf_read_element_displ's, bit for bit, placed differently.
+!
+! Not to be confused with gf_element_block, the cache fill: this routine
+! neither uses nor fills the handle's element cache (the caller keeps the
+! only copy), and counts only files_read.
+!
+! A time prefix, nt_out < nt_subsampled, reads only the chunks that hold it.
+! buf is CUSTOM_REAL and the C interface promises float, so a build with
+! CUSTOM_REAL = 8 is refused; a database written in double precision is
+! converted on read (gf_h5_read_displ_chunks).
+!
+! Every argument is checked before any file is opened. If a read fails
+! part-way, buf holds the stations read so far and garbage after them.
+
+  use constants, only: CUSTOM_REAL,SIZE_REAL,NGLLX,NGLLY,NGLLZ
+
+  implicit none
+
+  type(t_gfdb), intent(in) :: db
+  integer, intent(in) :: ielem,nsel,nt_out
+  integer, dimension(nsel), intent(in) :: ista_sel
+  real(kind=CUSTOM_REAL), dimension(GF_NCOMP*NGLLX*NGLLY*NGLLZ,nt_out,GF_NCOMP,nsel), &
+    intent(out) :: buf
+  integer, intent(out) :: ierr
+
+  ! local parameters
+  integer(kind=GF_HID) :: fid
+  integer :: s,ierr2
+  logical :: raw
+
+  if (CUSTOM_REAL /= SIZE_REAL) then
+    call gf_set_error(ierr,GF_ERR_ARG, &
+      'gf_element_export: needs a single-precision build (CUSTOM_REAL = 4)')
+    return
+  endif
+  if (.not. db%is_open) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_element_export: database is not open')
+    return
+  endif
+  if (ielem < 1 .or. ielem > db%nelem) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_element_export: element index out of range')
+    return
+  endif
+  if (nsel < 1 .or. nsel > db%nstations) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_element_export: nsel must be 1..nstations')
+    return
+  endif
+  if (any(ista_sel(:) < 1) .or. any(ista_sel(:) > db%nstations)) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_element_export: station index out of range')
+    return
+  endif
+  if (nt_out < 1 .or. nt_out > db%nt_subsampled) then
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_element_export: nt_out must be 1..nt_subsampled')
+    return
+  endif
+
+  do s = 1,nsel
+    call open_displ(db,ielem,ista_sel(s),fid,ierr)
+    if (ierr /= GF_OK) return
+    call gf_h5_read_displ_chunks(fid,'displacement',db%nt_subsampled,nt_out, &
+                                 GF_H5_ORDER_ATM,buf(1,1,1,s),raw,ierr)
+    call gf_h5_file_close(fid,ierr2)
+    if (ierr /= GF_OK) return
+  enddo
+
+  ierr = GF_OK
+
+  end subroutine gf_element_export
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -500,5 +563,57 @@
   if (associated(db%cache)) db%cache%files_read = db%cache%files_read + 1
 
   end subroutine count_file_read
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine open_displ(db,ielem,ista,fid,ierr)
+
+! opens one (element, station) displacement file and checks its shape
+!
+! On success the file is open and counted in files_read, and the caller
+! closes it; on failure nothing is left open.
+
+  use constants, only: NGLLX,NGLLY,NGLLZ,MAX_STRING_LEN
+
+  implicit none
+
+  type(t_gfdb), intent(in) :: db
+  integer, intent(in) :: ielem,ista
+  integer(kind=GF_HID), intent(out) :: fid
+  integer, intent(out) :: ierr
+
+  ! local parameters
+  character(len=MAX_STRING_LEN) :: filename
+  integer(kind=8), dimension(6) :: dims
+  integer :: ndims,ierr2
+
+  call gf_element_path(db,ielem,ista,filename,ierr)
+  if (ierr /= GF_OK) return
+
+  call gf_h5_file_open(filename,fid,ierr)
+  if (ierr /= GF_OK) return
+  call count_file_read(db)
+
+  ndims = 6
+  call gf_h5_dset_dims(fid,'displacement',ndims,dims,ierr)
+  if (ierr /= GF_OK) goto 99
+
+  if (ndims /= 6 .or. dims(1) /= GF_NCOMP .or. dims(2) /= GF_NCOMP .or. &
+      dims(3) /= NGLLX .or. dims(4) /= NGLLY .or. dims(5) /= NGLLZ .or. &
+      dims(6) /= db%nt_subsampled) then
+    call gf_set_error(ierr,GF_ERR_FORMAT, &
+      'unexpected shape for displacement, expected (3,3,NGLLX,NGLLY,NGLLZ,nt_subsampled), in ' &
+      //trim(filename))
+    goto 99
+  endif
+
+  return
+
+99 continue
+  call gf_h5_file_close(fid,ierr2)
+
+  end subroutine open_displ
 
   end module gf_element_io

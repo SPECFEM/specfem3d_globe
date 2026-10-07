@@ -49,7 +49,8 @@
 #                         cannot silently go unrun again.
 #
 # Exports: GFDB, CMT, FORCE, REFERENCE, FIXTURE_DIR (empty unless we made one).
-# Defines gfdb_make_fixture [chunked], for a runner that needs another fixture.
+# Defines gfdb_make_fixture [chunked], for a runner that needs another fixture,
+# and gfdb_extra_variants (below).
 # Returns non-zero when it cannot produce a database, so the caller keeps its
 # own "skipped: ...; exit 0" idiom rather than exiting from inside a source.
 #
@@ -97,6 +98,29 @@ gfdb_make_fixture() {
     return 1
   fi
   FIXTURE_MADE="$d/GFDB"
+  return 0
+}
+
+# gfdb_extra_variants -> EXTRA_GFDBS, the fixture layouts $GFDB is not.
+# For a runner whose main run is on $GFDB and which has one section that must
+# also run on both layouts of the fixture (contiguous: the h5dread_f route of
+# the chunk reader; chunked as the solver writes: the raw H5Dread_chunk
+# route). $GFDB a fixture: the other layout, and failing to build it is an
+# error. $GFDB a user database: both layouts, and failing to build them only
+# leaves the array short, since that database is what was asked for.
+gfdb_extra_variants() {
+  EXTRA_GFDBS=()
+  if [ -n "$FIXTURE_DIR" ]; then
+    if [ "${GF3D_FIXTURE_CHUNKED}" = "1" ]; then
+      gfdb_make_fixture || return 1
+    else
+      gfdb_make_fixture chunked || return 1
+    fi
+    EXTRA_GFDBS+=("$FIXTURE_MADE")
+  else
+    if gfdb_make_fixture; then EXTRA_GFDBS+=("$FIXTURE_MADE"); fi
+    if gfdb_make_fixture chunked; then EXTRA_GFDBS+=("$FIXTURE_MADE"); fi
+  fi
   return 0
 }
 

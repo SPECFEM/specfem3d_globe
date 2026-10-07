@@ -42,6 +42,9 @@ __all__ = [
     "GF_NCOMP",
     "GF_NDP_MT",
     "GF_NDP_LOC",
+    "GF_STF_NONE",
+    "GF_STF_GAUSS",
+    "GF_STF_HEAVI",
     "CSource",
     "CInfo",
     "CStation",
@@ -62,7 +65,7 @@ GF3D_MORTON_STRLEN = 24
 
 # GF3D_API_VERSION from include/gf3d.h; checked against the library in
 # _check_layout(), before the struct-size comparison below it.
-API_VERSION = 3
+API_VERSION = 4
 
 GF_OK = 0
 GF_ERR_NO_HDF5 = 1
@@ -84,6 +87,11 @@ GF_SRC_CMT = 2
 GF_NCOMP = 3
 GF_NDP_MT = 6
 GF_NDP_LOC = 10
+
+# gf3d_plan.kind_stf, the source time function conversion
+GF_STF_NONE = 0
+GF_STF_GAUSS = 1
+GF_STF_HEAVI = 2
 
 _c_double = ctypes.c_double
 _c_int = ctypes.c_int
@@ -289,6 +297,7 @@ LIBRARY_LOCK = threading.RLock()
 
 _c_double_p = ctypes.POINTER(_c_double)
 _c_int_p = ctypes.POINTER(_c_int)
+_c_float_p = ctypes.POINTER(ctypes.c_float)
 
 lib.gf3d_version.argtypes = [ctypes.c_char_p, _c_int]
 lib.gf3d_version.restype = _c_int
@@ -371,6 +380,40 @@ lib.gf3d_partials.argtypes = [
     ctypes.POINTER(CLocation),
 ]
 lib.gf3d_partials.restype = _c_int
+
+# new in GF3D_API_VERSION 4; _check_layout() refuses an older library with a
+# version message before any of this is called
+lib.gf3d_element_block.argtypes = [
+    _c_int,
+    _c_int,
+    _c_int,
+    _c_int_p,
+    _c_int,
+    _c_float_p,
+]
+lib.gf3d_element_block.restype = _c_int
+
+lib.gf3d_weights.argtypes = [
+    _c_int,
+    ctypes.POINTER(CSource),
+    _c_int,
+    _c_int,
+    _c_double_p,
+    _c_double_p,
+    _c_double_p,
+    ctypes.POINTER(CLocation),
+]
+lib.gf3d_weights.restype = _c_int
+
+lib.gf3d_stf_kernel_size.argtypes = [
+    _c_int, _c_double, _c_double, _c_double, _c_int_p,
+]
+lib.gf3d_stf_kernel_size.restype = _c_int
+
+lib.gf3d_stf_kernel.argtypes = [
+    _c_int, _c_double, _c_double, _c_double, _c_int, _c_double_p,
+]
+lib.gf3d_stf_kernel.restype = _c_int
 
 
 # ---------------------------------------------------------------------------

@@ -52,7 +52,12 @@
  * that lets this library be loaded into a Python interpreter, and the only
  * way to test it is to try each one and still reach the end.
  *
- * Usage: test_gf_capi <GFDB directory> <CMTSOLUTION>
+ * Usage: test_gf_capi <GFDB directory> <CMTSOLUTION> [block]
+ *
+ * With a third argument "block" only sections 11 and 12, gf3d_element_block
+ * and gf3d_weights, are run (each on its own handle). The runner does that on the fixture layout the full
+ * run did not use: the contiguous fixture reads through the h5dread_f
+ * fallback, the chunked one through the raw H5Dread_chunk route.
  */
 
 #include <stdio.h>
@@ -145,6 +150,380 @@ static int read_cmtsolution(const char *path, gf3d_source *src)
   return (iline >= 13) ? 0 : 3;
 }
 
+/* floats of one (station, force component, sample): 3 displacement
+   components * 5^3 points, the m of the header */
+#define NM (GF_NCOMP * 125)
+
+/*
+ * gf3d_element_block against itself and against the cache counters.
+ *
+ * The oracle is a copy: a selection or a prefix of the all-stations,
+ * all-samples read is the same stored numbers placed elsewhere, so every
+ * comparison is memcmp, never a tolerance. (The test_gf_python.sh section of
+ * the same name checks the full read against the station files themselves.)
+ */
+static void element_block_tests(const char *dbpath, const gf3d_source *src)
+{
+  gf3d_handle h = 0;
+  gf3d_info info;
+  gf3d_location loc;
+  gf3d_plan plan;
+  float *full = NULL, *sel = NULL;
+  double *seis = NULL, *t = NULL, *onset = NULL;
+  long long hits0, misses0, evict0, files0, hits1, misses1, evict1, files1;
+  int nc0, nc1, ierr, nsta, ntf, ntp, a, s, same, ielem;
+  int pick[2] = {1, 0};
+  int rep[2] = {0, 0};
+  size_t row;
+
+  /* two elements: the extraction below leaves one in the cache */
+  ierr = gf3d_open(dbpath, 0, 2, &h);
+  ok_status("gf3d_open for the element block", ierr, GF_OK);
+  if (ierr != GF_OK) return;
+  gf3d_get_info(h, &info);
+  nsta = info.nstations;
+
+  ierr = gf3d_locate(h, src->latitude, src->longitude, src->depth_km, &loc);
+  ok_status("gf3d_locate", ierr, GF_OK);
+  if (ierr != GF_OK) { gf3d_close(h); return; }
+  ielem = loc.ielem;
+
+  /* the whole record of every station is 3 GB on a real database: a prefix
+     of at most 256 MB there, everything on the fixture */
+  ntf = info.nt_subsampled;
+  if ((double)nsta * GF_NCOMP * NM * ntf * sizeof(float) > 256.0e6) {
+    ntf = (int)(256.0e6 / ((double)nsta * GF_NCOMP * NM * sizeof(float)));
+    if (ntf < 1) ntf = 1;
+    printf("       a large database: the full read is the first %d of %d samples\n",
+           ntf, info.nt_subsampled);
+  }
+  /* the fixture's first stored samples are all zero, so a comparison over a
+     short prefix compares zeros: ntp ends past the onset, inside a chunk (the
+     chunked fixture's are 7 samples), and its last sample is checked to be
+     nonzero below */
+  ntp = ntf / 2 + 1;
+
+  full = (float *)malloc((size_t)nsta * GF_NCOMP * NM * ntf * sizeof(float));
+  sel = (float *)malloc((size_t)2 * GF_NCOMP * NM * ntp * sizeof(float));
+  if (full == NULL || sel == NULL) { fprintf(stderr, "out of memory\n"); exit(1); }
+
+  /* one extraction, so that the cache holds something to leave alone */
+  ierr = gf3d_get_plan(h, src, -1.0, &plan);
+  seis = (double *)malloc((size_t)nsta * GF_NCOMP * plan.nt * sizeof(double));
+  t = (double *)malloc((size_t)plan.nt * sizeof(double));
+  onset = (double *)malloc((size_t)nsta * sizeof(double));
+  if (seis == NULL || t == NULL || onset == NULL) { fprintf(stderr, "out of memory\n"); exit(1); }
+  if (ierr == GF_OK)
+    ierr = gf3d_seismograms(h, src, -1.0, plan.nt, seis, t, onset, NULL);
+  ok_status("an extraction fills the cache", ierr, GF_OK);
+
+  gf3d_cache_stats(h, &hits0, &misses0, &evict0, &nc0, &files0);
+  ok("the cache holds one element", nc0 == 1);
+
+  /* all stations: NULL selection */
+  ierr = gf3d_element_block(h, ielem, nsta, NULL, ntf, full);
+  ok_status("all stations, NULL selection", ierr, GF_OK);
+  if (ierr == GF_OK) {
+    int finite = 1, nonzero = 0;
+    size_t n = (size_t)nsta * GF_NCOMP * NM * ntf, i;
+    for (i = 0; i < n; i++) {
+      if (!isfinite(full[i])) finite = 0;
+      if (full[i] != 0.0f) nonzero = 1;
+    }
+    ok("every value is finite", finite);
+    ok("the block is not all zero", nonzero);
+    nonzero = 0;
+    for (s = 0; s < nsta; s++)
+      for (a = 0; a < GF_NCOMP; a++)
+        for (i = 0; i < NM; i++)
+          if (full[(((size_t)s * GF_NCOMP + a) * ntf + (ntp - 1)) * NM + i] != 0.0f)
+            nonzero = 1;
+    ok("the last sample of the test prefix is not all zero", nonzero);
+  }
+
+  gf3d_cache_stats(h, &hits1, &misses1, &evict1, &nc1, &files1);
+  ok("the cache is untouched: hits, misses, evictions, held",
+     hits1 == hits0 && misses1 == misses0 && evict1 == evict0 && nc1 == nc0);
+  ok("files_read grew by one per station", files1 - files0 == nsta);
+
+  /* a selection, in another order, and a prefix: copies of the full read */
+  row = (size_t)ntp * NM;
+  if (nsta >= 2) {
+    ierr = gf3d_element_block(h, ielem, 2, pick, ntp, sel);
+    ok_status("stations {1, 0}, a prefix", ierr, GF_OK);
+    same = (ierr == GF_OK);
+    for (s = 0; same && s < 2; s++)
+      for (a = 0; a < GF_NCOMP; a++)
+        if (memcmp(sel + ((size_t)s * GF_NCOMP + a) * row,
+                   full + ((size_t)pick[s] * GF_NCOMP + a) * (size_t)ntf * NM,
+                   row * sizeof(float)) != 0)
+          same = 0;
+    ok("the selection and prefix equal the full read, bitwise", same);
+
+    ierr = gf3d_element_block(h, ielem, 2, rep, ntp, sel);
+    ok_status("station 0 twice", ierr, GF_OK);
+    same = (ierr == GF_OK);
+    for (s = 0; same && s < 2; s++)
+      for (a = 0; a < GF_NCOMP; a++)
+        if (memcmp(sel + ((size_t)s * GF_NCOMP + a) * row,
+                   full + ((size_t)0 * GF_NCOMP + a) * (size_t)ntf * NM,
+                   row * sizeof(float)) != 0)
+          same = 0;
+    ok("a repeated station is read twice, equal to the full read", same);
+  }
+
+  ierr = gf3d_element_block(h, ielem, 1, pick, 1, sel);
+  ok_status("one station, one sample", ierr, GF_OK);
+  same = (ierr == GF_OK);
+  for (a = 0; same && a < GF_NCOMP; a++)
+    if (memcmp(sel + (size_t)a * NM,
+               full + ((size_t)pick[0] * GF_NCOMP + a) * (size_t)ntf * NM,
+               NM * sizeof(float)) != 0)
+      same = 0;
+  ok("its first sample equals the full read's, bitwise", same);
+
+  /* the three calls above read 2 + 2 + 1 files and nothing else */
+  gf3d_cache_stats(h, &hits1, &misses1, &evict1, &nc1, &files1);
+  ok("files_read grew by nsel for each call",
+     files1 - files0 == (long long)nsta + (nsta >= 2 ? 4 : 0) + 1);
+  ok("the cache is still untouched",
+     hits1 == hits0 && misses1 == misses0 && evict1 == evict0 && nc1 == nc0);
+
+  /* refusals, before any file is opened */
+  files0 = files1;
+  ok_status("ielem 0 refused",
+            gf3d_element_block(h, 0, nsta, NULL, ntf, full), GF_ERR_ARG);
+  ok_status("ielem nelem+1 refused",
+            gf3d_element_block(h, info.nelem + 1, nsta, NULL, ntf, full), GF_ERR_ARG);
+  ok_status("nt_out 0 refused",
+            gf3d_element_block(h, ielem, nsta, NULL, 0, full), GF_ERR_ARG);
+  ok_status("nt_out nt_subsampled+1 refused",
+            gf3d_element_block(h, ielem, nsta, NULL, info.nt_subsampled + 1, full),
+            GF_ERR_ARG);
+  ok_status("nsel 0 refused",
+            gf3d_element_block(h, ielem, 0, pick, 1, sel), GF_ERR_ARG);
+  ok_status("nsel nstations+1 refused",
+            gf3d_element_block(h, ielem, nsta + 1, pick, 1, sel), GF_ERR_ARG);
+  if (nsta >= 2)
+    ok_status("a NULL selection with nsel != nstations refused",
+              gf3d_element_block(h, ielem, nsta - 1, NULL, 1, sel), GF_ERR_ARG);
+  {
+    int bad[1] = {-1};
+    ok_status("station index -1 refused",
+              gf3d_element_block(h, ielem, 1, bad, 1, sel), GF_ERR_ARG);
+    bad[0] = nsta;
+    ok_status("station index nstations refused",
+              gf3d_element_block(h, ielem, 1, bad, 1, sel), GF_ERR_ARG);
+  }
+  ok_status("a NULL buf refused",
+            gf3d_element_block(h, ielem, 1, pick, 1, NULL), GF_ERR_ARG);
+  ok_status("a bad handle refused",
+            gf3d_element_block(99, ielem, 1, pick, 1, sel), GF_ERR_ARG);
+
+  gf3d_cache_stats(h, NULL, NULL, NULL, NULL, &files1);
+  ok("no refused call read a file", files1 == files0);
+
+  free(full);
+  free(sel);
+  free(seis);
+  free(t);
+  free(onset);
+  ok_status("closing the handle", gf3d_close(h), GF_OK);
+}
+
+/*
+ * gf3d_weights and the kernel: the header's formula, written out in plain C.
+ *
+ * The identity is gf3d.h's, literally: the block of station 0 contracted in
+ * double with w and scale, padded, summed plainly, windowed, times dt_sub,
+ * against gf3d_seismograms. The error is relative to the same conversion of
+ * SUM|u w|, the scale a rounding error has, so that the bound does not depend
+ * on how well conditioned the fixture is.
+ */
+static void stf_plain(const double *x, int nd, int npad, int khalf, const double *k,
+                      int kind, double dt_sub, double *y)
+{
+  int n = npad + nd, i, j;
+  double *xpad = (double *)calloc((size_t)n, sizeof(double));
+  double *p = (double *)calloc((size_t)n, sizeof(double));
+  double acc = 0.0, win;
+
+  if (xpad == NULL || p == NULL) { fprintf(stderr, "out of memory\n"); exit(1); }
+  for (i = 0; i < nd; i++) xpad[npad + i] = x[i];
+  for (i = 0; i < n; i++) { acc += xpad[i]; p[i] = acc; }
+
+  for (i = 0; i < n; i++) {
+    if (kind == 0) { y[i] = xpad[i]; continue; }
+    win = 0.0;
+    for (j = -khalf; j <= khalf; j++)
+      if (i - j >= 0 && i - j < n) win += k[j + khalf] * xpad[i - j];
+    if (kind == 1) y[i] = win;
+    else y[i] = dt_sub * ((i - khalf - 1 >= 0 ? p[i - khalf - 1] : 0.0) + win);
+  }
+  free(xpad);
+  free(p);
+}
+
+static void weights_tests(const char *dbpath, const gf3d_source *src)
+{
+  gf3d_handle h = 0;
+  gf3d_info info;
+  gf3d_location loc, locw;
+  gf3d_plan plan;
+  float *blk = NULL;
+  double w[NM], dw[9 * NM], *scale = NULL, *k = NULL, *kbuf = NULL;
+  double *seis = NULL, *t = NULL, *onset = NULL, *x, *xa, *y, *ya;
+  double e, d, den, worst = 0.0, ssum = 0.0;
+  char msg[512];
+  int ierr, nsta, nk, a, m, i, nt, n;
+  int pick[1] = {0};
+
+  ierr = gf3d_open(dbpath, 0, 0, &h);
+  ok_status("gf3d_open for the weights", ierr, GF_OK);
+  if (ierr != GF_OK) return;
+  gf3d_get_info(h, &info);
+  nsta = info.nstations;
+  nt = info.nt_subsampled;
+
+  scale = (double *)malloc((size_t)nsta * sizeof(double));
+  if (scale == NULL) { fprintf(stderr, "out of memory\n"); exit(1); }
+
+  ierr = gf3d_locate(h, src->latitude, src->longitude, src->depth_km, &loc);
+  ok_status("gf3d_locate", ierr, GF_OK);
+  ierr = gf3d_get_plan(h, src, -1.0, &plan);
+  ok_status("gf3d_get_plan", ierr, GF_OK);
+  if (ierr != GF_OK) { gf3d_close(h); free(scale); return; }
+
+  memset(&locw, 0, sizeof(locw));
+  ierr = gf3d_weights(h, src, 0, 0, w, NULL, scale, &locw);
+  ok_status("gf3d_weights, kind 0, dw NULL", ierr, GF_OK);
+  ok("loc is the locate's: ielem, xi, eta, gamma exactly",
+     locw.ielem == loc.ielem && locw.xi == loc.xi && locw.eta == loc.eta
+     && locw.gamma == loc.gamma);
+  ok_status("loc NULL allowed", gf3d_weights(h, src, 0, 0, w, NULL, scale, NULL), GF_OK);
+  ok_status("kind 2, ndw 9",
+            gf3d_weights(h, src, 2, 9, w, dw, scale, NULL), GF_OK);
+  ok_status("kind 1, ndw 6",
+            gf3d_weights(h, src, 1, 6, w, dw, scale, NULL), GF_OK);
+
+  /* the kernel at the plan's parameters */
+  ierr = gf3d_stf_kernel_size(plan.kind_stf, plan.hdur_corr, plan.dt_sub, plan.trunc, &nk);
+  ok_status("gf3d_stf_kernel_size", ierr, GF_OK);
+  ok("2*khalf + 1 taps", ierr == GF_OK && nk == 2 * plan.khalf + 1);
+  if (ierr != GF_OK) { gf3d_close(h); free(scale); return; }
+  k = (double *)malloc((size_t)nk * sizeof(double));
+  kbuf = (double *)malloc((size_t)(nk + 2) * sizeof(double));
+  ierr = gf3d_stf_kernel(plan.kind_stf, plan.hdur_corr, plan.dt_sub, plan.trunc, nk, k);
+  ok_status("gf3d_stf_kernel", ierr, GF_OK);
+
+  /* the identity, station 0, the three force components */
+  n = plan.nt;
+  blk = (float *)malloc((size_t)GF_NCOMP * nt * NM * sizeof(float));
+  seis = (double *)malloc((size_t)nsta * GF_NCOMP * n * sizeof(double));
+  t = (double *)malloc((size_t)n * sizeof(double));
+  onset = (double *)malloc((size_t)nsta * sizeof(double));
+  x = (double *)malloc((size_t)nt * sizeof(double));
+  xa = (double *)malloc((size_t)nt * sizeof(double));
+  y = (double *)malloc((size_t)n * sizeof(double));
+  ya = (double *)malloc((size_t)n * sizeof(double));
+  if (blk == NULL || seis == NULL || t == NULL || onset == NULL || x == NULL
+      || xa == NULL || y == NULL || ya == NULL) {
+    fprintf(stderr, "out of memory\n"); exit(1);
+  }
+
+  ierr = gf3d_weights(h, src, 0, 0, w, NULL, scale, NULL);
+  if (ierr == GF_OK) ierr = gf3d_element_block(h, loc.ielem, 1, pick, nt, blk);
+  ok_status("the block of station 0", ierr, GF_OK);
+  if (ierr == GF_OK) ierr = gf3d_seismograms(h, src, -1.0, n, seis, t, onset, NULL);
+  ok_status("gf3d_seismograms", ierr, GF_OK);
+
+  if (ierr == GF_OK) {
+    for (a = 0; a < GF_NCOMP; a++) {
+      for (i = 0; i < nt; i++) {
+        const float *u = blk + ((size_t)a * nt + i) * NM;
+        double sum = 0.0, suma = 0.0;
+        for (m = 0; m < NM; m++) {
+          sum += (double)u[m] * w[m];
+          suma += fabs((double)u[m] * w[m]);
+        }
+        x[i] = scale[0] * sum;
+        xa[i] = fabs(scale[0]) * suma;
+      }
+      stf_plain(x, nt, plan.npad, plan.khalf, k, plan.kind_stf, plan.dt_sub, y);
+      stf_plain(xa, nt, plan.npad, plan.khalf, k, plan.kind_stf, plan.dt_sub, ya);
+      e = 0.0;
+      den = 0.0;
+      for (i = 0; i < n; i++) {
+        d = fabs(y[i] - seis[(size_t)a * n + i]);
+        if (d > e) e = d;
+        if (fabs(ya[i]) > den) den = fabs(ya[i]);
+      }
+      ssum += den;
+      if (e / den > worst || isnan(e / den)) worst = e / den;
+    }
+    ok("the sum of |terms| is not zero", ssum > 0.0);
+    ok_err("STF(scale * block . w) is the seismogram", worst, 1.0e-13);
+  }
+
+  /* refusals */
+  ok_status("kind 1, ndw 9",
+            gf3d_weights(h, src, 1, 9, w, dw, scale, NULL), GF_ERR_ARG);
+  ok_status("kind 2, ndw 6",
+            gf3d_weights(h, src, 2, 6, w, dw, scale, NULL), GF_ERR_ARG);
+  ok_status("kind 0, ndw 6",
+            gf3d_weights(h, src, 0, 6, w, dw, scale, NULL), GF_ERR_ARG);
+  ok_status("kind 3",
+            gf3d_weights(h, src, 3, 0, w, dw, scale, NULL), GF_ERR_ARG);
+  ok_status("a NULL w",
+            gf3d_weights(h, src, 0, 0, NULL, NULL, scale, NULL), GF_ERR_ARG);
+  ok_status("a NULL scale",
+            gf3d_weights(h, src, 0, 0, w, NULL, NULL, NULL), GF_ERR_ARG);
+  ok_status("a NULL dw with ndw 9",
+            gf3d_weights(h, src, 2, 9, w, NULL, scale, NULL), GF_ERR_ARG);
+  ok_status("ndw -1",
+            gf3d_weights(h, src, 0, -1, w, dw, scale, NULL), GF_ERR_ARG);
+  ok_status("a bad handle",
+            gf3d_weights(99, src, 0, 0, w, NULL, scale, NULL), GF_ERR_ARG);
+
+  ok_status("kernel_size: a NULL nk",
+            gf3d_stf_kernel_size(2, 1.0, 0.5, 4.0, NULL), GF_ERR_ARG);
+  gf3d_last_error(msg, (int)sizeof(msg));
+  ok("and the message names the routine", strstr(msg, "gf3d_stf_kernel_size") != NULL);
+  ok_status("kernel_size: dt 0",
+            gf3d_stf_kernel_size(2, 1.0, 0.0, 4.0, &nk), GF_ERR_ARG);
+  ok_status("kernel_size: trunc -1",
+            gf3d_stf_kernel_size(2, 1.0, 0.5, -1.0, &nk), GF_ERR_ARG);
+  ok_status("kernel_size: kind 3",
+            gf3d_stf_kernel_size(3, 1.0, 0.5, 4.0, &nk), GF_ERR_ARG);
+  gf3d_last_error(msg, (int)sizeof(msg));
+  ok("and the message names the routine", strstr(msg, "gf_stf_taps") != NULL);
+
+  ierr = gf3d_stf_kernel_size(plan.kind_stf, plan.hdur_corr, plan.dt_sub, plan.trunc, &nk);
+  ok_status("kernel: nk = size - 1",
+            gf3d_stf_kernel(plan.kind_stf, plan.hdur_corr, plan.dt_sub, plan.trunc,
+                            nk - 1, kbuf), GF_ERR_ARG);
+  gf3d_last_error(msg, (int)sizeof(msg));
+  ok("and the message names the routine", strstr(msg, "gf_stf_taps") != NULL);
+  ok_status("kernel: nk = size + 1",
+            gf3d_stf_kernel(plan.kind_stf, plan.hdur_corr, plan.dt_sub, plan.trunc,
+                            nk + 1, kbuf), GF_ERR_ARG);
+  ok_status("kernel: a NULL kernel",
+            gf3d_stf_kernel(plan.kind_stf, plan.hdur_corr, plan.dt_sub, plan.trunc,
+                            nk, NULL), GF_ERR_ARG);
+  ok_status("kernel: nk 0",
+            gf3d_stf_kernel(plan.kind_stf, plan.hdur_corr, plan.dt_sub, plan.trunc,
+                            0, kbuf), GF_ERR_ARG);
+  ok_status("kernel: nk -1",
+            gf3d_stf_kernel(plan.kind_stf, plan.hdur_corr, plan.dt_sub, plan.trunc,
+                            -1, kbuf), GF_ERR_ARG);
+  ok_status("kernel: kind 3",
+            gf3d_stf_kernel(3, 1.0, 0.5, 4.0, 1, kbuf), GF_ERR_ARG);
+
+  free(scale); free(k); free(kbuf); free(blk); free(seis); free(t); free(onset);
+  free(x); free(xa); free(y); free(ya);
+  ok_status("closing the handle", gf3d_close(h), GF_OK);
+}
+
 int main(int argc, char **argv)
 {
   const char *dbpath, *cmtpath;
@@ -169,6 +548,25 @@ int main(int argc, char **argv)
   printf("\n ******************************\n");
   printf(" test_gf_capi\n");
   printf(" ******************************\n\n");
+
+  /* the element block alone, on a database the full run did not use */
+  if (argc >= 4 && strcmp(argv[3], "block") == 0) {
+    printf(" 11. one element's raw data, on %s\n", dbpath);
+    if (read_cmtsolution(cmtpath, &src) != 0) {
+      fprintf(stderr, "cannot read %s\n", cmtpath);
+      return 1;
+    }
+    element_block_tests(dbpath, &src);
+    printf("\n 12. the weights, on %s\n", dbpath);
+    weights_tests(dbpath, &src);
+    printf("\n");
+    if (nfail == 0) {
+      printf(" test_gf_capi: all assertions passed\n\n");
+      return 0;
+    }
+    printf(" test_gf_capi: %d assertion(s) FAILED\n\n", nfail);
+    return 1;
+  }
 
   /* ---------------------------------------------------------------- */
   printf(" 1. version, sizes and error strings\n");
@@ -597,6 +995,16 @@ int main(int argc, char **argv)
               gf3d_cache_stats(hc, &hits, NULL, NULL, NULL, NULL), GF_ERR_ARG);
     gf3d_close(h0);
   }
+
+  /* ---------------------------------------------------------------- */
+  printf("\n 11. one element's raw data\n");
+
+  element_block_tests(dbpath, &src);
+
+  /* ---------------------------------------------------------------- */
+  printf("\n 12. the weights, and the source time function's kernel\n");
+
+  weights_tests(dbpath, &src);
 
   free(seis);
   free(dp);

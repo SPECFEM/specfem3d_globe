@@ -76,6 +76,47 @@ wherever a `CMTSource` does, except that it has no partials.
 (`pip install -e 'utils/green_function[obspy]'`); nothing else in the
 package needs it.
 
+### Doing the contraction yourself
+
+A seismogram is one dot product per sample between an element's stored
+displacement and 375 weights that depend only on the source (the
+`w_{p,ijk}` of the user manual's Green function chapter). A sampler that evaluates many
+sources in one element can take the two ingredients and do the rest itself,
+on a GPU for instance:
+
+```python
+W = db.weights(cmt, kind=2)              # locates; W.w (375,), W.dw (9, 375), W.scale (nstations,)
+u = db.element_block(W.location.ielem)   # float32 (nstations, 3, nt_db, 375), read once per element
+x = W.scale[:, None, None] * (u @ W.w)   # (nstations, 3, nt_db), before the source time function
+
+p = db.plan(cmt)
+k = gf3d.stf_kernel(p.kind_stf, p.hdur_corr, p.dt_sub, p.trunc)
+```
+
+`x` converted with `k` as `stf_kernel`'s docstring writes out is
+`db.seismograms(cmt).data` to rounding; `u @ W.dw[c]` likewise gives the
+first nine columns of `db.partials(cmt).dp` (the centroid time has no
+weight: it shifts the trace). The source time function is the caller's:
+`db.plan` gives the library's own kernel parameters, and any others are
+allowed.
+
+- `element_block(ielem, stations=..., nt=...)` reads a station subset and
+  only the first `nt` samples; the last `plan.khalf` converted samples need
+  data past the prefix, so read that many more than you keep. For 142
+  stations and 917 samples that is 0.59 GB, ~0.4 s on one core. `out=`
+  takes a preallocated (e.g. pinned) float32 buffer.
+- It reads from disk on every call and never touches the element cache:
+  `cache_stats` counts its files in `files_read` and nothing else. Keep the
+  blocks yourself, keyed by `W.location.ielem`.
+- `weights` reads no displacement: ~0.08 ms per call once the handle has
+  the element's coordinates. A source that moves into another element
+  changes `W.location.ielem`; the forward model jumps there, as the mesh's
+  strain does.
+
+`EXAMPLES/green_function_database/global/api_demos/python/gf3d_sampler_demo.py`
+does all of this on the global example and checks it against `seismograms`
+and `partials`.
+
 ## Things worth knowing
 
 **`t = 0` is the centroid time**, not the origin time. The CMTSOLUTION's
