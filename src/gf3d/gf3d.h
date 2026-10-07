@@ -120,6 +120,22 @@
  *                 never the default, applies to the whole build, and moves
  *                 last digits through fused multiply-adds (~1e-13 of a
  *                 trace); Intel builds already get -xHost from flags.guess.
+ * From a sampler  a caller that evaluates many sources in one element can
+ *                 do the contraction itself (on a GPU, say) and take only
+ *                 the ingredients from the library:
+ *                     once per element    gf3d_element_block(ielem, ...)
+ *                     once per source     gf3d_weights(src, kind, ...)
+ *                     once                gf3d_stf_kernel(kind, hdur, ...)
+ *                 trace = STF(scale[s] * block[s][a] . w), the conversion
+ *                 written out above gf3d_stf_kernel; the partials likewise
+ *                 with dw. The weights' loc.ielem says which block a source
+ *                 needs. A block is nsel*3*nt_out*375*4 bytes, read from disk
+ *                 on every call and never kept by the handle (142 stations,
+ *                 917 samples: 0.59 GB, ~0.4 s on the database above); a
+ *                 weights call reads no displacement (~0.08 ms warm, kind
+ *                 2). Both are serialised like every other call. The source
+ *                 time function is the caller's: gf3d_get_plan gives the
+ *                 library's own kernel parameters, any others are allowed.
  */
 
 #ifndef GF3D_H
