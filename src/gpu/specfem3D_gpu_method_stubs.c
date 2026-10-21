@@ -306,6 +306,9 @@ void FC_FUNC_ (initialize_gpu_device,
 void FC_FUNC_ (check_cuda_aware_mpi,
                CHECK_CUDA_AWARE_MPI) (int* has_cuda_aware_mpi_f) {}
 
+void FC_FUNC_ (query_cuda_aware_mpi,
+               QUERY_CUDA_AWARE_MPI) (int* myrank_f, int* has_cuda_aware_mpi_f) {}
+
 
 //
 // src/gpu/noise_tomography_gpu.c
@@ -881,25 +884,6 @@ void FC_FUNC_(unregister_host_array,
 
 
 //
-// src/gpu/update_displacement_LDDRK_gpu.c
-//
-
-void FC_FUNC_ (update_displ_lddrk_gpu,
-               UPDATE_DISPL_LDDRK_GPU) (long *Mesh_pointer_f,
-                                        int *FORWARD_OR_ADJOINT) {}
-
-void FC_FUNC_ (update_elastic_lddrk_gpu,
-               UPDATE_ELASTIC_LDDRK_GPU) (long *Mesh_pointer_f,
-                                          realw *alpha_lddrk_f, realw *beta_lddrk_f,
-                                          int *FORWARD_OR_ADJOINT) {}
-
-void FC_FUNC_ (update_acoustic_lddrk_gpu,
-               UPDATE_ACOUSTIC_LDDRK_GPU) (long *Mesh_pointer_f,
-                                           realw *alpha_lddrk_f, realw *beta_lddrk_f,
-                                           int *FORWARD_OR_ADJOINT) {}
-
-
-//
 // src/gpu/update_displacement_gpu.c
 //
 
@@ -940,6 +924,25 @@ void FC_FUNC_ (multiply_accel_acoustic_gpu,
 void FC_FUNC_ (update_veloc_acoustic_gpu,
                UPDATE_VELOC_ACOUSTIC_GPU) (long *Mesh_pointer_f,
                                            realw *deltatover2_f,
+                                           int *FORWARD_OR_ADJOINT) {}
+
+
+//
+// src/gpu/update_displacement_LDDRK_gpu.c
+//
+
+void FC_FUNC_ (update_displ_lddrk_gpu,
+               UPDATE_DISPL_LDDRK_GPU) (long *Mesh_pointer_f,
+                                        int *FORWARD_OR_ADJOINT) {}
+
+void FC_FUNC_ (update_elastic_lddrk_gpu,
+               UPDATE_ELASTIC_LDDRK_GPU) (long *Mesh_pointer_f,
+                                          realw *alpha_lddrk_f, realw *beta_lddrk_f,
+                                          int *FORWARD_OR_ADJOINT) {}
+
+void FC_FUNC_ (update_acoustic_lddrk_gpu,
+               UPDATE_ACOUSTIC_LDDRK_GPU) (long *Mesh_pointer_f,
+                                           realw *alpha_lddrk_f, realw *beta_lddrk_f,
                                            int *FORWARD_OR_ADJOINT) {}
 
 
