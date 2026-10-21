@@ -205,7 +205,8 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
       outer_core_kernel_p = &outer_core_impl_kernel_adjoint;
     }
 
-    outer_core_kernel_p<<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
+    outer_core_kernel_p<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                               nb_blocks_to_compute,
                                                                d_ibool.cuda,
                                                                mp->d_phase_ispec_inner_outer_core.cuda,
                                                                mp->num_phase_ispec_outer_core,
@@ -254,7 +255,7 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
       outer_core_kernel_p = &outer_core_impl_kernel_adjoint;
     }
 
-    hipLaunchKernelGGL( outer_core_kernel_p, grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL( outer_core_kernel_p, grid, threads, 0, mp->compute_stream.hip,
                                                                nb_blocks_to_compute,
                                                                d_ibool.hip,
                                                                mp->d_phase_ispec_inner_outer_core.hip,

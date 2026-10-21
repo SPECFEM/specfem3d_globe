@@ -392,7 +392,8 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
         inner_core_kernel_p = &inner_core_impl_kernel_adjoint;
       }
 
-      inner_core_kernel_p<<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
+      inner_core_kernel_p<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                 nb_blocks_to_compute,
                                                                  d_ibool.cuda,
                                                                  d_idoubling.cuda,
                                                                  mp->d_phase_ispec_inner_inner_core.cuda,
@@ -454,7 +455,8 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
         inner_core_kernel_p = &inner_core_aniso_impl_kernel_adjoint;
       }
 
-      inner_core_kernel_p<<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
+      inner_core_kernel_p<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                 nb_blocks_to_compute,
                                                                  d_ibool.cuda,
                                                                  d_idoubling.cuda,
                                                                  mp->d_phase_ispec_inner_inner_core.cuda,
@@ -526,7 +528,7 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
         inner_core_kernel_p = &inner_core_impl_kernel_adjoint;
       }
 
-      hipLaunchKernelGGL(HIP_KERNEL_NAME(inner_core_kernel_p), grid, threads, 0, mp->compute_stream,
+      hipLaunchKernelGGL(HIP_KERNEL_NAME(inner_core_kernel_p), grid, threads, 0, mp->compute_stream.hip,
                                                                  nb_blocks_to_compute,
                                                                  d_ibool.hip,
                                                                  d_idoubling.hip,
@@ -589,7 +591,7 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
         inner_core_kernel_p = &inner_core_aniso_impl_kernel_adjoint;
       }
 
-      hipLaunchKernelGGL(HIP_KERNEL_NAME(inner_core_kernel_p), grid, threads, 0, mp->compute_stream,
+      hipLaunchKernelGGL(HIP_KERNEL_NAME(inner_core_kernel_p), grid, threads, 0, mp->compute_stream.hip,
                                                                  nb_blocks_to_compute,
                                                                  d_ibool.hip,
                                                                  d_idoubling.hip,

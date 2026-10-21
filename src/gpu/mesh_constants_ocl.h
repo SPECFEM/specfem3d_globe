@@ -50,8 +50,14 @@
 #define MANUALLY_UNROLLED_LOOPS   // default unrolling
 
 // definitions
-typedef cl_event gpu_event;
-typedef void* gpu_stream; // dummy - instead of streams, we'll use cl_command_queue below in mocl structure
+// note: gpu_event and gpu_stream are defined in mesh_constants_gpu.h (backend-neutral types).
+//       for OpenCL, a gpu_stream holds a command queue (see the mocl structure below) and a
+//       gpu_event holds a cl_event.
+
+// note: clCreateEvent() is an OpenCL 2.0 routine; it is not available with the OpenCL 1.x headers
+#if defined(CL_VERSION_2_0) || defined(CL_VERSION_2_1) || defined(CL_VERSION_2_2) || defined(CL_VERSION_3_0)
+#define CL_HAS_CREATE_EVENT
+#endif
 
 #endif // USE_OPENCL
 

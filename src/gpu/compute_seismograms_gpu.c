@@ -144,7 +144,8 @@ void FC_FUNC_ (compute_seismograms_gpu,
     dim3 threads(blocksize,1,1);
 
     // prepare field transfer array on device
-    compute_seismograms_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->nrec_local,
+    compute_seismograms_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                      mp->nrec_local,
                                                                       displ.cuda,
                                                                       mp->d_ibool_crust_mantle.cuda,
                                                                       mp->d_hxir.cuda,mp->d_hetar.cuda,mp->d_hgammar.cuda,
@@ -180,7 +181,7 @@ void FC_FUNC_ (compute_seismograms_gpu,
     dim3 threads(blocksize,1,1);
 
     // prepare field transfer array on device
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_seismograms_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_seismograms_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                     mp->nrec_local,
                                                                     displ.hip,
                                                                     mp->d_ibool_crust_mantle.hip,

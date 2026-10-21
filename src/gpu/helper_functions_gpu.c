@@ -542,9 +542,8 @@ void gpuCopy_from_device_realw_asyncEvent (Mesh *mp, gpu_realw_mem *d_array_addr
       // waits until compute kernel is finished before starting async memcpy
       clCheck (clFinish (mocl.command_queue));
 
-      if (mp->has_last_copy_evt) {
-        clCheck (clReleaseEvent (mp->last_copy_evt));
-      }
+      gpuReleaseCopyEvent(mp);
+
       clCheck (clEnqueueReadBuffer (mocl.copy_queue, d_array_addr_ptr->ocl, CL_FALSE, 0, sizeof (realw) * size, h_array,
                0, NULL, &mp->last_copy_evt));
 
@@ -570,13 +569,13 @@ void gpuCopy_from_device_realw_asyncEvent (Mesh *mp, gpu_realw_mem *d_array_addr
       //             this would break the graph capturing...
       //
       // uses event synchronization instead
-      print_CUDA_error_if_any(cudaStreamWaitEvent(mp->copy_stream, mp->kernel_event, 0),32000);
+      print_CUDA_error_if_any(cudaStreamWaitEvent(mp->copy_stream.cuda, mp->kernel_event.cuda, 0),32000);
 
       // copies buffer to CPU
-      print_CUDA_error_if_any(cudaMemcpyAsync(h_array,d_array_addr_ptr->cuda, sizeof(realw)*size, cudaMemcpyDeviceToHost,mp->copy_stream),33000);
+      print_CUDA_error_if_any(cudaMemcpyAsync(h_array,d_array_addr_ptr->cuda, sizeof(realw)*size, cudaMemcpyDeviceToHost,mp->copy_stream.cuda),33000);
 
       // creates event record
-      print_CUDA_error_if_any(cudaEventRecord(mp->kernel_event, mp->copy_stream),32001);
+      print_CUDA_error_if_any(cudaEventRecord(mp->kernel_event.cuda, mp->copy_stream.cuda),32001);
     }else{
       // blocking
       // note: cudaMemcpy implicitly synchronizes all other cuda operations
@@ -597,13 +596,13 @@ void gpuCopy_from_device_realw_asyncEvent (Mesh *mp, gpu_realw_mem *d_array_addr
       print_HIP_error_if_any(hipMemcpy(h_array,d_array_addr_ptr->hip, sizeof(realw)*size, hipMemcpyDeviceToHost),34001);
 #else
       // wait on copy stream to finish the compute event
-      print_HIP_error_if_any(hipStreamWaitEvent(mp->copy_stream, mp->kernel_event, 0),32000);
+      print_HIP_error_if_any(hipStreamWaitEvent(mp->copy_stream.hip, mp->kernel_event.hip, 0),32000);
 
       // copies buffer to CPU
-      print_HIP_error_if_any(hipMemcpyAsync(h_array,d_array_addr_ptr->hip, sizeof(realw)*size, hipMemcpyDeviceToHost,mp->copy_stream),33000);
+      print_HIP_error_if_any(hipMemcpyAsync(h_array,d_array_addr_ptr->hip, sizeof(realw)*size, hipMemcpyDeviceToHost,mp->copy_stream.hip),33000);
 
       // creates event record
-      print_HIP_error_if_any(hipEventRecord(mp->kernel_event, mp->copy_stream),32001);
+      print_HIP_error_if_any(hipEventRecord(mp->kernel_event.hip, mp->copy_stream.hip),32001);
 #endif
     }else{
       // blocking
@@ -628,7 +627,7 @@ void gpuRecordEvent(Mesh *mp){
   if (run_cuda) {
     if (mp->GPU_ASYNC_COPY) {
       // record event on compute stream
-      print_CUDA_error_if_any(cudaEventRecord(mp->kernel_event, mp->compute_stream),31000);
+      print_CUDA_error_if_any(cudaEventRecord(mp->kernel_event.cuda, mp->compute_stream.cuda),31000);
     }
   }
 #endif
@@ -636,12 +635,59 @@ void gpuRecordEvent(Mesh *mp){
   if (run_hip) {
     if (mp->GPU_ASYNC_COPY) {
       // record event on compute stream
-      print_HIP_error_if_any(hipEventRecord(mp->kernel_event, mp->compute_stream),31000);
+      print_HIP_error_if_any(hipEventRecord(mp->kernel_event.hip, mp->compute_stream.hip),31000);
     }
   }
 #endif
 
   GPU_ERROR_CHECKING ("gpuRecordEvent");
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+
+void gpuReleaseCopyEvent (Mesh *mp) {
+
+  TRACE ("gpuReleaseCopyEvent");
+
+#ifdef USE_OPENCL
+  if (run_opencl) {
+    // releases the last asynchronous copy event, if any
+    if (mp->has_last_copy_evt) {
+      clCheck (clReleaseEvent (mp->last_copy_evt));
+      mp->has_last_copy_evt = 0;
+    }
+  }
+#endif
+#ifdef USE_CUDA
+  if (run_cuda) {
+    // for CUDA the copy event is the kernel event, which is reused across calls
+  }
+#endif
+#ifdef USE_HIP
+  if (run_hip) {
+    // for HIP the copy event is the kernel event, which is reused across calls
+  }
+#endif
+
+  GPU_ERROR_CHECKING ("gpuReleaseCopyEvent");
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+
+void gpuSyncCopyEvent (Mesh *mp) {
+
+  TRACE ("gpuSyncCopyEvent");
+
+#ifdef USE_OPENCL
+  if (run_opencl) {
+    // waits until previous copy finished
+    clCheck (clFinish (mocl.copy_queue));
+    // releases the copy event
+    gpuReleaseCopyEvent(mp);
+  }
+#endif
+
+  GPU_ERROR_CHECKING ("gpuSyncCopyEvent");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -656,20 +702,18 @@ void gpuWaitEvent (Mesh *mp) {
     if (run_opencl){
       // waits until previous copy finished
       clCheck (clFinish (mocl.copy_queue));
-      if (mp->has_last_copy_evt){
-        clCheck (clReleaseEvent (mp->last_copy_evt));
-        mp->has_last_copy_evt = 0;
-      }
+      // releases the copy event
+      gpuReleaseCopyEvent(mp);
     }
 #endif
 #ifdef USE_CUDA
     if (run_cuda) {
-      print_CUDA_error_if_any(cudaStreamWaitEvent(mp->compute_stream, mp->kernel_event, 0),34000);
+      print_CUDA_error_if_any(cudaStreamWaitEvent(mp->compute_stream.cuda, mp->kernel_event.cuda, 0),34000);
     }
 #endif
 #ifdef USE_HIP
     if (run_hip) {
-      print_HIP_error_if_any(hipStreamWaitEvent(mp->compute_stream, mp->kernel_event, 0),34000);
+      print_HIP_error_if_any(hipStreamWaitEvent(mp->compute_stream.hip, mp->kernel_event.hip, 0),34000);
     }
 #endif
   }
@@ -987,47 +1031,89 @@ void gpuSynchronize() {
 
 /* ----------------------------------------------------------------------------------------------- */
 
+// clears a stream handle
+// note: the mesh structure is allocated with malloc() and thus not zero-initialized,
+//       this makes sure that an unused stream handle stays a valid (null) value.
+void gpuStreamClear(gpu_stream* stream_ptr) {
+
+  TRACE ("gpuStreamClear");
+
+  // sets a null handle for the backend in use
+#ifdef USE_OPENCL
+  stream_ptr->queue = NULL;
+#endif
+#ifdef USE_CUDA
+  stream_ptr->cuda = NULL;
+#endif
+#ifdef USE_HIP
+  stream_ptr->hip = NULL;
+#endif
+
+  GPU_ERROR_CHECKING ("gpuStreamClear");
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+
+// clears an event handle
+// note: see gpuStreamClear() above
+void gpuEventClear(gpu_event* event_ptr) {
+
+  TRACE ("gpuEventClear");
+
+  // sets a null handle for the backend in use
+#ifdef USE_OPENCL
+  event_ptr->event = NULL;
+#endif
+#ifdef USE_CUDA
+  event_ptr->cuda = NULL;
+#endif
+#ifdef USE_HIP
+  event_ptr->hip = NULL;
+#endif
+
+  GPU_ERROR_CHECKING ("gpuEventClear");
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+
 void gpuStreamCreate(gpu_stream* stream_ptr) {
 
   TRACE ("gpuStreamCreate");
 
-  // synchronizes stream
+  // creates a stream
 #ifdef USE_OPENCL
-// daniel todo - not implemented streams for OpenCL, maybe use command_queue instead
+  // note: for OpenCL the command queues are created in prepare_constants_device(), since they
+  //       need a context which only exists after the GPU device has been selected.
+  //       they are then assigned to mp->compute_stream and mp->copy_stream.
+  (void) stream_ptr;
 #endif
 #ifdef USE_CUDA
-  if (run_cuda){ print_CUDA_error_if_any(cudaStreamCreate(stream_ptr), 101); }
+  if (run_cuda){ print_CUDA_error_if_any(cudaStreamCreate(&stream_ptr->cuda), 101); }
 #endif
 #ifdef USE_HIP
-  if (run_hip){ print_HIP_error_if_any(hipStreamCreate(stream_ptr), 101); }
+  if (run_hip){ print_HIP_error_if_any(hipStreamCreate(&stream_ptr->hip), 101); }
 #endif
 
   GPU_ERROR_CHECKING ("gpuStreamCreate");
 }
 
 
-void gpuStreamSynchronize(gpu_stream stream) {
+void gpuStreamSynchronize(gpu_stream* stream_ptr) {
 
   TRACE ("gpuStreamSynchronize");
 
   // synchronizes stream
 #ifdef USE_OPENCL
-//daniel todo - not implemented streams for OpenCL, maybe use command_queue instead
-/*
   if (run_opencl) {
-    clCheck (clFinish (mocl.copy_queue));
-    if (mp->has_last_copy_evt) {
-      clCheck (clReleaseEvent (mp->last_copy_evt));
-      mp->has_last_copy_evt = 0;
-    }
+    // for OpenCL a stream is a command queue; waits until all the commands in the queue have finished
+    if (stream_ptr->queue != NULL) clCheck (clFinish (stream_ptr->queue));
   }
-*/
 #endif
 #ifdef USE_CUDA
-  if (run_cuda){ cudaStreamSynchronize(stream); }
+  if (run_cuda){ cudaStreamSynchronize(stream_ptr->cuda); }
 #endif
 #ifdef USE_HIP
-  if (run_hip){ hipStreamSynchronize(stream); }
+  if (run_hip){ hipStreamSynchronize(stream_ptr->hip); }
 #endif
 
   GPU_ERROR_CHECKING ("gpuStreamSynchronize");
@@ -1147,18 +1233,24 @@ const char *clGetErrorString (cl_int error) {
 void start_timing_gpu(gpu_event* start,gpu_event* stop) {
   // creates & starts event
 #ifdef USE_OPENCL
-// not implemented yet, events object added to kernel lauch command
+#ifdef CL_HAS_CREATE_EVENT
+  // note: for OpenCL the events are created here, but they are not recorded into a command queue,
+  //       thus the timing below remains zero.
+  //       (measuring the time would require enabling profiling on the command queue)
+  clCheck (clCreateEvent (&start->event, CL_EVENT_DEFAULT, NULL, NULL));
+  clCheck (clCreateEvent (&stop->event, CL_EVENT_DEFAULT, NULL, NULL));
+#endif
 #endif
 #ifdef USE_CUDA
-  cudaEventCreate(start);
-  cudaEventCreate(stop);
-  cudaEventRecord( *start, 0 );
+  cudaEventCreate(&start->cuda);
+  cudaEventCreate(&stop->cuda);
+  cudaEventRecord(start->cuda, 0);
 #endif
 #ifdef USE_HIP
   // creates & starts event
-  hipEventCreate(start);
-  hipEventCreate(stop);
-  hipEventRecord( *start, 0 );
+  hipEventCreate(&start->hip);
+  hipEventCreate(&stop->hip);
+  hipEventRecord(start->hip, 0);
 #endif
 }
 
@@ -1166,23 +1258,25 @@ void stop_timing_gpu(gpu_event* start,gpu_event* stop, const char* info_str) {
   realw time = 0;
   // stops events
 #ifdef USE_OPENCL
-// not fully implemented yet...
-  clReleaseEvent(*start);
-  clReleaseEvent(*stop);
+#ifdef CL_HAS_CREATE_EVENT
+  // note: timing is not implemented for OpenCL, the time remains zero
+  clCheck (clReleaseEvent(start->event));
+  clCheck (clReleaseEvent(stop->event));
+#endif
 #endif
 #ifdef USE_CUDA
-  cudaEventRecord( *stop, 0 );
-  cudaEventSynchronize( *stop );
-  cudaEventElapsedTime( &time, *start, *stop );
-  cudaEventDestroy( *start );
-  cudaEventDestroy( *stop );
+  cudaEventRecord(stop->cuda, 0);
+  cudaEventSynchronize(stop->cuda);
+  cudaEventElapsedTime(&time, start->cuda, stop->cuda);
+  cudaEventDestroy(start->cuda);
+  cudaEventDestroy(stop->cuda);
 #endif
 #ifdef USE_HIP
-  hipEventRecord( *stop, 0 );
-  hipEventSynchronize( *stop );
-  hipEventElapsedTime( &time, *start, *stop );
-  hipEventDestroy( *start );
-  hipEventDestroy( *stop );
+  hipEventRecord(stop->hip, 0);
+  hipEventSynchronize(stop->hip);
+  hipEventElapsedTime(&time, start->hip, stop->hip);
+  hipEventDestroy(start->hip);
+  hipEventDestroy(stop->hip);
 #endif
   // user output
   printf("GPU_timing %s: Execution Time = %f ms\n",info_str,time);
@@ -1195,25 +1289,27 @@ void stop_timing_gpu_t(gpu_event* start,gpu_event* stop, const char* info_str, r
   realw time = 0;
   // stops events
 #ifdef USE_OPENCL
-// not fully implemented yet...
-  clReleaseEvent(*start);
-  clReleaseEvent(*stop);
+#ifdef CL_HAS_CREATE_EVENT
+  // note: timing is not implemented for OpenCL, the time remains zero
+  clCheck (clReleaseEvent(start->event));
+  clCheck (clReleaseEvent(stop->event));
+#endif
 #endif
 #ifdef USE_CUDA
   // stops events
-  cudaEventRecord( *stop, 0);
-  cudaEventSynchronize( *stop );
-  cudaEventElapsedTime( &time, *start, *stop );
-  cudaEventDestroy( *start );
-  cudaEventDestroy( *stop );
+  cudaEventRecord(stop->cuda, 0);
+  cudaEventSynchronize(stop->cuda);
+  cudaEventElapsedTime(&time, start->cuda, stop->cuda);
+  cudaEventDestroy(start->cuda);
+  cudaEventDestroy(stop->cuda);
 #endif
 #ifdef USE_HIP
   // stops events
-  hipEventRecord( *stop, 0);
-  hipEventSynchronize( *stop );
-  hipEventElapsedTime( &time, *start, *stop );
-  hipEventDestroy( *start );
-  hipEventDestroy( *stop );
+  hipEventRecord(stop->hip, 0);
+  hipEventSynchronize(stop->hip);
+  hipEventElapsedTime(&time, start->hip, stop->hip);
+  hipEventDestroy(start->hip);
+  hipEventDestroy(stop->hip);
 #endif
   // user output
   printf("GPU_timing %s: Execution Time = %f ms\n",info_str,time);

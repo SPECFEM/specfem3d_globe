@@ -92,13 +92,14 @@ void write_seismograms_transfer_from_device (Mesh *mp,
   if (run_cuda) {
     // waits for previous copy call to be finished
     if (mp->GPU_ASYNC_COPY) {
-      cudaStreamSynchronize(mp->copy_stream);
+      cudaStreamSynchronize(mp->copy_stream.cuda);
     }
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
     // prepare field transfer array on device
-    write_seismograms_transfer_from_device_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_number_receiver_global.cuda,
+    write_seismograms_transfer_from_device_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                                         mp->d_number_receiver_global.cuda,
                                                                                          d_ispec_selected->cuda,
                                                                                          mp->d_ibool_crust_mantle.cuda,
                                                                                          mp->d_station_seismo_field.cuda,
@@ -110,13 +111,13 @@ void write_seismograms_transfer_from_device (Mesh *mp,
   if (run_hip) {
     // waits for previous copy call to be finished
     if (mp->GPU_ASYNC_COPY) {
-      hipStreamSynchronize(mp->copy_stream);
+      hipStreamSynchronize(mp->copy_stream.hip);
     }
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
     // prepare field transfer array on device
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(write_seismograms_transfer_from_device_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(write_seismograms_transfer_from_device_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                                        mp->d_number_receiver_global.hip,
                                                                                        d_ispec_selected->hip,
                                                                                        mp->d_ibool_crust_mantle.hip,
@@ -133,9 +134,7 @@ void write_seismograms_transfer_from_device (Mesh *mp,
       // waits until kernel is finished
       clCheck (clFinish (mocl.command_queue));
 
-      if (mp->has_last_copy_evt) {
-        clCheck (clReleaseEvent (mp->last_copy_evt));
-      }
+      gpuReleaseCopyEvent(mp);
 
       clCheck (clEnqueueReadBuffer (mocl.copy_queue, mp->d_station_seismo_field.ocl, CL_FALSE, 0,
                                     3 * NGLL3 * mp->nrec_local * sizeof (realw),
@@ -146,25 +145,25 @@ void write_seismograms_transfer_from_device (Mesh *mp,
 #ifdef USE_CUDA
     if (run_cuda) {
       // waits for previous compute call to be finished
-      cudaStreamSynchronize(mp->compute_stream);
+      cudaStreamSynchronize(mp->compute_stream.cuda);
 
       // asynchronous copy
       // note: we need to update the host array in a subsequent call to transfer_seismo_from_device_async() routine
       cudaMemcpyAsync(mp->h_station_seismo_field,mp->d_station_seismo_field.cuda,
                       3*NGLL3*(mp->nrec_local)*sizeof(realw),
-                      cudaMemcpyDeviceToHost,mp->copy_stream);
+                      cudaMemcpyDeviceToHost,mp->copy_stream.cuda);
     }
 #endif
 #ifdef USE_HIP
     if (run_hip) {
       // waits for previous compute call to be finished
-      hipStreamSynchronize(mp->compute_stream);
+      hipStreamSynchronize(mp->compute_stream.hip);
 
       // asynchronous copy
       // note: we need to update the host array in a subsequent call to transfer_seismo_from_device_async() routine
       hipMemcpyAsync(mp->h_station_seismo_field,mp->d_station_seismo_field.hip,
                       3*NGLL3*(mp->nrec_local)*sizeof(realw),
-                      hipMemcpyDeviceToHost,mp->copy_stream);
+                      hipMemcpyDeviceToHost,mp->copy_stream.hip);
     }
 #endif
 
@@ -245,14 +244,15 @@ void write_seismograms_transfer_strain_from_device (Mesh *mp,
   if (run_cuda) {
     // waits for previous copy call to be finished
     if (mp->GPU_ASYNC_COPY) {
-      cudaStreamSynchronize(mp->copy_stream);
+      cudaStreamSynchronize(mp->copy_stream.cuda);
     }
 
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
     // prepare field transfer array on device
-    write_seismograms_transfer_strain_from_device_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_number_receiver_global.cuda,
+    write_seismograms_transfer_strain_from_device_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                                                mp->d_number_receiver_global.cuda,
                                                                                                 d_ispec_selected->cuda,
                                                                                                 mp->d_ibool_crust_mantle.cuda,
                                                                                                 mp->d_station_strain_field.cuda,
@@ -264,14 +264,14 @@ void write_seismograms_transfer_strain_from_device (Mesh *mp,
   if (run_hip) {
     // waits for previous copy call to be finished
     if (mp->GPU_ASYNC_COPY) {
-      hipStreamSynchronize(mp->copy_stream);
+      hipStreamSynchronize(mp->copy_stream.hip);
     }
 
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
     // prepare field transfer array on device
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(write_seismograms_transfer_strain_from_device_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(write_seismograms_transfer_strain_from_device_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                                               mp->d_number_receiver_global.hip,
                                                                                               d_ispec_selected->hip,
                                                                                               mp->d_ibool_crust_mantle.hip,
@@ -407,15 +407,11 @@ void FC_FUNC_(transfer_seismo_from_device_async,
   }
 
   // waits for previous copy call to be finished
-  gpuStreamSynchronize(mp->copy_stream);
+  gpuStreamSynchronize(&mp->copy_stream);
 
 #ifdef USE_OPENCL
   if (run_opencl) {
-    if (mp->has_last_copy_evt) {
-      clCheck (clReleaseEvent (mp->last_copy_evt));
-      mp->has_last_copy_evt = 0;
-    }
-    clCheck (clFinish (mocl.copy_queue));
+    gpuSyncCopyEvent(mp);
   }
 #endif
 

@@ -126,9 +126,7 @@ void FC_FUNC_(transfer_boun_pot_from_device,
       // waits until kernel is finished before starting async memcpy
       clCheck (clFinish (mocl.command_queue));
 
-      if (mp->has_last_copy_evt) {
-        clCheck (clReleaseEvent (mp->last_copy_evt));
-      }
+      gpuReleaseCopyEvent(mp);
 
       if (mp->use_cuda_aware_mpi){
         // CUDA-aware MPI copies buffers on GPU
@@ -161,7 +159,8 @@ void FC_FUNC_(transfer_boun_pot_from_device,
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
-    prepare_boundary_potential_on_device<<<grid,threads, 0, mp->compute_stream>>>(accel.cuda,
+    prepare_boundary_potential_on_device<<<grid,threads, 0, mp->compute_stream.cuda>>>(
+                                                                                  accel.cuda,
                                                                                   buffer.cuda,
                                                                                   mp->num_interfaces_outer_core,
                                                                                   mp->max_nibool_interfaces_oc,
@@ -171,14 +170,14 @@ void FC_FUNC_(transfer_boun_pot_from_device,
     // copies buffer to CPU
     if (mp->GPU_ASYNC_COPY) {
       // waits until kernel is finished before starting async memcpy
-      cudaStreamSynchronize(mp->compute_stream);
+      cudaStreamSynchronize(mp->compute_stream.cuda);
       // copies buffer to CPU
       if (mp->use_cuda_aware_mpi){
         // CUDA-aware MPI copies buffers on GPU
-        cudaMemcpyAsync(h_buffer,buffer.cuda,size_mpi_buffer*sizeof(realw),cudaMemcpyDeviceToDevice,mp->copy_stream);
+        cudaMemcpyAsync(h_buffer,buffer.cuda,size_mpi_buffer*sizeof(realw),cudaMemcpyDeviceToDevice,mp->copy_stream.cuda);
       }else{
         // copies buffer to CPU
-        cudaMemcpyAsync(h_buffer,buffer.cuda,size_mpi_buffer*sizeof(realw),cudaMemcpyDeviceToHost,mp->copy_stream);
+        cudaMemcpyAsync(h_buffer,buffer.cuda,size_mpi_buffer*sizeof(realw),cudaMemcpyDeviceToHost,mp->copy_stream.cuda);
       }
     } else {
       // synchronous copy
@@ -199,7 +198,7 @@ void FC_FUNC_(transfer_boun_pot_from_device,
     dim3 grid(num_blocks_x,num_blocks_y,1);
     dim3 threads(blocksize,1,1);
 
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(prepare_boundary_potential_on_device), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(prepare_boundary_potential_on_device), grid, threads, 0, mp->compute_stream.hip,
                                                                               accel.hip,
                                                                               buffer.hip,
                                                                               mp->num_interfaces_outer_core,
@@ -210,14 +209,14 @@ void FC_FUNC_(transfer_boun_pot_from_device,
     // copies buffer to CPU
     if (mp->GPU_ASYNC_COPY) {
       // waits until kernel is finished before starting async memcpy
-      hipStreamSynchronize(mp->compute_stream);
+      hipStreamSynchronize(mp->compute_stream.hip);
       // copies buffer to CPU
       if (mp->use_cuda_aware_mpi){
         // CUDA-aware MPI copies buffers on GPU
-        hipMemcpyAsync(h_buffer,buffer.hip,size_mpi_buffer*sizeof(realw),hipMemcpyDeviceToDevice,mp->copy_stream);
+        hipMemcpyAsync(h_buffer,buffer.hip,size_mpi_buffer*sizeof(realw),hipMemcpyDeviceToDevice,mp->copy_stream.hip);
       }else{
         // copies buffer to CPU
-        hipMemcpyAsync(h_buffer,buffer.hip,size_mpi_buffer*sizeof(realw),hipMemcpyDeviceToHost,mp->copy_stream);
+        hipMemcpyAsync(h_buffer,buffer.hip,size_mpi_buffer*sizeof(realw),hipMemcpyDeviceToHost,mp->copy_stream.hip);
       }
     } else {
       // synchronous copy
@@ -331,10 +330,7 @@ void FC_FUNC_ (transfer_asmbl_pot_to_device,
                                      global_work_size, local_work_size, num_evt, copy_evt, NULL));
 
     if (mp->GPU_ASYNC_COPY) {
-      if (mp->has_last_copy_evt) {
-        clCheck (clReleaseEvent (mp->last_copy_evt));
-        mp->has_last_copy_evt = 0;
-      }
+      gpuReleaseCopyEvent(mp);
     }
   }
 #endif
@@ -346,7 +342,7 @@ void FC_FUNC_ (transfer_asmbl_pot_to_device,
     // asynchronous copy
     if (mp->GPU_ASYNC_COPY) {
       // Wait until previous copy stream finishes. We assemble while other compute kernels execute.
-      cudaStreamSynchronize(mp->copy_stream);
+      cudaStreamSynchronize(mp->copy_stream.cuda);
     }else{
       // copies scalar buffer onto GPU
       if (mp->use_cuda_aware_mpi){
@@ -361,7 +357,8 @@ void FC_FUNC_ (transfer_asmbl_pot_to_device,
     }
 
     //assemble field
-    assemble_boundary_potential_on_device<<<grid,threads,0,mp->compute_stream>>>(accel.cuda,
+    assemble_boundary_potential_on_device<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                                 accel.cuda,
                                                                                  buffer.cuda,
                                                                                  mp->num_interfaces_outer_core,
                                                                                  mp->max_nibool_interfaces_oc,
@@ -378,7 +375,7 @@ void FC_FUNC_ (transfer_asmbl_pot_to_device,
     // asynchronous copy
     if (mp->GPU_ASYNC_COPY) {
       // Wait until previous copy stream finishes. We assemble while other compute kernels execute.
-      hipStreamSynchronize(mp->copy_stream);
+      hipStreamSynchronize(mp->copy_stream.hip);
     }else{
       // copies scalar buffer onto GPU
       if (mp->use_cuda_aware_mpi){
@@ -393,7 +390,7 @@ void FC_FUNC_ (transfer_asmbl_pot_to_device,
     }
 
     //assemble field
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(assemble_boundary_potential_on_device), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(assemble_boundary_potential_on_device), grid, threads, 0, mp->compute_stream.hip,
                                                                                accel.hip,
                                                                                buffer.hip,
                                                                                mp->num_interfaces_outer_core,

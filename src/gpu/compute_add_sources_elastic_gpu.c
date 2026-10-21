@@ -93,7 +93,8 @@ void FC_FUNC_ (compute_add_sources_gpu,
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(NGLLX,NGLLX,NGLLX);
     // adds source contributions
-    compute_add_sources_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_accel_crust_mantle.cuda,
+    compute_add_sources_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                      mp->d_accel_crust_mantle.cuda,
                                                                       mp->d_ibool_crust_mantle.cuda,
                                                                       mp->d_sourcearrays_local.cuda,
                                                                       mp->d_stf_local.cuda,
@@ -109,7 +110,7 @@ void FC_FUNC_ (compute_add_sources_gpu,
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(NGLLX,NGLLX,NGLLX);
     // adds source contributions
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_add_sources_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_add_sources_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                     mp->d_accel_crust_mantle.hip,
                                                                     mp->d_ibool_crust_mantle.hip,
                                                                     mp->d_sourcearrays_local.hip,
@@ -216,7 +217,8 @@ void FC_FUNC_ (compute_add_sources_backward_gpu,
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(NGLLX,NGLLX,NGLLX);
 
-    compute_add_sources_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_accel_crust_mantle.cuda,
+    compute_add_sources_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                      mp->d_b_accel_crust_mantle.cuda,
                                                                       mp->d_ibool_crust_mantle.cuda,
                                                                       mp->d_sourcearrays_local.cuda,
                                                                       stf_local.cuda,
@@ -232,7 +234,7 @@ void FC_FUNC_ (compute_add_sources_backward_gpu,
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(NGLLX,NGLLX,NGLLX);
 
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_add_sources_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_add_sources_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                     mp->d_b_accel_crust_mantle.hip,
                                                                     mp->d_ibool_crust_mantle.hip,
                                                                     mp->d_sourcearrays_local.hip,
@@ -313,10 +315,7 @@ void FC_FUNC_ (compute_add_sources_adjoint_gpu,
                                      global_work_size, local_work_size, num_evt, copy_evt, NULL));
 
     if (mp->GPU_ASYNC_COPY) {
-      if (mp->has_last_copy_evt) {
-        clCheck (clReleaseEvent (mp->last_copy_evt));
-        mp->has_last_copy_evt = 0;
-      }
+      gpuReleaseCopyEvent(mp);
     }
   }
 #endif
@@ -325,13 +324,14 @@ void FC_FUNC_ (compute_add_sources_adjoint_gpu,
     // waits for previous transfer_** calls to be finished
     if (mp->GPU_ASYNC_COPY) {
       // waits for asynchronous copy to finish
-      cudaStreamSynchronize(mp->copy_stream);
+      cudaStreamSynchronize(mp->copy_stream.cuda);
     }
 
     dim3 grid(num_blocks_x,num_blocks_y,1);
     dim3 threads(NGLLX,NGLLX,NGLLX);
 
-    compute_add_sources_adjoint_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_accel_crust_mantle.cuda,
+    compute_add_sources_adjoint_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                              mp->d_accel_crust_mantle.cuda,
                                                                               mp->d_stf_array_adjoint.cuda,
                                                                               mp->d_hxir_adj.cuda,
                                                                               mp->d_hetar_adj.cuda,
@@ -347,13 +347,13 @@ void FC_FUNC_ (compute_add_sources_adjoint_gpu,
     // waits for previous transfer_** calls to be finished
     if (mp->GPU_ASYNC_COPY) {
       // waits for asynchronous copy to finish
-      hipStreamSynchronize(mp->copy_stream);
+      hipStreamSynchronize(mp->copy_stream.hip);
     }
 
     dim3 grid(num_blocks_x,num_blocks_y,1);
     dim3 threads(NGLLX,NGLLX,NGLLX);
 
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_add_sources_adjoint_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_add_sources_adjoint_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                             mp->d_accel_crust_mantle.hip,
                                                                             mp->d_stf_array_adjoint.hip,
                                                                             mp->d_hxir_adj.hip,
@@ -447,15 +447,11 @@ void FC_FUNC_(transfer_adj_to_device_async,
   int nrec = *h_nrec;
 
   // waits for previous copy_stream call to be finished
-  gpuStreamSynchronize(mp->copy_stream);
+  gpuStreamSynchronize(&mp->copy_stream);
 
 #ifdef USE_OPENCL
   if (run_opencl) {
-    if (mp->has_last_copy_evt) {
-      clCheck (clReleaseEvent (mp->last_copy_evt));
-      mp->has_last_copy_evt = 0;
-    }
-    clCheck (clFinish (mocl.copy_queue));
+    gpuSyncCopyEvent(mp);
   }
 #endif
 
@@ -485,9 +481,7 @@ void FC_FUNC_(transfer_adj_to_device_async,
     // waits for previous compute_add_sources_adjoint_cuda_kernel() call to be finished
     clCheck (clFinish (mocl.command_queue));
 
-    if (mp->has_last_copy_evt) {
-      clCheck (clReleaseEvent (mp->last_copy_evt));
-    }
+    gpuReleaseCopyEvent(mp);
 
     clCheck (clEnqueueWriteBuffer (mocl.copy_queue, mp->d_stf_array_adjoint.ocl, CL_FALSE, 0,
                                    mp->nadj_rec_local * NDIM * sizeof (realw),
@@ -498,23 +492,23 @@ void FC_FUNC_(transfer_adj_to_device_async,
 #ifdef USE_CUDA
   if (run_cuda) {
     // waits for previous compute_add_sources_adjoint_cuda_kernel() call to be finished
-    cudaStreamSynchronize(mp->compute_stream);
+    cudaStreamSynchronize(mp->compute_stream.cuda);
 
     // copies extracted array values onto GPU
     // (asynchronous copy to GPU using copy_stream)
     cudaMemcpyAsync(mp->d_stf_array_adjoint.cuda, mp->h_stf_array_adjoint,(mp->nadj_rec_local)*NDIM*sizeof(realw),
-                    cudaMemcpyHostToDevice,mp->copy_stream);
+                    cudaMemcpyHostToDevice,mp->copy_stream.cuda);
   }
 #endif
 #ifdef USE_HIP
   if (run_hip) {
     // waits for previous compute_add_sources_adjoint_cuda_kernel() call to be finished
-    hipStreamSynchronize(mp->compute_stream);
+    hipStreamSynchronize(mp->compute_stream.hip);
 
     // copies extracted array values onto GPU
     // (asynchronous copy to GPU using copy_stream)
     hipMemcpyAsync(mp->d_stf_array_adjoint.hip, mp->h_stf_array_adjoint,(mp->nadj_rec_local)*NDIM*sizeof(realw),
-                   hipMemcpyHostToDevice,mp->copy_stream);
+                   hipMemcpyHostToDevice,mp->copy_stream.hip);
   }
 #endif
 }

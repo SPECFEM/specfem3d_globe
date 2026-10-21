@@ -266,7 +266,7 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
     // debug: synchronizes first
     //gpuSynchronize(); synchronize_mpi();
     // start capturing
-    print_CUDA_error_if_any(cudaStreamBeginCapture(mp->compute_stream),930);
+    print_CUDA_error_if_any(cudaStreamBeginCapture(mp->compute_stream.cuda),930);
   }
 #endif
 
@@ -308,7 +308,8 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
       dim3 grid(num_blocks_x,num_blocks_y);
       dim3 threads(blocksize,1,1);
 
-      get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(displ.cuda,size_nonpadded,mp->d_norm_max.cuda);
+      get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                     displ.cuda,size_nonpadded,mp->d_norm_max.cuda);
 
 #ifdef USE_CUDA_GRAPHS
       } // graph
@@ -320,7 +321,7 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
       dim3 grid(num_blocks_x,num_blocks_y);
       dim3 threads(blocksize,1,1);
 
-      hipLaunchKernelGGL(HIP_KERNEL_NAME(get_maximum_scalar_kernel), grid, threads, 0, mp->compute_stream,
+      hipLaunchKernelGGL(HIP_KERNEL_NAME(get_maximum_scalar_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                      displ.hip,size_nonpadded,mp->d_norm_max.hip);
     }
 #endif
@@ -382,7 +383,8 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
     dim3 grid = dim3(num_blocks_x,num_blocks_y);
     dim3 threads = dim3(blocksize,1,1);
 
-    get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(displ.cuda,size_nonpadded,tmp.cuda);
+    get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                   displ.cuda,size_nonpadded,tmp.cuda);
 
 #ifdef USE_CUDA_GRAPHS
     } // graph
@@ -394,7 +396,7 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
     dim3 grid = dim3(num_blocks_x,num_blocks_y);
     dim3 threads = dim3(blocksize,1,1);
 
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(get_maximum_vector_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(get_maximum_vector_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                    displ.hip,size_nonpadded,tmp.hip);
   }
 #endif
@@ -453,7 +455,8 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
       dim3 grid = dim3(num_blocks_x,num_blocks_y);
       dim3 threads = dim3(blocksize,1,1);
 
-      get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(displ.cuda,size_nonpadded,tmp.cuda);
+      get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                     displ.cuda,size_nonpadded,tmp.cuda);
 
 #ifdef USE_CUDA_GRAPHS
       } // graph
@@ -465,7 +468,7 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
       dim3 grid = dim3(num_blocks_x,num_blocks_y);
       dim3 threads = dim3(blocksize,1,1);
 
-      hipLaunchKernelGGL(HIP_KERNEL_NAME(get_maximum_vector_kernel), grid, threads, 0, mp->compute_stream,
+      hipLaunchKernelGGL(HIP_KERNEL_NAME(get_maximum_vector_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                      displ.hip,size_nonpadded,tmp.hip);
     }
 #endif
@@ -511,7 +514,7 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
   // finish creating graph
   if (mp->init_graph_norm){
     // stop capturing
-    print_CUDA_error_if_any(cudaStreamEndCapture(mp->compute_stream, &mp->graph_norm),930);
+    print_CUDA_error_if_any(cudaStreamEndCapture(mp->compute_stream.cuda, &mp->graph_norm),930);
 
     // get graph info
     size_t numNodes = 0;
@@ -529,11 +532,11 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
   // launches graph instead of separate kernels
   if (mp->use_graph_call_norm){
     // graph
-    print_CUDA_error_if_any(cudaGraphLaunch(mp->graphExec_norm, mp->compute_stream),930);
+    print_CUDA_error_if_any(cudaGraphLaunch(mp->graphExec_norm, mp->compute_stream.cuda),930);
     //if (mp->myrank == 0) printf("\nGraph: norm launch\n");
 
     // makes sure kernels have finished copies to host
-    cudaStreamSynchronize(mp->compute_stream);
+    cudaStreamSynchronize(mp->compute_stream.cuda);
   }
 #endif
 
@@ -658,7 +661,7 @@ void FC_FUNC_ (check_norm_strain_from_device,
     // debug: synchronizes first
     //gpuSynchronize(); synchronize_mpi();
     // start capturing
-    print_CUDA_error_if_any(cudaStreamBeginCapture(mp->compute_stream),950);
+    print_CUDA_error_if_any(cudaStreamBeginCapture(mp->compute_stream.cuda),950);
   }
 #endif
 
@@ -696,7 +699,8 @@ void FC_FUNC_ (check_norm_strain_from_device,
       dim3 threads = dim3(blocksize,1,1);
 
       // reduction kernel
-      get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_eps_trace_over_3_crust_mantle.cuda,
+      get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                       mp->d_eps_trace_over_3_crust_mantle.cuda,
                                                                        size_nonpadded,
                                                                        mp->d_norm_strain_max.cuda);
 
@@ -712,7 +716,7 @@ void FC_FUNC_ (check_norm_strain_from_device,
       dim3 threads = dim3(blocksize,1,1);
 
       // reduction kernel
-      hipLaunchKernelGGL(HIP_KERNEL_NAME(get_maximum_scalar_kernel), grid, threads, 0, mp->compute_stream,
+      hipLaunchKernelGGL(HIP_KERNEL_NAME(get_maximum_scalar_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                      mp->d_eps_trace_over_3_crust_mantle.hip,
                                                                      size_nonpadded,
                                                                      mp->d_norm_strain_max.hip);
@@ -783,7 +787,8 @@ void FC_FUNC_ (check_norm_strain_from_device,
       dim3 threads = dim3(blocksize,1,1);
 
       // determines max for: epsilondev_xx_crust_mantle
-      get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(d_epsilondev_HH_crust_mantle[loop].cuda,
+      get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                       d_epsilondev_HH_crust_mantle[loop].cuda,
                                                                        size_nonpadded,
                                                                        tmp.cuda);
 
@@ -799,7 +804,7 @@ void FC_FUNC_ (check_norm_strain_from_device,
       dim3 threads = dim3(blocksize,1,1);
 
       // determines max for: epsilondev_xx_crust_mantle
-      hipLaunchKernelGGL(HIP_KERNEL_NAME(get_maximum_scalar_kernel), grid, threads, 0, mp->compute_stream,
+      hipLaunchKernelGGL(HIP_KERNEL_NAME(get_maximum_scalar_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                      d_epsilondev_HH_crust_mantle[loop].hip,
                                                                      size_nonpadded,
                                                                      tmp.hip);
@@ -854,7 +859,7 @@ void FC_FUNC_ (check_norm_strain_from_device,
     // finish creating graph
     if (mp->init_graph_norm_strain){
       // stop capturing
-      print_CUDA_error_if_any(cudaStreamEndCapture(mp->compute_stream, &mp->graph_norm_strain),950);
+      print_CUDA_error_if_any(cudaStreamEndCapture(mp->compute_stream.cuda, &mp->graph_norm_strain),950);
 
       // get graph info
       size_t numNodes = 0;
@@ -872,11 +877,11 @@ void FC_FUNC_ (check_norm_strain_from_device,
     // launches graph instead of separate kernels
     if (mp->use_graph_call_norm_strain){
       // graph
-      print_CUDA_error_if_any(cudaGraphLaunch(mp->graphExec_norm_strain, mp->compute_stream),953);
+      print_CUDA_error_if_any(cudaGraphLaunch(mp->graphExec_norm_strain, mp->compute_stream.cuda),953);
       //if (mp->myrank == 0) printf("\nGraph: norm strain launch \n");
 
       // makes sure kernels have finished copies to host
-      cudaStreamSynchronize(mp->compute_stream);
+      cudaStreamSynchronize(mp->compute_stream.cuda);
     }
 #endif
   }

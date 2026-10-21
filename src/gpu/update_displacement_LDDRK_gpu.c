@@ -129,7 +129,8 @@ void FC_FUNC_ (update_displ_lddrk_gpu,
     dim3 threads(blocksize,1,1);
 
     //launch kernel
-    update_displ_lddrk_kernel<<<grid,threads,0,mp->compute_stream>>>(accel_cm.cuda,
+    update_displ_lddrk_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                     accel_cm.cuda,
                                                                      accel_oc.cuda,
                                                                      accel_ic.cuda,
                                                                      size_cm,size_oc,size_ic);
@@ -242,7 +243,8 @@ void FC_FUNC_ (update_elastic_lddrk_gpu,
     dim3 threads = dim3(blocksize,1,1);
 
     // launches kernel
-    update_elastic_lddrk_kernel<<< grid, threads,0,mp->compute_stream>>>(displ.cuda,
+    update_elastic_lddrk_kernel<<< grid, threads,0,mp->compute_stream.cuda>>>(
+                                                                         displ.cuda,
                                                                          veloc.cuda,
                                                                          accel.cuda,
                                                                          displ_lddrk.cuda,
@@ -262,7 +264,7 @@ void FC_FUNC_ (update_elastic_lddrk_gpu,
     dim3 threads = dim3(blocksize,1,1);
 
     // launches kernel
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_elastic_lddrk_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_elastic_lddrk_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                      displ.hip,
                                                                      veloc.hip,
                                                                      accel.hip,
@@ -334,7 +336,8 @@ void FC_FUNC_ (update_elastic_lddrk_gpu,
     dim3 threads = dim3(blocksize,1,1);
 
     // launches kernel
-    update_elastic_lddrk_kernel<<< grid, threads,0,mp->compute_stream>>>(displ.cuda,
+    update_elastic_lddrk_kernel<<< grid, threads,0,mp->compute_stream.cuda>>>(
+                                                                         displ.cuda,
                                                                          veloc.cuda,
                                                                          accel.cuda,
                                                                          displ_lddrk.cuda,
@@ -350,7 +353,7 @@ void FC_FUNC_ (update_elastic_lddrk_gpu,
     // finish creating graph
     if (mp->init_graph_elastic){
       // stop capturing
-      print_CUDA_error_if_any(cudaStreamEndCapture(mp->compute_stream, &mp->graph_elastic),930);
+      print_CUDA_error_if_any(cudaStreamEndCapture(mp->compute_stream.cuda, &mp->graph_elastic),930);
 
       // get graph info
       size_t numNodes = 0;
@@ -368,7 +371,7 @@ void FC_FUNC_ (update_elastic_lddrk_gpu,
     // launches graph instead of separate kernels
     if (mp->use_graph_call_elastic){
       // graph
-      print_CUDA_error_if_any(cudaGraphLaunch(mp->graphExec_elastic, mp->compute_stream),935);
+      print_CUDA_error_if_any(cudaGraphLaunch(mp->graphExec_elastic, mp->compute_stream.cuda),935);
       //if (mp->myrank == 0) printf("\nGraph: elastic launch \n");
     }
 #endif
@@ -380,7 +383,7 @@ void FC_FUNC_ (update_elastic_lddrk_gpu,
     dim3 threads = dim3(blocksize,1,1);
 
     // launches kernel
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_elastic_lddrk_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_elastic_lddrk_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                      displ.hip,
                                                                      veloc.hip,
                                                                      accel.hip,
@@ -493,7 +496,8 @@ void FC_FUNC_ (update_acoustic_lddrk_gpu,
     dim3 threads(blocksize,1,1);
 
     // updates velocity
-    update_acoustic_lddrk_kernel<<< grid, threads,0,mp->compute_stream>>>(displ.cuda,
+    update_acoustic_lddrk_kernel<<< grid, threads,0,mp->compute_stream.cuda>>>(
+                                                                          displ.cuda,
                                                                           veloc.cuda,
                                                                           accel.cuda,
                                                                           displ_lddrk.cuda,
@@ -509,7 +513,7 @@ void FC_FUNC_ (update_acoustic_lddrk_gpu,
     // finish creating graph
     if (mp->init_graph_acoustic){
       // stop capturing
-      print_CUDA_error_if_any(cudaStreamEndCapture(mp->compute_stream, &mp->graph_acoustic),920);
+      print_CUDA_error_if_any(cudaStreamEndCapture(mp->compute_stream.cuda, &mp->graph_acoustic),920);
 
       // get graph info
       size_t numNodes = 0;
@@ -527,7 +531,7 @@ void FC_FUNC_ (update_acoustic_lddrk_gpu,
     // launches graph instead of separate kernels
     if (mp->use_graph_call_acoustic){
       // graph
-      print_CUDA_error_if_any(cudaGraphLaunch(mp->graphExec_acoustic, mp->compute_stream),925);
+      print_CUDA_error_if_any(cudaGraphLaunch(mp->graphExec_acoustic, mp->compute_stream.cuda),925);
       //if (mp->myrank == 0) printf("\nGraph: acoustic launch \n");
     }
 #endif
@@ -539,7 +543,7 @@ void FC_FUNC_ (update_acoustic_lddrk_gpu,
     dim3 threads(blocksize,1,1);
 
     // updates velocity
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_acoustic_lddrk_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_acoustic_lddrk_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                       displ.hip,
                                                                       veloc.hip,
                                                                       accel.hip,

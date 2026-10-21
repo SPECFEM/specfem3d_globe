@@ -110,7 +110,8 @@ void FC_FUNC_ (compute_stacey_elastic_gpu,
     dim3 threads(blocksize,1,1);
 
     // absorbing boundary contributions
-    compute_stacey_elastic_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_veloc_crust_mantle.cuda,
+    compute_stacey_elastic_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                         mp->d_veloc_crust_mantle.cuda,
                                                                          mp->d_accel_crust_mantle.cuda,
                                                                          num_abs_boundary_faces,
                                                                          d_abs_boundary_ispec.cuda,
@@ -131,7 +132,7 @@ void FC_FUNC_ (compute_stacey_elastic_gpu,
     dim3 threads(blocksize,1,1);
 
     // absorbing boundary contributions
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_stacey_elastic_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_stacey_elastic_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                        mp->d_veloc_crust_mantle.hip,
                                                                        mp->d_accel_crust_mantle.hip,
                                                                        num_abs_boundary_faces,
@@ -234,7 +235,8 @@ void FC_FUNC_ (compute_stacey_elastic_backward_gpu,
     dim3 threads(blocksize,1,1);
 
     // absorbing boundary contributions
-    compute_stacey_elastic_backward_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_accel_crust_mantle.cuda,
+    compute_stacey_elastic_backward_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                                  mp->d_b_accel_crust_mantle.cuda,
                                                                                   d_absorb_field.cuda,
                                                                                   num_abs_boundary_faces,
                                                                                   d_abs_boundary_ispec.cuda,
@@ -249,7 +251,7 @@ void FC_FUNC_ (compute_stacey_elastic_backward_gpu,
     dim3 threads(blocksize,1,1);
 
     // absorbing boundary contributions
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_stacey_elastic_backward_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_stacey_elastic_backward_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                                 mp->d_b_accel_crust_mantle.hip,
                                                                                 d_absorb_field.hip,
                                                                                 num_abs_boundary_faces,
@@ -350,7 +352,8 @@ void FC_FUNC_ (compute_stacey_elastic_undoatt_gpu,
     dim3 threads(blocksize,1,1);
 
     // absorbing boundary contributions
-    compute_stacey_elastic_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_veloc_crust_mantle.cuda,
+    compute_stacey_elastic_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                         mp->d_b_veloc_crust_mantle.cuda,
                                                                          mp->d_b_accel_crust_mantle.cuda,
                                                                          num_abs_boundary_faces,
                                                                          d_abs_boundary_ispec.cuda,
@@ -371,7 +374,7 @@ void FC_FUNC_ (compute_stacey_elastic_undoatt_gpu,
     dim3 threads(blocksize,1,1);
 
     // absorbing boundary contributions
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_stacey_elastic_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_stacey_elastic_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                        mp->d_b_veloc_crust_mantle.hip,
                                                                        mp->d_b_accel_crust_mantle.hip,
                                                                        num_abs_boundary_faces,

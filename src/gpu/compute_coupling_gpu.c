@@ -98,7 +98,8 @@ void FC_FUNC_ (compute_coupling_fluid_cmb_gpu,
     dim3 threads(NGLLX,NGLLX,1);
 
     // launches GPU kernel
-    compute_coupling_fluid_CMB_kernel<<<grid,threads,0,mp->compute_stream>>>(displ.cuda,
+    compute_coupling_fluid_CMB_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                             displ.cuda,
                                                                              accel.cuda,
                                                                              mp->d_ibool_crust_mantle.cuda,
                                                                              mp->d_ibelm_bottom_crust_mantle.cuda,
@@ -116,7 +117,7 @@ void FC_FUNC_ (compute_coupling_fluid_cmb_gpu,
     dim3 threads(NGLLX,NGLLX,1);
 
     // launches GPU kernel
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_coupling_fluid_CMB_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_coupling_fluid_CMB_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                            displ.hip,
                                                                            accel.hip,
                                                                            mp->d_ibool_crust_mantle.hip,
@@ -199,7 +200,8 @@ void FC_FUNC_ (compute_coupling_fluid_icb_gpu,
     dim3 threads(NGLLX,NGLLX,1);
 
     // launches GPU kernel
-    compute_coupling_fluid_ICB_kernel<<<grid,threads,0,mp->compute_stream>>>(displ.cuda,
+    compute_coupling_fluid_ICB_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                             displ.cuda,
                                                                              accel.cuda,
                                                                              mp->d_ibool_inner_core.cuda,
                                                                              mp->d_ibelm_top_inner_core.cuda,
@@ -217,7 +219,7 @@ void FC_FUNC_ (compute_coupling_fluid_icb_gpu,
     dim3 threads(NGLLX,NGLLX,1);
 
     // launches GPU kernel
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_coupling_fluid_ICB_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_coupling_fluid_ICB_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                            displ.hip,
                                                                            accel.hip,
                                                                            mp->d_ibool_inner_core.hip,
@@ -306,7 +308,8 @@ void FC_FUNC_ (compute_coupling_cmb_fluid_gpu,
     dim3 threads(5,5,1);
 
     // launches GPU kernel
-    compute_coupling_CMB_fluid_kernel<<<grid,threads,0,mp->compute_stream>>>(displ.cuda,
+    compute_coupling_CMB_fluid_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                             displ.cuda,
                                                                              accel_cm.cuda,
                                                                              accel_oc.cuda,
                                                                              mp->d_ibool_crust_mantle.cuda,
@@ -328,7 +331,7 @@ void FC_FUNC_ (compute_coupling_cmb_fluid_gpu,
     dim3 threads(5,5,1);
 
     // launches GPU kernel
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_coupling_CMB_fluid_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_coupling_CMB_fluid_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                            displ.hip,
                                                                            accel_cm.hip,
                                                                            accel_oc.hip,
@@ -420,7 +423,8 @@ void FC_FUNC_ (compute_coupling_icb_fluid_gpu,
     dim3 threads(NGLLX,NGLLX,1);
 
     // launches GPU kernel
-    compute_coupling_ICB_fluid_kernel<<<grid,threads,0,mp->compute_stream>>>(displ.cuda,
+    compute_coupling_ICB_fluid_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                             displ.cuda,
                                                                              accel_ic.cuda,
                                                                              accel_oc.cuda,
                                                                              mp->d_ibool_inner_core.cuda,
@@ -443,7 +447,7 @@ void FC_FUNC_ (compute_coupling_icb_fluid_gpu,
     dim3 threads(NGLLX,NGLLX,1);
 
     // launches GPU kernel
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_coupling_ICB_fluid_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_coupling_ICB_fluid_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                            displ.hip,
                                                                            accel_ic.hip,
                                                                            accel_oc.hip,
@@ -542,7 +546,8 @@ void FC_FUNC_ (compute_coupling_ocean_gpu,
     dim3 threads(blocksize,1,1);
 
     // uses corrected mass matrices
-    compute_coupling_ocean_kernel<<<grid,threads,0,mp->compute_stream>>>(accel.cuda,
+    compute_coupling_ocean_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                         accel.cuda,
                                                                          rmassx.cuda,
                                                                          rmassy.cuda,
                                                                          rmassz.cuda,
@@ -562,7 +567,7 @@ void FC_FUNC_ (compute_coupling_ocean_gpu,
     dim3 threads(blocksize,1,1);
 
     // uses corrected mass matrices
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_coupling_ocean_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_coupling_ocean_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                        accel.hip,
                                                                        rmassx.hip,
                                                                        rmassy.hip,

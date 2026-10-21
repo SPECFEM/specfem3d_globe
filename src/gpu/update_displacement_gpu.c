@@ -126,7 +126,8 @@ void FC_FUNC_ (update_displacement_ic_gpu,
     dim3 threads(blocksize,1,1);
 
     //launch kernel
-    update_disp_veloc_kernel<<<grid,threads,0,mp->compute_stream>>>(displ.cuda,
+    update_disp_veloc_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                    displ.cuda,
                                                                     veloc.cuda,
                                                                     accel.cuda,
                                                                     size,deltat,deltatsqover2,deltatover2);
@@ -138,7 +139,7 @@ void FC_FUNC_ (update_displacement_ic_gpu,
     dim3 threads(blocksize,1,1);
 
     //launch kernel
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_disp_veloc_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_disp_veloc_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                   displ.hip,
                                                                   veloc.hip,
                                                                   accel.hip,
@@ -251,7 +252,8 @@ void FC_FUNC_ (update_displacement_cm_gpu,
     dim3 threads(blocksize,1,1);
 
     //launch kernel
-    update_disp_veloc_kernel<<<grid,threads,0,mp->compute_stream>>>(displ.cuda,
+    update_disp_veloc_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                    displ.cuda,
                                                                     veloc.cuda,
                                                                     accel.cuda,
                                                                     size,deltat,deltatsqover2,deltatover2);
@@ -263,7 +265,7 @@ void FC_FUNC_ (update_displacement_cm_gpu,
     dim3 threads(blocksize,1,1);
 
     //launch kernel
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_disp_veloc_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_disp_veloc_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                   displ.hip,
                                                                   veloc.hip,
                                                                   accel.hip,
@@ -376,7 +378,8 @@ void FC_FUNC_ (update_displacement_oc_gpu,
     dim3 threads(blocksize,1,1);
 
     //launch kernel
-    update_potential_kernel<<<grid,threads,0,mp->compute_stream>>>(displ.cuda,
+    update_potential_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                   displ.cuda,
                                                                    veloc.cuda,
                                                                    accel.cuda,
                                                                    size,deltat,deltatsqover2,deltatover2);
@@ -388,7 +391,7 @@ void FC_FUNC_ (update_displacement_oc_gpu,
     dim3 threads(blocksize,1,1);
 
     //launch kernel
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_potential_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_potential_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                  displ.hip,
                                                                  veloc.hip,
                                                                  accel.hip,
@@ -459,7 +462,7 @@ void FC_FUNC_ (multiply_accel_elastic_gpu,
     // debug: synchronizes first
     //gpuSynchronize(); synchronize_mpi();
     // start capturing
-    print_CUDA_error_if_any(cudaStreamBeginCapture(mp->compute_stream),910);
+    print_CUDA_error_if_any(cudaStreamBeginCapture(mp->compute_stream.cuda),910);
   }
 #endif
 
@@ -499,7 +502,8 @@ void FC_FUNC_ (multiply_accel_elastic_gpu,
     dim3 threads = dim3(blocksize,1,1);
 
     // launches kernel
-    update_accel_elastic_kernel<<< grid, threads,0,mp->compute_stream>>>(accel.cuda,
+    update_accel_elastic_kernel<<< grid, threads,0,mp->compute_stream.cuda>>>(
+                                                                         accel.cuda,
                                                                          veloc.cuda,
                                                                          mp->NGLOB_CRUST_MANTLE,
                                                                          two_omega_earth,
@@ -517,7 +521,7 @@ void FC_FUNC_ (multiply_accel_elastic_gpu,
     dim3 threads = dim3(blocksize,1,1);
 
     // launches kernel
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_accel_elastic_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_accel_elastic_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                      accel.hip,
                                                                      veloc.hip,
                                                                      mp->NGLOB_CRUST_MANTLE,
@@ -584,7 +588,8 @@ void FC_FUNC_ (multiply_accel_elastic_gpu,
       dim3 threads = dim3(blocksize,1,1);
 
       // launches kernel
-      update_accel_elastic_kernel<<< grid, threads,0,mp->compute_stream>>>(accel.cuda,
+      update_accel_elastic_kernel<<< grid, threads,0,mp->compute_stream.cuda>>>(
+                                                                           accel.cuda,
                                                                            veloc.cuda,
                                                                            mp->NGLOB_INNER_CORE,
                                                                            two_omega_earth,
@@ -602,7 +607,7 @@ void FC_FUNC_ (multiply_accel_elastic_gpu,
       dim3 threads = dim3(blocksize,1,1);
 
       // launches kernel
-      hipLaunchKernelGGL(HIP_KERNEL_NAME(update_accel_elastic_kernel), grid, threads, 0, mp->compute_stream,
+      hipLaunchKernelGGL(HIP_KERNEL_NAME(update_accel_elastic_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                        accel.hip,
                                                                        veloc.hip,
                                                                        mp->NGLOB_INNER_CORE,
@@ -699,7 +704,8 @@ void FC_FUNC_ (update_veloc_elastic_gpu,
     dim3 threads = dim3(blocksize,1,1);
 
     // launches kernel
-    update_veloc_elastic_kernel<<< grid, threads,0,mp->compute_stream>>>(veloc.cuda,
+    update_veloc_elastic_kernel<<< grid, threads,0,mp->compute_stream.cuda>>>(
+                                                                         veloc.cuda,
                                                                          accel.cuda,
                                                                          mp->NGLOB_CRUST_MANTLE,
                                                                          deltatover2);
@@ -714,7 +720,7 @@ void FC_FUNC_ (update_veloc_elastic_gpu,
     dim3 threads = dim3(blocksize,1,1);
 
     // launches kernel
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_veloc_elastic_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_veloc_elastic_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                      veloc.hip,
                                                                      accel.hip,
                                                                      mp->NGLOB_CRUST_MANTLE,
@@ -770,7 +776,8 @@ void FC_FUNC_ (update_veloc_elastic_gpu,
       dim3 threads = dim3(blocksize,1,1);
 
       // launches kernel
-      update_veloc_elastic_kernel<<< grid, threads,0,mp->compute_stream>>>(veloc.cuda,
+      update_veloc_elastic_kernel<<< grid, threads,0,mp->compute_stream.cuda>>>(
+                                                                           veloc.cuda,
                                                                            accel.cuda,
                                                                            mp->NGLOB_INNER_CORE,
                                                                            deltatover2);
@@ -786,7 +793,7 @@ void FC_FUNC_ (update_veloc_elastic_gpu,
       dim3 threads = dim3(blocksize,1,1);
 
       // launches kernel
-      hipLaunchKernelGGL(HIP_KERNEL_NAME(update_veloc_elastic_kernel), grid, threads, 0, mp->compute_stream,
+      hipLaunchKernelGGL(HIP_KERNEL_NAME(update_veloc_elastic_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                        veloc.hip,
                                                                        accel.hip,
                                                                        mp->NGLOB_INNER_CORE,
@@ -803,7 +810,7 @@ void FC_FUNC_ (update_veloc_elastic_gpu,
     // finish creating graph
     if (mp->init_graph_elastic){
       // stop capturing
-      print_CUDA_error_if_any(cudaStreamEndCapture(mp->compute_stream, &mp->graph_elastic),930);
+      print_CUDA_error_if_any(cudaStreamEndCapture(mp->compute_stream.cuda, &mp->graph_elastic),930);
 
       // get graph info
       size_t numNodes = 0;
@@ -821,7 +828,7 @@ void FC_FUNC_ (update_veloc_elastic_gpu,
     // launches graph instead of separate kernels
     if (mp->use_graph_call_elastic){
       // graph
-      print_CUDA_error_if_any(cudaGraphLaunch(mp->graphExec_elastic, mp->compute_stream),935);
+      print_CUDA_error_if_any(cudaGraphLaunch(mp->graphExec_elastic, mp->compute_stream.cuda),935);
       //if (mp->myrank == 0) printf("\nGraph: elastic launch \n");
     }
   }
@@ -881,7 +888,7 @@ void FC_FUNC_ (multiply_accel_acoustic_gpu,
     // debug: synchronizes first
     //gpuSynchronize(); synchronize_mpi();
     // start capturing
-    print_CUDA_error_if_any(cudaStreamBeginCapture(mp->compute_stream),910);
+    print_CUDA_error_if_any(cudaStreamBeginCapture(mp->compute_stream.cuda),910);
   }
 #endif
 
@@ -918,7 +925,8 @@ void FC_FUNC_ (multiply_accel_acoustic_gpu,
     dim3 threads(blocksize,1,1);
 
     // multiplies accel with inverse of mass matrix
-    update_accel_acoustic_kernel<<< grid, threads,0,mp->compute_stream>>>(accel.cuda,
+    update_accel_acoustic_kernel<<< grid, threads,0,mp->compute_stream.cuda>>>(
+                                                                          accel.cuda,
                                                                           mp->NGLOB_OUTER_CORE,
                                                                           rmass.cuda);
 #ifdef USE_CUDA_GRAPHS
@@ -932,7 +940,7 @@ void FC_FUNC_ (multiply_accel_acoustic_gpu,
     dim3 threads(blocksize,1,1);
 
     // multiplies accel with inverse of mass matrix
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_accel_acoustic_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_accel_acoustic_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                       accel.hip,
                                                                       mp->NGLOB_OUTER_CORE,
                                                                       rmass.hip);
@@ -1025,7 +1033,8 @@ void FC_FUNC_ (update_veloc_acoustic_gpu,
     dim3 threads(blocksize,1,1);
 
     // updates velocity
-    update_veloc_acoustic_kernel<<< grid, threads,0,mp->compute_stream>>>(veloc.cuda,
+    update_veloc_acoustic_kernel<<< grid, threads,0,mp->compute_stream.cuda>>>(
+                                                                          veloc.cuda,
                                                                           accel.cuda,
                                                                           mp->NGLOB_OUTER_CORE,
                                                                           deltatover2);
@@ -1041,7 +1050,7 @@ void FC_FUNC_ (update_veloc_acoustic_gpu,
     dim3 threads(blocksize,1,1);
 
     // updates velocity
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_veloc_acoustic_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(update_veloc_acoustic_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                       veloc.hip,
                                                                       accel.hip,
                                                                       mp->NGLOB_OUTER_CORE,
@@ -1059,7 +1068,7 @@ void FC_FUNC_ (update_veloc_acoustic_gpu,
     // finish creating graph
     if (mp->init_graph_acoustic){
       // stop capturing
-      print_CUDA_error_if_any(cudaStreamEndCapture(mp->compute_stream, &mp->graph_acoustic),920);
+      print_CUDA_error_if_any(cudaStreamEndCapture(mp->compute_stream.cuda, &mp->graph_acoustic),920);
 
       // get graph info
       size_t numNodes = 0;
@@ -1077,7 +1086,7 @@ void FC_FUNC_ (update_veloc_acoustic_gpu,
     // launches graph instead of separate kernels
     if (mp->use_graph_call_acoustic){
       // graph
-      print_CUDA_error_if_any(cudaGraphLaunch(mp->graphExec_acoustic, mp->compute_stream),925);
+      print_CUDA_error_if_any(cudaGraphLaunch(mp->graphExec_acoustic, mp->compute_stream.cuda),925);
       //if (mp->myrank == 0) printf("\nGraph: acoustic launch \n");
     }
 #endif
