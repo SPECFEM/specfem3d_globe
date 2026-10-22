@@ -622,6 +622,7 @@ void gpuRecordEvent(Mesh *mp){
 
 #ifdef USE_OPENCL
 // not available
+  (void) mp; // to avoid compiler warning
 #endif
 #ifdef USE_CUDA
   if (run_cuda) {
@@ -659,14 +660,12 @@ void gpuReleaseCopyEvent (Mesh *mp) {
   }
 #endif
 #ifdef USE_CUDA
-  if (run_cuda) {
-    // for CUDA the copy event is the kernel event, which is reused across calls
-  }
+  // for CUDA the copy event is the kernel event, which is reused across calls
+  (void) mp; // to avoid compiler warning
 #endif
 #ifdef USE_HIP
-  if (run_hip) {
-    // for HIP the copy event is the kernel event, which is reused across calls
-  }
+  // for HIP the copy event is the kernel event, which is reused across calls
+  (void) mp; // to avoid compiler warning
 #endif
 
   GPU_ERROR_CHECKING ("gpuReleaseCopyEvent");
@@ -685,6 +684,12 @@ void gpuSyncCopyEvent (Mesh *mp) {
     // releases the copy event
     gpuReleaseCopyEvent(mp);
   }
+#endif
+#ifdef USE_CUDA
+  (void) mp; // to avoid compiler warning
+#endif
+#ifdef USE_HIP
+  (void) mp; // to avoid compiler warning
 #endif
 
   GPU_ERROR_CHECKING ("gpuSyncCopyEvent");
