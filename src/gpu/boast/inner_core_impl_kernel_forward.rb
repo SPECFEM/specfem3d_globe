@@ -1176,66 +1176,81 @@ module BOAST
         # element aniso/iso/tiso routines
         if type == :inner_core then
           # aniso
-          print sub_compute_element_ic_aniso
-          comment()
+          # OpenCL kernel only prints subroutine if needed (to enable OpenCL kernel compilation with flag "-Werror")
+          if ((get_lang == CL and only_anisotropy) or (get_lang == CUDA or get_lang == HIP)) then
+            print sub_compute_element_ic_aniso
+            comment()
+          end
           # iso
-          print sub_compute_element_ic_iso
-          comment()
+          # OpenCL kernel only prints subroutine if needed (to enable OpenCL kernel compilation with flag "-Werror")
+          if ((get_lang == CL and not only_anisotropy) or (get_lang == CUDA or get_lang == HIP)) then
+            print sub_compute_element_ic_iso
+            comment()
+          end
         elsif type == :crust_mantle then
           # aniso
-          if use_cuda_shared_async then
-            # BOAST doesn't allow to modify the function argument list with #ifdef-statements
-            # we thus call the routine twice and put the #ifdef-statement around the whole function
-            get_output.puts "#ifdef #{cuda_shared_async}"
-            # routine w/ cuda shared async copies
-            comment("// CUDA asynchronuous memory copies")
-            print sub_compute_element_cm_aniso_async
-            get_output.puts "#else"
-            # routine w/out
-            comment("//default (w/out asynchronuous memory copies) routine")
-            print sub_compute_element_cm_aniso
-            get_output.puts "#endif  // #{cuda_shared_async}"
-          else
-            print sub_compute_element_cm_aniso
+          # OpenCL kernel only prints subroutine if needed (to enable OpenCL kernel compilation with flag "-Werror")
+          if ((get_lang == CL and only_anisotropy) or (get_lang == CUDA or get_lang == HIP)) then
+            if use_cuda_shared_async then
+              # BOAST doesn't allow to modify the function argument list with #ifdef-statements
+              # we thus call the routine twice and put the #ifdef-statement around the whole function
+              get_output.puts "#ifdef #{cuda_shared_async}"
+              # routine w/ cuda shared async copies
+              comment("// CUDA asynchronuous memory copies")
+              print sub_compute_element_cm_aniso_async
+              get_output.puts "#else"
+              # routine w/out
+              comment("//default (w/out asynchronuous memory copies) routine")
+              print sub_compute_element_cm_aniso
+              get_output.puts "#endif  // #{cuda_shared_async}"
+            else
+              print sub_compute_element_cm_aniso
+            end
+            comment()
           end
-          comment()
           # iso
-          if use_cuda_shared_async then
-            # BOAST doesn't allow to modify the function argument list with #ifdef-statements
-            # we thus call the routine twice and put the #ifdef-statement around the whole function
-            get_output.puts "#ifdef #{cuda_shared_async}"
-            # routine w/ cuda shared async copies
-            comment("// CUDA asynchronuous memory copies")
-            print sub_compute_element_cm_iso_async
-            get_output.puts "#else"
-            # routine w/out
-            comment("//default (w/out asynchronuous memory copies) routine")
-            print sub_compute_element_cm_iso
-            get_output.puts "#endif  // #{cuda_shared_async}"
-          else
-            print sub_compute_element_cm_iso
+          # OpenCL kernel only prints subroutine if needed (to enable OpenCL kernel compilation with flag "-Werror")
+          if ((get_lang == CL and not only_anisotropy) or (get_lang == CUDA or get_lang == HIP)) then
+            if use_cuda_shared_async then
+              # BOAST doesn't allow to modify the function argument list with #ifdef-statements
+              # we thus call the routine twice and put the #ifdef-statement around the whole function
+              get_output.puts "#ifdef #{cuda_shared_async}"
+              # routine w/ cuda shared async copies
+              comment("// CUDA asynchronuous memory copies")
+              print sub_compute_element_cm_iso_async
+              get_output.puts "#else"
+              # routine w/out
+              comment("//default (w/out asynchronuous memory copies) routine")
+              print sub_compute_element_cm_iso
+              get_output.puts "#endif  // #{cuda_shared_async}"
+            else
+              print sub_compute_element_cm_iso
+            end
+            comment()
           end
-          comment()
           # tiso
-          if use_cuda_shared_async then
-            # BOAST doesn't allow to modify the function argument list with #ifdef-statements
-            # we thus call the routine twice and put the #ifdef-statement around the whole function
-            get_output.puts "#ifdef #{cuda_shared_async}"
-            # routine w/ cuda shared async copies
-            comment("// CUDA asynchronuous memory copies")
-            print sub_compute_element_cm_tiso_async
-            get_output.puts "#else"
-            # routine w/out
-            comment("//default (w/out asynchronuous memory copies) routine")
-            print sub_compute_element_cm_tiso
-            get_output.puts "#endif  // #{cuda_shared_async}"
-          else
-            # old routine
-            #print sub_compute_element_cm_tiso_org
-            # new routine
-            print sub_compute_element_cm_tiso
+          # OpenCL kernel only prints subroutine if needed (to enable OpenCL kernel compilation with flag "-Werror")
+          if ((get_lang == CL and not only_anisotropy) or (get_lang == CUDA or get_lang == HIP)) then
+            if use_cuda_shared_async then
+              # BOAST doesn't allow to modify the function argument list with #ifdef-statements
+              # we thus call the routine twice and put the #ifdef-statement around the whole function
+              get_output.puts "#ifdef #{cuda_shared_async}"
+              # routine w/ cuda shared async copies
+              comment("// CUDA asynchronuous memory copies")
+              print sub_compute_element_cm_tiso_async
+              get_output.puts "#else"
+              # routine w/out
+              comment("//default (w/out asynchronuous memory copies) routine")
+              print sub_compute_element_cm_tiso
+              get_output.puts "#endif  // #{cuda_shared_async}"
+            else
+              # old routine
+              #print sub_compute_element_cm_tiso_org
+              # new routine
+              print sub_compute_element_cm_tiso
+            end
+            comment()
           end
-          comment()
         end
 
         comment()

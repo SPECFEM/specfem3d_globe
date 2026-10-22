@@ -210,14 +210,14 @@ void FC_FUNC_ (prepare_constants_device,
   // clCreateCommandQueue feature in OpenCL 1.2, will be deprecated in OpenCL 2.0
 #if defined(CL_VERSION_2_0) || defined(CL_VERSION_2_1) || defined(CL_VERSION_2_2) || defined(CL_VERSION_3_0)
   // version 2.x, 3.x
-#pragma message ("\nCompiling for OpenCL version > 1\n")
+#pragma message ("\n\nCompiling for OpenCL version 2+\n")
   mocl.command_queue = clCreateCommandQueueWithProperties(mocl.context, mocl.device, 0, clck_(&errcode));
   if (mp->GPU_ASYNC_COPY) {
     mocl.copy_queue = clCreateCommandQueueWithProperties(mocl.context, mocl.device, 0, clck_(&errcode));
   }
 #else
   // version 1.0, 1.1, 1.2, mostly CL_VERSION_1_2
-#pragma message ("\nCompiling for OpenCL version 1.x\n")
+#pragma message ("\n\nCompiling for OpenCL version 1.x\n")
   mocl.command_queue = clCreateCommandQueue(mocl.context, mocl.device, 0, clck_(&errcode));
   if (mp->GPU_ASYNC_COPY) {
     mocl.copy_queue = clCreateCommandQueue(mocl.context, mocl.device, 0, clck_(&errcode));

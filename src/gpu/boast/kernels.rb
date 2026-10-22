@@ -118,7 +118,7 @@ puts "building kernel files:"
 puts "-------------------------------"
 
 # checks output directory
-if File.exists? "#{$options[:output_dir]}/" then
+if File.exist? "#{$options[:output_dir]}/" then
   puts "directory exists: #{$options[:output_dir]}/"
 else
   puts "directory does not exist: #{$options[:output_dir]}/"
