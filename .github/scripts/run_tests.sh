@@ -175,6 +175,10 @@ if [ "${GPU}" == "true" ]; then
   sed -i "s:^GPU_MODE .*:GPU_MODE    = .true.:" DATA/Par_file
   sed -i "s:^GPU_PLATFORM .*:GPU_PLATFORM    = *:" DATA/Par_file
   sed -i "s:^GPU_DEVICE .*:GPU_DEVICE    = *:" DATA/Par_file
+  # GPU runtime: 0=compile-time, 1=CUDA, 2=OpenCL, 3=HIP
+  if [ "${GPU_RUNTIME}" != "" ]; then
+    sed -i "s:^GPU_RUNTIME .*:GPU_RUNTIME    = ${GPU_RUNTIME}:" DATA/Par_file
+  fi
 fi
 
 # coverage runs use short steps

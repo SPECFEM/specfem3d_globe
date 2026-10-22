@@ -1008,13 +1008,43 @@ jobs:
           tests/gf3d/config.log
         if-no-files-found: ignore
 
+  linuxTest_20:
+    name: Test 20 - regional_Greece_small GPU OpenCL
+    runs-on: ubuntu-latest
+    needs: [compilationChecks]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install packages
+      env:
+        OPENCL: true
+      run: ./.github/scripts/run_install.sh
+      shell: bash
+
+    - name: Run build
+      env:
+        OPENCL: true
+        TESTFLAGS: --enable-debug
+      run: ./.github/scripts/run_build.sh
+      shell: bash
+
+    - name: Run test
+      env:
+        TESTDIR: EXAMPLES/regional_Greece_small
+        GPU: true
+        GPU_RUNTIME: 2
+        OMP_NUM_THREADS: 1
+      run: ./.github/scripts/run_tests.sh
+      shell: bash
+
 
   # intermediate workflow check
   exampleChecks:
     needs: [linuxTest_0,linuxTest_1,linuxTest_2,linuxTest_3,linuxTest_4,linuxTest_5,
             linuxTest_6,linuxTest_7,linuxTest_8,linuxTest_9,linuxTest_10,
             linuxTest_11,linuxTest_12,linuxTest_13,linuxTest_14,linuxTest_15,
-            linuxTest_16,linuxTest_17,linuxTest_18,linuxTest_19]
+            linuxTest_16,linuxTest_17,linuxTest_18,linuxTest_19,linuxTest_20]
     runs-on: ubuntu-latest
     steps:
     - run: echo "example tests passed"

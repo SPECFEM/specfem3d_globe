@@ -246,7 +246,7 @@ if [ "${CUDA}" == "true" ]; then
 
   ## OpenCL additionals
   if [ "${OPENCL}" == "true" ]; then
-    echo "OpenCL installation"
+    echo "OpenCL installation w/ nvidia opencl"
     #echo "dpkg toolkit:"
     #dpkg -l | grep toolkit
     #echo ""
@@ -267,6 +267,40 @@ if [ "${CUDA}" == "true" ]; then
   fi
 else
   export CUDA_HOME=""
+fi
+
+## OpenCL additionals
+if [ "${OPENCL}" == "true" ]; then
+  if [ "${CUDA}" == "true" ]; then
+    echo "OpenCL installation w/ nvidia opencl"
+    #echo "dpkg toolkit:"
+    #dpkg -l | grep toolkit
+    #echo ""
+    #echo "dpkg opencl:"
+    #dpkg -l | grep opencl
+    #echo ""
+    #echo "apt-cache opencl:"
+    #apt-cache search opencl
+    # possible packages for OpenCL:
+    #sudo apt-get install -y --no-install-recommends cuda-toolkit-${CUDA_APT}
+    #sudo apt-get install opencl-headers
+    # for ppc64 architecture: to be able to compile/link OpenCL version
+    sudo apt-get install nvidia-opencl-dev
+    if [[ $? -ne 0 ]]; then echo "OpenCL installation failed"; exit 1; fi
+  else
+    echo "OpenCL installation w/ pocl"
+    # drivers w/ container using CPU core - not working...
+    sudo apt-get install -y ocl-icd-libopencl1 ocl-icd-opencl-dev pocl-opencl-icd
+    if [[ $? -ne 0 ]]; then echo "OpenCL installation failed"; exit 1; fi
+  fi
+  echo ""
+  # sanity checks: headers and a visible CPU device
+  ls -l /usr/include/CL/cl.h
+  echo ""
+  # clinfo
+  sudo apt-get install -y clinfo
+  clinfo | head -40
+  echo ""
 fi
 
 # MPI
