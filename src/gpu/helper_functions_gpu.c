@@ -1159,13 +1159,13 @@ const char* clewErrorString (cl_int error) {
     , "CL_BUILD_PROGRAM_FAILURE"                    //  -11
     , "CL_MAP_FAILURE"                              //  -12
 
-    , ""    //  -13
-    , ""    //  -14
-    , ""    //  -15
-    , ""    //  -16
-    , ""    //  -17
-    , ""    //  -18
-    , ""    //  -19
+    , "CL_MISALIGNED_SUB_BUFFER_OFFSET"               //  -13
+    , "CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST"  //  -14
+    , "CL_COMPILE_PROGRAM_FAILURE"                    //  -15
+    , "CL_LINKER_NOT_AVAILABLE"                       //  -16
+    , "CL_LINK_PROGRAM_FAILURE"                       //  -17
+    , "CL_DEVICE_PARTITION_FAILED"                    //  -18
+    , "CL_KERNEL_ARG_INFO_NOT_AVAILABLE"              //  -19
 
     , ""    //  -20
     , ""    //  -21
@@ -1212,13 +1212,22 @@ const char* clewErrorString (cl_int error) {
     , "CL_INVALID_BUFFER_SIZE"                      //  -61
     , "CL_INVALID_MIP_LEVEL"                        //  -62
     , "CL_INVALID_GLOBAL_WORK_SIZE"                 //  -63
+    , "CL_INVALID_PROPERTY"                        //  -64
+    , "CL_INVALID_IMAGE_DESCRIPTOR"                //  -65
+    , "CL_INVALID_COMPILER_OPTIONS"                //  -66
+    , "CL_INVALID_LINKER_OPTIONS"                  //  -67
+    , "CL_INVALID_DEVICE_PARTITION_COUNT"          //  -68
+    , "CL_INVALID_PIPE_SIZE"                       //  -69
+    , "CL_INVALID_DEVICE_QUEUE"                    //  -70
+    , "CL_INVALID_SPEC_ID"                         //  -71
+    , "CL_MAX_SIZE_RESTRICTION_EXCEEDED"           //  -72
     , "CL_UNKNOWN_ERROR_CODE"
   };
 
-  if (error >= -63 && error <= 0) {
+  if (error >= -72 && error <= 0) {
     return strings[-error];
   } else {
-    return strings[64];
+    return strings[73];
   }
 }
 
@@ -1238,12 +1247,17 @@ const char *clGetErrorString (cl_int error) {
 void start_timing_gpu(gpu_event* start,gpu_event* stop) {
   // creates & starts event
 #ifdef USE_OPENCL
+// pragma
 #ifdef CL_HAS_CREATE_EVENT
+#pragma message ("\n\nCompiling with: CL_HAS_CREATE_EVENT enabled\n")
   // note: for OpenCL the events are created here, but they are not recorded into a command queue,
   //       thus the timing below remains zero.
   //       (measuring the time would require enabling profiling on the command queue)
-  clCheck (clCreateEvent (&start->event, CL_EVENT_DEFAULT, NULL, NULL));
-  clCheck (clCreateEvent (&stop->event, CL_EVENT_DEFAULT, NULL, NULL));
+  cl_int err;
+  start->event = clCreateUserEvent(mocl.context, &err);
+  clCheck(err);
+  stop->event = clCreateUserEvent(mocl.context, &err);
+  clCheck(err);
 #endif
 #endif
 #ifdef USE_CUDA
