@@ -75,7 +75,10 @@ do {                                                                    \
       clCheck (clGetMemObjectInfo (mp->_buffer_.ocl, CL_MEM_FLAGS, sizeof(cl_mem_flags), &buffer_create_type, NULL)); \
       clCheck (clGetMemObjectInfo (mp->_buffer_.ocl, CL_MEM_SIZE , sizeof(size_t), &size_buffer, NULL)); \
                                                                         \
-      region_type.origin = _offset_ * sizeof(CL_FLOAT);                 \
+      /* note: the origin of a sub-buffer must be a multiple of the device alignment  */ \
+      /*       (CL_DEVICE_MEM_BASE_ADDR_ALIGN), otherwise the runtime returns          */ \
+      /*       CL_MISALIGNED_SUB_BUFFER_OFFSET (-13)                                  */ \
+      region_type.origin = _offset_ * sizeof(realw);                    \
       region_type.size = size_buffer - region_type.origin;              \
                                                                         \
       _buffer_##_##_offset_.ocl = clCreateSubBuffer (mp->_buffer_.ocl, buffer_create_type, CL_BUFFER_CREATE_TYPE_REGION, \

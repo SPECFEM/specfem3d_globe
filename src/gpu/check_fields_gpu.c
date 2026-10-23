@@ -209,6 +209,7 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
 
   int num_blocks_x, num_blocks_y;
   int size_nonpadded, size_padded;
+  int offset = 0;
 
   // initializes
   *fluidnorm = 0.f;
@@ -292,6 +293,7 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
 
       clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &displ.ocl));
       clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (int), (void *) &size_nonpadded));
+      clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (int), (void *) &offset));
       clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_norm_max.ocl));
 
       clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.get_maximum_scalar_kernel, 2, NULL,
@@ -309,7 +311,7 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
       dim3 threads(blocksize,1,1);
 
       get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
-                                                                     displ.cuda,size_nonpadded,mp->d_norm_max.cuda);
+                                                                     displ.cuda,size_nonpadded,offset,mp->d_norm_max.cuda);
 
 #ifdef USE_CUDA_GRAPHS
       } // graph
@@ -322,7 +324,7 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
       dim3 threads(blocksize,1,1);
 
       hipLaunchKernelGGL(HIP_KERNEL_NAME(get_maximum_scalar_kernel), grid, threads, 0, mp->compute_stream.hip,
-                                                                     displ.hip,size_nonpadded,mp->d_norm_max.hip);
+                                                                     displ.hip,size_nonpadded,offset,mp->d_norm_max.hip);
     }
 #endif
   } //outer_core
@@ -344,15 +346,11 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
     displ = mp->d_b_displ_crust_mantle;
   }
 
-  gpu_realw_mem tmp;
   int offset1,offset2;
 
-  INITIALIZE_OFFSET();
-
+  // note: the offset is now passed to the kernel as an argument,
+  //       no sub-buffer (and thus no alignment constraint) is needed
   offset1 = size_block_fluid;
-  INIT_OFFSET(d_norm_max, offset1);
-
-  tmp = gpuTakeRef(PASS_OFFSET(d_norm_max, offset1));
 
 #ifdef USE_OPENCL
   if (run_opencl) {
@@ -367,7 +365,8 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
 
     clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &displ.ocl));
     clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (int), (void *) &size_nonpadded));
-    clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &tmp.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (int), (void *) &offset1));
+    clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_norm_max.ocl));
 
     clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.get_maximum_vector_kernel, 2, NULL,
                                      global_work_size, local_work_size, 0, NULL, NULL));
@@ -384,7 +383,7 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
     dim3 threads = dim3(blocksize,1,1);
 
     get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
-                                                                   displ.cuda,size_nonpadded,tmp.cuda);
+                                                                   displ.cuda,size_nonpadded,offset1,mp->d_norm_max.cuda);
 
 #ifdef USE_CUDA_GRAPHS
     } // graph
@@ -397,11 +396,9 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
     dim3 threads = dim3(blocksize,1,1);
 
     hipLaunchKernelGGL(HIP_KERNEL_NAME(get_maximum_vector_kernel), grid, threads, 0, mp->compute_stream.hip,
-                                                                   displ.hip,size_nonpadded,tmp.hip);
+                                                                   displ.hip,size_nonpadded,offset1,mp->d_norm_max.hip);
   }
 #endif
-
-  RELEASE_OFFSET(d_norm_max, offset1);
 
   // inner_core
   size_nonpadded = mp->NGLOB_INNER_CORE;
@@ -422,9 +419,6 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
     }
 
     offset2 = size_block_fluid + size_block_cm;
-    INIT_OFFSET(d_norm_max, offset2);
-
-    tmp = gpuTakeRef(PASS_OFFSET(d_norm_max, offset2));
 
 #ifdef USE_OPENCL
     if (run_opencl) {
@@ -439,7 +433,8 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
 
       clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &displ.ocl));
       clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (int), (void *) &size_nonpadded));
-      clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &tmp.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (int), (void *) &offset2));
+      clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_norm_max.ocl));
 
       clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.get_maximum_vector_kernel, 2, NULL,
                                        global_work_size, local_work_size, 0, NULL, NULL));
@@ -456,7 +451,7 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
       dim3 threads = dim3(blocksize,1,1);
 
       get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
-                                                                     displ.cuda,size_nonpadded,tmp.cuda);
+                                                                     displ.cuda,size_nonpadded,offset2,mp->d_norm_max.cuda);
 
 #ifdef USE_CUDA_GRAPHS
       } // graph
@@ -469,11 +464,9 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
       dim3 threads = dim3(blocksize,1,1);
 
       hipLaunchKernelGGL(HIP_KERNEL_NAME(get_maximum_vector_kernel), grid, threads, 0, mp->compute_stream.hip,
-                                                                     displ.hip,size_nonpadded,tmp.hip);
+                                                                     displ.hip,size_nonpadded,offset2,mp->d_norm_max.hip);
     }
 #endif
-
-    RELEASE_OFFSET(d_norm_max, offset2);
   } //inner_core
 
   // graph
@@ -616,6 +609,7 @@ void FC_FUNC_ (check_norm_strain_from_device,
 
   int num_blocks_x, num_blocks_y;
   int size_nonpadded, size_padded;
+  int offset = 0;
 
   // initializes
   *strain_norm = 0.f;
@@ -682,6 +676,7 @@ void FC_FUNC_ (check_norm_strain_from_device,
       // reduction kernel
       clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_eps_trace_over_3_crust_mantle.ocl));
       clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (int), (void *) &size_nonpadded));
+      clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (int), (void *) &offset));
       clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_norm_strain_max.ocl));
 
       clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.get_maximum_scalar_kernel, 2, NULL,
@@ -702,6 +697,7 @@ void FC_FUNC_ (check_norm_strain_from_device,
       get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
                                                                        mp->d_eps_trace_over_3_crust_mantle.cuda,
                                                                        size_nonpadded,
+                                                                       offset,
                                                                        mp->d_norm_strain_max.cuda);
 
       // graph
@@ -719,6 +715,7 @@ void FC_FUNC_ (check_norm_strain_from_device,
       hipLaunchKernelGGL(HIP_KERNEL_NAME(get_maximum_scalar_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                      mp->d_eps_trace_over_3_crust_mantle.hip,
                                                                      size_nonpadded,
+                                                                     offset,
                                                                      mp->d_norm_strain_max.hip);
     }
 #endif
@@ -745,15 +742,10 @@ void FC_FUNC_ (check_norm_strain_from_device,
      mp->d_epsilondev_yz_crust_mantle
     };
 
-  INITIALIZE_OFFSET();
-  gpu_realw_mem tmp;
-  int offset;
-
   for (loop = 0; loop < 5; loop++) {
+    // note: the offset is now passed to the kernel as an argument,
+    //       no sub-buffer (and thus no alignment constraint) is needed
     offset = size_block_strain + loop * size_block;
-    INIT_OFFSET(d_norm_strain_max, offset);
-
-    tmp = gpuTakeRef(PASS_OFFSET(d_norm_strain_max, offset));
 
     // gets maximum by gpu reduction kernel
 #ifdef USE_OPENCL
@@ -770,7 +762,8 @@ void FC_FUNC_ (check_norm_strain_from_device,
       // determines max
       clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &d_epsilondev_HH_crust_mantle[loop].ocl));
       clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (int), (void *) &size_nonpadded));
-      clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &tmp.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (int), (void *) &offset));
+      clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_norm_strain_max.ocl));
 
       clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.get_maximum_scalar_kernel, 2, NULL,
                                        global_work_size, local_work_size, 0, NULL, NULL));
@@ -790,7 +783,8 @@ void FC_FUNC_ (check_norm_strain_from_device,
       get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
                                                                        d_epsilondev_HH_crust_mantle[loop].cuda,
                                                                        size_nonpadded,
-                                                                       tmp.cuda);
+                                                                       offset,
+                                                                       mp->d_norm_strain_max.cuda);
 
       // graph
 #ifdef USE_CUDA_GRAPHS
@@ -807,11 +801,10 @@ void FC_FUNC_ (check_norm_strain_from_device,
       hipLaunchKernelGGL(HIP_KERNEL_NAME(get_maximum_scalar_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                      d_epsilondev_HH_crust_mantle[loop].hip,
                                                                      size_nonpadded,
-                                                                     tmp.hip);
+                                                                     offset,
+                                                                     mp->d_norm_strain_max.hip);
     }
 #endif
-
-    RELEASE_OFFSET(d_norm_strain_max, offset);
   }
 
   // graph

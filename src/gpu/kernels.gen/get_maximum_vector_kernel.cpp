@@ -81,7 +81,7 @@
 #define BLOCKSIZE_TRANSFER 256
 #endif
 
-__global__ void get_maximum_vector_kernel(const float * array, const int size, float * d_max){
+__global__ void get_maximum_vector_kernel(const float * array, const int size, const int offset, float * d_max){
   __shared__ float sdata[(BLOCKSIZE_TRANSFER)];
   int tid;
   int bx;
@@ -107,6 +107,6 @@ __global__ void get_maximum_vector_kernel(const float * array, const int size, f
   }
 
   if (tid == 0) {
-    d_max[bx] = sdata[0];
+    d_max[bx + offset] = sdata[0];
   }
 }
