@@ -97,7 +97,7 @@ __kernel void smooth_normalize_data_kernel(__global float * data_smooth, const _
   int igll;\n\
   float norm;\n\
   float val;\n\
-  const float TOL = 1.e-24;\n\
+  const float TOL = 1.e-24f;\n\
 \n\
   ispec = get_group_id(0) + (get_group_id(1)) * (get_num_groups(0));\n\
   igll = get_local_id(0);\n\

@@ -86,7 +86,7 @@ __global__ void smooth_normalize_data_kernel(float * data_smooth, const float * 
   int igll;
   float norm;
   float val;
-  const float TOL = 1.e-24;
+  const float TOL = 1.e-24f;
 
   ispec = blockIdx.x + (blockIdx.y) * (gridDim.x);
   igll = threadIdx.x;
