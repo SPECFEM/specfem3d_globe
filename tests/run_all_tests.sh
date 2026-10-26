@@ -28,20 +28,30 @@ tests=( compilations \
         auxiliaries \
         meshfem3D \
         specfem3D \
-        gf3d \
         examples
       )
+
+# user specified target test directory
+if [ "$1" != "" ]; then
+  target="$1"
+fi
+
+# appends gf3d to all tests
+if [ "$target" == "all" ]; then
+  tests+=( gf3d )
+  target=""
+fi
 
 # running tests
 echo "main directory   : $dir"
 echo
 date
-if [ "$1" != "" ]; then
+if [ "$target" != "" ]; then
 
 # specified test directory
-echo "test $1 starting"
+echo "test $target starting"
 # runs all bash scripts in specified test-subdirectory
-./run_tests.sh $1
+./run_tests.sh $target
 
 # checks exit code
 if [[ $? -ne 0 ]]; then
