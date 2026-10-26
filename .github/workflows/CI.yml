@@ -1033,8 +1033,7 @@ jobs:
       env:
         TESTDIR: EXAMPLES/regional_Greece_small
         GPU: true
-        GPU_RUNTIME: 2
-        OMP_NUM_THREADS: 1
+        OPENCL: true
       run: ./.github/scripts/run_tests.sh
       shell: bash
 
