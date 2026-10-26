@@ -29,6 +29,22 @@
 
 #include "mesh_constants_gpu.h"
 
+// buffer pointer offset
+// note: For get_maximum_*(..) kernels, we can either offset the pointer to the d_norm_max array
+//       and pass the temporary pointer and zero as offset value,
+//       or call the kernels with the actual offset value and pass the original d_norm_max array pointer.
+//
+//       OpenCL might fail when using the former due to misalignment of the buffer pointer
+//       (error -13: CL_MISALIGNED_SUB_BUFFER_OFFSET).
+//
+//       by default, we thus call the kernels with the original array pointer and the actual offset value as argument
+//       and not by the offset buffer pointer.
+//       for checking performance with the buffer offset option, uncomment the line below
+//#define USE_BUFFER_POINTER_OFFSET
+#ifdef USE_BUFFER_POINTER_OFFSET
+#pragma message ("\n\nCompiling with: USE_BUFFER_POINTER_OFFSET enabled\n")
+#endif
+
 
 /*----------------------------------------------------------------------------------------------- */
 // GPU device memory functions
@@ -209,6 +225,8 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
 
   int num_blocks_x, num_blocks_y;
   int size_nonpadded, size_padded;
+
+  // initial buffer offset
   int offset = 0;
 
   // initializes
@@ -352,6 +370,21 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
   //       no sub-buffer (and thus no alignment constraint) is needed
   offset1 = size_block_fluid;
 
+#ifdef USE_BUFFER_POINTER_OFFSET
+  gpu_realw_mem tmp;
+#else
+  gpu_realw_mem tmp = mp->d_norm_max;
+#endif
+
+#ifdef USE_BUFFER_POINTER_OFFSET
+  // buffer pointer offset
+  INITIALIZE_OFFSET();
+  INIT_OFFSET(d_norm_max, offset1);
+  tmp = gpuTakeRef(PASS_OFFSET(d_norm_max, offset1));
+  // reset offset for kernel call
+  offset1 = 0;
+#endif
+
 #ifdef USE_OPENCL
   if (run_opencl) {
     size_t global_work_size[2];
@@ -366,7 +399,7 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
     clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &displ.ocl));
     clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (int), (void *) &size_nonpadded));
     clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (int), (void *) &offset1));
-    clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_norm_max.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &tmp.ocl));
 
     clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.get_maximum_vector_kernel, 2, NULL,
                                      global_work_size, local_work_size, 0, NULL, NULL));
@@ -383,7 +416,10 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
     dim3 threads = dim3(blocksize,1,1);
 
     get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
-                                                                   displ.cuda,size_nonpadded,offset1,mp->d_norm_max.cuda);
+                                                                   displ.cuda,
+                                                                   size_nonpadded,
+                                                                   offset1,
+                                                                   tmp.cuda);
 
 #ifdef USE_CUDA_GRAPHS
     } // graph
@@ -396,8 +432,16 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
     dim3 threads = dim3(blocksize,1,1);
 
     hipLaunchKernelGGL(HIP_KERNEL_NAME(get_maximum_vector_kernel), grid, threads, 0, mp->compute_stream.hip,
-                                                                   displ.hip,size_nonpadded,offset1,mp->d_norm_max.hip);
+                                                                   displ.hip,
+                                                                   size_nonpadded,
+                                                                   offset1,
+                                                                   tmp.hip);
   }
+#endif
+
+#ifdef USE_BUFFER_POINTER_OFFSET
+  // buffer pointer offset
+  RELEASE_OFFSET(d_norm_max, offset1);
 #endif
 
   // inner_core
@@ -420,6 +464,14 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
 
     offset2 = size_block_fluid + size_block_cm;
 
+#ifdef USE_BUFFER_POINTER_OFFSET
+    // buffer pointer offset
+    INIT_OFFSET(d_norm_max, offset2);
+    tmp = gpuTakeRef(PASS_OFFSET(d_norm_max, offset2));
+    // reset offset for kernel call
+    offset2 = 0;
+#endif
+
 #ifdef USE_OPENCL
     if (run_opencl) {
       size_t global_work_size[2];
@@ -434,7 +486,7 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
       clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &displ.ocl));
       clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (int), (void *) &size_nonpadded));
       clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (int), (void *) &offset2));
-      clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_norm_max.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &tmp.ocl));
 
       clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.get_maximum_vector_kernel, 2, NULL,
                                        global_work_size, local_work_size, 0, NULL, NULL));
@@ -451,7 +503,10 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
       dim3 threads = dim3(blocksize,1,1);
 
       get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
-                                                                     displ.cuda,size_nonpadded,offset2,mp->d_norm_max.cuda);
+                                                                     displ.cuda,
+                                                                     size_nonpadded,
+                                                                     offset2,
+                                                                     tmp.cuda);
 
 #ifdef USE_CUDA_GRAPHS
       } // graph
@@ -464,8 +519,16 @@ void FC_FUNC_ (check_norm_elastic_acoustic_from_device,
       dim3 threads = dim3(blocksize,1,1);
 
       hipLaunchKernelGGL(HIP_KERNEL_NAME(get_maximum_vector_kernel), grid, threads, 0, mp->compute_stream.hip,
-                                                                     displ.hip,size_nonpadded,offset2,mp->d_norm_max.hip);
+                                                                     displ.hip,
+                                                                     size_nonpadded,
+                                                                     offset2,
+                                                                     tmp.hip);
     }
+#endif
+
+#ifdef USE_BUFFER_POINTER_OFFSET
+    // buffer pointer offset
+    RELEASE_OFFSET(d_norm_max, offset2);
 #endif
   } //inner_core
 
@@ -609,6 +672,8 @@ void FC_FUNC_ (check_norm_strain_from_device,
 
   int num_blocks_x, num_blocks_y;
   int size_nonpadded, size_padded;
+
+  // initial buffer offset
   int offset = 0;
 
   // initializes
@@ -742,10 +807,29 @@ void FC_FUNC_ (check_norm_strain_from_device,
      mp->d_epsilondev_yz_crust_mantle
     };
 
+#ifdef USE_BUFFER_POINTER_OFFSET
+  gpu_realw_mem tmp;
+#else
+  gpu_realw_mem tmp = mp->d_norm_strain_max;
+#endif
+
+#ifdef USE_BUFFER_POINTER_OFFSET
+  // buffer pointer offset
+  INITIALIZE_OFFSET();
+#endif
+
   for (loop = 0; loop < 5; loop++) {
     // note: the offset is now passed to the kernel as an argument,
     //       no sub-buffer (and thus no alignment constraint) is needed
     offset = size_block_strain + loop * size_block;
+
+#ifdef USE_BUFFER_POINTER_OFFSET
+    // buffer pointer offset
+    INIT_OFFSET(d_norm_strain_max, offset);
+    tmp = gpuTakeRef(PASS_OFFSET(d_norm_strain_max, offset));
+    // reset offset for kernel call
+    offset = 0;
+#endif
 
     // gets maximum by gpu reduction kernel
 #ifdef USE_OPENCL
@@ -763,7 +847,7 @@ void FC_FUNC_ (check_norm_strain_from_device,
       clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &d_epsilondev_HH_crust_mantle[loop].ocl));
       clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (int), (void *) &size_nonpadded));
       clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (int), (void *) &offset));
-      clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_norm_strain_max.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &tmp.ocl));
 
       clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.get_maximum_scalar_kernel, 2, NULL,
                                        global_work_size, local_work_size, 0, NULL, NULL));
@@ -784,7 +868,7 @@ void FC_FUNC_ (check_norm_strain_from_device,
                                                                        d_epsilondev_HH_crust_mantle[loop].cuda,
                                                                        size_nonpadded,
                                                                        offset,
-                                                                       mp->d_norm_strain_max.cuda);
+                                                                       tmp.cuda);
 
       // graph
 #ifdef USE_CUDA_GRAPHS
@@ -802,8 +886,13 @@ void FC_FUNC_ (check_norm_strain_from_device,
                                                                      d_epsilondev_HH_crust_mantle[loop].hip,
                                                                      size_nonpadded,
                                                                      offset,
-                                                                     mp->d_norm_strain_max.hip);
+                                                                     tmp.hip);
     }
+#endif
+
+#ifdef USE_BUFFER_POINTER_OFFSET
+    // buffer pointer offset
+    RELEASE_OFFSET(d_norm_strain_max, offset);
 #endif
   }
 
