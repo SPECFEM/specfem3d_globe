@@ -54,8 +54,10 @@
 //       for OpenCL, a gpu_stream holds a command queue (see the mocl structure below) and a
 //       gpu_event holds a cl_event.
 
-// note: clCreateEvent() is an OpenCL 2.0 routine; it is not available with the OpenCL 1.x headers
-#if defined(CL_VERSION_2_0) || defined(CL_VERSION_2_1) || defined(CL_VERSION_2_2) || defined(CL_VERSION_3_0)
+// Determine if we can use OpenCL 2.0+ features
+// note: clCreateUserEvent() is standard in OpenCL 2.0 versions; it is not available with the OpenCL 1.0 headers
+#if defined(CL_VERSION_2_0) || defined(CL_VERSION_2_1) || defined(CL_VERSION_2_2) || defined(CL_VERSION_3_0) || \
+    (defined(__OPENCL_C_VERSION__) && __OPENCL_C_VERSION__ >= 200)
 #define CL_HAS_CREATE_EVENT
 #endif
 
