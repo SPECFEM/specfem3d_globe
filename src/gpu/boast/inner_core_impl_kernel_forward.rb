@@ -1011,6 +1011,7 @@ module BOAST
       if (get_lang == CL or ((get_lang == CUDA or get_lang == HIP) and not only_anisotropy)) then
         # header
         make_specfem3d_header(:ngllx => n_gllx, :ngll2 => n_gll2, :ngll3 => n_gll3, :ngll3_padded => n_gll3_padded, :n_sls => n_sls, :coloring_min_nspec_inner_core => coloring_min_nspec_inner_core, :iflag_in_fictitious_cube => i_flag_in_fictitious_cube)
+        make_atomicAdd_header
 
         # texture definitions
         if type == :inner_core then

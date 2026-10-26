@@ -32,19 +32,6 @@
 */
 
 const char * compute_ani_undoatt_kernel_program = "\
-#if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
-static\n\
-#endif\n\
-inline void atomicAdd(volatile __global float *source, const float val) {\n\
-  union {\n\
-    unsigned int iVal;\n\
-    float fVal;\n\
-  } res, orig;\n\
-  do {\n\
-    orig.fVal = *source;\n\
-    res.fVal = orig.fVal + val;\n\
-  } while (atomic_cmpxchg((volatile __global unsigned int *)source, orig.iVal, res.iVal) != orig.iVal);\n\
-}\n\
 #ifndef INDEX2\n\
 #define INDEX2(isize,i,j) i + isize*j\n\
 #endif\n\

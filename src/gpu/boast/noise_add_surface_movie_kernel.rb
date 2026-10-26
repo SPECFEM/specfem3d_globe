@@ -29,6 +29,7 @@ module BOAST
       get_output.print File::read("references/#{function_name}.cu")
     elsif(get_lang == CL or get_lang == CUDA or get_lang == HIP) then
       make_specfem3d_header( :ndim => n_dim, :ngllx => n_gllx, :ngll2 => n_gll2)
+      make_atomicAdd_header
       open p
         decl igll  = Int("igll")
         decl iface  = Int("iface")
