@@ -32,6 +32,9 @@
 */
 
 const char * crust_mantle_impl_kernel_adjoint_program = "\
+#if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
+static\n\
+#endif\n\
 inline void atomicAdd(volatile __global float *source, const float val) {\n\
   union {\n\
     unsigned int iVal;\n\
@@ -832,6 +835,9 @@ __kernel  void crust_mantle_impl_kernel_adjoint(const int nb_blocks_to_compute, 
 ";
 
 const char * crust_mantle_aniso_impl_kernel_adjoint_program = "\
+#if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
+static\n\
+#endif\n\
 inline void atomicAdd(volatile __global float *source, const float val) {\n\
   union {\n\
     unsigned int iVal;\n\

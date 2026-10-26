@@ -32,6 +32,9 @@
 */
 
 const char * inner_core_impl_kernel_forward_program = "\
+#if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
+static\n\
+#endif\n\
 inline void atomicAdd(volatile __global float *source, const float val) {\n\
   union {\n\
     unsigned int iVal;\n\
@@ -781,6 +784,9 @@ __kernel  void inner_core_impl_kernel_forward(const int nb_blocks_to_compute, co
 ";
 
 const char * inner_core_aniso_impl_kernel_forward_program = "\
+#if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
+static\n\
+#endif\n\
 inline void atomicAdd(volatile __global float *source, const float val) {\n\
   union {\n\
     unsigned int iVal;\n\

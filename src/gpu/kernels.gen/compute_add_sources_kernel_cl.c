@@ -33,6 +33,9 @@
 
 const char * compute_add_sources_kernel_program = "\
 #pragma OPENCL EXTENSION cl_khr_fp64: enable\n\
+#if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
+static\n\
+#endif\n\
 inline void atomicAdd(volatile __global float *source, const float val) {\n\
   union {\n\
     unsigned int iVal;\n\

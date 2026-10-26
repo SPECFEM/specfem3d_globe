@@ -7,6 +7,9 @@
         cmpx_name = "atomic_cmpxchg"
       end
       BOAST::get_output.print <<EOF
+#if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120
+static
+#endif
 inline void atomicAdd(volatile __global float *source, const float val) {
   union {
     #{type_i} iVal;
