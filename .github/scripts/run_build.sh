@@ -103,7 +103,7 @@ if [ "${OPENCL}" == "true" ]; then
         OCL_CPU_FLAGS="-g -Wall -std=c99 -DWITH_MPI" OCL_GPU_FLAGS="-Werror")
   else
     opencl=(--with-opencl OCL_LIBS="-lOpenCL" \
-        OCL_CPU_FLAGS="-g -Wall -std=c99 -DWITH_MPI" OCL_GPU_FLAGS="-Werror")
+        OCL_CPU_FLAGS="-g -Wall -std=c99 -DWITH_MPI -DCL_TARGET_OPENCL_VERSION=300" OCL_GPU_FLAGS="-Werror -g -cl-std=CL3.0")
   fi
   cuda=()
   hip=()

@@ -18,6 +18,12 @@ if [ "${OPENCL}" == "true" ]; then
   # to avoid issues with kernel compilation optimizations,
   # switch the work-group transformation method
   export POCL_WORK_GROUP_METHOD=cbs
+  # debugging
+  if [ "${DEBUG}" == "true" ]; then
+    export POCL_DEBUG=err,warn
+    export POCL_EXTRA_BUILD_FLAGS="-cl-opt-disable"
+    export POCL_VECTORIZER_FORCE_VECTOR_WIDTH=1
+  fi
 fi
 
 # info
