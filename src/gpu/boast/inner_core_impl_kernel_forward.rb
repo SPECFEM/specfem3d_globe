@@ -1539,6 +1539,18 @@ module BOAST
         print active[elem_index] === Ternary( tx < ngll3, 1, 0)
         comment()
 
+        # possible OpenCL work-arounds:
+        #   in case OpenCL crashes with segmentation faults due to compiler optimizations,
+        #   you can try one of the following:
+        #   - switch the work-group transformation method when calling binary:
+        #     `POCL_WORK_GROUP_METHOD=cbs mpirun -np .. ./bin/xspecfem3D
+        #   - initialize working_element and iglob_1,.. to avoid optimization issues with OpenCL kernels
+        #if elem_index == 0 then
+        #  print working_element === 0
+        #end
+        #print iglob[elem_index] === 0
+        #comment()
+
         print If(active[elem_index]) {
           if elem_index == 0 then
             get_output.puts "#ifdef #{use_mesh_coloring}"
