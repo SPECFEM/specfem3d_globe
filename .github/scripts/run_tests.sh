@@ -12,13 +12,13 @@ TESTID=${TESTID:-}
 TESTCOV=${TESTCOV:-}
 
 ## OpenCL
-#if [ "${OPENCL}" == "true" ]; then
-#GPU_RUNTIME=2
-#OMP_NUM_THREADS=1
-# to avoid issues with kernel compilation optimizations,
-# switch the work-group transformation method
-#export POCL_WORK_GROUP_METHOD=cbs
-#fi
+if [ "${OPENCL}" == "true" ]; then
+  GPU_RUNTIME=2
+  #OMP_NUM_THREADS=1
+  # to avoid issues with kernel compilation optimizations,
+  # switch the work-group transformation method
+  export POCL_WORK_GROUP_METHOD=cbs
+fi
 
 # info
 echo "work directory: $WORKDIR"
