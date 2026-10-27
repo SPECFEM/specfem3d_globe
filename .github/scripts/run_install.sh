@@ -339,6 +339,10 @@ echo
 #echo "orte_default_hostfile = $HOME/.openmpi/openmpi-default-hostfile" >> $HOME/.openmpi/mca-params.conf
 #echo "localhost slots=8" >> $HOME/.openmpi/openmpi-default-hostfile
 #or: export OMPI_MCA_orte_default_hostfile=$HOME/.openmpi/openmpi-default-hostfile
+# MPI include path
+MPI_INC=$(ompi_info --path incdir --parsable | cut -d: -f3)
+echo "MPI_INC: ${MPI_INC}"
+echo
 
 # storing updated environment parameters for following bash-script
 echo "export PATH=${PATH}" > $HOME/.tmprc
@@ -355,6 +359,9 @@ echo "OMPI_MCA_rmaps_base_inherit=1" >> $GITHUB_ENV
 ## avoid MPI warnings when running in container
 #echo "export OMPI_MCA_btl_vader_single_copy_mechanism=none" >> $HOME/.tmprc
 #echo "export OMPI_MCA_btl=^openib" >> $HOME/.tmprc
+
+# MPI include
+echo "export MPI_INC=${MPI_INC}" >> $HOME/.tmprc
 
 # exports for xterm output (for make tests)
 echo "TERM=xterm" >> $GITHUB_ENV
