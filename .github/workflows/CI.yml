@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Check for changes
       id: diff
@@ -86,7 +86,7 @@ jobs:
     needs: changesCheck
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Install dependencies
       run: |
@@ -147,11 +147,11 @@ jobs:
     needs: changesCheck
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Cache Intel oneapi packages
       id: cache-intel-oneapi
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: /opt/intel/oneapi
         key: install-${{ runner.os }}-all
@@ -263,11 +263,11 @@ jobs:
     needs: changesCheck
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Cache Intel oneapi packages
       id: cache-intel-oneapi-ifx
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: /opt/intel/oneapi
         key: install-${{ runner.os }}-ifx-all
@@ -378,7 +378,7 @@ jobs:
         os: [ubuntu-latest,ubuntu-22.04]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -397,7 +397,7 @@ jobs:
     needs: changesCheck
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Install packages
       env:
@@ -419,7 +419,7 @@ jobs:
     needs: changesCheck
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Install packages
       env:
@@ -443,7 +443,7 @@ jobs:
     needs: changesCheck
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         submodules: true      # needs submodule content in folder external_libs/ROCm-HIP-CPU/
 
@@ -474,7 +474,7 @@ jobs:
     needs: [compilationChecks]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -492,7 +492,7 @@ jobs:
      needs: [compilationChecks]
 
      steps:
-     - uses: actions/checkout@v4
+     - uses: actions/checkout@v7
 
      - name: Install packages
        run: ./.github/scripts/run_install.sh
@@ -517,7 +517,7 @@ jobs:
     needs: [compilationChecks]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -541,7 +541,7 @@ jobs:
     needs: [compilationChecks]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -563,7 +563,7 @@ jobs:
     needs: [compilationChecks]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -588,7 +588,7 @@ jobs:
     needs: [compilationChecks]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -612,7 +612,7 @@ jobs:
     needs: [compilationChecks]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -636,7 +636,7 @@ jobs:
     needs: [compilationChecks]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -660,7 +660,7 @@ jobs:
     needs: [compilationChecks]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Install packages
       env:
@@ -688,7 +688,7 @@ jobs:
     needs: [compilationChecks]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Install packages
       env:
@@ -716,7 +716,7 @@ jobs:
     needs: [compilationChecks]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Install packages
       env:
@@ -744,7 +744,7 @@ jobs:
     needs: [compilationChecks]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Install packages
       env:
@@ -771,7 +771,7 @@ jobs:
     needs: [compilationChecks]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Install packages
       env:
@@ -798,7 +798,7 @@ jobs:
     needs: [compilationChecks]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Install packages
       env:
@@ -826,7 +826,7 @@ jobs:
     needs: [compilationChecks]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         submodules: true      # needs submodule content in folder external_libs/ROCm-HIP-CPU/
 
@@ -859,7 +859,7 @@ jobs:
     needs: [compilationChecks]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -883,7 +883,7 @@ jobs:
     needs: [compilationChecks]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         submodules: true      # needs submodule content in folder external_libs/ROCm-HIP-CPU/
 
@@ -913,7 +913,7 @@ jobs:
     needs: [compilationChecks]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -937,7 +937,7 @@ jobs:
     needs: [compilationChecks]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Install packages
       run: ./.github/scripts/run_install.sh
@@ -963,7 +963,7 @@ jobs:
     needs: [compilationChecks]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Install packages
       env:
@@ -1014,7 +1014,7 @@ jobs:
     needs: [compilationChecks]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Install packages
       env:
@@ -1087,7 +1087,7 @@ jobs:
           testngll: 6
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         submodules: ${{ matrix.testHIP == true && 'true' || 'false' }}  # HIP needs submodule content in folder external_libs/ROCm-HIP-CPU/
 
