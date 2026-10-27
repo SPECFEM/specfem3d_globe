@@ -90,8 +90,8 @@ if [ "${HIP}" == "true" ]; then
   echo
   echo "enabling HIP"
   echo
-  hip=(--with-hip HIPCC=g++ HIP_PLATFORM=cpu HIP_INC=./external_libs/ROCm-HIP-CPU/include HIP_LIBS="-ltbb -lpthread -lstdc++ -lmpi_cxx" \
-       HIP_FLAGS="-O2 -g -std=c++17")
+  hip=(--with-hip HIPCC=g++ HIP_PLATFORM=cpu HIP_INC=./external_libs/ROCm-HIP-CPU/include HIP_LIBS="-ltbb -lpthread -lstdc++ ${MPI_LINK_FLAGS}" \
+       HIP_FLAGS="-O2 -g -std=c++17" MPI_INC="${MPI_INCLUDE}")
 else
   hip=()
 fi

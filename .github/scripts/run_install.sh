@@ -339,6 +339,13 @@ echo
 #echo "orte_default_hostfile = $HOME/.openmpi/openmpi-default-hostfile" >> $HOME/.openmpi/mca-params.conf
 #echo "localhost slots=8" >> $HOME/.openmpi/openmpi-default-hostfile
 #or: export OMPI_MCA_orte_default_hostfile=$HOME/.openmpi/openmpi-default-hostfile
+# MPI include path
+MPI_INCLUDE=$(ompi_info --path incdir --parsable | cut -d: -f3)
+echo "MPI_INCLUDE: ${MPI_INCLUDE}"
+# MPI library links -L/usr/.. -lmpi_cxx -lmpi
+MPI_LINK_FLAGS=$(mpicxx --showme:link)
+echo "MPI_LINK_FLAGS: ${MPI_LINK_FLAGS}"
+echo
 
 # storing updated environment parameters for following bash-script
 echo "export PATH=${PATH}" > $HOME/.tmprc
@@ -353,8 +360,12 @@ echo "OMPI_MCA_rmaps_base_oversubscribe=1" >> $GITHUB_ENV
 echo "OMPI_MCA_rmaps_base_inherit=1" >> $GITHUB_ENV
 
 ## avoid MPI warnings when running in container
-#echo "export OMPI_MCA_btl_vader_single_copy_mechanism=none" >> $HOME/.tmprc
-#echo "export OMPI_MCA_btl=^openib" >> $HOME/.tmprc
+#echo "OMPI_MCA_btl_vader_single_copy_mechanism=none" >> $GITHUB_ENV
+#echo "OMPI_MCA_btl=^openib" >> $GITHUB_ENV
+
+# MPI include & link (needed for HIP test compilation)
+echo "MPI_INCLUDE=${MPI_INCLUDE}" >> $GITHUB_ENV
+echo "MPI_LINK_FLAGS=${MPI_LINK_FLAGS}" >> $GITHUB_ENV
 
 # exports for xterm output (for make tests)
 echo "TERM=xterm" >> $GITHUB_ENV
