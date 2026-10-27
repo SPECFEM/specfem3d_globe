@@ -14,16 +14,25 @@ TESTCOV=${TESTCOV:-}
 ## OpenCL
 if [ "${OPENCL}" == "true" ]; then
   GPU_RUNTIME=2
-  #OMP_NUM_THREADS=1
   # to avoid issues with kernel compilation optimizations,
   # switch the work-group transformation method
   export POCL_WORK_GROUP_METHOD=cbs
+  # disable disk cache to avoid multi-process MPI collisions
+  export POCL_KERNEL_CACHE=0
+  # limit OpenMP threads
+  #export OMP_NUM_THREADS=1
   # debugging
   if [ "${DEBUG}" == "true" ]; then
     export POCL_DEBUG=err,warn
-    export POCL_EXTRA_BUILD_FLAGS="-cl-opt-disable"
-    export POCL_VECTORIZER_FORCE_VECTOR_WIDTH=1
+    export POCL_EXTRA_BUILD_FLAGS="-g -cl-opt-disable"
+    # more options
+    #export POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES=1
+    #export POCL_VECTORIZER_FORCE_VECTOR_WIDTH=1
+    #export POCL_CPU_MAX_CU_COUNT=1
   fi
+  echo "export:"
+  export
+  echo
 fi
 
 # info
