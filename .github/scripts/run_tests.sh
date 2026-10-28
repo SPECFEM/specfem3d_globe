@@ -17,8 +17,9 @@ if [ "${OPENCL}" == "true" ]; then
   # to avoid issues with kernel compilation optimizations,
   # switch the work-group transformation method
   export POCL_WORK_GROUP_METHOD=cbs
+  export POCL_DEVICES=cpu
   # kernel cache usage
-  USE_POCL_CACHE=1
+  USE_POCL_CACHE=0
   if [ "${USE_POCL_CACHE}" == "0" ]; then
   # disable disk cache to avoid multi-process MPI collisions
     echo "disabling pocl kernel cache"
@@ -48,13 +49,14 @@ EOF
   fi
   # limit OpenMP threads
   export OMP_NUM_THREADS=1
+  # to avoid issues with SIMD/vectorization
+  export POCL_VECTORIZER_FORCE_VECTOR_WIDTH=1    # forces SIMD width 1
   # debugging
   if [ "${DEBUG}" == "true" ]; then
     export POCL_DEBUG=err,warn
     export POCL_EXTRA_BUILD_FLAGS="-g -cl-opt-disable"
     # more options
     #export POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES=1
-    #export POCL_VECTORIZER_FORCE_VECTOR_WIDTH=1
     #export POCL_CPU_MAX_CU_COUNT=1
   fi
   echo "export:"
