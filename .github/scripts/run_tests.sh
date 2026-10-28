@@ -17,10 +17,37 @@ if [ "${OPENCL}" == "true" ]; then
   # to avoid issues with kernel compilation optimizations,
   # switch the work-group transformation method
   export POCL_WORK_GROUP_METHOD=cbs
+  # kernel cache usage
+  USE_POCL_CACHE=1
+  if [ "${USE_POCL_CACHE}" == "0" ]; then
   # disable disk cache to avoid multi-process MPI collisions
-  export POCL_KERNEL_CACHE=0
+    echo "disabling pocl kernel cache"
+    export POCL_KERNEL_CACHE=0
+  else
+    # enable disk cache, with per-rank cache dirs patched into MPI launches below
+    # to avoid multi-process MPI collisions
+    echo "enabling pocl kernel cache"
+    export POCL_KERNEL_CACHE=1
+    # creates temporary folder
+    export POCL_CACHE_BASE="/tmp/pocl"
+    mkdir -p "$POCL_CACHE_BASE"
+    # creates wrapper script to pass correct environment variables to each MPI process
+    POCL_CACHE_WRAPPER="$WORKDIR/.pocl_cache_wrapper.sh"
+    cat > "$POCL_CACHE_WRAPPER" <<'EOF'
+#!/bin/bash
+export POCL_CACHE_DIR="${POCL_CACHE_BASE}/rank-${OMPI_COMM_WORLD_RANK:-${PMI_RANK:-$$}}"
+mkdir -p "$POCL_CACHE_DIR"
+exec "$@"
+EOF
+    chmod +x "$POCL_CACHE_WRAPPER"
+    # route MPI launches through the wrapper so every rank gets its own cache dir
+    if [ -f $dir/run_mesher_solver.bash ]; then
+      sed -i "s#mpirun -np \\\$numnodes \\\$PWD/bin/xmeshfem3D#mpirun -np \$numnodes $POCL_CACHE_WRAPPER \$PWD/bin/xmeshfem3D#" $dir/run_mesher_solver.bash
+      sed -i "s#mpirun -np \\\$numnodes \\\$PWD/bin/xspecfem3D#mpirun -np \$numnodes $POCL_CACHE_WRAPPER \$PWD/bin/xspecfem3D#" $dir/run_mesher_solver.bash
+    fi
+  fi
   # limit OpenMP threads
-  #export OMP_NUM_THREADS=1
+  export OMP_NUM_THREADS=1
   # debugging
   if [ "${DEBUG}" == "true" ]; then
     export POCL_DEBUG=err,warn

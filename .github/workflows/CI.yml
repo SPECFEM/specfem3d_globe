@@ -1025,7 +1025,6 @@ jobs:
     - name: Run build
       env:
         OPENCL: true
-        TESTFLAGS: --enable-debug
       run: ./.github/scripts/run_build.sh
       shell: bash
 
