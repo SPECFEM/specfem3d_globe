@@ -18,7 +18,7 @@ if [ "${OPENCL}" == "true" ]; then
   # switch the work-group transformation method
   export POCL_WORK_GROUP_METHOD=cbs
   # kernel cache usage
-  USE_POCL_CACHE=1
+  USE_POCL_CACHE=0
   if [ "${USE_POCL_CACHE}" == "0" ]; then
   # disable disk cache to avoid multi-process MPI collisions
     echo "disabling pocl kernel cache"
