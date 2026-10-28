@@ -4,11 +4,14 @@
 #
 
 # updates repository
-sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6B05F25D762E3157
-sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 78BD65473CB3BD13
-sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 762E3157
-sudo apt-get update
+if command -v apt-key >/dev/null 2>&1; then
+  echo "apt-key is available"
+  sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6B05F25D762E3157
+  sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 78BD65473CB3BD13
+  sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 762E3157
+fi
 
+sudo apt-get update
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
 
@@ -175,7 +178,7 @@ fi
 if [ "${CUDA}" == "true" ]; then
   # Linux environment
   ## distribution from ubuntu 24.04
-  UBUNTU_VERSION=ubuntu2204
+  UBUNTU_VERSION=ubuntu2404
 
   # CUDA_VERSION - specifies CUDA toolkit version
   # http://developer.download.nvidia.com/compute/cuda/repos/
@@ -227,16 +230,16 @@ if [ "${CUDA}" == "true" ]; then
   echo "Updating libraries"
   sudo apt-get update -qq
   dpkg -l | grep cuda
-  export CUDA_APT=${CUDA_VERSION:0:4}  # version 13.1
+  export CUDA_APT=${CUDA_VERSION:0:4}  # version 13.x
   export CUDA_APT=${CUDA_APT/./-}
-  echo "CUDA: ${CUDA_APT}"  # apt version 13-1 -> package name: cuda-compiler-13-1
+  echo "CUDA: ${CUDA_APT}"  # apt version 13-x -> package name: cuda-compiler-13-x
 
   # installs packages
   CUDA_PACKAGES="cuda-drivers cuda-compiler-${CUDA_APT} cuda-cudart-dev-${CUDA_APT}"
   echo "Installing ${CUDA_PACKAGES}"
   sudo apt-get install -y --no-install-recommends ${CUDA_PACKAGES}
   sudo apt-get clean
-  export CUDA_HOME=/usr/local/cuda-${CUDA_VERSION:0:4}    # version 13.1
+  export CUDA_HOME=/usr/local/cuda-${CUDA_VERSION:0:4}    # version 13.x
   export LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}
   export PATH=${CUDA_HOME}/bin:${PATH}
   echo ""

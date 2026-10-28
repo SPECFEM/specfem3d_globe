@@ -16,7 +16,8 @@ if [ "${OPENCL}" == "true" ]; then
   GPU_RUNTIME=2
   # to avoid issues with kernel compilation optimizations,
   # switch the work-group transformation method
-  export POCL_WORK_GROUP_METHOD=cbs
+  export POCL_WORK_GROUP_METHOD=cbs     # or loops? (loops fails due to optimizations in inner_core/crust_mantle kernels)
+  export POCL_DEVICES=cpu
   # kernel cache usage
   USE_POCL_CACHE=1
   if [ "${USE_POCL_CACHE}" == "0" ]; then
@@ -47,15 +48,18 @@ EOF
     fi
   fi
   # limit OpenMP threads
-  export OMP_NUM_THREADS=1
+  #export OMP_NUM_THREADS=1
+  # to avoid issues with SIMD/vectorization
+  #export POCL_VECTORIZER_FORCE_VECTOR_WIDTH=1       # forces SIMD width
+  #export POCL_VECTORIZER_PREFER_VECTOR_WIDTH=128
+  #export POCL_CPU_MAX_CU_COUNT=1
+  #export POCL_WORK_GROUP_SPECIALIZATION=0
   # debugging
   if [ "${DEBUG}" == "true" ]; then
     export POCL_DEBUG=err,warn
     export POCL_EXTRA_BUILD_FLAGS="-g -cl-opt-disable"
     # more options
     #export POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES=1
-    #export POCL_VECTORIZER_FORCE_VECTOR_WIDTH=1
-    #export POCL_CPU_MAX_CU_COUNT=1
   fi
   echo "export:"
   export

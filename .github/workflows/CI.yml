@@ -393,7 +393,7 @@ jobs:
 
   linuxCheck-CUDA:
     name: Test on linux w/ CUDA
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: changesCheck
 
     steps:
@@ -415,7 +415,7 @@ jobs:
 
   linuxCheck-OpenCL:
     name: Test on linux w/ OpenCL
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: changesCheck
 
     steps:
@@ -1010,7 +1010,7 @@ jobs:
 
   linuxTest_20:
     name: Test 20 - regional_Greece_small GPU OpenCL
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04               # ubuntu-26.04 fails due to compiler optimization issues
     needs: [compilationChecks]
 
     steps:
