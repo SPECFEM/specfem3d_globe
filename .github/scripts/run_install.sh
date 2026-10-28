@@ -131,9 +131,10 @@ if [ "${ADIOS2}" == "true" ]; then
   # uses /opt as installation directory
   mkdir -p /opt; cd /opt
   # download source
-  wget https://github.com/ornladios/ADIOS2/archive/refs/tags/v2.10.1.tar.gz
-  tar zxf v2.10.1.tar.gz
-  cd ADIOS2-2.10.1/
+  version=2.12.1   # older: 2.10.1  - fails with newer gcc versions (15.x)
+  wget https://github.com/ornladios/ADIOS2/archive/refs/tags/v${version}.tar.gz
+  tar zxf v${version}.tar.gz
+  cd ADIOS2-${version}/
   # build source
   mkdir -p build; cd build/
   CC=gcc CXX=g++ FC=gfortran cmake -DADIOS2_USE_Fortran=ON \
@@ -339,6 +340,7 @@ echo
 #echo "orte_default_hostfile = $HOME/.openmpi/openmpi-default-hostfile" >> $HOME/.openmpi/mca-params.conf
 #echo "localhost slots=8" >> $HOME/.openmpi/openmpi-default-hostfile
 #or: export OMPI_MCA_orte_default_hostfile=$HOME/.openmpi/openmpi-default-hostfile
+
 # MPI include path
 MPI_INCLUDE=$(ompi_info --path incdir --parsable | cut -d: -f3)
 echo "MPI_INCLUDE: ${MPI_INCLUDE}"
@@ -358,6 +360,9 @@ echo "export CUDA_HOME=${CUDA_HOME}" >> $HOME/.tmprc
 # uses github environment to store (for subsequent steps)
 echo "OMPI_MCA_rmaps_base_oversubscribe=1" >> $GITHUB_ENV
 echo "OMPI_MCA_rmaps_base_inherit=1" >> $GITHUB_ENV
+# oversubscription (for newer PRTE-based Open MPI where OMPI_MCA alone no longer suffices)
+# newer OpenMPI (PRTE) needs its own oversubscription setting
+echo "PRTE_MCA_rmaps_default_mapping_policy=:oversubscribe" >> $GITHUB_ENV
 
 ## avoid MPI warnings when running in container
 #echo "OMPI_MCA_btl_vader_single_copy_mechanism=none" >> $GITHUB_ENV

@@ -100,10 +100,10 @@ fi
 if [ "${OPENCL}" == "true" ]; then
   if [ "${CUDA}" == "true" ]; then
     opencl=(--with-opencl OCL_INC="${CUDA_HOME}/include" OCL_LIB="${CUDA_HOME}/lib64" OCL_LIBS="-lOpenCL" \
-        OCL_CPU_FLAGS="-g -Wall -std=c99 -DWITH_MPI" OCL_GPU_FLAGS="-Werror")
+        OCL_CPU_FLAGS="-g -Wall -std=c99 -DWITH_MPI" OCL_GPU_FLAGS="-Werror" MPI_INC="${MPI_INCLUDE}")
   else
     opencl=(--with-opencl OCL_LIBS="-lOpenCL" \
-        OCL_CPU_FLAGS="-g -Wall -std=c99 -DWITH_MPI -DCL_TARGET_OPENCL_VERSION=300" OCL_GPU_FLAGS="-Werror -g -cl-std=CL3.0")
+        OCL_CPU_FLAGS="-g -Wall -std=c99 -DWITH_MPI -DCL_TARGET_OPENCL_VERSION=300" OCL_GPU_FLAGS="-Werror -g -cl-std=CL3.0" MPI_INC="${MPI_INCLUDE}")
   fi
   cuda=()
   hip=()
