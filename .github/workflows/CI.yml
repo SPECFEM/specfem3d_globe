@@ -1033,6 +1033,7 @@ jobs:
         TESTDIR: EXAMPLES/regional_Greece_small
         GPU: true
         OPENCL: true
+        DEBUG: true
       run: ./.github/scripts/run_tests.sh
       shell: bash
 
