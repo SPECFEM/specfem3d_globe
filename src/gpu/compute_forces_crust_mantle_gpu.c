@@ -468,7 +468,8 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
         crust_mantle_kernel_p = &crust_mantle_impl_kernel_adjoint;
       }
 
-      crust_mantle_kernel_p<<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
+      crust_mantle_kernel_p<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                   nb_blocks_to_compute,
                                                                    d_ibool.cuda,
                                                                    d_ispec_is_tiso.cuda,
                                                                    mp->d_phase_ispec_inner_crust_mantle.cuda,
@@ -544,7 +545,8 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
         crust_mantle_kernel_p = &crust_mantle_aniso_impl_kernel_adjoint;
       }
 
-      crust_mantle_kernel_p<<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
+      crust_mantle_kernel_p<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                   nb_blocks_to_compute,
                                                                    d_ibool.cuda,
                                                                    d_ispec_is_tiso.cuda,
                                                                    mp->d_phase_ispec_inner_crust_mantle.cuda,
@@ -668,7 +670,7 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
       epsilondev_ALL[4] = epsilondev_yz.hip;
       */
 
-     hipLaunchKernelGGL(HIP_KERNEL_NAME(crust_mantle_kernel_p), grid, threads, 0, mp->compute_stream,
+     hipLaunchKernelGGL(HIP_KERNEL_NAME(crust_mantle_kernel_p), grid, threads, 0, mp->compute_stream.hip,
                                                                nb_blocks_to_compute,
                                                                d_ibool.hip,
                                                                d_ispec_is_tiso.hip,
@@ -738,7 +740,7 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
        crust_mantle_kernel_p = &crust_mantle_aniso_impl_kernel_adjoint;
       }
 
-      hipLaunchKernelGGL(HIP_KERNEL_NAME(crust_mantle_kernel_p), grid, threads, 0, mp->compute_stream,
+      hipLaunchKernelGGL(HIP_KERNEL_NAME(crust_mantle_kernel_p), grid, threads, 0, mp->compute_stream.hip,
                                                                 nb_blocks_to_compute,
                                                                 d_ibool.hip,
                                                                 d_ispec_is_tiso.hip,

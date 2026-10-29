@@ -7,6 +7,7 @@ module BOAST
     kernel = CKernel::new
 
     size = Int("size", :dir => :in)
+    offset = Int("offset", :dir => :in)
 
     if type == :scalar then
       function_name = "get_maximum_scalar_kernel"
@@ -20,7 +21,7 @@ module BOAST
 
     d_max = Real("d_max", :dir => :out, :dim => [ Dim()])
     blocksize_transfer = Int("BLOCKSIZE_TRANSFER", :const => block_size_transfer)
-    p = Procedure(function_name, [array, size, d_max])
+    p = Procedure(function_name, [array, size, offset, d_max])
     if (get_lang == CUDA and ref) then
       get_output.print File::read("references/#{function_name}.cu")
     elsif(get_lang == CL or get_lang == CUDA or get_lang == HIP) then
@@ -64,7 +65,7 @@ module BOAST
       comment()
 
       print If(tid == 0) {
-        print d_max[bx] === sdata[0]
+        print d_max[bx + offset] === sdata[0]
       }
       close p
     else

@@ -78,7 +78,8 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
   dim3 threads(blocksize,1,1);
   if (run_cuda) {
     // rho kernel
-    compute_rho_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_ibool_crust_mantle.cuda,
+    compute_rho_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                              mp->d_ibool_crust_mantle.cuda,
                                                               mp->d_accel_crust_mantle.cuda,
                                                               mp->d_b_displ_crust_mantle.cuda,
                                                               mp->d_rho_kl_crust_mantle.cuda,
@@ -91,7 +92,7 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
   dim3 threads(blocksize,1,1);
   if (run_hip) {
     // rho kernel
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_rho_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_rho_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                             mp->d_ibool_crust_mantle.hip,
                                                             mp->d_accel_crust_mantle.hip,
                                                             mp->d_b_displ_crust_mantle.hip,
@@ -173,7 +174,8 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
       // computes strain locally based on current backward/reconstructed (b_displ) wavefield
       if (! mp->anisotropic_kl) {
         // isotropic kernels
-        compute_iso_undoatt_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_xx_crust_mantle.cuda,
+        compute_iso_undoatt_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                          mp->d_epsilondev_xx_crust_mantle.cuda,
                                                                           mp->d_epsilondev_yy_crust_mantle.cuda,
                                                                           mp->d_epsilondev_xy_crust_mantle.cuda,
                                                                           mp->d_epsilondev_xz_crust_mantle.cuda,
@@ -197,7 +199,8 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
                                                                           mp->d_hprime_xx.cuda);
       } else {
         // anisotropic kernels
-        compute_ani_undoatt_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_xx_crust_mantle.cuda,
+        compute_ani_undoatt_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                          mp->d_epsilondev_xx_crust_mantle.cuda,
                                                                           mp->d_epsilondev_yy_crust_mantle.cuda,
                                                                           mp->d_epsilondev_xy_crust_mantle.cuda,
                                                                           mp->d_epsilondev_xz_crust_mantle.cuda,
@@ -226,7 +229,7 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
       // computes strain locally based on current backward/reconstructed (b_displ) wavefield
       if (! mp->anisotropic_kl) {
         // isotropic kernels
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_iso_undoatt_kernel), grid, threads, 0, mp->compute_stream,
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_iso_undoatt_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                         mp->d_epsilondev_xx_crust_mantle.hip,
                                                                         mp->d_epsilondev_yy_crust_mantle.hip,
                                                                         mp->d_epsilondev_xy_crust_mantle.hip,
@@ -251,7 +254,7 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
                                                                         mp->d_hprime_xx.hip);
       } else {
         // anisotropic kernels
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_ani_undoatt_kernel), grid, threads, 0, mp->compute_stream,
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_ani_undoatt_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                         mp->d_epsilondev_xx_crust_mantle.hip,
                                                                         mp->d_epsilondev_yy_crust_mantle.hip,
                                                                         mp->d_epsilondev_xy_crust_mantle.hip,
@@ -331,7 +334,8 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
       // takes strain arrays computed from previous compute_forces call
       if (! mp->anisotropic_kl) {
         // isotropic kernels
-        compute_iso_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_xx_crust_mantle.cuda,
+        compute_iso_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                  mp->d_epsilondev_xx_crust_mantle.cuda,
                                                                   mp->d_epsilondev_yy_crust_mantle.cuda,
                                                                   mp->d_epsilondev_xy_crust_mantle.cuda,
                                                                   mp->d_epsilondev_xz_crust_mantle.cuda,
@@ -349,7 +353,8 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
                                                                   deltat);
       } else {
         // anisotropic kernels
-        compute_ani_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_xx_crust_mantle.cuda,
+        compute_ani_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                  mp->d_epsilondev_xx_crust_mantle.cuda,
                                                                   mp->d_epsilondev_yy_crust_mantle.cuda,
                                                                   mp->d_epsilondev_xy_crust_mantle.cuda,
                                                                   mp->d_epsilondev_xz_crust_mantle.cuda,
@@ -372,7 +377,7 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
       // takes strain arrays computed from previous compute_forces call
       if (! mp->anisotropic_kl) {
         // isotropic kernels
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_iso_kernel), grid, threads, 0, mp->compute_stream,
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_iso_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                 mp->d_epsilondev_xx_crust_mantle.hip,
                                                                 mp->d_epsilondev_yy_crust_mantle.hip,
                                                                 mp->d_epsilondev_xy_crust_mantle.hip,
@@ -391,7 +396,7 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
                                                                 deltat);
       } else {
         // anisotropic kernels
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_ani_kernel), grid, threads, 0, mp->compute_stream,
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_ani_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                 mp->d_epsilondev_xx_crust_mantle.hip,
                                                                 mp->d_epsilondev_yy_crust_mantle.hip,
                                                                 mp->d_epsilondev_xy_crust_mantle.hip,
@@ -468,7 +473,8 @@ void FC_FUNC_ (compute_kernels_ic_gpu,
   dim3 threads(blocksize,1,1);
   if (run_cuda) {
     // rho kernels
-    compute_rho_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_ibool_inner_core.cuda,
+    compute_rho_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                              mp->d_ibool_inner_core.cuda,
                                                               mp->d_accel_inner_core.cuda,
                                                               mp->d_b_displ_inner_core.cuda,
                                                               mp->d_rho_kl_inner_core.cuda,
@@ -481,7 +487,7 @@ void FC_FUNC_ (compute_kernels_ic_gpu,
   dim3 threads(blocksize,1,1);
   if (run_hip) {
     // rho kernels
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_rho_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_rho_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                             mp->d_ibool_inner_core.hip,
                                                             mp->d_accel_inner_core.hip,
                                                             mp->d_b_displ_inner_core.hip,
@@ -533,7 +539,8 @@ void FC_FUNC_ (compute_kernels_ic_gpu,
 #endif
 #ifdef USE_CUDA
     if (run_cuda) {
-      compute_iso_undoatt_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_xx_inner_core.cuda,
+      compute_iso_undoatt_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                        mp->d_epsilondev_xx_inner_core.cuda,
                                                                         mp->d_epsilondev_yy_inner_core.cuda,
                                                                         mp->d_epsilondev_xy_inner_core.cuda,
                                                                         mp->d_epsilondev_xz_inner_core.cuda,
@@ -559,7 +566,7 @@ void FC_FUNC_ (compute_kernels_ic_gpu,
 #endif
 #ifdef USE_HIP
     if (run_hip) {
-      hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_iso_undoatt_kernel), grid, threads, 0, mp->compute_stream,
+      hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_iso_undoatt_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                       mp->d_epsilondev_xx_inner_core.hip,
                                                                       mp->d_epsilondev_yy_inner_core.hip,
                                                                       mp->d_epsilondev_xy_inner_core.hip,
@@ -615,7 +622,8 @@ void FC_FUNC_ (compute_kernels_ic_gpu,
 #endif
 #ifdef USE_CUDA
     if (run_cuda) {
-      compute_iso_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_xx_inner_core.cuda,
+      compute_iso_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                mp->d_epsilondev_xx_inner_core.cuda,
                                                                 mp->d_epsilondev_yy_inner_core.cuda,
                                                                 mp->d_epsilondev_xy_inner_core.cuda,
                                                                 mp->d_epsilondev_xz_inner_core.cuda,
@@ -635,7 +643,7 @@ void FC_FUNC_ (compute_kernels_ic_gpu,
 #endif
 #ifdef USE_HIP
     if (run_hip) {
-      hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_iso_kernel), grid, threads, 0, mp->compute_stream,
+      hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_iso_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                               mp->d_epsilondev_xx_inner_core.hip,
                                                               mp->d_epsilondev_yy_inner_core.hip,
                                                               mp->d_epsilondev_xy_inner_core.hip,
@@ -722,7 +730,8 @@ void FC_FUNC_ (compute_kernels_oc_gpu,
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
-    compute_acoustic_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_ibool_outer_core.cuda,
+    compute_acoustic_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                   mp->d_ibool_outer_core.cuda,
                                                                    mp->d_rhostore_outer_core.cuda,
                                                                    mp->d_kappavstore_outer_core.cuda,
                                                                    mp->d_hprime_xx.cuda,
@@ -749,7 +758,7 @@ void FC_FUNC_ (compute_kernels_oc_gpu,
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_acoustic_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_acoustic_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                  mp->d_ibool_outer_core.hip,
                                                                  mp->d_rhostore_outer_core.hip,
                                                                  mp->d_kappavstore_outer_core.hip,
@@ -833,7 +842,8 @@ void FC_FUNC_ (compute_kernels_strength_noise_gpu,
     dim3 threads(NGLL2,1,1);
 
     // calculates noise strength kernel
-    compute_strength_noise_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_crust_mantle.cuda,
+    compute_strength_noise_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                         mp->d_displ_crust_mantle.cuda,
                                                                          mp->d_ibelm_top_crust_mantle.cuda,
                                                                          mp->d_ibool_crust_mantle.cuda,
                                                                          mp->d_noise_surface_movie.cuda,
@@ -851,7 +861,7 @@ void FC_FUNC_ (compute_kernels_strength_noise_gpu,
     dim3 threads(NGLL2,1,1);
 
     // calculates noise strength kernel
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_strength_noise_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_strength_noise_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                        mp->d_displ_crust_mantle.hip,
                                                                        mp->d_ibelm_top_crust_mantle.hip,
                                                                        mp->d_ibool_crust_mantle.hip,
@@ -946,7 +956,8 @@ void FC_FUNC_ (compute_kernels_hess_gpu,
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
-    compute_hess_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_ibool_crust_mantle.cuda,
+    compute_hess_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                               mp->d_ibool_crust_mantle.cuda,
                                                                mp->d_accel_crust_mantle.cuda,
                                                                mp->d_b_accel_crust_mantle.cuda,
                                                                mp->d_hess_kl_crust_mantle.cuda,
@@ -954,7 +965,8 @@ void FC_FUNC_ (compute_kernels_hess_gpu,
                                                                mp->NSPEC_CRUST_MANTLE,
                                                                USE_SOURCE_RECEIVER_HESSIAN);
 
-    compute_kappa_mu_hess_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_ibool_crust_mantle.cuda,
+    compute_kappa_mu_hess_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                        mp->d_ibool_crust_mantle.cuda,
                                                                         mp->d_veloc_crust_mantle.cuda,
                                                                         mp->d_b_veloc_crust_mantle.cuda,
                                                                         mp->d_xix_crust_mantle.cuda,
@@ -980,7 +992,7 @@ void FC_FUNC_ (compute_kernels_hess_gpu,
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hess_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_hess_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                              mp->d_ibool_crust_mantle.hip,
                                                              mp->d_accel_crust_mantle.hip,
                                                              mp->d_b_accel_crust_mantle.hip,
@@ -989,7 +1001,7 @@ void FC_FUNC_ (compute_kernels_hess_gpu,
                                                              mp->NSPEC_CRUST_MANTLE,
                                                              USE_SOURCE_RECEIVER_HESSIAN);
 
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_kappa_mu_hess_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_kappa_mu_hess_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                       mp->d_ibool_crust_mantle.hip,
                                                                       mp->d_veloc_crust_mantle.hip,
                                                                       mp->d_b_veloc_crust_mantle.hip,
@@ -1059,7 +1071,8 @@ void FC_FUNC_ (resort_array,
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
-    resort_array<<<grid,threads,0,mp->compute_stream>>>(mp->d_cijkl_kl_crust_mantle.cuda, mp->NSPEC_CRUST_MANTLE);
+    resort_array<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                      mp->d_cijkl_kl_crust_mantle.cuda, mp->NSPEC_CRUST_MANTLE);
   }
 #endif
 #ifdef USE_HIP
@@ -1067,7 +1080,7 @@ void FC_FUNC_ (resort_array,
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(resort_array), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(resort_array), grid, threads, 0, mp->compute_stream.hip,
                                                       mp->d_cijkl_kl_crust_mantle.hip, mp->NSPEC_CRUST_MANTLE);
   }
 #endif

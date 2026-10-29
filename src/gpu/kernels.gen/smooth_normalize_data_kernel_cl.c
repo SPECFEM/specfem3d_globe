@@ -32,16 +32,6 @@
 */
 
 const char * smooth_normalize_data_kernel_program = "\
-inline void atomicAdd(volatile __global float *source, const float val) {\n\
-  union {\n\
-    unsigned int iVal;\n\
-    float fVal;\n\
-  } res, orig;\n\
-  do {\n\
-    orig.fVal = *source;\n\
-    res.fVal = orig.fVal + val;\n\
-  } while (atomic_cmpxchg((volatile __global unsigned int *)source, orig.iVal, res.iVal) != orig.iVal);\n\
-}\n\
 #ifndef INDEX2\n\
 #define INDEX2(isize,i,j) i + isize*j\n\
 #endif\n\
@@ -97,7 +87,7 @@ __kernel void smooth_normalize_data_kernel(__global float * data_smooth, const _
   int igll;\n\
   float norm;\n\
   float val;\n\
-  const float TOL = 1.e-24;\n\
+  const float TOL = 1.e-24f;\n\
 \n\
   ispec = get_group_id(0) + (get_group_id(1)) * (get_num_groups(0));\n\
   igll = get_local_id(0);\n\

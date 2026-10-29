@@ -161,6 +161,7 @@ module BOAST
       # header
       make_specfem3d_header(:ngllx => n_gllx, :ngll2 => n_gll2, :ngll3 => n_gll3, :ngll3_padded => n_gll3_padded,
                             :coloring_min_nspec_outer_core => coloring_min_nspec_outer_core)
+      make_atomicAdd_header
 
       #DEACTIVATE USE TEXTURES CONSTANTS
       get_output.puts "#ifdef #{use_textures_constants}"

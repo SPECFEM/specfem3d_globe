@@ -190,6 +190,12 @@ void FC_FUNC_ (prepare_constants_device,
   //       for some reason, calling cudaSetDevice() may return success even when devices are exclusive,
   //       and only when calling the cudaStreamCreate() below a cudaError occurs...
   //
+  // note: the mesh structure is allocated with malloc() and thus not zero-initialized.
+  //       we explicitly clear the stream/event handles here, so that the unused ones stay valid.
+  gpuStreamClear(&mp->compute_stream);
+  gpuStreamClear(&mp->copy_stream);
+  gpuEventClear(&mp->kernel_event);
+
   // compute stream
   gpuStreamCreate(&mp->compute_stream);
   // copy stream (needed to transfer MPI buffers)
@@ -204,19 +210,26 @@ void FC_FUNC_ (prepare_constants_device,
   // clCreateCommandQueue feature in OpenCL 1.2, will be deprecated in OpenCL 2.0
 #if defined(CL_VERSION_2_0) || defined(CL_VERSION_2_1) || defined(CL_VERSION_2_2) || defined(CL_VERSION_3_0)
   // version 2.x, 3.x
-#pragma message ("\nCompiling for OpenCL version > 1\n")
+#pragma message ("\n\nCompiling for OpenCL version 2+\n")
   mocl.command_queue = clCreateCommandQueueWithProperties(mocl.context, mocl.device, 0, clck_(&errcode));
   if (mp->GPU_ASYNC_COPY) {
     mocl.copy_queue = clCreateCommandQueueWithProperties(mocl.context, mocl.device, 0, clck_(&errcode));
   }
 #else
   // version 1.0, 1.1, 1.2, mostly CL_VERSION_1_2
-#pragma message ("\nCompiling for OpenCL version 1.x\n")
+#pragma message ("\n\nCompiling for OpenCL version 1.x\n")
   mocl.command_queue = clCreateCommandQueue(mocl.context, mocl.device, 0, clck_(&errcode));
   if (mp->GPU_ASYNC_COPY) {
     mocl.copy_queue = clCreateCommandQueue(mocl.context, mocl.device, 0, clck_(&errcode));
   }
 #endif
+
+  // assigns the OpenCL command queues to the mesh stream fields,
+  // such that the compute and copy streams can be used the same way as for CUDA and HIP
+  if (run_opencl) {
+    mp->compute_stream.queue = mocl.command_queue;
+    if (mp->GPU_ASYNC_COPY) mp->copy_stream.queue = mocl.copy_queue;
+  }
 #endif
 
   // CUDA graphs
@@ -585,7 +598,7 @@ void FC_FUNC_ (prepare_constants_device,
       // note: Allocate pinned buffers otherwise cudaMemcpyAsync() will behave like cudaMemcpy(), i.e. synchronously.
       print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_norm_max), 3 * size_block_norm * sizeof(realw)),8001);
       print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_norm_strain_max), 6 * size_block_norm_strain * sizeof(realw)),8002);
-      print_CUDA_error_if_any(cudaEventCreate(&mp->kernel_event),8003);
+      print_CUDA_error_if_any(cudaEventCreate(&mp->kernel_event.cuda),8003);
     }
 #endif
 #ifdef USE_HIP
@@ -593,7 +606,7 @@ void FC_FUNC_ (prepare_constants_device,
       // note: Allocate pinned buffers otherwise hipMemcpyAsync() will behave like hipMemcpy(), i.e. synchronously.
       print_HIP_error_if_any(hipHostMalloc((void**)&(mp->h_norm_max), 3 * size_block_norm * sizeof(realw)),8001);
       print_HIP_error_if_any(hipHostMalloc((void**)&(mp->h_norm_strain_max), 6 * size_block_norm_strain * sizeof(realw)),8002);
-      print_HIP_error_if_any(hipEventCreate(&mp->kernel_event),8003);
+      print_HIP_error_if_any(hipEventCreate(&mp->kernel_event.hip),8003);
     }
 #endif
 
@@ -1200,10 +1213,18 @@ void FC_FUNC_ (prepare_mpi_buffers_device,
     size_mpi_buffer = NDIM*(mp->max_nibool_interfaces_cm)*(mp->num_interfaces_crust_mantle);
 
     // allocates MPI buffer for exchange with CPU
-    gpuMalloc_realw (&mp->d_send_accel_buffer_crust_mantle, size_mpi_buffer);
-    if (mp->simulation_type == 3) {
-      gpuMalloc_realw (&mp->d_b_send_accel_buffer_crust_mantle, size_mpi_buffer);
-    }
+    //daniel todo mpi
+    //if (mp->use_cuda_aware_mpi){
+    //  // CUDA-aware MPI
+    //  // buffers already on device
+    //  mp->d_send_accel_buffer_crust_mantle = NULL;
+    //  mp->d_b_send_accel_buffer_crust_mantle = NULL;
+    //} else {
+      gpuMalloc_realw (&mp->d_send_accel_buffer_crust_mantle, size_mpi_buffer);
+      if (mp->simulation_type == 3) {
+        gpuMalloc_realw (&mp->d_b_send_accel_buffer_crust_mantle, size_mpi_buffer);
+      }
+    //}
 
     // asynchronous MPI buffer
     if (mp->GPU_ASYNC_COPY) {
@@ -1248,7 +1269,6 @@ void FC_FUNC_ (prepare_mpi_buffers_device,
         }
       }
 #endif
-
     }
   }
 
@@ -2838,14 +2858,14 @@ void FC_FUNC_ (prepare_cleanup_device,
     if (run_cuda){
       cudaFreeHost(mp->h_norm_max);
       cudaFreeHost(mp->h_norm_strain_max);
-      cudaEventDestroy(mp->kernel_event);
+      cudaEventDestroy(mp->kernel_event.cuda);
     }
 #endif
 #ifdef USE_HIP
     if (run_hip){
       hipHostFree(mp->h_norm_max);
       hipHostFree(mp->h_norm_strain_max);
-      hipEventDestroy(mp->kernel_event);
+      hipEventDestroy(mp->kernel_event.hip);
     }
 #endif
   }
@@ -3332,8 +3352,8 @@ void FC_FUNC_ (prepare_cleanup_device,
 #endif
 #ifdef USE_CUDA
   if (run_cuda) {
-    cudaStreamDestroy(mp->compute_stream);
-    if (mp->GPU_ASYNC_COPY) cudaStreamDestroy(mp->copy_stream);
+    cudaStreamDestroy(mp->compute_stream.cuda);
+    if (mp->GPU_ASYNC_COPY) cudaStreamDestroy(mp->copy_stream.cuda);
     // graphs
 #ifdef USE_CUDA_GRAPHS
     if (mp->use_graph_call_elastic) {
@@ -3357,8 +3377,8 @@ void FC_FUNC_ (prepare_cleanup_device,
 #endif
 #ifdef USE_HIP
   if (run_hip) {
-    hipStreamDestroy(mp->compute_stream);
-    if (mp->GPU_ASYNC_COPY) hipStreamDestroy(mp->copy_stream);
+    hipStreamDestroy(mp->compute_stream.hip);
+    if (mp->GPU_ASYNC_COPY) hipStreamDestroy(mp->copy_stream.hip);
   }
 #endif
 

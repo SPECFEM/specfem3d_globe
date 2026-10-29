@@ -557,6 +557,34 @@ typedef union {
 #endif
 } gpu_mem;
 
+// backend-neutral stream and event types
+// note: these are defined here rather than in the backend-specific headers, so that a combined
+//       CUDA+OpenCL build does not produce conflicting typedefs.
+//       only one backend is ever active at runtime (see run_cuda / run_opencl / run_hip).
+typedef union {
+#ifdef USE_OPENCL
+  cl_command_queue queue;
+#endif
+#ifdef USE_CUDA
+  cudaStream_t cuda;
+#endif
+#ifdef USE_HIP
+  hipStream_t hip;
+#endif
+} gpu_stream;
+
+typedef union {
+#ifdef USE_OPENCL
+  cl_event event;
+#endif
+#ifdef USE_CUDA
+  cudaEvent_t cuda;
+#endif
+#ifdef USE_HIP
+  hipEvent_t hip;
+#endif
+} gpu_event;
+
 
 #ifdef __cplusplus
 #define EXTERN_LANG "C"
@@ -1319,6 +1347,8 @@ void gpuCopy_from_device_realw_offset (gpu_realw_mem *d_array_addr_ptr, realw *h
 void gpuCopy_from_device_realw_asyncEvent (Mesh *mp, gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size);
 void gpuRecordEvent(Mesh *mp);
 void gpuWaitEvent (Mesh *mp);
+void gpuReleaseCopyEvent (Mesh *mp);
+void gpuSyncCopyEvent (Mesh *mp);
 
 void gpuRegisterHost_realw ( realw *h_array, const size_t size);
 void gpuUnregisterHost_realw ( realw *h_array);
@@ -1336,7 +1366,9 @@ void gpuSynchronize ();
 void gpuReset ();
 
 void gpuStreamCreate(gpu_stream* stream_ptr);
-void gpuStreamSynchronize(gpu_stream stream);
+void gpuStreamSynchronize(gpu_stream* stream_ptr);
+void gpuStreamClear(gpu_stream* stream_ptr);
+void gpuEventClear(gpu_event* event_ptr);
 
 void exit_on_gpu_error (const char *kernel_name);
 void exit_on_error (const char *info);

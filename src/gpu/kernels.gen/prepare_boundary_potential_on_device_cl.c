@@ -32,16 +32,6 @@
 */
 
 const char * prepare_boundary_potential_on_device_program = "\
-inline void atomicAdd(volatile __global float *source, const float val) {\n\
-  union {\n\
-    unsigned int iVal;\n\
-    float fVal;\n\
-  } res, orig;\n\
-  do {\n\
-    orig.fVal = *source;\n\
-    res.fVal = orig.fVal + val;\n\
-  } while (atomic_cmpxchg((volatile __global unsigned int *)source, orig.iVal, res.iVal) != orig.iVal);\n\
-}\n\
 #ifndef INDEX2\n\
 #define INDEX2(isize,i,j) i + isize*j\n\
 #endif\n\

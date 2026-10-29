@@ -26,7 +26,7 @@ module BOAST
       decl norm  =   Real("norm")
       decl val   =   Real("val")
 
-      decl tol = Real("TOL", :const => "1.e-24")
+      decl tol = Real("TOL", :const => "1.e-24f")
 
       iker = Int("iker")
       comment()

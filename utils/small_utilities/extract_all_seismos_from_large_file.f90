@@ -34,7 +34,7 @@
 
   implicit none
 
-  include "../constants.h"
+  include "../../setup/constants.h"
 
 ! binary or ASCII storage format (see its value in DATA/Par_file instead)
   logical, parameter :: USE_BINARY_FOR_LARGE_FILE = .true.
@@ -48,9 +48,8 @@
   integer, parameter :: NSTEP = 37200 ! see its value in OUTPUT_FILES/values_from_mesher.h
 
   integer :: irec,istep,irepeat
-  real :: time,U_value
-
-  character(len=150) :: station_name
+  real(kind=CUSTOM_REAL) :: time,U_value
+  character(len=MAX_STRING_LEN) :: station_name
 
 ! open the large seismogram file
   if (USE_BINARY_FOR_LARGE_FILE) then

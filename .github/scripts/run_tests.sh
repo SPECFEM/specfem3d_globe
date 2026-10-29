@@ -11,6 +11,61 @@ dir=${TESTDIR}
 TESTID=${TESTID:-}
 TESTCOV=${TESTCOV:-}
 
+## OpenCL
+if [ "${OPENCL}" == "true" ]; then
+  GPU_RUNTIME=2
+  # to avoid issues with kernel compilation optimizations,
+  # switch the work-group transformation method
+  export POCL_WORK_GROUP_METHOD=cbs     # or loops? (loops fails due to optimizations in inner_core/crust_mantle kernels)
+  export POCL_DEVICES=cpu
+  # kernel cache usage
+  USE_POCL_CACHE=1
+  if [ "${USE_POCL_CACHE}" == "0" ]; then
+  # disable disk cache to avoid multi-process MPI collisions
+    echo "disabling pocl kernel cache"
+    export POCL_KERNEL_CACHE=0
+  else
+    # enable disk cache, with per-rank cache dirs patched into MPI launches below
+    # to avoid multi-process MPI collisions
+    echo "enabling pocl kernel cache"
+    export POCL_KERNEL_CACHE=1
+    # creates temporary folder
+    export POCL_CACHE_BASE="/tmp/pocl"
+    mkdir -p "$POCL_CACHE_BASE"
+    # creates wrapper script to pass correct environment variables to each MPI process
+    POCL_CACHE_WRAPPER="$WORKDIR/.pocl_cache_wrapper.sh"
+    cat > "$POCL_CACHE_WRAPPER" <<'EOF'
+#!/bin/bash
+export POCL_CACHE_DIR="${POCL_CACHE_BASE}/rank-${OMPI_COMM_WORLD_RANK:-${PMI_RANK:-$$}}"
+mkdir -p "$POCL_CACHE_DIR"
+exec "$@"
+EOF
+    chmod +x "$POCL_CACHE_WRAPPER"
+    # route MPI launches through the wrapper so every rank gets its own cache dir
+    if [ -f $dir/run_mesher_solver.bash ]; then
+      sed -i "s#mpirun -np \\\$numnodes \\\$PWD/bin/xmeshfem3D#mpirun -np \$numnodes $POCL_CACHE_WRAPPER \$PWD/bin/xmeshfem3D#" $dir/run_mesher_solver.bash
+      sed -i "s#mpirun -np \\\$numnodes \\\$PWD/bin/xspecfem3D#mpirun -np \$numnodes $POCL_CACHE_WRAPPER \$PWD/bin/xspecfem3D#" $dir/run_mesher_solver.bash
+    fi
+  fi
+  # limit OpenMP threads
+  #export OMP_NUM_THREADS=1
+  # to avoid issues with SIMD/vectorization
+  #export POCL_VECTORIZER_FORCE_VECTOR_WIDTH=1       # forces SIMD width
+  #export POCL_VECTORIZER_PREFER_VECTOR_WIDTH=128
+  #export POCL_CPU_MAX_CU_COUNT=1
+  #export POCL_WORK_GROUP_SPECIALIZATION=0
+  # debugging
+  if [ "${DEBUG}" == "true" ]; then
+    export POCL_DEBUG=err,warn
+    export POCL_EXTRA_BUILD_FLAGS="-g -cl-opt-disable"
+    # more options
+    #export POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES=1
+  fi
+  echo "export:"
+  export
+  echo
+fi
+
 # info
 echo "work directory: $WORKDIR"
 echo `date`
@@ -175,6 +230,10 @@ if [ "${GPU}" == "true" ]; then
   sed -i "s:^GPU_MODE .*:GPU_MODE    = .true.:" DATA/Par_file
   sed -i "s:^GPU_PLATFORM .*:GPU_PLATFORM    = *:" DATA/Par_file
   sed -i "s:^GPU_DEVICE .*:GPU_DEVICE    = *:" DATA/Par_file
+  # GPU runtime: 0=compile-time, 1=CUDA, 2=OpenCL, 3=HIP
+  if [ "${GPU_RUNTIME}" != "" ]; then
+    sed -i "s:^GPU_RUNTIME .*:GPU_RUNTIME    = ${GPU_RUNTIME}:" DATA/Par_file
+  fi
 fi
 
 # coverage runs use short steps

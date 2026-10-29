@@ -32,16 +32,6 @@
 */
 
 const char * get_maximum_scalar_kernel_program = "\
-inline void atomicAdd(volatile __global float *source, const float val) {\n\
-  union {\n\
-    unsigned int iVal;\n\
-    float fVal;\n\
-  } res, orig;\n\
-  do {\n\
-    orig.fVal = *source;\n\
-    res.fVal = orig.fVal + val;\n\
-  } while (atomic_cmpxchg((volatile __global unsigned int *)source, orig.iVal, res.iVal) != orig.iVal);\n\
-}\n\
 #ifndef INDEX2\n\
 #define INDEX2(isize,i,j) i + isize*j\n\
 #endif\n\
@@ -92,7 +82,7 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #define BLOCKSIZE_TRANSFER 256\n\
 #endif\n\
 \n\
-__kernel void get_maximum_scalar_kernel(const __global float * array, const int size, __global float * d_max){\n\
+__kernel void get_maximum_scalar_kernel(const __global float * array, const int size, const int offset, __global float * d_max){\n\
   __local float sdata[(BLOCKSIZE_TRANSFER)];\n\
   int tid;\n\
   int bx;\n\
@@ -118,7 +108,7 @@ __kernel void get_maximum_scalar_kernel(const __global float * array, const int 
   }\n\
 \n\
   if (tid == 0) {\n\
-    d_max[bx] = sdata[0];\n\
+    d_max[bx + offset] = sdata[0];\n\
   }\n\
 }\n\
 ";

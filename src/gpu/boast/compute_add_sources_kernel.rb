@@ -20,7 +20,8 @@ module BOAST
     if (get_lang == CUDA and ref) then
       get_output.print File::read("references/#{function_name}.cu")
     elsif(get_lang == CUDA or get_lang == CL or get_lang == HIP) then
-      make_specfem3d_header( :ndim => n_dim, :ngllx => n_gllx, :double => true )
+      make_specfem3d_header( :ndim => n_dim, :ngllx => n_gllx)
+      make_atomicAdd_header
       open p
       ispec =   Int( "ispec")
       iglob =   Int( "iglob")
@@ -67,7 +68,7 @@ module BOAST
 #    accel =                  Real("accel",                            :dir => :inout,:dim => [ Dim() ] )
 #    ibool =                  Int("ibool",                             :dir => :in,   :dim => [ Dim() ] )
 #    sourcearrays =           Real("sourcearrays",                     :dir => :in,   :dim => [ Dim() ] )
-#    stf_pre_compute =        Real("stf_pre_compute",      :size => 8, :dir => :in,   :dim => [ Dim() ] )
+#    stf_pre_compute =        Real("stf_pre_compute",      :size => 8, :dir => :in,   :dim => [ Dim() ] )    # double precision
 #    myrank =                 Int("myrank",                            :dir => :in)
 #    islice_selected_source = Int("islice_selected_source",            :dir => :in,   :dim => [ Dim() ] )
 #    ispec_selected_source =  Int("ispec_selected_source",             :dir => :in,   :dim => [ Dim() ] )
@@ -79,7 +80,8 @@ module BOAST
 #    if (get_lang == CUDA and ref) then
 #      get_output.print File::read("references/#{function_name}.cu")
 #    elsif(get_lang == CUDA or get_lang == CL or get_lang == HIP) then
-#      make_specfem3d_header( :ndim => n_dim, :ngllx => n_gllx, :double => true )
+#      make_specfem3d_header( :ndim => n_dim, :ngllx => n_gllx)
+#      make_atomicAdd_header( :double => true )
 #      open p
 #      ispec =   Int( "ispec")
 #      iglob =   Int( "iglob")

@@ -116,7 +116,8 @@ void FC_FUNC_ (compute_stacey_acoustic_gpu,
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
-    compute_stacey_acoustic_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_veloc_outer_core.cuda,
+    compute_stacey_acoustic_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                          mp->d_veloc_outer_core.cuda,
                                                                           mp->d_accel_outer_core.cuda,
                                                                           num_abs_boundary_faces,
                                                                           d_abs_boundary_ispec.cuda,
@@ -134,7 +135,7 @@ void FC_FUNC_ (compute_stacey_acoustic_gpu,
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_stacey_acoustic_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_stacey_acoustic_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                         mp->d_veloc_outer_core.hip,
                                                                         mp->d_accel_outer_core.hip,
                                                                         num_abs_boundary_faces,
@@ -231,7 +232,8 @@ void FC_FUNC_ (compute_stacey_acoustic_backward_gpu,
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
-    compute_stacey_acoustic_backward_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_accel_outer_core.cuda,
+    compute_stacey_acoustic_backward_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                                   mp->d_b_accel_outer_core.cuda,
                                                                                    d_absorb_potential.cuda,
                                                                                    num_abs_boundary_faces,
                                                                                    d_abs_boundary_ispec.cuda,
@@ -245,7 +247,7 @@ void FC_FUNC_ (compute_stacey_acoustic_backward_gpu,
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_stacey_acoustic_backward_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_stacey_acoustic_backward_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                                  mp->d_b_accel_outer_core.hip,
                                                                                  d_absorb_potential.hip,
                                                                                  num_abs_boundary_faces,
@@ -340,7 +342,8 @@ void FC_FUNC_ (compute_stacey_acoustic_undoatt_gpu,
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
-    compute_stacey_acoustic_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_veloc_outer_core.cuda,
+    compute_stacey_acoustic_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                          mp->d_b_veloc_outer_core.cuda,
                                                                           mp->d_b_accel_outer_core.cuda,
                                                                           num_abs_boundary_faces,
                                                                           d_abs_boundary_ispec.cuda,
@@ -358,7 +361,7 @@ void FC_FUNC_ (compute_stacey_acoustic_undoatt_gpu,
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_stacey_acoustic_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_stacey_acoustic_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                         mp->d_b_veloc_outer_core.hip,
                                                                         mp->d_b_accel_outer_core.hip,
                                                                         num_abs_boundary_faces,

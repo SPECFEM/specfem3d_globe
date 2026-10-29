@@ -32,16 +32,6 @@
 */
 
 const char * inner_core_impl_kernel_forward_program = "\
-inline void atomicAdd(volatile __global float *source, const float val) {\n\
-  union {\n\
-    unsigned int iVal;\n\
-    float fVal;\n\
-  } res, orig;\n\
-  do {\n\
-    orig.fVal = *source;\n\
-    res.fVal = orig.fVal + val;\n\
-  } while (atomic_cmpxchg((volatile __global unsigned int *)source, orig.iVal, res.iVal) != orig.iVal);\n\
-}\n\
 #ifndef INDEX2\n\
 #define INDEX2(isize,i,j) i + isize*j\n\
 #endif\n\
@@ -91,6 +81,20 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef BLOCKSIZE_TRANSFER\n\
 #define BLOCKSIZE_TRANSFER 256\n\
 #endif\n\
+\n\
+#if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
+static\n\
+#endif\n\
+inline void atomicAdd(volatile __global float *source, const float val) {\n\
+  union {\n\
+    unsigned int iVal;\n\
+    float fVal;\n\
+  } res, orig;\n\
+  do {\n\
+    orig.fVal = *source;\n\
+    res.fVal = orig.fVal + val;\n\
+  } while (atomic_cmpxchg((volatile __global unsigned int *)source, orig.iVal, res.iVal) != orig.iVal);\n\
+}\n\
 \n\
 #ifdef USE_TEXTURES_CONSTANTS\n\
 #undef USE_TEXTURES_CONSTANTS\n\
@@ -260,30 +264,6 @@ void compute_element_ic_gravity(const int tx, const int iglob, const __global fl
   *(rho_s_H1) = (factor) * ((sx_l) * (Hxxl) + (sy_l) * (Hxyl) + (sz_l) * (Hxzl));\n\
   *(rho_s_H2) = (factor) * ((sx_l) * (Hxyl) + (sy_l) * (Hyyl) + (sz_l) * (Hyzl));\n\
   *(rho_s_H3) = (factor) * ((sx_l) * (Hxzl) + (sy_l) * (Hyzl) + (sz_l) * (Hzzl));\n\
-}\n\
-\n\
-#if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
-static\n\
-#endif\n\
-void compute_element_ic_aniso(const int offset, const __global float * restrict d_c11store, const __global float * restrict d_c12store, const __global float * restrict d_c13store, const __global float * restrict d_c33store, const __global float * restrict d_c44store, const float duxdxl, const float duydyl, const float duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){\n\
-  float c11;\n\
-  float c12;\n\
-  float c13;\n\
-  float c33;\n\
-  float c44;\n\
-  float c66;\n\
-  c11 = d_c11store[offset];\n\
-  c12 = d_c12store[offset];\n\
-  c13 = d_c13store[offset];\n\
-  c33 = d_c33store[offset];\n\
-  c44 = d_c44store[offset];\n\
-  c66 = (0.5f) * (c11 - (c12));\n\
-  *(sigma_xx) = (c11) * (duxdxl) + (c12) * (duydyl) + (c13) * (duzdzl);\n\
-  *(sigma_yy) = (c12) * (duxdxl) + (c11) * (duydyl) + (c13) * (duzdzl);\n\
-  *(sigma_zz) = (c13) * (duxdxl) + (c13) * (duydyl) + (c33) * (duzdzl);\n\
-  *(sigma_xy) = (c66) * (duxdyl_plus_duydxl);\n\
-  *(sigma_xz) = (c44) * (duzdxl_plus_duxdzl);\n\
-  *(sigma_yz) = (c44) * (duzdyl_plus_duydzl);\n\
 }\n\
 \n\
 #if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
@@ -805,16 +785,6 @@ __kernel  void inner_core_impl_kernel_forward(const int nb_blocks_to_compute, co
 ";
 
 const char * inner_core_aniso_impl_kernel_forward_program = "\
-inline void atomicAdd(volatile __global float *source, const float val) {\n\
-  union {\n\
-    unsigned int iVal;\n\
-    float fVal;\n\
-  } res, orig;\n\
-  do {\n\
-    orig.fVal = *source;\n\
-    res.fVal = orig.fVal + val;\n\
-  } while (atomic_cmpxchg((volatile __global unsigned int *)source, orig.iVal, res.iVal) != orig.iVal);\n\
-}\n\
 #ifndef INDEX2\n\
 #define INDEX2(isize,i,j) i + isize*j\n\
 #endif\n\
@@ -864,6 +834,20 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef BLOCKSIZE_TRANSFER\n\
 #define BLOCKSIZE_TRANSFER 256\n\
 #endif\n\
+\n\
+#if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
+static\n\
+#endif\n\
+inline void atomicAdd(volatile __global float *source, const float val) {\n\
+  union {\n\
+    unsigned int iVal;\n\
+    float fVal;\n\
+  } res, orig;\n\
+  do {\n\
+    orig.fVal = *source;\n\
+    res.fVal = orig.fVal + val;\n\
+  } while (atomic_cmpxchg((volatile __global unsigned int *)source, orig.iVal, res.iVal) != orig.iVal);\n\
+}\n\
 \n\
 #ifdef USE_TEXTURES_CONSTANTS\n\
 #undef USE_TEXTURES_CONSTANTS\n\
@@ -1057,26 +1041,6 @@ void compute_element_ic_aniso(const int offset, const __global float * restrict 
   *(sigma_xy) = (c66) * (duxdyl_plus_duydxl);\n\
   *(sigma_xz) = (c44) * (duzdxl_plus_duxdzl);\n\
   *(sigma_yz) = (c44) * (duzdyl_plus_duydzl);\n\
-}\n\
-\n\
-#if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
-static\n\
-#endif\n\
-void compute_element_ic_iso(const int offset, const __global float * d_kappavstore, const __global float * d_muvstore, const float duxdxl, const float duydyl, const float duzdzl, const float duxdxl_plus_duydyl, const float duxdxl_plus_duzdzl, const float duydyl_plus_duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){\n\
-  float lambdal;\n\
-  float mul;\n\
-  float lambdalplus2mul;\n\
-  float kappal;\n\
-  kappal = d_kappavstore[offset];\n\
-  mul = d_muvstore[offset];\n\
-  lambdalplus2mul = kappal + (mul) * (1.3333333333333333f);\n\
-  lambdal = lambdalplus2mul - ((mul) * (2.0f));\n\
-  *(sigma_xx) = (lambdalplus2mul) * (duxdxl) + (lambdal) * (duydyl_plus_duzdzl);\n\
-  *(sigma_yy) = (lambdalplus2mul) * (duydyl) + (lambdal) * (duxdxl_plus_duzdzl);\n\
-  *(sigma_zz) = (lambdalplus2mul) * (duzdzl) + (lambdal) * (duxdxl_plus_duydyl);\n\
-  *(sigma_xy) = (mul) * (duxdyl_plus_duydxl);\n\
-  *(sigma_xz) = (mul) * (duzdxl_plus_duxdzl);\n\
-  *(sigma_yz) = (mul) * (duzdyl_plus_duydzl);\n\
 }\n\
 \n\
 \n\

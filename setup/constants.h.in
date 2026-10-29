@@ -1072,8 +1072,12 @@
   integer, parameter :: NUM_ITER = 5
 
 ! number of hours per day for rotation rate of the Earth
+! Solar day is 24 * 3600 s
   double precision, parameter :: EARTH_HOURS_PER_DAY = 24.d0
   double precision, parameter :: EARTH_SECONDS_PER_HOUR = 3600.d0
+! Sidereal day is ~86,164.0905 s ~ 23 h 56 min 4.0905 s or 23.9344696 h
+!  double precision, parameter :: EARTH_HOURS_PER_DAY = 23.9344696d0
+!  double precision, parameter :: EARTH_SECONDS_PER_HOUR = 3600.d0
 
 ! for lookup table for gravity every 100 m in radial direction of Earth model
   integer, parameter :: NRAD_GRAVITY = 70000

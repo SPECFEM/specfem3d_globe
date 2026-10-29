@@ -423,7 +423,7 @@
 
   ! local parameters
   double precision :: weight
-  real(kind=CUSTOM_REAL) :: deltat,deltatover2
+  real(kind=CUSTOM_REAL) :: deltatover2
   real(kind=CUSTOM_REAL) :: tx,ty,tz,sn
   real(kind=CUSTOM_REAL) :: nx,ny,nz,vn
   integer :: ispec,i,j,k,iglob
@@ -461,8 +461,7 @@
   if (.not. allocated(abs_boundary_ispec) ) call exit_MPI(myrank,'Error Stacey array not allocated')
 
   ! use the non-dimensional time step to make the mass matrix correction
-  deltat = real(DT*dsqrt(PI*GRAV*RHOAV), kind=CUSTOM_REAL)
-  deltatover2 = real(0.5d0*deltat, kind=CUSTOM_REAL)
+  deltatover2 = real(0.5d0 * DT * dsqrt(PI * GRAV * RHOAV), kind=CUSTOM_REAL)
 
   ! adds contributions to mass matrix to stabilize Stacey conditions
   select case (iregion_code)

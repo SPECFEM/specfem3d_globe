@@ -32,16 +32,6 @@
 */
 
 const char * assemble_boundary_potential_on_device_program = "\
-inline void atomicAdd(volatile __global float *source, const float val) {\n\
-  union {\n\
-    unsigned int iVal;\n\
-    float fVal;\n\
-  } res, orig;\n\
-  do {\n\
-    orig.fVal = *source;\n\
-    res.fVal = orig.fVal + val;\n\
-  } while (atomic_cmpxchg((volatile __global unsigned int *)source, orig.iVal, res.iVal) != orig.iVal);\n\
-}\n\
 #ifndef INDEX2\n\
 #define INDEX2(isize,i,j) i + isize*j\n\
 #endif\n\
@@ -91,6 +81,20 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef BLOCKSIZE_TRANSFER\n\
 #define BLOCKSIZE_TRANSFER 256\n\
 #endif\n\
+\n\
+#if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
+static\n\
+#endif\n\
+inline void atomicAdd(volatile __global float *source, const float val) {\n\
+  union {\n\
+    unsigned int iVal;\n\
+    float fVal;\n\
+  } res, orig;\n\
+  do {\n\
+    orig.fVal = *source;\n\
+    res.fVal = orig.fVal + val;\n\
+  } while (atomic_cmpxchg((volatile __global unsigned int *)source, orig.iVal, res.iVal) != orig.iVal);\n\
+}\n\
 \n\
 __kernel void assemble_boundary_potential_on_device(__global float * d_potential_dot_dot_acoustic, const __global float * d_send_potential_dot_dot_buffer, const int num_interfaces, const int max_nibool_interfaces, const __global int * d_nibool_interfaces, const __global int * d_ibool_interfaces){\n\
   int id;\n\

@@ -133,7 +133,8 @@ void FC_FUNC_ (compute_strain_gpu,
     threads = dim3(blocksize,1,1);
 
     // strain kernel
-    compute_strain_kernel<<<grid,threads,0,mp->compute_stream>>>(displ.cuda,
+    compute_strain_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                 displ.cuda,
                                                                  veloc.cuda,
                                                                  epsilondev_xx.cuda,
                                                                  epsilondev_yy.cuda,
@@ -163,7 +164,7 @@ void FC_FUNC_ (compute_strain_gpu,
     threads = dim3(blocksize,1,1);
 
     // strain kernel
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_strain_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_strain_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                displ.hip,
                                                                veloc.hip,
                                                                epsilondev_xx.hip,
@@ -259,7 +260,8 @@ void FC_FUNC_ (compute_strain_gpu,
     threads = dim3(blocksize,1,1);
 
     // strain kernel
-    compute_strain_kernel<<<grid,threads,0,mp->compute_stream>>>(displ.cuda,
+    compute_strain_kernel<<<grid,threads,0,mp->compute_stream.cuda>>>(
+                                                                 displ.cuda,
                                                                  veloc.cuda,
                                                                  epsilondev_xx.cuda,
                                                                  epsilondev_yy.cuda,
@@ -288,7 +290,7 @@ void FC_FUNC_ (compute_strain_gpu,
     threads = dim3(blocksize,1,1);
 
     // strain kernel
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_strain_kernel), grid, threads, 0, mp->compute_stream,
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(compute_strain_kernel), grid, threads, 0, mp->compute_stream.hip,
                                                                displ.hip,
                                                                veloc.hip,
                                                                epsilondev_xx.hip,

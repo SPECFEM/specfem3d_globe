@@ -79,13 +79,8 @@ if [ "${CUDA}" == "true" ]; then
   echo
   echo "enabling CUDA"
   echo
-  if [ "${OPENCL}" == "true" ]; then
-    cuda=(--with-opencl OCL_INC="${CUDA_HOME}/include" OCL_LIB="${CUDA_HOME}/lib64" OCL_LIBS="-lOpenCL" \
-          OCL_CPU_FLAGS="-g -Wall -std=c99 -DWITH_MPI" OCL_GPU_FLAGS="-Werror")
-  else
-    cuda=(--with-cuda=cuda13 CUDA_INC="${CUDA_HOME}/include" CUDA_LIB="${CUDA_HOME}/lib64" \
-          CUDA_FLAGS="-Xcompiler -Wall,-Wno-unused-function,-Wno-unused-const-variable,-Wfatal-errors -g -G")
-  fi
+  cuda=(--with-cuda=cuda13 CUDA_INC="${CUDA_HOME}/include" CUDA_LIB="${CUDA_HOME}/lib64" \
+        CUDA_FLAGS="-Xcompiler -Wall,-Wno-unused-function,-Wno-unused-const-variable,-Wfatal-errors -g -G")
 else
   cuda=()
 fi
@@ -95,10 +90,25 @@ if [ "${HIP}" == "true" ]; then
   echo
   echo "enabling HIP"
   echo
-  hip=(--with-hip HIPCC=g++ HIP_PLATFORM=cpu HIP_INC=./external_libs/ROCm-HIP-CPU/include HIP_LIBS="-ltbb -lpthread -lstdc++ -lmpi_cxx" \
-       HIP_FLAGS="-O2 -g -std=c++17")
+  hip=(--with-hip HIPCC=g++ HIP_PLATFORM=cpu HIP_INC=./external_libs/ROCm-HIP-CPU/include HIP_LIBS="-ltbb -lpthread -lstdc++ ${MPI_LINK_FLAGS}" \
+       HIP_FLAGS="-O3 -std=c++17" MPI_INC="${MPI_INCLUDE}")
 else
   hip=()
+fi
+
+## OpenCL
+if [ "${OPENCL}" == "true" ]; then
+  if [ "${CUDA}" == "true" ]; then
+    opencl=(--with-opencl OCL_INC="${CUDA_HOME}/include" OCL_LIB="${CUDA_HOME}/lib64" OCL_LIBS="-lOpenCL" \
+        OCL_CPU_FLAGS="-g -Wall -std=c99 -DWITH_MPI" OCL_GPU_FLAGS="-Werror" MPI_INC="${MPI_INCLUDE}")
+  else
+    opencl=(--with-opencl OCL_LIBS="-lOpenCL" \
+        OCL_CPU_FLAGS="-g -Wall -std=c99 -DWITH_MPI -DCL_TARGET_OPENCL_VERSION=300" OCL_GPU_FLAGS="-Werror -g -cl-std=CL3.0" MPI_INC="${MPI_INCLUDE}")
+  fi
+  cuda=()
+  hip=()
+else
+  opencl=()
 fi
 
 ## special testflags
@@ -134,6 +144,7 @@ if [ "${TESTCOV}" == "true" ]; then
     "${hdf[@]}" \
     "${cuda[@]}" \
     "${hip[@]}" \
+    "${opencl[@]}" \
     "${petsc[@]}" \
     "${flags[@]}" \
     FLAGS_CHECK="-fprofile-arcs -ftest-coverage -O0" CFLAGS="-coverage -O0" \
@@ -146,7 +157,11 @@ else
       echo "configuration: for cuda"
     fi
   else
-    echo "configuration: default"
+    if [ "${OPENCL}" == "true" ]; then
+      echo "configuration: for opencl" # uses libOpenCL provided from pocl package
+    else
+      echo "configuration: default"
+    fi
   fi
   ./configure \
     "${adios[@]}" \
@@ -154,6 +169,7 @@ else
     "${hdf[@]}" \
     "${cuda[@]}" \
     "${hip[@]}" \
+    "${opencl[@]}" \
     "${petsc[@]}" \
     "${flags[@]}" \
     FC=${FC} MPIFC=${MPIFC} CC=${CC} "$@"

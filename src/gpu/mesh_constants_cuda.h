@@ -40,9 +40,7 @@
 
 /*----------------------------------------------------------------------------------------------- */
 
-// definitions
-typedef cudaEvent_t gpu_event;
-typedef cudaStream_t gpu_stream;
+// note: gpu_event and gpu_stream are defined in mesh_constants_gpu.h (backend-neutral types)
 
 // cuda header files
 #include "kernel_proto.cu.h"

@@ -4,11 +4,14 @@
 #
 
 # updates repository
-sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6B05F25D762E3157
-sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 78BD65473CB3BD13
-sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 762E3157
-sudo apt-get update
+if command -v apt-key >/dev/null 2>&1; then
+  echo "apt-key is available"
+  sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6B05F25D762E3157
+  sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 78BD65473CB3BD13
+  sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 762E3157
+fi
 
+sudo apt-get update
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
 
@@ -131,9 +134,10 @@ if [ "${ADIOS2}" == "true" ]; then
   # uses /opt as installation directory
   mkdir -p /opt; cd /opt
   # download source
-  wget https://github.com/ornladios/ADIOS2/archive/refs/tags/v2.10.1.tar.gz
-  tar zxf v2.10.1.tar.gz
-  cd ADIOS2-2.10.1/
+  version=2.12.1   # older: 2.10.1  - fails with newer gcc versions (15.x)
+  wget https://github.com/ornladios/ADIOS2/archive/refs/tags/v${version}.tar.gz
+  tar zxf v${version}.tar.gz
+  cd ADIOS2-${version}/
   # build source
   mkdir -p build; cd build/
   CC=gcc CXX=g++ FC=gfortran cmake -DADIOS2_USE_Fortran=ON \
@@ -174,7 +178,7 @@ fi
 if [ "${CUDA}" == "true" ]; then
   # Linux environment
   ## distribution from ubuntu 24.04
-  UBUNTU_VERSION=ubuntu2204
+  UBUNTU_VERSION=ubuntu2404
 
   # CUDA_VERSION - specifies CUDA toolkit version
   # http://developer.download.nvidia.com/compute/cuda/repos/
@@ -226,16 +230,16 @@ if [ "${CUDA}" == "true" ]; then
   echo "Updating libraries"
   sudo apt-get update -qq
   dpkg -l | grep cuda
-  export CUDA_APT=${CUDA_VERSION:0:4}  # version 13.1
+  export CUDA_APT=${CUDA_VERSION:0:4}  # version 13.x
   export CUDA_APT=${CUDA_APT/./-}
-  echo "CUDA: ${CUDA_APT}"  # apt version 13-1 -> package name: cuda-compiler-13-1
+  echo "CUDA: ${CUDA_APT}"  # apt version 13-x -> package name: cuda-compiler-13-x
 
   # installs packages
   CUDA_PACKAGES="cuda-drivers cuda-compiler-${CUDA_APT} cuda-cudart-dev-${CUDA_APT}"
   echo "Installing ${CUDA_PACKAGES}"
   sudo apt-get install -y --no-install-recommends ${CUDA_PACKAGES}
   sudo apt-get clean
-  export CUDA_HOME=/usr/local/cuda-${CUDA_VERSION:0:4}    # version 13.1
+  export CUDA_HOME=/usr/local/cuda-${CUDA_VERSION:0:4}    # version 13.x
   export LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}
   export PATH=${CUDA_HOME}/bin:${PATH}
   echo ""
@@ -246,7 +250,7 @@ if [ "${CUDA}" == "true" ]; then
 
   ## OpenCL additionals
   if [ "${OPENCL}" == "true" ]; then
-    echo "OpenCL installation"
+    echo "OpenCL installation w/ nvidia opencl"
     #echo "dpkg toolkit:"
     #dpkg -l | grep toolkit
     #echo ""
@@ -267,6 +271,40 @@ if [ "${CUDA}" == "true" ]; then
   fi
 else
   export CUDA_HOME=""
+fi
+
+## OpenCL additionals
+if [ "${OPENCL}" == "true" ]; then
+  if [ "${CUDA}" == "true" ]; then
+    echo "OpenCL installation w/ nvidia opencl"
+    #echo "dpkg toolkit:"
+    #dpkg -l | grep toolkit
+    #echo ""
+    #echo "dpkg opencl:"
+    #dpkg -l | grep opencl
+    #echo ""
+    #echo "apt-cache opencl:"
+    #apt-cache search opencl
+    # possible packages for OpenCL:
+    #sudo apt-get install -y --no-install-recommends cuda-toolkit-${CUDA_APT}
+    #sudo apt-get install opencl-headers
+    # for ppc64 architecture: to be able to compile/link OpenCL version
+    sudo apt-get install nvidia-opencl-dev
+    if [[ $? -ne 0 ]]; then echo "OpenCL installation failed"; exit 1; fi
+  else
+    echo "OpenCL installation w/ pocl"
+    # drivers w/ container using CPU core - not working...
+    sudo apt-get install -y ocl-icd-libopencl1 ocl-icd-opencl-dev pocl-opencl-icd
+    if [[ $? -ne 0 ]]; then echo "OpenCL installation failed"; exit 1; fi
+  fi
+  echo ""
+  # sanity checks: headers and a visible CPU device
+  ls -l /usr/include/CL/cl.h
+  echo ""
+  # clinfo
+  sudo apt-get install -y clinfo
+  clinfo | head -40
+  echo ""
 fi
 
 # MPI
@@ -306,6 +344,14 @@ echo
 #echo "localhost slots=8" >> $HOME/.openmpi/openmpi-default-hostfile
 #or: export OMPI_MCA_orte_default_hostfile=$HOME/.openmpi/openmpi-default-hostfile
 
+# MPI include path
+MPI_INCLUDE=$(ompi_info --path incdir --parsable | cut -d: -f3)
+echo "MPI_INCLUDE: ${MPI_INCLUDE}"
+# MPI library links -L/usr/.. -lmpi_cxx -lmpi
+MPI_LINK_FLAGS=$(mpicxx --showme:link)
+echo "MPI_LINK_FLAGS: ${MPI_LINK_FLAGS}"
+echo
+
 # storing updated environment parameters for following bash-script
 echo "export PATH=${PATH}" > $HOME/.tmprc
 echo "export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}" >> $HOME/.tmprc
@@ -317,10 +363,17 @@ echo "export CUDA_HOME=${CUDA_HOME}" >> $HOME/.tmprc
 # uses github environment to store (for subsequent steps)
 echo "OMPI_MCA_rmaps_base_oversubscribe=1" >> $GITHUB_ENV
 echo "OMPI_MCA_rmaps_base_inherit=1" >> $GITHUB_ENV
+# oversubscription (for newer PRTE-based Open MPI where OMPI_MCA alone no longer suffices)
+# newer OpenMPI (PRTE) needs its own oversubscription setting
+echo "PRTE_MCA_rmaps_default_mapping_policy=:oversubscribe" >> $GITHUB_ENV
 
 ## avoid MPI warnings when running in container
-#echo "export OMPI_MCA_btl_vader_single_copy_mechanism=none" >> $HOME/.tmprc
-#echo "export OMPI_MCA_btl=^openib" >> $HOME/.tmprc
+#echo "OMPI_MCA_btl_vader_single_copy_mechanism=none" >> $GITHUB_ENV
+#echo "OMPI_MCA_btl=^openib" >> $GITHUB_ENV
+
+# MPI include & link (needed for HIP test compilation)
+echo "MPI_INCLUDE=${MPI_INCLUDE}" >> $GITHUB_ENV
+echo "MPI_LINK_FLAGS=${MPI_LINK_FLAGS}" >> $GITHUB_ENV
 
 # exports for xterm output (for make tests)
 echo "TERM=xterm" >> $GITHUB_ENV

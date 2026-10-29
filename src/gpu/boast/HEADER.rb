@@ -76,8 +76,7 @@ module BOAST
     BOAST::get_output.puts "#endif"
   end
 
-  def BOAST::make_specfem3d_header(opts = {})
-
+  def BOAST::make_atomicAdd_header(opts = {})
     # atomicAdd function for single precision (real) values in OpenCL
     if BOAST::get_lang == CL then
       if BOAST::get_default_real_size == 8 or opts[:double] then
@@ -87,7 +86,11 @@ module BOAST
         BOAST::get_output.puts "#pragma OPENCL EXTENSION cl_khr_int64_base_atomics: enable"
       end
       load "./atomicAdd_f.rb"
+      BOAST::get_output.puts "\n"
     end
+  end
+
+  def BOAST::make_specfem3d_header(opts = {})
 
     # index definitions
     load "./INDEX2.rb"

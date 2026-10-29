@@ -1687,6 +1687,9 @@ Please check MPI installation.\n";
       fclose(fp);
     }
   }
+#else
+  // avoid compiler warning
+  (void) myrank;
 #endif // WITH_CUDA_AWARE_MPI
 
   // return value

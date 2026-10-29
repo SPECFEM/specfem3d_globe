@@ -32,16 +32,6 @@
 */
 
 const char * compute_stacey_acoustic_kernel_program = "\
-inline void atomicAdd(volatile __global float *source, const float val) {\n\
-  union {\n\
-    unsigned int iVal;\n\
-    float fVal;\n\
-  } res, orig;\n\
-  do {\n\
-    orig.fVal = *source;\n\
-    res.fVal = orig.fVal + val;\n\
-  } while (atomic_cmpxchg((volatile __global unsigned int *)source, orig.iVal, res.iVal) != orig.iVal);\n\
-}\n\
 #ifndef INDEX2\n\
 #define INDEX2(isize,i,j) i + isize*j\n\
 #endif\n\
@@ -91,6 +81,20 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef BLOCKSIZE_TRANSFER\n\
 #define BLOCKSIZE_TRANSFER 256\n\
 #endif\n\
+\n\
+#if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
+static\n\
+#endif\n\
+inline void atomicAdd(volatile __global float *source, const float val) {\n\
+  union {\n\
+    unsigned int iVal;\n\
+    float fVal;\n\
+  } res, orig;\n\
+  do {\n\
+    orig.fVal = *source;\n\
+    res.fVal = orig.fVal + val;\n\
+  } while (atomic_cmpxchg((volatile __global unsigned int *)source, orig.iVal, res.iVal) != orig.iVal);\n\
+}\n\
 \n\
 __kernel void compute_stacey_acoustic_kernel(const __global float * potential_dot_acoustic, __global float * potential_dot_dot_acoustic, const int num_abs_boundary_faces, const __global int * abs_boundary_ispec, const __global int * abs_boundary_npoin, const __global int * abs_boundary_ijk, const __global float * abs_boundary_jacobian2Dw, const __global int * ibool, const __global float * vpstore, const int SAVE_STACEY, __global float * b_absorb_potential){\n\
   int npoin;\n\

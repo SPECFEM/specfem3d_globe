@@ -23,7 +23,7 @@ run_simple() {
   local mode="$3"
 
   echo "##################################################################"
-  echo "${rel_dir}"
+  echo "${rel_dir} (simple coverage) NSTEP=${nstep} MODE=${mode}"
   echo
 
   cd "${WORKDIR}/${rel_dir}"
@@ -32,7 +32,7 @@ run_simple() {
   cp -v DATA/Par_file DATA/Par_file.org
   sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
   sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
-  echo "NSTEP    = ${nstep}:" >> DATA/Par_file
+  echo "NSTEP    = ${nstep}" >> DATA/Par_file
 
   if [ "${mode}" == "GPU" ]; then
     # turns on GPU
@@ -61,7 +61,7 @@ run_kernel() {
   local mode="$3"
 
   echo "##################################################################"
-  echo "${rel_dir} (kernel coverage)"
+  echo "${rel_dir} (kernel coverage) NSTEP=${nstep} MODE=${mode}"
   echo
 
   cd "${WORKDIR}/${rel_dir}"
@@ -70,7 +70,7 @@ run_kernel() {
   cp -v DATA/Par_file DATA/Par_file.org
   sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
   sed -i "s:^NTSTEP_BETWEEN_OUTPUT_INFO .*:NTSTEP_BETWEEN_OUTPUT_INFO    = 50:" DATA/Par_file
-  echo "NSTEP    = ${nstep}:" >> DATA/Par_file
+  echo "NSTEP    = ${nstep}" >> DATA/Par_file
 
   if [ "${mode}" == "GPU" ]; then
     # turns on GPU
@@ -117,6 +117,7 @@ case "$TESTID" in
     run_simple "EXAMPLES/regional_sgloberani" 2
     ;;
   2) # vectorization & openMP
+    export OMP_NUM_THREADS=2  # limit OpenMP threads
     run_simple "EXAMPLES/global_small" 2
     run_simple "EXAMPLES/global_small" 2 "FULL_GRAVITY"
     ;;

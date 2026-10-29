@@ -32,16 +32,6 @@
 */
 
 const char * crust_mantle_impl_kernel_adjoint_program = "\
-inline void atomicAdd(volatile __global float *source, const float val) {\n\
-  union {\n\
-    unsigned int iVal;\n\
-    float fVal;\n\
-  } res, orig;\n\
-  do {\n\
-    orig.fVal = *source;\n\
-    res.fVal = orig.fVal + val;\n\
-  } while (atomic_cmpxchg((volatile __global unsigned int *)source, orig.iVal, res.iVal) != orig.iVal);\n\
-}\n\
 #ifndef INDEX2\n\
 #define INDEX2(isize,i,j) i + isize*j\n\
 #endif\n\
@@ -91,6 +81,20 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef BLOCKSIZE_TRANSFER\n\
 #define BLOCKSIZE_TRANSFER 256\n\
 #endif\n\
+\n\
+#if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
+static\n\
+#endif\n\
+inline void atomicAdd(volatile __global float *source, const float val) {\n\
+  union {\n\
+    unsigned int iVal;\n\
+    float fVal;\n\
+  } res, orig;\n\
+  do {\n\
+    orig.fVal = *source;\n\
+    res.fVal = orig.fVal + val;\n\
+  } while (atomic_cmpxchg((volatile __global unsigned int *)source, orig.iVal, res.iVal) != orig.iVal);\n\
+}\n\
 \n\
 \n\
 \n\
@@ -257,62 +261,6 @@ void compute_element_cm_gravity(const int tx, const int iglob, const __global fl
   *(rho_s_H1) = (factor) * ((sx_l) * (Hxxl) + (sy_l) * (Hxyl) + (sz_l) * (Hxzl));\n\
   *(rho_s_H2) = (factor) * ((sx_l) * (Hxyl) + (sy_l) * (Hyyl) + (sz_l) * (Hyzl));\n\
   *(rho_s_H3) = (factor) * ((sx_l) * (Hxzl) + (sy_l) * (Hyzl) + (sz_l) * (Hzzl));\n\
-}\n\
-\n\
-#if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
-static\n\
-#endif\n\
-void compute_element_cm_aniso(const int offset, const __global float * d_c11store, const __global float * d_c12store, const __global float * d_c13store, const __global float * d_c14store, const __global float * d_c15store, const __global float * d_c16store, const __global float * d_c22store, const __global float * d_c23store, const __global float * d_c24store, const __global float * d_c25store, const __global float * d_c26store, const __global float * d_c33store, const __global float * d_c34store, const __global float * d_c35store, const __global float * d_c36store, const __global float * d_c44store, const __global float * d_c45store, const __global float * d_c46store, const __global float * d_c55store, const __global float * d_c56store, const __global float * d_c66store, const float duxdxl, const float duxdyl, const float duxdzl, const float duydxl, const float duydyl, const float duydzl, const float duzdxl, const float duzdyl, const float duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){\n\
-  float c11;\n\
-  float c12;\n\
-  float c13;\n\
-  float c14;\n\
-  float c15;\n\
-  float c16;\n\
-  float c22;\n\
-  float c23;\n\
-  float c24;\n\
-  float c25;\n\
-  float c26;\n\
-  float c33;\n\
-  float c34;\n\
-  float c35;\n\
-  float c36;\n\
-  float c44;\n\
-  float c45;\n\
-  float c46;\n\
-  float c55;\n\
-  float c56;\n\
-  float c66;\n\
-\n\
-  c11 = d_c11store[offset];\n\
-  c12 = d_c12store[offset];\n\
-  c13 = d_c13store[offset];\n\
-  c14 = d_c14store[offset];\n\
-  c15 = d_c15store[offset];\n\
-  c16 = d_c16store[offset];\n\
-  c22 = d_c22store[offset];\n\
-  c23 = d_c23store[offset];\n\
-  c24 = d_c24store[offset];\n\
-  c25 = d_c25store[offset];\n\
-  c26 = d_c26store[offset];\n\
-  c33 = d_c33store[offset];\n\
-  c34 = d_c34store[offset];\n\
-  c35 = d_c35store[offset];\n\
-  c36 = d_c36store[offset];\n\
-  c44 = d_c44store[offset];\n\
-  c45 = d_c45store[offset];\n\
-  c46 = d_c46store[offset];\n\
-  c55 = d_c55store[offset];\n\
-  c56 = d_c56store[offset];\n\
-  c66 = d_c66store[offset];\n\
-\n\
-  *(sigma_xx) = (c11) * (duxdxl) + (c16) * (duxdyl_plus_duydxl) + (c12) * (duydyl) + (c15) * (duzdxl_plus_duxdzl) + (c14) * (duzdyl_plus_duydzl) + (c13) * (duzdzl);\n\
-  *(sigma_yy) = (c12) * (duxdxl) + (c26) * (duxdyl_plus_duydxl) + (c22) * (duydyl) + (c25) * (duzdxl_plus_duxdzl) + (c24) * (duzdyl_plus_duydzl) + (c23) * (duzdzl);\n\
-  *(sigma_zz) = (c13) * (duxdxl) + (c36) * (duxdyl_plus_duydxl) + (c23) * (duydyl) + (c35) * (duzdxl_plus_duxdzl) + (c34) * (duzdyl_plus_duydzl) + (c33) * (duzdzl);\n\
-  *(sigma_xy) = (c16) * (duxdxl) + (c66) * (duxdyl_plus_duydxl) + (c26) * (duydyl) + (c56) * (duzdxl_plus_duxdzl) + (c46) * (duzdyl_plus_duydzl) + (c36) * (duzdzl);\n\
-  *(sigma_xz) = (c15) * (duxdxl) + (c56) * (duxdyl_plus_duydxl) + (c25) * (duydyl) + (c55) * (duzdxl_plus_duxdzl) + (c45) * (duzdyl_plus_duydzl) + (c35) * (duzdzl);\n\
-  *(sigma_yz) = (c14) * (duxdxl) + (c46) * (duxdyl_plus_duydxl) + (c24) * (duydyl) + (c45) * (duzdxl_plus_duxdzl) + (c44) * (duzdyl_plus_duydzl) + (c34) * (duzdzl);\n\
 }\n\
 \n\
 #if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
@@ -888,16 +836,6 @@ __kernel  void crust_mantle_impl_kernel_adjoint(const int nb_blocks_to_compute, 
 ";
 
 const char * crust_mantle_aniso_impl_kernel_adjoint_program = "\
-inline void atomicAdd(volatile __global float *source, const float val) {\n\
-  union {\n\
-    unsigned int iVal;\n\
-    float fVal;\n\
-  } res, orig;\n\
-  do {\n\
-    orig.fVal = *source;\n\
-    res.fVal = orig.fVal + val;\n\
-  } while (atomic_cmpxchg((volatile __global unsigned int *)source, orig.iVal, res.iVal) != orig.iVal);\n\
-}\n\
 #ifndef INDEX2\n\
 #define INDEX2(isize,i,j) i + isize*j\n\
 #endif\n\
@@ -947,6 +885,20 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef BLOCKSIZE_TRANSFER\n\
 #define BLOCKSIZE_TRANSFER 256\n\
 #endif\n\
+\n\
+#if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
+static\n\
+#endif\n\
+inline void atomicAdd(volatile __global float *source, const float val) {\n\
+  union {\n\
+    unsigned int iVal;\n\
+    float fVal;\n\
+  } res, orig;\n\
+  do {\n\
+    orig.fVal = *source;\n\
+    res.fVal = orig.fVal + val;\n\
+  } while (atomic_cmpxchg((volatile __global unsigned int *)source, orig.iVal, res.iVal) != orig.iVal);\n\
+}\n\
 \n\
 \n\
 \n\
@@ -1119,85 +1071,6 @@ void compute_element_cm_gravity(const int tx, const int iglob, const __global fl
 static\n\
 #endif\n\
 void compute_element_cm_aniso(const int offset, const __global float * d_c11store, const __global float * d_c12store, const __global float * d_c13store, const __global float * d_c14store, const __global float * d_c15store, const __global float * d_c16store, const __global float * d_c22store, const __global float * d_c23store, const __global float * d_c24store, const __global float * d_c25store, const __global float * d_c26store, const __global float * d_c33store, const __global float * d_c34store, const __global float * d_c35store, const __global float * d_c36store, const __global float * d_c44store, const __global float * d_c45store, const __global float * d_c46store, const __global float * d_c55store, const __global float * d_c56store, const __global float * d_c66store, const float duxdxl, const float duxdyl, const float duxdzl, const float duydxl, const float duydyl, const float duydzl, const float duzdxl, const float duzdyl, const float duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){\n\
-  float c11;\n\
-  float c12;\n\
-  float c13;\n\
-  float c14;\n\
-  float c15;\n\
-  float c16;\n\
-  float c22;\n\
-  float c23;\n\
-  float c24;\n\
-  float c25;\n\
-  float c26;\n\
-  float c33;\n\
-  float c34;\n\
-  float c35;\n\
-  float c36;\n\
-  float c44;\n\
-  float c45;\n\
-  float c46;\n\
-  float c55;\n\
-  float c56;\n\
-  float c66;\n\
-\n\
-  c11 = d_c11store[offset];\n\
-  c12 = d_c12store[offset];\n\
-  c13 = d_c13store[offset];\n\
-  c14 = d_c14store[offset];\n\
-  c15 = d_c15store[offset];\n\
-  c16 = d_c16store[offset];\n\
-  c22 = d_c22store[offset];\n\
-  c23 = d_c23store[offset];\n\
-  c24 = d_c24store[offset];\n\
-  c25 = d_c25store[offset];\n\
-  c26 = d_c26store[offset];\n\
-  c33 = d_c33store[offset];\n\
-  c34 = d_c34store[offset];\n\
-  c35 = d_c35store[offset];\n\
-  c36 = d_c36store[offset];\n\
-  c44 = d_c44store[offset];\n\
-  c45 = d_c45store[offset];\n\
-  c46 = d_c46store[offset];\n\
-  c55 = d_c55store[offset];\n\
-  c56 = d_c56store[offset];\n\
-  c66 = d_c66store[offset];\n\
-\n\
-  *(sigma_xx) = (c11) * (duxdxl) + (c16) * (duxdyl_plus_duydxl) + (c12) * (duydyl) + (c15) * (duzdxl_plus_duxdzl) + (c14) * (duzdyl_plus_duydzl) + (c13) * (duzdzl);\n\
-  *(sigma_yy) = (c12) * (duxdxl) + (c26) * (duxdyl_plus_duydxl) + (c22) * (duydyl) + (c25) * (duzdxl_plus_duxdzl) + (c24) * (duzdyl_plus_duydzl) + (c23) * (duzdzl);\n\
-  *(sigma_zz) = (c13) * (duxdxl) + (c36) * (duxdyl_plus_duydxl) + (c23) * (duydyl) + (c35) * (duzdxl_plus_duxdzl) + (c34) * (duzdyl_plus_duydzl) + (c33) * (duzdzl);\n\
-  *(sigma_xy) = (c16) * (duxdxl) + (c66) * (duxdyl_plus_duydxl) + (c26) * (duydyl) + (c56) * (duzdxl_plus_duxdzl) + (c46) * (duzdyl_plus_duydzl) + (c36) * (duzdzl);\n\
-  *(sigma_xz) = (c15) * (duxdxl) + (c56) * (duxdyl_plus_duydxl) + (c25) * (duydyl) + (c55) * (duzdxl_plus_duxdzl) + (c45) * (duzdyl_plus_duydzl) + (c35) * (duzdzl);\n\
-  *(sigma_yz) = (c14) * (duxdxl) + (c46) * (duxdyl_plus_duydxl) + (c24) * (duydyl) + (c45) * (duzdxl_plus_duxdzl) + (c44) * (duzdyl_plus_duydzl) + (c34) * (duzdzl);\n\
-}\n\
-\n\
-#if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
-static\n\
-#endif\n\
-void compute_element_cm_iso(const int offset, const __global float * d_kappavstore, const __global float * d_muvstore, const float duxdxl, const float duydyl, const float duzdzl, const float duxdxl_plus_duydyl, const float duxdxl_plus_duzdzl, const float duydyl_plus_duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){\n\
-  float lambdal;\n\
-  float mul;\n\
-  float lambdalplus2mul;\n\
-  float kappal;\n\
-\n\
-  mul = d_muvstore[offset];\n\
-  kappal = d_kappavstore[offset];\n\
-\n\
-  lambdalplus2mul = kappal + (mul) * (1.3333333333333333f);\n\
-  lambdal = lambdalplus2mul - ((mul) * (2.0f));\n\
-\n\
-  *(sigma_xx) = (lambdalplus2mul) * (duxdxl) + (lambdal) * (duydyl_plus_duzdzl);\n\
-  *(sigma_yy) = (lambdalplus2mul) * (duydyl) + (lambdal) * (duxdxl_plus_duzdzl);\n\
-  *(sigma_zz) = (lambdalplus2mul) * (duzdzl) + (lambdal) * (duxdxl_plus_duydyl);\n\
-  *(sigma_xy) = (mul) * (duxdyl_plus_duydxl);\n\
-  *(sigma_xz) = (mul) * (duzdxl_plus_duxdzl);\n\
-  *(sigma_yz) = (mul) * (duzdyl_plus_duydzl);\n\
-}\n\
-\n\
-#if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
-static\n\
-#endif\n\
-void compute_element_cm_tiso(const int offset, const __global float * d_c11store, const __global float * d_c12store, const __global float * d_c13store, const __global float * d_c14store, const __global float * d_c15store, const __global float * d_c16store, const __global float * d_c22store, const __global float * d_c23store, const __global float * d_c24store, const __global float * d_c25store, const __global float * d_c26store, const __global float * d_c33store, const __global float * d_c34store, const __global float * d_c35store, const __global float * d_c36store, const __global float * d_c44store, const __global float * d_c45store, const __global float * d_c46store, const __global float * d_c55store, const __global float * d_c56store, const __global float * d_c66store, const float duxdxl, const float duxdyl, const float duxdzl, const float duydxl, const float duydyl, const float duydzl, const float duzdxl, const float duzdyl, const float duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){\n\
   float c11;\n\
   float c12;\n\
   float c13;\n\

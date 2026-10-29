@@ -3,7 +3,7 @@
 
 typedef float realw;
 
-__global__ void get_maximum_vector_kernel(realw* array, int size, realw* d_max){
+__global__ void get_maximum_vector_kernel(realw* array, int size, int offset, realw* d_max){
 
   // reduction example:
   __shared__ realw sdata[BLOCKSIZE_TRANSFER] ;
@@ -33,6 +33,6 @@ __global__ void get_maximum_vector_kernel(realw* array, int size, realw* d_max){
   }
 
   // write result for this block to global mem
-  if (tid == 0) d_max[bx] = sdata[0];
+  if (tid == 0) d_max[bx + offset] = sdata[0];
 
 }
