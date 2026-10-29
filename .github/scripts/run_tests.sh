@@ -51,13 +51,14 @@ EOF
   export OMP_NUM_THREADS=1
   # to avoid issues with SIMD/vectorization
   export POCL_VECTORIZER_FORCE_VECTOR_WIDTH=1    # forces SIMD width 1
+  export POCL_CPU_MAX_CU_COUNT=1
+  export POCL_EXTRA_BUILD_FLAGS="-cl-opt-disable"
   # debugging
   if [ "${DEBUG}" == "true" ]; then
     export POCL_DEBUG=err,warn
     export POCL_EXTRA_BUILD_FLAGS="-g -cl-opt-disable"
     # more options
     #export POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES=1
-    #export POCL_CPU_MAX_CU_COUNT=1
   fi
   echo "export:"
   export
