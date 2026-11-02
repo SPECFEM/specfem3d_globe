@@ -64,6 +64,12 @@
   ! offset for nspec
   integer, dimension(0:NPROCTOT-1) :: offset_nelems
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '     model in HDF5 file format'
+    call flush_IMAIN()
+  endif
+
   ! gather nspec
   call gather_all_all_singlei(nspec, offset_nelems, NPROCTOT)
 
@@ -151,6 +157,9 @@
     call h5_close_file()
 
   endif ! myrank == 0
+
+  ! synchronizes MPI processes
+  call synchronize_all()
 
   !
   ! write the data
@@ -266,6 +275,12 @@
   call h5_close_group()
   ! close the file
   call h5_close_file()
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '     model region ',iregion_code,'done'
+    call flush_IMAIN()
+  endif
 
 #else
 
