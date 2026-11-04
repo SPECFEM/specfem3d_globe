@@ -1087,3 +1087,44 @@
   estimated_min_wavelength = T_min_period * S_VELOCITY_MIN
 
   end subroutine get_minimum_period_estimate
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine band_instrument_code(sampling_rate,bic)
+
+! This subroutine is to choose the appropriate band and instrument codes for channel names of seismograms
+! based on the IRIS convention (first two letters of channel codes, respectively,
+! which were LH(Z/E/N) previously).
+! For consistency with observed data, we now use the IRIS convention for band codes (first letter in channel codes) of
+! SEM seismograms governed by their sampling rate.
+! Instrument code (second letter in channel codes) is fixed to "X" which is assigned by IRIS for synthetic seismograms.
+! See the manual for further explanations!
+! Ebru Bozdag, November 2010
+
+  implicit none
+
+  double precision,intent(in) :: sampling_rate
+  character(len=2),intent(out) :: bic
+
+  ! local parameter
+  logical,parameter :: SUPPRESS_IRIS_CONVENTION = .false.
+
+  bic = ''
+
+  ! see manual for ranges
+  if (sampling_rate >= 1.0d0)  bic = 'LX'
+  if (sampling_rate < 1.0d0 .and. sampling_rate > 0.1d0) bic = 'MX'
+  if (sampling_rate <= 0.1d0 .and. sampling_rate > 0.0125d0) bic = 'BX'
+  if (sampling_rate <= 0.0125d0 .and. sampling_rate > 0.004d0) bic = 'HX'
+  if (sampling_rate <= 0.004d0 .and. sampling_rate > 0.001d0) bic = 'CX'
+  if (sampling_rate <= 0.001d0) bic = 'FX'
+
+  ! ignores IRIS convention, uses previous, constant band and instrument code
+  if (SUPPRESS_IRIS_CONVENTION) then
+    bic = 'BH'
+  endif
+
+  end subroutine band_instrument_code
