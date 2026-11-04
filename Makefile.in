@@ -589,7 +589,6 @@ OUTPUT = $B/OUTPUT_FILES
 SUBDIRS = \
 	auxiliaries \
 	create_header_file \
-	gf3d \
 	gpu \
 	meshfem3D \
 	shared \
@@ -600,6 +599,9 @@ SUBDIRS = \
 
 # full gravity tool
 SUBDIRS += gindex3D
+
+# Green function database - gf3d
+SUBDIRS += gf3d
 
 #ifeq ($(HAS_GPU),yes)
 #  SUBDIRS := gpu $(SUBDIRS)
@@ -638,14 +640,14 @@ endif
 #	$(EMPTY_MACRO)
 #endif
 
-# Green function extraction library and tool
-# note: the database format is HDF5-only, so this is off unless configured --with-hdf5
-ifeq ($(HDF5), yes)
-DEFAULT += 	xgf3d
-endif
-
 # full gravity tool
 DEFAULT += 	xgindex3D
+
+# Green function extraction library and tool
+# note: the database format is HDF5-only, so this is off unless configured --with-hdf5
+#ifeq ($(HDF5), yes)
+#  DEFAULT += 	xgf3d
+#endif
 
 
 all: default aux movies postprocess tomography
