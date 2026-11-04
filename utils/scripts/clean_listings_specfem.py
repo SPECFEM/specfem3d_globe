@@ -194,6 +194,25 @@ non_comment_patterns = [
     (r'(?<!\s)=\.false\.', ' = .false.'),
 ]
 
+# Fortran quoted string literals, used to protect their contents from operator-spacing transforms
+_QUOTED_STRING_RE = re.compile(r"'(?:''|[^'])*'|\"(?:\"\"|[^\"])*\"")
+
+
+def mask_quoted_strings(line):
+    saved = []
+    def repl(m):
+        saved.append(m.group(0))
+        return '\x01STR%d\x01' % (len(saved) - 1)
+    masked = _QUOTED_STRING_RE.sub(repl, line)
+    return masked, saved
+
+
+def unmask_quoted_strings(line, saved):
+    for idx, val in enumerate(saved):
+        line = line.replace('\x01STR%d\x01' % idx, val)
+    return line
+
+
 def format_content_fortran(content):
     """
     applies Fortran code formatting
@@ -225,21 +244,28 @@ def format_content_fortran(content):
                 has_xml_pattern = True
                 break
         if not has_xml_pattern:
-            ## Replace special patterns
-            for pattern, replacement in special_patterns:
-                line = re.sub(pattern, replacement, line, flags=re.IGNORECASE)
+            ## Replace special patterns (only on non-comment lines, so placeholders like <NET> in comments stay intact)
+            if first_letter not in comment:
+                masked_line, saved = mask_quoted_strings(line)
+                for pattern, replacement in special_patterns:
+                    masked_line = re.sub(pattern, replacement, masked_line, flags=re.IGNORECASE)
+                line = unmask_quoted_strings(masked_line, saved)
 
             ## Replace patterns on non-comment lines
             if first_letter in comment:
                 # comment line
+                masked_line, saved = mask_quoted_strings(line)
                 for pattern, replacement in comment_patterns:
                     #print(f"comment pattern: {pattern}")
-                    line = re.sub(pattern, replacement, line, flags=re.IGNORECASE)
+                    masked_line = re.sub(pattern, replacement, masked_line, flags=re.IGNORECASE)
+                line = unmask_quoted_strings(masked_line, saved)
             else:
                 # non-comment line
+                masked_line, saved = mask_quoted_strings(line)
                 for pattern, replacement in non_comment_patterns:
                     #print(f"non-comment pattern: {pattern}")
-                    line = re.sub(pattern, replacement, line, flags=re.IGNORECASE)
+                    masked_line = re.sub(pattern, replacement, masked_line, flags=re.IGNORECASE)
+                line = unmask_quoted_strings(masked_line, saved)
 
         ## special formatting
         # "write(IMAIN,*)'my-comment'" -> "write(IMAIN,*) 'my-comment'"
