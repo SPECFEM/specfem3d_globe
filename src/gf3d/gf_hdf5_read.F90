@@ -48,6 +48,11 @@
   use hdf5
 #endif
 
+! Include the HDF5 Fortran preprocessor configuration file for preprocessior version checks
+#ifdef USE_HDF5
+#  include "H5config_f.inc"
+#endif
+
   use gf_par, only: gf_set_error,GF_OK,GF_ERR_NO_HDF5,GF_ERR_NO_FILE,GF_ERR_HDF5,GF_ERR_FORMAT, &
                     GF_ERR_ARG,GF_ERR_ALLOC,GF_NCOMP
 
@@ -75,6 +80,23 @@
   ! hsize_t are 64-bit in every HDF5 since 1.10; gf_h5_read_displ_chunks
   ! checks that this build's HID_T and HSIZE_T agree before it calls this.
   ! The offset is in C order.
+#if defined(H5_VERS_MAJOR) && H5_VERS_MAJOR >= 2
+  ! HDF5 versions 2.x defines `H5Dread_chunk2` as new default function
+#warning "Compiling with HDF5 version 2.x"
+  interface
+    integer(c_int) function h5dread_chunk_c(dset_id,dxpl_id,offset,filters,buf,buf_size) &
+        bind(C,name='H5Dread_chunk2')
+      use, intrinsic :: iso_c_binding, only: c_int,c_int32_t,c_int64_t,c_ptr,c_size_t
+      integer(c_int64_t), value :: dset_id,dxpl_id
+      integer(c_int64_t), dimension(*), intent(in) :: offset
+      integer(c_int32_t), intent(out) :: filters
+      type(c_ptr), value :: buf
+      integer(c_size_t), intent(inout) :: buf_size
+    end function h5dread_chunk_c
+  end interface
+#else
+  ! HDF5 versions 1.x
+#warning "Compiling with HDF5 version 1.x"
   interface
     integer(c_int) function h5dread_chunk_c(dset_id,dxpl_id,offset,filters,buf) &
         bind(C,name='H5Dread_chunk')
@@ -85,6 +107,7 @@
       type(c_ptr), value :: buf
     end function h5dread_chunk_c
   end interface
+#endif
 #endif
 
   public :: gf_h5_init
@@ -751,6 +774,10 @@
   integer(c_int32_t) :: filters
   integer :: hdferr,nchunk,ia,t0,nh,ier
 
+#if defined(H5_VERS_MAJOR) && H5_VERS_MAJOR >= 2
+  integer(c_size_t) :: chunk_size
+#endif
+
   raw = .false.
 
   if (nt_out < 1 .or. nt_out > nt .or. &
@@ -782,11 +809,23 @@
         coff(:) = 0
         coff(1) = int(t0,c_int64_t)
         coff(6) = int(ia-1,c_int64_t)
+
+#if defined(H5_VERS_MAJOR) && H5_VERS_MAJOR >= 2
+        ! HDF5 versions 2.x
+        chunk_size = int(NM*nchunk, c_size_t) * c_sizeof(cbuf(1,1))
+        if (h5dread_chunk_c(int(dset_id,c_int64_t), int(H5P_DEFAULT_F,c_int64_t), &
+                            coff,filters,c_loc(cbuf),chunk_size) < 0 .or. filters /= 0) then
+          raw = .false.
+          exit components
+        endif
+#else
+        ! HDF5 versions 1.x
         if (h5dread_chunk_c(int(dset_id,c_int64_t),int(H5P_DEFAULT_F,c_int64_t), &
                             coff,filters,c_loc(cbuf)) < 0 .or. filters /= 0) then
           raw = .false.
           exit components
         endif
+#endif
         ! the last chunk is stored at full length; only its first rows are data
         nh = min(nchunk,nt_out-t0)
         if (order == GF_H5_ORDER_ATM) then
