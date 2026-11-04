@@ -981,6 +981,14 @@ jobs:
         utils/green_function/.venv/bin/python -c "import numpy, scipy, h5py, obspy; print('numpy', numpy.__version__, 'scipy', scipy.__version__, 'h5py', h5py.__version__, 'obspy', obspy.__version__)"
       shell: bash
 
+    - name: gf3d
+      env:
+        HDF5_INC: /usr/include/hdf5/openmpi
+        HDF5_LIBS: "-L/usr/lib/x86_64-linux-gnu/hdf5/openmpi"
+      run: |
+        make xgf3d
+      shell: bash
+
     - name: gf3d tests
       env:
         HDF5_INC: /usr/include/hdf5/openmpi
@@ -988,8 +996,7 @@ jobs:
         GF3D_TEST_STRICT: 1
         GF3D_PYTHON: ${{ github.workspace }}/utils/green_function/.venv/bin/python
       run: |
-        cd tests
-        ./run_all_tests.sh gf3d
+        make tests gf3d
       shell: bash
 
     - name: Summary

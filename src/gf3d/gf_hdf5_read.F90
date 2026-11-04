@@ -49,8 +49,13 @@
 #endif
 
 ! Include the HDF5 Fortran preprocessor configuration file for preprocessior version checks
+! (only if the installed HDF5 provides it; some distributions do not ship it)
 #ifdef USE_HDF5
-#  include "H5config_f.inc"
+#if defined __has_include
+#if __has_include("H5config_f.inc")
+#include "H5config_f.inc"
+#endif
+#endif
 #endif
 
   use gf_par, only: gf_set_error,GF_OK,GF_ERR_NO_HDF5,GF_ERR_NO_FILE,GF_ERR_HDF5,GF_ERR_FORMAT, &
@@ -82,7 +87,7 @@
   ! The offset is in C order.
 #if defined(H5_VERS_MAJOR) && H5_VERS_MAJOR >= 2
   ! HDF5 versions 2.x defines `H5Dread_chunk2` as new default function
-#warning "Compiling with HDF5 version 2.x"
+!!#warning "Compiling with HDF5 version 2.x"
   interface
     integer(c_int) function h5dread_chunk_c(dset_id,dxpl_id,offset,filters,buf,buf_size) &
         bind(C,name='H5Dread_chunk2')
@@ -96,7 +101,7 @@
   end interface
 #else
   ! HDF5 versions 1.x
-#warning "Compiling with HDF5 version 1.x"
+!!#warning "Compiling with HDF5 version 1.x"
   interface
     integer(c_int) function h5dread_chunk_c(dset_id,dxpl_id,offset,filters,buf) &
         bind(C,name='H5Dread_chunk')

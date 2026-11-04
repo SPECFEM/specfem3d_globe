@@ -658,6 +658,7 @@ clean:
 	-rm -f ${O}/*__genmod.*
 	-rm -f ${O}/*.smod
 	-rm -f ${O}/*.lst
+	-rm -rf ${O}/gfpic
 else
 clean:
 	@echo "cleaning all"
@@ -666,6 +667,7 @@ clean:
 	-rm -f ${O}/*__genmod.*
 	-rm -f ${O}/*.smod
 	-rm -f ${O}/*.lst
+	-rm -rf ${O}/gfpic
 endif
 
 realclean: clean
