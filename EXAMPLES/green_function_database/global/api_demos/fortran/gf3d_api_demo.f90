@@ -418,7 +418,7 @@
 !--- 6. what it costs to move into another element ----------------------
 !
 
-  call banner('6. loading a neighbouring element')
+  call banner('6. loading a neighboring element')
 
   write(*,*) ' Sections 4 and 5 stayed inside one element. A source that'
   write(*,*) ' moves far enough leaves it, and the next extraction works'

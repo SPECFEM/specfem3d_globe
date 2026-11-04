@@ -28,7 +28,7 @@
 !----
 !---- The derivative of the geographic map: d(x,y,z)/d(lat,lon,depth).
 !----
-!---- gf_geometry's gf_geographic_to_cartesian is the solver's chain
+!---- gf_geometry's gf_geographic_to_Cartesian is the solver's chain
 !---- (locate_sources.f90:220-354): geographic latitude to geocentric
 !---- colatitude, the surface radius from the topography, ellipticity on
 !---- that surface radius, and only then the depth. This module
@@ -67,7 +67,7 @@
 
   use gf_par, only: gf_set_error,GF_OK,GF_ERR_ARG,GF_ERR_MISMATCH
 
-  use gf_geometry, only: gf_geographic_to_cartesian
+  use gf_geometry, only: gf_geographic_to_Cartesian
 
   implicit none
 
@@ -161,7 +161,7 @@
 ! km). `elevation` is in metres and `delev_dlat`, `delev_dlon` in metres
 ! per degree, as gf_topo_gradient returns them (zero without topography).
 ! The spline arguments are the database's, as for
-! gf_geographic_to_cartesian. `dtheta_dlat` and `dphi_dlon` (radians per
+! gf_geographic_to_Cartesian. `dtheta_dlat` and `dphi_dlon` (radians per
 ! degree) are returned as well, because the moment tensor's rotation is
 ! differentiated with respect to theta and phi and needs the same chain.
 !
@@ -199,7 +199,7 @@
   dphi_dlon = 0.d0
 
   ! the forward map, for the reduced angles and the surface radius
-  call gf_geographic_to_cartesian(lat,lon,depth_km,is_elliptical,elevation, &
+  call gf_geographic_to_Cartesian(lat,lon,depth_km,is_elliptical,elevation, &
                                   nspl,rspl,ell1,ell2,R_PLANET,xyz,theta,phi,r_surface,ierr)
   if (ierr /= GF_OK) return
 

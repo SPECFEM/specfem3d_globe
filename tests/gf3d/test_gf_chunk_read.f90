@@ -116,7 +116,7 @@
   write(*,'(a,a)') '  route    = ',trim(expect)
   write(*,'(a)') ''
 
-  call gf_open(dbpath,db,ierr,check_completion=.false.)
+  call gf_open(dbpath,db,ierr,check_completion = .false.)
   if (ierr /= GF_OK) call die('could not open the database')
 
   nt = db%nt_subsampled

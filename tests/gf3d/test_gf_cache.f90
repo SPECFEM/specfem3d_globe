@@ -229,7 +229,7 @@
   write(*,'(a)') ''
   write(*,'(a)') '4. max_elements = 2 against 0, bitwise'
 
-  call gf_open(dbpath,dbc,ierr,check_completion=.false.,max_elements=2)
+  call gf_open(dbpath,dbc,ierr,check_completion = .false.,max_elements=2)
   if (ierr /= GF_OK) call die('could not open the database with max_elements = 2')
 
   seq = (/ 1, 2, 1, 2 /)
@@ -301,8 +301,8 @@
   ! enough for every element: on a real $GF3D_TEST_GFDB three locates may
   ! try more candidates than the default store holds, and these counts are
   ! about the element cache. Section 5b is about the store's bound.
-  call gf_open(dbpath,dbc,ierr,check_completion=.false.,max_elements=3, &
-               coord_capacity=huge(1))
+  call gf_open(dbpath,dbc,ierr,check_completion = .false.,max_elements = 3, &
+               coord_capacity = huge(1))
   if (ierr /= GF_OK) call die('could not open the database with max_elements = 3')
   call snapshot(dbc,misses0,files0)
   call extract_at(dbc,1)
@@ -387,7 +387,7 @@
   enddo
   call expect('locations differing from no store',int(nbad,8),0_8,nfail)
 
-  call gf_open(dbpath,dbc,ierr,check_completion=.false.,coord_capacity=-1)
+  call gf_open(dbpath,dbc,ierr,check_completion = .false.,coord_capacity=-1)
   call gf_report_true('a negative coord_capacity is refused   ',ierr == GF_ERR_ARG,nfail)
 
   !--------------------------------------------------------------------
@@ -397,11 +397,11 @@
   write(*,'(a)') ''
   write(*,'(a)') '6. max_elements'
 
-  call gf_open(dbpath,dbc,ierr,check_completion=.false.,max_elements=-1)
+  call gf_open(dbpath,dbc,ierr,check_completion = .false.,max_elements=-1)
   call gf_report_true('a negative max_elements is refused      ',ierr == GF_ERR_ARG,nfail)
   call gf_report_true('and leaves the handle closed            ',.not. dbc%is_open,nfail)
 
-  call gf_open(dbpath,dbc,ierr,check_completion=.false.,max_elements=huge(1))
+  call gf_open(dbpath,dbc,ierr,check_completion = .false.,max_elements = huge(1))
   call gf_report_true('more than nelem opens                   ',ierr == GF_OK,nfail)
   if (ierr == GF_OK) then
     call expect('and keeps at most nelem',int(dbc%cache%capacity,8),int(dbc%nelem,8),nfail)
@@ -428,7 +428,7 @@
   if (.not. staged) then
     write(*,'(a)') '     note: could not stage the broken copy; not exercised'
   else
-    call gf_open(trim(broken),dbc,ierr,check_completion=.false.,max_elements=2)
+    call gf_open(trim(broken),dbc,ierr,check_completion = .false.,max_elements = 2)
     if (ierr /= GF_OK) call die('could not open the broken copy')
 
     call extract_at(dbc,1)
@@ -487,7 +487,7 @@
   if (.not. openmp) then
     write(*,'(a)') '     not compiled with OpenMP: 9i.test_gf_openmp.sh runs this section'
   else
-    call gf_open(dbpath,dbc,ierr,check_completion=.false.,max_elements=1)
+    call gf_open(dbpath,dbc,ierr,check_completion = .false.,max_elements=1)
     if (ierr /= GF_OK) call die('could not open the database with max_elements = 1')
     write(*,'(a,i0,a,i0,a)') '     ',db%nstations,' stations over 1 and ',NTHREADS,' threads'
 !$  call omp_set_num_threads(1)
@@ -609,7 +609,7 @@
   integer(kind=8) :: nh,nm,ne,nf
   integer :: nc,i,ier
 
-  call gf_open(dbpath,h,ier,check_completion=.false.,max_elements=nkeep)
+  call gf_open(dbpath,h,ier,check_completion = .false.,max_elements=nkeep)
   if (ier /= GF_OK) call die('could not open the database for '//name)
 
   do i = 1,size(order)
@@ -690,7 +690,7 @@
 
   integer :: ier
 
-  call gf_open(dbpath,h,ier,check_completion=.false.)
+  call gf_open(dbpath,h,ier,check_completion = .false.)
   if (ier /= GF_OK) call die('could not open the database')
 
   end subroutine open_or_die
@@ -715,7 +715,7 @@
   integer(kind=8) :: m0,f0,m1,f1
   integer :: i,ier
 
-  call gf_open(dbpath,h,ier,check_completion=.false.,coord_capacity=ncap)
+  call gf_open(dbpath,h,ier,check_completion = .false.,coord_capacity=ncap)
   if (ier /= GF_OK) call die('could not open the database with a coordinate capacity')
   call snapshot(h,m0,f0)
   do i = 1,size(order)

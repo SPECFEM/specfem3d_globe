@@ -139,7 +139,7 @@
   endif
   write(*,'(a)') ''
 
-  call gf_open(dbpath,db,ierr,check_completion=.false.)
+  call gf_open(dbpath,db,ierr,check_completion = .false.)
   if (ierr /= GF_OK) then
     write(*,'(a)') '  could not open the database'
     write(*,'(a)') '  '//trim(gf_error_string(ierr))//': '//trim(gf_errmsg)
@@ -305,7 +305,7 @@
 
   write(*,'(a)') ''
 
-  call gf_open(dbpath,db2,ierr,check_completion=.false.)
+  call gf_open(dbpath,db2,ierr,check_completion = .false.)
   call gf_report_true('the same database opens twice     ',ierr == GF_OK,nfail)
 
   if (ierr == GF_OK) then
@@ -351,7 +351,7 @@
                       owner_first == db%open_id .and. db%open_id /= 0,nfail)
 
   call gf_close(db)
-  call gf_open(dbpath,db,ierr,check_completion=.false.)
+  call gf_open(dbpath,db,ierr,check_completion = .false.)
   call gf_report_true('the same path reopens             ',ierr == GF_OK,nfail)
   call gf_report_true('with a different open id          ',db%open_id /= owner_first,nfail)
 

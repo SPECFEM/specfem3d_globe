@@ -668,7 +668,7 @@
 
   ! raw bytes: apply the range test too, so that an unreadable file makes us
   ! fall through to the text manifest rather than trusting nonsense
-  if (.not. gf_index_is_sane(db,nrec,check_range=.true.)) goto 98
+  if (.not. gf_index_is_sane(db,nrec,check_range = .true.)) goto 98
 
   db%nelem = nrec
   ok = .true.
@@ -754,7 +754,7 @@
   close(IIN_GF)
 
   ! as for centroids.bin: a failure here falls through to the element scan
-  if (.not. gf_index_is_sane(db,nrec,check_range=.true.)) then
+  if (.not. gf_index_is_sane(db,nrec,check_range = .true.)) then
     deallocate(db%morton,db%morton_hex,db%centroid)
     return
   endif
@@ -837,7 +837,7 @@
 
   ! last route, nothing to fall through to: structural invariants only, so an
   ! unusual but legitimate database is never rejected on its centroid range
-  if (.not. gf_index_is_sane(db,nfound,check_range=.false.)) then
+  if (.not. gf_index_is_sane(db,nfound,check_range = .false.)) then
     call gf_set_error(ierr,GF_ERR_FORMAT,'implausible element centroids or Morton ordering')
     return
   endif

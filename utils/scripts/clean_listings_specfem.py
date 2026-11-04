@@ -346,8 +346,10 @@ def format_content_fortran(content):
                     break
             if not has_equal_pattern:
                 # "myvar=something" -> "myvar = something"  but not "a==b" or lines with "open(unit=.." etc.
-                if re.search(r'(\w+)=(\w+)', line):
-                    line = re.sub(r'(\w+)=(\w+)', r'\1 = \2', line, flags=re.IGNORECASE)
+                masked_eq_line, eq_saved = mask_quoted_strings(line)
+                if re.search(r'(\w+)=(\w+)', masked_eq_line):
+                    masked_eq_line = re.sub(r'(\w+)=(\w+)', r'\1 = \2', masked_eq_line, flags=re.IGNORECASE)
+                line = unmask_quoted_strings(masked_eq_line, eq_saved)
 
         # Replace the original line with the modified line
         lines[i] = line

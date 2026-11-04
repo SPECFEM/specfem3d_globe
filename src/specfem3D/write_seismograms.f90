@@ -610,7 +610,7 @@ contains
     ! velocity
     !one_seismogram(:,1:seismo_current) = seismograms_v(:,irec_local,1:seismo_current)
     ! not used yet...
-    call exit_MPI(myrank,'component istore==2 (velocity) not implemented yet in get_single_trace() routine')
+    call exit_MPI(myrank,'velocity component (istore == 2) not implemented yet in get_single_trace() routine')
   case (3)
     ! acceleration
     one_seismogram(:,1:seismo_current) = seismograms_a(:,irec_local,1:seismo_current)
@@ -618,7 +618,7 @@ contains
     ! pressure
     !one_seismogram(1,1:seismo_current) = seismograms_p(1,irec_local,1:seismo_current) ! single component
     ! not used yet...
-    call exit_MPI(myrank,'component istore==4 (pressure) not implemented yet in get_single_trace() routine')
+    call exit_MPI(myrank,'pressure component (istore == 4) not implemented yet in get_single_trace() routine')
   case (5)
     ! gravity potential (seismograms_phi)
     one_seismogram(1,1:seismo_current) = seismograms_phi(1,irec_local,1:seismo_current)  ! potential (single component)

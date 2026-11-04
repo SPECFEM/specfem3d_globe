@@ -1084,7 +1084,7 @@
 
   ! every thread reaches the loop, also one whose buffers could not be
   ! allocated: a worksharing loop must be met by the whole team
-  !$omp do schedule(dynamic)
+  !$OMP DO schedule(dynamic)
   do ista = 1,db%nstations
     if (ier_init /= GF_OK) then
       ierr_sta(ista) = ier_init
@@ -1094,7 +1094,7 @@
                            seis,ndp,dp,onset,ierr_sta(ista))
     endif
   enddo
-  !$omp end do
+  !$OMP ENDDO
 
   call gf_seis_work_free(work)
 

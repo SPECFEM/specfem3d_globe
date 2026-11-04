@@ -80,7 +80,7 @@
 
   use gf_shape3D, only: gf_shape3D_functions,gf_shape3D_functions_2nd,gf_shape3D_map,gf_shape3D_map_2nd
 
-  use gf_geometry, only: gf_geographic_to_cartesian,gf_find_local_coords
+  use gf_geometry, only: gf_geographic_to_Cartesian,gf_find_local_coords
 
   use gf_geo_chain, only: gf_spline_derivative,gf_geographic_jacobian
 
@@ -1631,10 +1631,10 @@
 
   elev = ct_elev0 + ct_glat*(s(1) - ct_s0(1)) + ct_glon*(s(2) - ct_s0(2))
   if (ct_ell_on) then
-    call gf_geographic_to_cartesian(s(1),s(2),s(3),ct_ell_on,elev,NSPL,ct_rspl,ct_ell,ct_ell2,R_EARTH, &
+    call gf_geographic_to_Cartesian(s(1),s(2),s(3),ct_ell_on,elev,NSPL,ct_rspl,ct_ell,ct_ell2,R_EARTH, &
                                     xyz,theta,phi,r_surface,ierr)
   else
-    call gf_geographic_to_cartesian(s(1),s(2),s(3),ct_ell_on,elev,0,ct_nospl,ct_nospl,ct_nospl,R_EARTH, &
+    call gf_geographic_to_Cartesian(s(1),s(2),s(3),ct_ell_on,elev,0,ct_nospl,ct_nospl,ct_nospl,R_EARTH, &
                                     xyz,theta,phi,r_surface,ierr)
   endif
 

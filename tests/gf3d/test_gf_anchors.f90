@@ -93,7 +93,7 @@
 
   ! the per-element completion scan is not what is being tested here, and it
   ! is the slow part of gf_open on a large database
-  call gf_open(dbpath,db,ierr,check_completion=.false.)
+  call gf_open(dbpath,db,ierr,check_completion = .false.)
   if (ierr /= GF_OK) then
     write(*,'(a)') '  could not open the database'
     write(*,'(a)') '  '//trim(gf_error_string(ierr))//': '//trim(gf_errmsg)

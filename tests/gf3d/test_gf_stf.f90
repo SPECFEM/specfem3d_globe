@@ -168,14 +168,14 @@
 
   write(*,'(a)') '1. hdur_Gaussian = hdur/SOURCE_DECAY_MIMIC_TRIANGLE'
 
-  call gf_report('gf_hdur_gaussian(60) vs 60/1.628', &
-                 abs(gf_hdur_gaussian(HCMT) - HCMT/SOURCE_DECAY_MIMIC_TRIANGLE) &
+  call gf_report('gf_hdur_Gaussian(60) vs 60/1.628', &
+                 abs(gf_hdur_Gaussian(HCMT) - HCMT/SOURCE_DECAY_MIMIC_TRIANGLE) &
                  /(HCMT/SOURCE_DECAY_MIMIC_TRIANGLE),1.d-14,nfail)
 
   ! the force forward run prints 'Gaussian half duration: 27.641277641277643'
   ! for its f0 = 45 (forward/OUTPUT_FILES/output_solver.txt:142)
-  call gf_report('gf_hdur_gaussian(45) vs the solver print 27.641277641277643', &
-                 abs(gf_hdur_gaussian(45.d0) - 27.641277641277643d0)/27.641277641277643d0,1.d-14,nfail)
+  call gf_report('gf_hdur_Gaussian(45) vs the solver print 27.641277641277643', &
+                 abs(gf_hdur_Gaussian(45.d0) - 27.641277641277643d0)/27.641277641277643d0,1.d-14,nfail)
 
   end subroutine test_hdur_pin
 
@@ -283,7 +283,7 @@
 
   write(*,'(a)') '2. Gaussian kernel (h = 60/1.628, dt = 0.4, trunc 7)'
 
-  h = gf_hdur_gaussian(HCMT)
+  h = gf_hdur_Gaussian(HCMT)
   k = gf_stf_khalf(h,DTG,7.d0)
   allocate(w(-k:k))
   call gf_stf_kernel_gauss(h,DTG,k,w)
@@ -334,7 +334,7 @@
 
   write(*,'(a)') '3. Heaviside kernel vs netlib_specfun_erf (h = hdur_corr, dt = 0.4, trunc 6)'
 
-  h = sqrt(gf_hdur_gaussian(HCMT)**2 - HDB**2)
+  h = sqrt(gf_hdur_Gaussian(HCMT)**2 - HDB**2)
   k = gf_stf_khalf(h,DTG,GF_STF_TRUNC)
   allocate(w(-k:k))
   call gf_stf_kernel_heavi(h,DTG,k,w)
@@ -381,7 +381,7 @@
 
   write(*,'(a)') '4. delta response'
 
-  h = sqrt(gf_hdur_gaussian(HCMT)**2 - HDB**2)
+  h = sqrt(gf_hdur_Gaussian(HCMT)**2 - HDB**2)
   k = gf_stf_khalf(h,DTG,GF_STF_TRUNC)
   allocate(w(-k:k),x(N),y(N),p(0:N))
 
@@ -445,7 +445,7 @@
 
   write(*,'(a)') '5. centroid preservation'
 
-  h = sqrt(gf_hdur_gaussian(HCMT)**2 - HDB**2)
+  h = sqrt(gf_hdur_Gaussian(HCMT)**2 - HDB**2)
   k = gf_stf_khalf(h,DTG,GF_STF_TRUNC)
   allocate(w(-k:k),x(N),y(N),t(N))
 
@@ -492,7 +492,7 @@
   write(*,'(a)') '6. composition identity g_h1 * g_h2 = g_h3 (h1 = hdur_db, h2 = hdur_corr)'
 
   h1 = HDB
-  h2 = sqrt(gf_hdur_gaussian(HCMT)**2 - HDB**2)
+  h2 = sqrt(gf_hdur_Gaussian(HCMT)**2 - HDB**2)
   h3 = sqrt(h1**2 + h2**2)
   ref0 = gauss(0.d0,h3)
 
@@ -676,7 +676,7 @@
   write(*,'(a)') '9. the premise: g_h1 * H_h2 = H_h3, one operator (h1 = hdur_db, h2 = hdur_corr)'
 
   h1 = HDB
-  h2 = sqrt(gf_hdur_gaussian(HCMT)**2 - HDB**2)
+  h2 = sqrt(gf_hdur_Gaussian(HCMT)**2 - HDB**2)
   h3 = sqrt(h1**2 + h2**2)
 
   do ig = 1,2
@@ -959,7 +959,7 @@
 
   write(*,'(a)') '13. padding'
 
-  h = sqrt(gf_hdur_gaussian(HCMT)**2 - HDB**2)
+  h = sqrt(gf_hdur_Gaussian(HCMT)**2 - HDB**2)
   k = gf_stf_khalf(h,DTR,GF_STF_TRUNC)
   allocate(w(-k:k),x(N),y(N),xp(NPAD+N),yp(NPAD+N),p(0:N),pp(0:NPAD+N))
 

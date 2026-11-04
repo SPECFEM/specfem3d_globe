@@ -120,7 +120,7 @@
   !--- the source time function and the output time axis
   use gf_stf, only: &
     gf_stf_plan, gf_taxis_plan, gf_taxis_times, gf_stf_kind_name, gf_print_stf, &
-    gf_hdur_gaussian, gf_default_t0, gf_stf_taps_size, gf_stf_taps
+    gf_hdur_Gaussian, gf_default_t0, gf_stf_taps_size, gf_stf_taps
 
   !--- one element's data, contraction-ready, for a caller that contracts
   !--- and processes outside the library

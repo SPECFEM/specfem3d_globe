@@ -369,7 +369,7 @@
 
 ! one element's displacement for every station, from the handle's cache
 !
-! Returns the slot that holds it: db%cache%slot(islot)%displ(:,...,ista) is
+! returns the slot that holds it: db%cache%slot(islot)%displ(:,...,ista) is
 ! what gf_read_element_displ would have returned for station ista, byte for
 ! byte, because that is what put it there.
 !
