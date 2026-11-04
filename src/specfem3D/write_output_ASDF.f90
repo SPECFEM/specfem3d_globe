@@ -132,10 +132,10 @@
   asdf_container%network_array(irec_local) = network_name(irec)(1:length_network_name)
   asdf_container%component_array(i) = chn(1:3)
 
-  asdf_container%receiver_lat(irec_local) = stlat(irec)
-  asdf_container%receiver_lo(irec_local) = stlon(irec)
-  asdf_container%receiver_el(irec_local) = stele(irec)
-  asdf_container%receiver_dpt(irec_local) = stbur(irec)
+  asdf_container%receiver_lat(irec_local) = real(stlat(irec),kind=4)  ! container arrays defined as real, pointer :: ..
+  asdf_container%receiver_lo(irec_local) = real(stlon(irec),kind=4)
+  asdf_container%receiver_el(irec_local) = real(stele(irec),kind=4)
+  asdf_container%receiver_dpt(irec_local) = real(stbur(irec),kind=4)
 
   allocate(asdf_container%records(i)%record(seismo_current),stat=ier)
   if (ier /= 0) call exit_MPI (myrank, 'Allocating ASDF container failed.')
@@ -283,7 +283,7 @@
 
   ! Calculate start_time
   call get_time_cmt(startTime, start_time_string, pde_start_time_string, cmt_start_time_string, end_time_string)
-  start_time = startTime*(int(1000000000,kind=8)) ! convert to nanoseconds
+  start_time = int(startTime * 1000000000.0d0, kind=8) ! convert to nanoseconds
 
   !--------------------------------------------------------
   ! Setup data on each process.
@@ -1045,12 +1045,12 @@
   character(len=ASDF_MAX_TIME_STRING_LENGTH), intent(out) :: time_string
 
   ! local parameters
-  real :: fraction_sec
+  double precision :: fraction_sec
   integer :: iatime(9)
   character(len=4) :: yr
   character(len=2) :: mo, da, hr, minute
   character(len=15) :: str_second
-  real :: real_sec
+  double precision :: real_sec
   integer :: stime,iyr,imo,ida,ihr,imin,isec,imillisec
 
   ! extract msec
