@@ -603,10 +603,6 @@ SUBDIRS += gindex3D
 # Green function database - gf3d
 SUBDIRS += gf3d
 
-#ifeq ($(HAS_GPU),yes)
-#  SUBDIRS := gpu $(SUBDIRS)
-#endif
-
 # default targets
 DEFAULT = \
 	xcreate_header_file \
@@ -657,7 +653,7 @@ default: $(DEFAULT)
 ifdef CLEAN
 clean:
 	@echo "cleaning by CLEAN"
-	-rm -f $(foreach dir, $(CLEAN), $($(dir)_OBJECTS) $($(dir)_MODULES) $($(dir)_SHARED_OBJECTS) $($(dir)_TARGETS))
+	-rm -f $(foreach dir, $(CLEAN), $($(dir)_OBJECTS) $($(dir)_MODULES) $($(dir)_SHARED_OBJECTS) $($(dir)_PROGRAM_OBJECTS) $($(dir)_TARGETS))
 	-rm -f ${E}/*__genmod.*
 	-rm -f ${O}/*__genmod.*
 	-rm -f ${O}/*.smod
@@ -665,7 +661,7 @@ clean:
 else
 clean:
 	@echo "cleaning all"
-	-rm -f $(foreach dir, $(SUBDIRS), $($(dir)_OBJECTS) $($(dir)_MODULES) $($(dir)_TARGETS))
+	-rm -f $(foreach dir, $(SUBDIRS), $($(dir)_OBJECTS) $($(dir)_MODULES) $($(dir)_SHARED_OBJECTS) $($(dir)_PROGRAM_OBJECTS) $($(dir)_TARGETS))
 	-rm -f ${E}/*__genmod.*
 	-rm -f ${O}/*__genmod.*
 	-rm -f ${O}/*.smod
