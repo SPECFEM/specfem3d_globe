@@ -100,7 +100,7 @@
   yy(3) = 0.d0
 
   ndp = ndis+1
-  do 3 nd = 1,ndp
+  do nd = 1,ndp
     if (nd == 1) then
       j1 = 1
       j2 = kdis(1)-2
@@ -126,7 +126,8 @@
     s2(j2) = yy(2)
     s3(j1) = yy(3)
     s3(j2) = yy(3)
-  goto 3
+
+    cycle
 
   11 a0 = 0.0d0
 
@@ -199,7 +200,7 @@
     s1(j2) = yy(1)
     s2(j2) = yy(2)
     s3(j2) = yy(3)
- 3 continue
+  enddo
 
   do i = 1,n
     yprime(i) = s1(i)
