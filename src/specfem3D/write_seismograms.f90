@@ -53,8 +53,7 @@
 
   implicit none
 
-  ! HDF5 is not implemented because ASDF is already available
-  ! TODO ADD IO_SERVER for seismograms (low priority because it's not I/O intensive)
+  ! HDF5: TODO ADD IO_SERVER for seismograms (low priority because it's not I/O intensive)
 
   ! local parameters
   ! timing
@@ -185,7 +184,7 @@
 
     ! checks if anything to do
     ! note: ASDF uses parallel hdf5 that defines the MPI communicator group that the solver is
-    !       run with. this means every processor in the group is needed for write_seismograms
+    !       run with. this means every processor in the group is needed for `write_seismograms_*()`
     if (nrec_local > 0 .or. ( WRITE_SEISMOGRAMS_BY_MAIN .and. myrank == 0 ) .or. OUTPUT_SEISMOS_ASDF) then
       ! writes out seismogram files
       select case (SIMULATION_TYPE)
@@ -279,6 +278,9 @@
   character(len=MAX_STRING_LEN) :: sisname,staname
   character(len=8) :: component
 
+  ! note: default seismogram output is in displacement (istore == 1) only.
+  !       for full gravity cases, additional outputs (istore > 1) are possible.
+
   ! saves displacement or potential
   component = ''
   select case (istore)
@@ -307,7 +309,7 @@
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) 'Component: .sem '//trim(component)
+    write(IMAIN,*) 'Component: .sem'//trim(component)
     call flush_IMAIN()
   endif
 
@@ -346,33 +348,41 @@
     write(sisname,'(A,I5.5)') '/array_seismograms_node_',myrank
     write(staname,'(A,I5.5)') '/array_stations_node_',myrank
     if (seismo_offset == 0) then
-      open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='unknown',form='unformatted',action='write')
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='unknown', &
+           form='unformatted',action='write',iostat=ier)
     else
       open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='old', &
-            form='unformatted',position='append',action='write')
+            form='unformatted',position='append',action='write',iostat=ier)
     endif
+    if (ier /= 0) call exit_mpi(myrank,'Error opening file: '//trim(OUTPUT_FILES)//trim(sisname)//'.bin')
     write(IOUT) seismograms(:,:,1:seismo_current:NTSTEP_BETWEEN_OUTPUT_SAMPLE)
     close(IOUT)
     ! save list of stations in current processor
     if (seismo_offset == 0) then
       if (myrank == 0) then
-        open(unit=IOUT,file=trim(OUTPUT_FILES)//'seismogram_stats.txt',status='unknown',form='formatted',action='write')
+        open(unit=IOUT,file=trim(OUTPUT_FILES)//'seismogram_stats.txt',status='unknown', &
+             form='formatted',action='write',iostat=ier)
+        if (ier /= 0) call exit_mpi(myrank,'Error opening file: '//trim(OUTPUT_FILES)//'seismogram_stats.txt')
         write(IOUT,*) 'DT0    =', DT
         write(IOUT,*) 'NSTEP0 =', NSTEP
         write(IOUT,*) 'DT     =', DT * NTSTEP_BETWEEN_OUTPUT_SAMPLE
         write(IOUT,*) 'NSTEP  =', ceiling(real(seismo_current) / NTSTEP_BETWEEN_OUTPUT_SAMPLE)
         close(IOUT)
       endif
-      open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(staname)//'.txt',status='unknown',form='formatted',action='write')
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(staname)//'.txt',status='unknown', &
+           form='formatted',action='write',iostat=ier)
+      if (ier /= 0) call exit_mpi(myrank,'Error opening file: '//trim(OUTPUT_FILES)//trim(staname)//'.txt')
     else
       if (myrank == 0) then
         open(unit=IOUT,file=trim(OUTPUT_FILES)//'seismogram_stats.txt',status='old', &
-            form='formatted',position='append',action='write')
+            form='formatted',position='append',action='write',iostat=ier)
+        if (ier /= 0) call exit_mpi(myrank,'Error opening file: '//trim(OUTPUT_FILES)//'seismogram_stats.txt')
         write(IOUT,*) 'NSTEP =', ceiling(real(seismo_current) / NTSTEP_BETWEEN_OUTPUT_SAMPLE)
         close(IOUT)
       endif
       open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(staname)//'.txt',status='old', &
-            form='formatted',position='append',action='write')
+            form='formatted',position='append',action='write',iostat=ier)
+      if (ier /= 0) call exit_mpi(myrank,'Error opening file: '//trim(OUTPUT_FILES)//trim(staname)//'.txt')
     endif
     do irec_local = 1,nrec_local
       ! get global number of that receiver
@@ -390,7 +400,9 @@
     if (NTSTEP_BETWEEN_OUTPUT_SAMPLE > 1 .and. istore == 1) then
       ! save original DT and NSTEP for adjoint simulation
       if (myrank == 0 .and. seismo_offset == 0) then
-        open(unit=IOUT,file=trim(OUTPUT_FILES)//'seismogram_stats.txt',status='unknown',form='formatted',action='write')
+        open(unit=IOUT,file=trim(OUTPUT_FILES)//'seismogram_stats.txt',status='unknown', &
+             form='formatted',action='write',iostat=ier)
+        if (ier /= 0) call exit_mpi(myrank,'Error opening file: '//trim(OUTPUT_FILES)//'seismogram_stats.txt')
         write(IOUT,*) 'DT0     =', DT
         write(IOUT,*) 'NSTEP0  =', NSTEP
         close(IOUT)
@@ -407,8 +419,8 @@
     ! write out seismograms: all processes write their local seismograms themselves
     if (.not. WRITE_SEISMOGRAMS_BY_MAIN) then
 
-      ! HDF5 is not supported
-      if (OUTPUT_SEISMOS_HDF5) call exit_MPI(myrank,'WRITE_SEISMOGRAMS_BY_MAIN must be true for HDF5 format')
+      ! HDF5 is only supported in `WRITE_SEISMOGRAMS_BY_MAIN` mode
+      if (OUTPUT_SEISMOS_HDF5) call exit_MPI(myrank,'WRITE_SEISMOGRAMS_BY_MAIN must be .true. for HDF5 format')
 
       ! all the processes write their local seismograms themselves
       if (SAVE_ALL_SEISMOS_IN_ONE_FILE .and. OUTPUT_SEISMOS_ASCII_TEXT) then
@@ -416,18 +428,22 @@
 
         if (USE_BINARY_FOR_LARGE_FILE) then
           if (seismo_offset == 0) then
-            open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='unknown',form='unformatted',action='write')
+            open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='unknown', &
+                 form='unformatted',action='write',iostat=ier)
           else
             open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='old', &
-                 form='unformatted',position='append',action='write')
+                 form='unformatted',position='append',action='write',iostat=ier)
           endif
+          if (ier /= 0) call exit_mpi(myrank,'Error opening file: '//trim(OUTPUT_FILES)//trim(sisname)//'.bin')
         else
           if (seismo_offset == 0) then
-            open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='unknown',form='formatted',action='write')
+            open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='unknown', &
+                 form='formatted',action='write',iostat=ier)
           else
             open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='old', &
-                 form='formatted',position='append',action='write')
+                 form='formatted',position='append',action='write',iostat=ier)
           endif
+          if (ier /= 0) call exit_mpi(myrank,'Error opening file: '//trim(OUTPUT_FILES)//trim(sisname)//'.ascii')
         endif
       endif
 
@@ -461,19 +477,21 @@
           if (USE_BINARY_FOR_LARGE_FILE) then
             if (seismo_offset == 0) then
               open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='unknown', &
-                   form='unformatted',action='write')
+                   form='unformatted',action='write',iostat=ier)
             else
               open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='old', &
-                   form='unformatted',position='append',action='write')
+                   form='unformatted',position='append',action='write',iostat=ier)
             endif
+            if (ier /= 0) call exit_mpi(myrank,'Error opening file: '//trim(OUTPUT_FILES)//trim(sisname)//'.bin')
           else
             if (seismo_offset == 0) then
               open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='unknown', &
-                   form='formatted',action='write')
+                   form='formatted',action='write',iostat=ier)
             else
               open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='old', &
-                   form='formatted',position='append',action='write')
+                   form='formatted',position='append',action='write',iostat=ier)
             endif
+            if (ier /= 0) call exit_mpi(myrank,'Error opening file: '//trim(OUTPUT_FILES)//trim(sisname)//'.ascii')
           endif
         endif ! myrank
       endif
@@ -520,13 +538,7 @@
               endif
 
               ! write this seismogram
-              if (.not. OUTPUT_SEISMOS_HDF5) then
-                ! ASCII or SAC format
-                call write_one_seismogram(one_seismogram,irec,irec_local,0,component,istore)
-              else
-                ! HDF5 format
-                call write_one_seismogram(one_seismogram,irec,irec_local,2,component,istore)
-              endif
+              call write_one_seismogram(one_seismogram,irec,irec_local,0,component,istore)
 
               ! counts seismos written
               total_seismos = total_seismos + 1
@@ -571,6 +583,7 @@
 
   endif ! ASCII / SAC format
 
+  ! free temporary array
   deallocate(one_seismogram)
 
 contains
@@ -586,58 +599,38 @@ contains
   integer,intent(in) :: istore,irec_local
   real(kind=CUSTOM_REAL),intent(out) :: one_seismogram(NDIM,nlength_seismogram)
 
-  ! local parameters
-  integer :: i
-
   ! init trace
   one_seismogram(:,:) = 0.0_CUSTOM_REAL
 
   select case (istore)
   case (1)
     ! displacement
-    !one_seismogram(:,:) = seismograms(:,irec_local,:)
-    do i = 1,seismo_current
-      one_seismogram(:,i) = seismograms(:,irec_local,i)
-    enddo
+    one_seismogram(:,1:seismo_current) = seismograms(:,irec_local,1:seismo_current)
   case (2)
     ! velocity
-    !do i = 1,seismo_current
-    !  one_seismogram(:,i) = seismograms_v(:,irec_local,i)
-    !enddo
+    !one_seismogram(:,1:seismo_current) = seismograms_v(:,irec_local,1:seismo_current)
     ! not used yet...
-    continue
+    call exit_MPI(myrank,'component istore==2 (velocity) not implemented yet in get_single_trace() routine')
   case (3)
     ! acceleration
-    do i = 1,seismo_current
-      one_seismogram(:,i) = seismograms_a(:,irec_local,i)
-    enddo
+    one_seismogram(:,1:seismo_current) = seismograms_a(:,irec_local,1:seismo_current)
   case (4)
     ! pressure
-    !do i = 1,seismo_current
-    !  one_seismogram(1,i) = seismograms_p(1,irec_local,i) ! single component
-    !enddo
+    !one_seismogram(1,1:seismo_current) = seismograms_p(1,irec_local,1:seismo_current) ! single component
     ! not used yet...
-    continue
+    call exit_MPI(myrank,'component istore==4 (pressure) not implemented yet in get_single_trace() routine')
   case (5)
     ! gravity potential (seismograms_phi)
-    do i = 1,seismo_current
-      one_seismogram(1,i) = seismograms_phi(1,irec_local,i)  ! potential (single component)
-    enddo
+    one_seismogram(1,1:seismo_current) = seismograms_phi(1,irec_local,1:seismo_current)  ! potential (single component)
   case (6)
     ! gravity perturbation (seismograms_pgrav)
-    do i = 1,seismo_current
-      one_seismogram(:,i) = seismograms_pgrav(:,irec_local,i)
-    enddo
+    one_seismogram(:,1:seismo_current) = seismograms_pgrav(:,irec_local,1:seismo_current)
   case (7)
     ! free-air gravity (seismograms_grav)
-    do i = 1,seismo_current
-      one_seismogram(:,i) = seismograms_grav(:,irec_local,i)
-    enddo
+    one_seismogram(:,1:seismo_current) = seismograms_grav(:,irec_local,1:seismo_current)
   case (8)
     ! Coriolis acceleration (seismograms_corio)
-    do i = 1,seismo_current
-      one_seismogram(:,i) = seismograms_corio(:,irec_local,i)
-    enddo
+    one_seismogram(:,1:seismo_current) = seismograms_corio(:,irec_local,1:seismo_current)
   case default
     call exit_MPI(myrank,'wrong istore component to get single trace')
   end select
@@ -658,11 +651,12 @@ contains
   use specfem_par, only: &
     myrank, &
     station_name,network_name,stlat,stlon, &
-    DT,NTSTEP_BETWEEN_OUTPUT_SAMPLE, &
-    seismo_current, &
-    OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_ASDF, &
-    OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT, &
-    nlength_seismogram
+    seismo_current,nlength_seismogram, &
+    OUTPUT_SEISMOS_ASCII_TEXT, &
+    OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
+    OUTPUT_SEISMOS_ASDF, &
+    OUTPUT_SEISMOS_HDF5, &
+    ROTATE_SEISMOGRAMS_RT
 
   use specfem_par, only: &
     cmt_lat => cmt_lat_SAC,cmt_lon => cmt_lon_SAC
@@ -671,7 +665,7 @@ contains
 
   integer,intent(in) :: irec,irec_local
   integer,intent(in) :: ftype_flag
-  logical :: is_for_asdf,is_for_hdf5
+  logical :: is_for_asdf_only
   real(kind=CUSTOM_REAL), dimension(NDIM,nlength_seismogram),intent(in) :: one_seismogram
 
   integer,intent(in) :: istore
@@ -681,9 +675,9 @@ contains
   real(kind=CUSTOM_REAL), dimension(5,nlength_seismogram) :: seismogram_tmp
   integer :: iorientation,length_station_name,length_network_name
 
-  character(len=4) :: chn
+  character(len=4) :: channel_extended
   character(len=MAX_STRING_LEN) :: sisname,sisname_big_file
-  character(len=2) :: bic
+  character(len=3) :: channel
 
   ! variables used for calculation of backazimuth and
   ! rotation of components if ROTATE_SEISMOGRAMS=.true.
@@ -692,34 +686,23 @@ contains
   double precision :: phi
   real(kind=CUSTOM_REAL) :: cphi,sphi
   integer :: isample
-  double precision :: sampling_rate
 
   ! initializes
   seismogram_tmp(:,:) = 0.0_CUSTOM_REAL
-  is_for_asdf = .false.
-  is_for_hdf5 = .false.
 
   ! check file type
+  is_for_asdf_only = .false.
   if (ftype_flag == 0) then
-    ! ascii
-    is_for_asdf = .false.
-    is_for_hdf5 = .false.
+    ! ascii/sac/..
+    is_for_asdf_only = .false.
   else if (ftype_flag == 1) then
     ! asdf
-    is_for_asdf = .true.
-    is_for_hdf5 = .false.
-  else if (ftype_flag == 2) then
-    ! hdf5
-    is_for_asdf = .false.
-    is_for_hdf5 = .true.
+    is_for_asdf_only = .true.
   else
     call exit_MPI(myrank,'wrong file type flag')
   endif
 
-  ! get band code
-  sampling_rate = DT * NTSTEP_BETWEEN_OUTPUT_SAMPLE
-  call band_instrument_code(sampling_rate,bic)
-
+  ! select orientation indices
   if (ROTATE_SEISMOGRAMS_RT) then ! iorientation 1 = N,2 = E,3 = Z,4 = R,5 = T
     ior_start = 3    ! starting from Z
     ior_end   = 5    ! ending with T => ZRT
@@ -728,7 +711,7 @@ contains
     ior_end   = 3    ! ending with Z => NEZ
   endif
 
-  ! single component only for pressure & gravitational potential
+  ! single component only for pressure & gravitational potential (full gravity cases)
   if (istore == 4 .or. istore == 5) then
     ior_start = 1
     ior_end = 1
@@ -736,39 +719,25 @@ contains
 
   do iorientation = ior_start,ior_end    ! changes according to ROTATE_SEISMOGRAMS_RT
 
-    select case (iorientation)
-    case (1)
-      !chn = 'LHN'
-      chn = bic(1:2)//'N'
-    case (2)
-      !chn = 'LHE'
-      chn = bic(1:2)//'E'
-    case (3)
-      !chn = 'LHZ'
-      chn = bic(1:2)//'Z'
-    case (4)
-      !chn = 'LHR'
-      chn = bic(1:2)//'R'
-    case (5)
-      !chn = 'LHT'
-      chn = bic(1:2)//'T'
-    case default
-      call exit_MPI(myrank,'incorrect channel value')
-    end select
-
-    ! single component only for pressure & gravitational potential
+    ! gets channel name
     if (istore == 4 .or. istore == 5) then
-      chn = bic(1:2)//'P'
-    else if (istore == 2) then
-      ! Velocity
-      chn = chn(1:3)//'V'
-    else if (istore == 3) then
-      ! Acceleration
-      chn = chn(1:3)//'A'
+      ! single component only for pressure & gravitational potential
+      call write_channel_name(6,channel)
+    else
+      call write_channel_name(iorientation,channel)
     endif
 
-
-
+    ! append 'V' for velocity, 'A' for acceleration
+    channel_extended = ''
+    if (istore == 2) then
+      ! Velocity (e.g. LHNV)
+      channel_extended = channel(1:3)//'V'
+    else if (istore == 3) then
+      ! Acceleration (e.g. LHNA)
+      channel_extended = channel(1:3)//'A'
+    else
+      channel_extended(1:3) = channel(1:3)
+    endif
 
     ! backazimuth rotation
     if (iorientation == 4 .or. iorientation == 5) then
@@ -799,13 +768,11 @@ contains
       ! new variable seismogram_tmp
       if (iorientation == 4) then ! radial component
         do isample = 1,seismo_current
-          seismogram_tmp(iorientation,isample) = &
-               cphi * one_seismogram(1,isample) + sphi * one_seismogram(2,isample)
+          seismogram_tmp(iorientation,isample) = cphi * one_seismogram(1,isample) + sphi * one_seismogram(2,isample)
         enddo
       else if (iorientation == 5) then ! transverse component
         do isample = 1,seismo_current
-          seismogram_tmp(iorientation,isample) = &
-            -1*sphi * one_seismogram(1,isample) + cphi * one_seismogram(2,isample)
+          seismogram_tmp(iorientation,isample) = -1.0 * sphi * one_seismogram(1,isample) + cphi * one_seismogram(2,isample)
         enddo
       endif
     else
@@ -822,60 +789,72 @@ contains
 
     ! check that length conforms to standard
     if (length_station_name < 1 .or. length_station_name > MAX_LENGTH_STATION_NAME) &
-           call exit_MPI(myrank,'wrong length of station name')
+      call exit_MPI(myrank,'wrong length of station name')
 
     if (length_network_name < 1 .or. length_network_name > MAX_LENGTH_NETWORK_NAME) &
-           call exit_MPI(myrank,'wrong length of network name')
+      call exit_MPI(myrank,'wrong length of network name')
 
     ! create the name of the seismogram file using the station name and network name
     ! using format: **net**.**sta**.channel
     write(sisname,"('/',a,'.',a,'.',a3,'.sem')") network_name(irec)(1:length_network_name), &
-                   station_name(irec)(1:length_station_name),chn
+                   station_name(irec)(1:length_station_name),channel
 
     ! create this name also for the text line added to the unique big seismogram file
     write(sisname_big_file,"(a,'.',a,'.',a3,'.sem')") network_name(irec)(1:length_network_name), &
-                   station_name(irec)(1:length_station_name),chn
+                   station_name(irec)(1:length_station_name),channel
 
+    ! full gravity seismos add an additional component indicator to the name
+    ! acceleration
     if (istore == 3) then
-
       write(sisname,"('/',a,'.',a,'.',a4,'.sem')") network_name(irec)(1:length_network_name), &
-      station_name(irec)(1:length_station_name),chn
+      station_name(irec)(1:length_station_name),channel_extended
 
       ! create this name also for the text line added to the unique big seismogram file
       write(sisname_big_file,"(a,'.',a,'.',a4,'.sem')") network_name(irec)(1:length_network_name), &
-            station_name(irec)(1:length_station_name),chn
+            station_name(irec)(1:length_station_name),channel_extended
     endif
 
-
-    ! full gravity seismos add an additional component indicator to the name
     if (istore > 4) then
       ! using format: **net**.**sta**.channel.C.GRAV.sem.ascii
       write(sisname,"('/',a,'.',a,'.',a3,'.',a,'.sem')") network_name(irec)(1:length_network_name), &
-                     station_name(irec)(1:length_station_name),chn,trim(component)
+                     station_name(irec)(1:length_station_name),channel,trim(component)
 
       ! create this name also for the text line added to the unique big seismogram file
       write(sisname_big_file,"(a,'.',a,'.',a3,'.',a,'.sem')") network_name(irec)(1:length_network_name), &
-                     station_name(irec)(1:length_station_name),chn,trim(component)
+                     station_name(irec)(1:length_station_name),channel,trim(component)
     endif
 
-
-    if (is_for_asdf) then
+    ! ASDF
+    if (is_for_asdf_only) then
+      ! note: this stores the trace in the ASDF container, but doesn't write it out yet.
+      !       the writing of ASDF seismograms is called afterwards explicitly in routine `write_seismograms_to_file()`.
+      !       thus, this is a special case of "write one seismogram" and handled by the flag `is_for_asdf_only`.
+      !
+      !       once the trace is stored, there is nothing more to do for this ASDF case in this routine.
+      !       however, this routine will be called again for writing out ascii/sac/hdf5/.. formats.
+      !       for those cases, the flag `is_for_asdf_only` will be false and this section skipped.
+      !
       ! ASDF output format
       if (OUTPUT_SEISMOS_ASDF) then
-        call store_asdf_data(seismogram_tmp,irec_local,irec,chn,iorientation)
+        call store_asdf_data(seismogram_tmp,irec_local,irec,channel_extended,iorientation)
       endif
-    else if (is_for_hdf5) then
-      ! TODO: add HDF5 format
-      call write_output_hdf5(seismogram_tmp,irec_local,irec,chn,iorientation)
     else
-      ! SAC output format
-      if (OUTPUT_SEISMOS_SAC_ALPHANUM .or. OUTPUT_SEISMOS_SAC_BINARY ) then
-        call write_output_SAC(seismogram_tmp,irec,iorientation,sisname,chn,phi)
-      endif
-
+      ! note: allows multiple outputs in different formats (non-exclusive);
+      !       that is, it can output ascii traces together with sac or hdf5 outputs.
+      !
       ! ASCII output format
       if (OUTPUT_SEISMOS_ASCII_TEXT) then
         call write_output_ASCII(seismogram_tmp,iorientation,sisname,sisname_big_file)
+      endif
+
+      ! SAC output format
+      if (OUTPUT_SEISMOS_SAC_ALPHANUM .or. OUTPUT_SEISMOS_SAC_BINARY ) then
+        call write_output_SAC(seismogram_tmp,irec,iorientation,sisname,channel_extended,phi)
+      endif
+
+      ! HDF5
+      if (OUTPUT_SEISMOS_HDF5) then
+        call write_output_hdf5(seismogram_tmp,irec_local,irec,channel_extended,iorientation)
       endif
     endif
 
@@ -906,9 +885,8 @@ contains
   integer :: iorientation,isample,it_tmp
   real(kind=CUSTOM_REAL) :: time_t
 
-  character(len=4) :: chn
   character(len=MAX_STRING_LEN) :: sisname
-  character(len=2) :: bic
+  character(len=3) :: channel
 
   ! for adjoint simulations, source locations become the "receivers" for storing seismograms
 
@@ -919,40 +897,19 @@ contains
   ! checks if anything to do
   if (nrec_local <= 0 ) return
 
-  ! get band code
-  call band_instrument_code(DT,bic)
-
   do irec_local = 1,nrec_local
 
     ! get global number of that receiver
     irec = number_receiver_global(irec_local)
 
     do iorientation = 1,9
-      if (iorientation == 1) then
-       chn = 'SNN'
-      else if (iorientation == 2) then
-       chn = 'SEE'
-      else if (iorientation == 3) then
-       chn = 'SZZ'
-      else if (iorientation == 4) then
-       chn = 'SNE'
-      else if (iorientation == 5) then
-       chn = 'SNZ'
-      else if (iorientation == 6) then
-       chn = 'SEZ'
-      else if (iorientation == 7) then
-       !chn = 'LHN'
-       chn = bic(1:2)//'N'
-      else if (iorientation == 8) then
-       chn = bic(1:2)//'E'
-      else if (iorientation == 9) then
-       chn = bic(1:2)//'Z'
-      endif
+      ! get channel name
+      call write_adj_channel_name(iorientation,channel)
 
       ! create the name of the seismogram file for each slice
       ! file name includes the name of the station, the network and the component
       ! for example: NT.S000001.MXN.sem.ascii
-      write(sisname,"(a3,'.',a1,i6.6,'.',a3,'.sem.ascii')") '/NT','S',irec,chn
+      write(sisname,"(a3,'.',a1,i6.6,'.',a3,'.sem.ascii')") '/NT','S',irec,channel
 
       ! save seismograms in text format
       if (it <= NTSTEP_BETWEEN_OUTPUT_SEISMOS) then
@@ -997,10 +954,9 @@ contains
 
   use constants, only: MAX_STRING_LEN,CUSTOM_REAL,IOUT,IMAIN,myrank,NDIM,DEGREES_TO_RADIANS
 
-  use specfem_par, only: NSTEP,DT,t0,seismo_current,seismo_offset, &
+  use specfem_par, only: NSTEP,DT,t0,seismo_current,seismo_offset,nlength_seismogram, &
     OUTPUT_FILES,WRITE_SEISMOGRAMS_BY_MAIN,ROTATE_SEISMOGRAMS_RT,SIMULATION_TYPE, &
-    number_receiver_global,nrec_local,network_name,station_name, &
-    stlat,stlon, &
+    number_receiver_global,nrec_local,network_name,station_name,stlat,stlon, &
     seismograms_eps
 
   use specfem_par_full_gravity, only: seismograms_Hgrav
@@ -1013,12 +969,13 @@ contains
   integer,intent(in) :: istore
 
   ! local parameters
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: one_seismogram_Hgrav
   integer :: irec,irec_local,ier,it_tmp
   integer :: iorientation,isample
   double precision :: value
   double precision :: timeval
 
-  character(len=3) :: chn
+  character(len=3) :: channel
   character(len=MAX_STRING_LEN) :: sisname
 
   ! full gravity strain
@@ -1045,10 +1002,18 @@ contains
   ! checks if anything to do
   if (nrec_local <= 0 ) return
 
+  ! allocates single station seismogram
+  allocate(one_seismogram_Hgrav(NDIM,NDIM,nlength_seismogram),stat=ier)
+  if (ier /= 0) call exit_mpi(myrank,'Error while allocating one temporary seismogram Hgrav')
+  one_seismogram_Hgrav(:,:,:) = 0.0_CUSTOM_REAL
+
   do irec_local = 1,nrec_local
 
     ! get global number of that receiver
     irec = number_receiver_global(irec_local)
+
+    ! get single station seismogram
+    one_seismogram_Hgrav(:,:,1:seismo_current) = seismograms_Hgrav(:,:,irec_local,1:seismo_current)
 
     ! gravity strain rotation
     if (istore == 2 .and. ROTATE_SEISMOGRAMS_RT) then
@@ -1084,15 +1049,19 @@ contains
 
       QmatT = transpose(Qmat)
 
+      ! note: instead of rotating the original array entries in seismograms_Hgrav(..), we use here
+      !       the temporary one_seismogram_Hgrav(..) array to avoid rotating multiple times in case
+      !       this routine gets called multiple times.
+
       ! Rotate the matrix for each timestep Q M Q^T :
       do isample = 1,seismo_current
         ! gets strain matrix
-        one_matrix(:,:) = seismograms_Hgrav(:,:,irec_local,isample)
+        one_matrix(:,:) = one_seismogram_Hgrav(:,:,isample)
         ! rotates
         one_matrix(:,:) = matmul(Qmat, one_matrix)
         one_matrix(:,:) = matmul(one_matrix, QmatT)
         ! stores
-        seismograms_Hgrav(:,:,irec_local,isample) = one_matrix(:,:)
+        one_seismogram_Hgrav(:,:,isample) = one_matrix(:,:)
       enddo
     endif
 
@@ -1107,89 +1076,19 @@ contains
     do iorientation = ior_start,ior_end
 
       ! determines channel name
-      chn = ''
-      select case (istore)
-      case (1)
-        ! default
-        ! elastic strain
-        ! see compute_seismograms_strain() routine for orientations
-        select case (iorientation)
-        case (1)
-         chn = 'SNN'
-        case (2)
-         chn = 'SEE'
-        case (3)
-         chn = 'SZZ'
-        case (4)
-         chn = 'SNE'
-        case (5)
-         chn = 'SNZ'
-        case (6)
-         chn = 'SEZ'
-        case default
-          call exit_MPI(myrank,'incorrect channel value in write_seismograms_strain()')
-        end select
-
-      case (2)
-        ! gravity strain
-        ! see SIEM_compute_seismograms_pgrav() routine for orientations
-        ! global -> local (n-e-up)
-        ! eps_xx -> eps_nn
-        ! eps_xy -> eps_ne
-        ! eps_xz -> eps_nz
-        ! eps_yx -> eps_en
-        ! eps_yy -> eps_ee
-        ! eps_yz -> eps_ez
-        ! eps_zx -> eps_zn
-        ! eps_zy -> eps_ze
-        ! eps_zz -> eps_zz (z in radial direction up)
-        select case (iorientation)
-        case (1)
-         chn = 'HNN'
-         if (ROTATE_SEISMOGRAMS_RT) chn = 'HRR'
-        case (2)
-         chn = 'HNE'
-         if (ROTATE_SEISMOGRAMS_RT) chn = 'HRT'
-        case (3)
-         chn = 'HNZ'
-         if (ROTATE_SEISMOGRAMS_RT) chn = 'HRZ'
-        case (4)
-         chn = 'HEN'
-         if (ROTATE_SEISMOGRAMS_RT) chn = 'HTR'
-        case (5)
-         chn = 'HEE'
-         if (ROTATE_SEISMOGRAMS_RT) chn = 'HTT'
-        case (6)
-         chn = 'HEZ'
-         if (ROTATE_SEISMOGRAMS_RT) chn = 'HTZ'
-        case (7)
-         chn = 'HZN'
-         if (ROTATE_SEISMOGRAMS_RT) chn = 'HZR'
-        case (8)
-         chn = 'HZE'
-         if (ROTATE_SEISMOGRAMS_RT) chn = 'HZT'
-        case (9)
-         chn = 'HZZ'
-         if (ROTATE_SEISMOGRAMS_RT) chn = 'HZZ'
-        case default
-          call exit_MPI(myrank,'incorrect channel value in write_seismograms_strain()')
-        end select
-
-      case default
-        call exit_MPI(myrank,'wrong component to save for strains')
-      end select
+      call write_strain_channel_name(iorientation,istore,channel)
 
       ! strain seismograms will have channel-code S**
       !
       ! create the name of the strain seismogram file using the station name and network name
       ! using format: **net**.**sta**.channel
       ! for example: IU.KONO.SNN.sem.ascii
-      write(sisname,"('/',a,'.',a,'.',a3,'.sem.ascii')") trim(network_name(irec)),trim(station_name(irec)),chn
+      write(sisname,"('/',a,'.',a,'.',a3,'.sem.ascii')") trim(network_name(irec)),trim(station_name(irec)),channel
 
       ! full gravity strain has channel-code H**
       if (istore == 2) then
         ! for example: IU.KONO.HNN.PGRAV.sem.ascii
-        write(sisname,"('/',a,'.',a,'.',a3,'.PGRAV','.sem.ascii')") trim(network_name(irec)),trim(station_name(irec)),chn
+        write(sisname,"('/',a,'.',a,'.',a3,'.PGRAV','.sem.ascii')") trim(network_name(irec)),trim(station_name(irec)),channel
       endif
 
       ! save seismograms in text format
@@ -1220,7 +1119,7 @@ contains
           !          ..
           idim = int((iorientation-1)/3) + 1
           jdim = iorientation - (idim-1) * 3
-          value = dble(seismograms_Hgrav(idim,jdim,irec_local,isample))
+          value = dble(one_seismogram_Hgrav(idim,jdim,isample))
         end select
 
         ! current time increment
@@ -1243,5 +1142,238 @@ contains
     enddo
   enddo
 
+  ! free temporary array
+  deallocate(one_seismogram_Hgrav)
+
   end subroutine write_seismograms_strain
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine write_channel_name(iorientation,channel)
+
+  use specfem_par, only: myrank,DT,NTSTEP_BETWEEN_OUTPUT_SAMPLE
+
+  implicit none
+
+  integer, intent(in) :: iorientation
+  character(len=3), intent(out) :: channel
+
+  ! local parameters
+  character(len=2) :: bic
+  double precision:: sampling_rate
+
+  ! initializes
+  channel = ''
+
+  ! gets band and instrument code
+  sampling_rate = DT * NTSTEP_BETWEEN_OUTPUT_SAMPLE
+  call band_instrument_code(sampling_rate,bic)
+
+  ! sets channel name
+  select case (iorientation)
+  case (1)
+    !channel = 'LXN', 'MXN', 'BXN', ..
+    channel = bic(1:2)//'N'
+  case (2)
+    !channel = 'LXE'
+    channel = bic(1:2)//'E'
+  case (3)
+    !channel = 'LXZ'
+    channel = bic(1:2)//'Z'
+  case (4)
+    !channel = 'LHR'
+    channel = bic(1:2)//'R'     ! radial
+  case (5)
+    !channel = 'LHT'
+    channel = bic(1:2)//'T'     ! transverse
+  case (6)
+    !channel = 'LHP'
+    channel = bic(1:2)//'P'     ! pressure/potential
+  case default
+    call exit_MPI(myrank,'incorrect channel orientation value')
+  end select
+
+  end subroutine write_channel_name
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine write_adj_channel_name(iorientation,channel)
+
+  use specfem_par, only: myrank,DT
+
+  implicit none
+
+  integer, intent(in) :: iorientation
+  character(len=3), intent(out) :: channel
+
+  ! local parameters
+  character(len=2) :: bic
+  double precision:: sampling_rate
+
+  ! initializes
+  channel = ''
+
+  ! gets band and instrument code
+  sampling_rate = DT                            ! uses DT (not DT * NTSTEP_BETWEEN_OUTPUT_SAMPLE) for adjoint trace naming
+  call band_instrument_code(sampling_rate,bic)
+
+  ! sets channel name
+  select case(iorientation)
+  case (1)
+    channel = 'SNN'
+  case (2)
+    channel = 'SEE'
+  case (3)
+    channel = 'SZZ'
+  case (4)
+    channel = 'SNE'
+  case (5)
+    channel = 'SNZ'
+  case (6)
+    channel = 'SEZ'
+  case (7)
+    !channel = 'LXN','MXN',..
+    channel = bic(1:2)//'N'
+  case (8)
+    channel = bic(1:2)//'E'
+  case (9)
+    channel = bic(1:2)//'Z'
+  case default
+    call exit_MPI(myrank,'incorrect adjoint seismogram orientation in write_adj_channel_name()')
+  end select
+
+  end subroutine write_adj_channel_name
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine write_strain_channel_name(iorientation,istore,channel)
+
+  use specfem_par, only: myrank,ROTATE_SEISMOGRAMS_RT
+
+  implicit none
+
+  integer, intent(in) :: iorientation,istore
+  character(len=3), intent(out) :: channel
+
+  ! initializes
+  channel = ''
+
+  ! sets channel name
+  select case (istore)
+  case (1)
+    ! default
+    ! elastic strain
+    ! see compute_seismograms_strain() routine for orientations
+    select case (iorientation)
+    case (1)
+     channel = 'SNN'
+    case (2)
+     channel = 'SEE'
+    case (3)
+     channel = 'SZZ'
+    case (4)
+     channel = 'SNE'
+    case (5)
+     channel = 'SNZ'
+    case (6)
+     channel = 'SEZ'
+    case default
+      call exit_MPI(myrank,'incorrect channel value in write_strain_channel_name()')
+    end select
+
+  case (2)
+    ! gravity strain
+    ! see SIEM_compute_seismograms_pgrav() routine for orientations
+    ! global -> local (n-e-up)
+    ! eps_xx -> eps_nn
+    ! eps_xy -> eps_ne
+    ! eps_xz -> eps_nz
+    ! eps_yx -> eps_en
+    ! eps_yy -> eps_ee
+    ! eps_yz -> eps_ez
+    ! eps_zx -> eps_zn
+    ! eps_zy -> eps_ze
+    ! eps_zz -> eps_zz (z in radial direction up)
+    select case (iorientation)
+    case (1)
+     channel = 'HNN'
+     if (ROTATE_SEISMOGRAMS_RT) channel = 'HRR'
+    case (2)
+     channel = 'HNE'
+     if (ROTATE_SEISMOGRAMS_RT) channel = 'HRT'
+    case (3)
+     channel = 'HNZ'
+     if (ROTATE_SEISMOGRAMS_RT) channel = 'HRZ'
+    case (4)
+     channel = 'HEN'
+     if (ROTATE_SEISMOGRAMS_RT) channel = 'HTR'
+    case (5)
+     channel = 'HEE'
+     if (ROTATE_SEISMOGRAMS_RT) channel = 'HTT'
+    case (6)
+     channel = 'HEZ'
+     if (ROTATE_SEISMOGRAMS_RT) channel = 'HTZ'
+    case (7)
+     channel = 'HZN'
+     if (ROTATE_SEISMOGRAMS_RT) channel = 'HZR'
+    case (8)
+     channel = 'HZE'
+     if (ROTATE_SEISMOGRAMS_RT) channel = 'HZT'
+    case (9)
+     channel = 'HZZ'
+     if (ROTATE_SEISMOGRAMS_RT) channel = 'HZZ'
+    case default
+      call exit_MPI(myrank,'incorrect channel value in write_strain_channel_name()')
+    end select
+
+  case default
+    call exit_MPI(myrank,'wrong component to save for strains in write_strain_channel_name()')
+  end select
+
+  end subroutine write_strain_channel_name
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine band_instrument_code(sampling_rate,bic)
+
+! This subroutine is to choose the appropriate band and instrument codes for channel names of seismograms
+! based on the IRIS convention (first two letters of channel codes, respectively,
+! which were LH(Z/E/N) previously).
+! For consistency with observed data, we now use the IRIS convention for band codes (first letter in channel codes) of
+! SEM seismograms governed by their sampling rate.
+! Instrument code (second letter in channel codes) is fixed to "X" which is assigned by IRIS for synthetic seismograms.
+! See the manual for further explanations!
+! Ebru Bozdag, November 2010
+
+  implicit none
+
+  double precision,intent(in) :: sampling_rate
+  character(len=2),intent(out) :: bic
+
+  ! local parameter
+  logical,parameter :: SUPPRESS_IRIS_CONVENTION = .false.
+
+  bic = ''
+
+  ! see manual for ranges
+  if (sampling_rate >= 1.0d0)  bic = 'LX'
+  if (sampling_rate < 1.0d0 .and. sampling_rate > 0.1d0) bic = 'MX'
+  if (sampling_rate <= 0.1d0 .and. sampling_rate > 0.0125d0) bic = 'BX'
+  if (sampling_rate <= 0.0125d0 .and. sampling_rate > 0.004d0) bic = 'HX'
+  if (sampling_rate <= 0.004d0 .and. sampling_rate > 0.001d0) bic = 'CX'
+  if (sampling_rate <= 0.001d0) bic = 'FX'
+
+  ! ignores IRIS convention, uses previous, constant band and instrument code
+  if (SUPPRESS_IRIS_CONVENTION) then
+    bic = 'BH'
+  endif
+
+  end subroutine band_instrument_code
