@@ -986,7 +986,7 @@ jobs:
         HDF5_INC: /usr/include/hdf5/openmpi
         HDF5_LIBS: "-L/usr/lib/x86_64-linux-gnu/hdf5/openmpi"
       run: |
-        ./configure --enable-debug --with-hdf5
+        ./configure --with-hdf5
         make xgf3d
       shell: bash
 
