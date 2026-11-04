@@ -1261,9 +1261,11 @@ contains
     dim = shape(data_in)
 
     allocate(data(dim(1)),stat=error)
+    if (error /= 0) write(*,*) 'hdf5 data allocation failed for ', dataset_name
+
     ! fill blancs after each string to have the same length of strings
-    do i = 1, dim(1)
-        data(i) = data_in(i)//repeat(' ',str_len-len(data_in(i)))
+    do i = 1, int(dim(1))
+      data(i) = data_in(i)//repeat(' ',str_len-len(data_in(i)))
     enddo
 
     call h5screate_simple_f(rank, dim, dspace_id, error)
@@ -1278,8 +1280,8 @@ contains
     call h5sclose_f(dspace_id, error)
     if (error /= 0) write(*,*) 'hdf5 dataspace closing failed for ', dataset_name
     call check_error()
-    deallocate(data, stat=error)
 
+    deallocate(data)
   end subroutine h5_write_dataset_1d_c
 
 !
@@ -1299,8 +1301,10 @@ contains
     dim = shape(data_in)
 
     allocate(data(dim(1)),stat=error)
+    if (error /= 0) write(*,*) 'hdf5 data allocation failed for ', dataset_name
+
     ! fill blancs after each string to have the same length of strings
-    do i = 1, dim(1)
+    do i = 1, int(dim(1))
         data(i) = data_in(i)//repeat(' ',str_len-len(data_in(i)))
     enddo
 
@@ -1318,7 +1322,8 @@ contains
     call check_error()
     ! closes dataset
     call h5_close_dataset()
-    deallocate(data, stat=error)
+
+    deallocate(data)
   end subroutine h5_write_dataset_1d_c_no_group
 
 !
@@ -2082,9 +2087,12 @@ contains
     integer, dimension(:), allocatable :: ldata
     integer(HSIZE_T), dimension(1)    :: dim
     integer :: lsize
+
     dim = shape(data)
     lsize = size(data)
+
     allocate(ldata(lsize),stat=error)
+    if (error /= 0) write(*,*) 'hdf5 data allocation failed for ', dataset_name
 
     call h5dopen_f(group_id, dataset_name, dataset_id, error)
     call check_error()
@@ -2100,7 +2108,7 @@ contains
     call check_error()
     call int_array2bool(ldata, data)
 
-    deallocate(ldata, stat=error)
+    deallocate(ldata)
   end subroutine h5_read_dataset_p_1d_l
 
 !
@@ -2546,7 +2554,9 @@ contains
 
     dim = shape(data_out)
     offset = offset_in ! convert data type
-    allocate(data(dim(1)))
+
+    allocate(data(dim(1)),stat=error)
+    if (error /= 0) write(*,*) 'hdf5 data allocation failed for ', dataset_name
 
     ! open dataset
     call h5_open_dataset2(trim(dataset_name))
@@ -2564,7 +2574,7 @@ contains
     call h5_create_dataset_prop_list(if_collective)
 
     ! write array using Fortran pointer
-    f_ptr = c_loc(data(1))
+    f_ptr = c_loc(data)
     call h5dread_f(dataset_id, H5T_NATIVE_INTEGER, f_ptr, error, &
                    file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     if (error /= 0) write(*,*) 'hdf5 dataset write failed for ', dataset_name
@@ -2577,6 +2587,7 @@ contains
     call h5_close_dataset()
 
     call int_array2bool(data, data_out)
+
     deallocate(data)
   end subroutine h5_read_dataset_1d_l_collect_hyperslab
 
@@ -2599,7 +2610,9 @@ contains
 
     dim = shape(data_out)
     offset = offset_in ! convert data type
-    allocate(data(dim(1)))
+
+    allocate(data(dim(1)),stat=error)
+    if (error /= 0) write(*,*) 'hdf5 data allocation failed for ', dataset_name
 
     ! open dataset
     call h5_open_dataset(trim(dataset_name))
@@ -2617,7 +2630,7 @@ contains
     call h5_create_dataset_prop_list(if_collective)
 
     ! write array using Fortran pointer
-    f_ptr = c_loc(data(1))
+    f_ptr = c_loc(data)
     call h5dread_f(dataset_id, H5T_NATIVE_INTEGER, f_ptr, error, &
                    file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     if (error /= 0) write(*,*) 'hdf5 dataset write failed for ', dataset_name
@@ -2630,6 +2643,7 @@ contains
     call h5_close_dataset()
 
     call int_array2bool(data, data_out)
+
     deallocate(data)
   end subroutine h5_read_dataset_1d_l_collect_hyperslab_in_group
 
@@ -2674,7 +2688,7 @@ contains
     !call h5dread_f(dataset_id, H5T_NATIVE_INTEGER, data, dim, error, &
     !                file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     ! use F2003 API
-    f_ptr = c_loc(data(1))
+    f_ptr = c_loc(data)
     call h5dread_f(dataset_id, H5T_NATIVE_INTEGER, f_ptr, error, &
                     file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     if (error /= 0) write(*,*) 'hdf5 dataset write failed for ', dataset_name
@@ -2727,7 +2741,7 @@ contains
     !call h5dread_f(dataset_id, H5T_NATIVE_INTEGER, data, dim, error, &
     !                file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     ! use F2003 API
-    f_ptr = c_loc(data(1))
+    f_ptr = c_loc(data)
     call h5dread_f(dataset_id, H5T_NATIVE_INTEGER, f_ptr, error, &
                     file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     if (error /= 0) write(*,*) 'hdf5 dataset write failed for ', dataset_name
@@ -2776,7 +2790,7 @@ contains
     call check_error()
     call h5_create_dataset_prop_list(if_collective)
 
-    f_ptr = c_loc(data(1))
+    f_ptr = c_loc(data)
 
     ! write array using Fortran pointer
     if (CUSTOM_REAL == 4) then
@@ -2831,7 +2845,7 @@ contains
     call check_error()
     call h5_create_dataset_prop_list(if_collective)
 
-    f_ptr = c_loc(data(1))
+    f_ptr = c_loc(data)
 
     ! write array using Fortran pointer
     if (CUSTOM_REAL == 4) then
@@ -2886,7 +2900,7 @@ contains
     call check_error()
     call h5_create_dataset_prop_list(if_collective)
 
-    f_ptr = c_loc(data(1))
+    f_ptr = c_loc(data)
 
     ! write array using Fortran pointer
     call h5dread_f(dataset_id, H5T_NATIVE_DOUBLE, f_ptr, error, &
@@ -2938,7 +2952,7 @@ contains
     call check_error()
     call h5_create_dataset_prop_list(if_collective)
 
-    f_ptr = c_loc(data(1,1))
+    f_ptr = c_loc(data)
 
     ! write array using Fortran pointer
     call h5dread_f(dataset_id, H5T_NATIVE_INTEGER, f_ptr, error, &
@@ -2988,7 +3002,7 @@ contains
     call check_error()
     call h5_create_dataset_prop_list(if_collective)
 
-    f_ptr = c_loc(data(1,1))
+    f_ptr = c_loc(data)
 
     ! write array using Fortran pointer
     call h5dread_f(dataset_id, H5T_NATIVE_INTEGER, f_ptr, error, &
@@ -3039,7 +3053,7 @@ contains
     call check_error()
     call h5_create_dataset_prop_list(if_collective)
 
-    f_ptr = c_loc(data(1,1))
+    f_ptr = c_loc(data)
 
     ! write array using Fortran pointer
     if (CUSTOM_REAL == 4) then
@@ -3095,7 +3109,7 @@ contains
     call check_error()
     call h5_create_dataset_prop_list(if_collective)
 
-    f_ptr = c_loc(data(1,1))
+    f_ptr = c_loc(data)
 
     ! write array using Fortran pointer
     if (CUSTOM_REAL == 4) then
@@ -3151,7 +3165,7 @@ contains
     call check_error()
     call h5_create_dataset_prop_list(if_collective)
 
-    f_ptr = c_loc(data(1,1))
+    f_ptr = c_loc(data)
 
     ! write array using Fortran pointer
     call h5dread_f(dataset_id, H5T_NATIVE_DOUBLE, f_ptr, error, &
@@ -3202,7 +3216,7 @@ contains
     call check_error()
     call h5_create_dataset_prop_list(if_collective)
 
-    f_ptr = c_loc(data(1,1,1))
+    f_ptr = c_loc(data)
 
     ! write array using Fortran pointer
     call h5dread_f(dataset_id, H5T_NATIVE_INTEGER, f_ptr, error, &
@@ -3253,7 +3267,7 @@ contains
     call check_error()
     call h5_create_dataset_prop_list(if_collective)
 
-    f_ptr = c_loc(data(1,1,1))
+    f_ptr = c_loc(data)
 
     ! write array using Fortran pointer
     call h5dread_f(dataset_id, H5T_NATIVE_INTEGER, f_ptr, error, &
@@ -3305,7 +3319,7 @@ contains
     call check_error()
     call h5_create_dataset_prop_list(if_collective)
 
-    f_ptr = c_loc(data(1,1,1))
+    f_ptr = c_loc(data)
 
     ! write array using Fortran pointer
     if (CUSTOM_REAL == 4) then
@@ -3361,7 +3375,7 @@ contains
     call check_error()
     call h5_create_dataset_prop_list(if_collective)
 
-    f_ptr = c_loc(data(1,1,1))
+    f_ptr = c_loc(data)
 
     ! write array using Fortran pointer
     if (CUSTOM_REAL == 4) then
@@ -3419,7 +3433,7 @@ contains
     call check_error()
     call h5_create_dataset_prop_list(if_collective)
 
-    f_ptr = c_loc(data(1,1,1,1))
+    f_ptr = c_loc(data)
 
     ! write array using Fortran pointer
     call h5dread_f(dataset_id, H5T_NATIVE_INTEGER, f_ptr, error, &
@@ -3471,7 +3485,7 @@ contains
     call check_error()
     call h5_create_dataset_prop_list(if_collective)
 
-    f_ptr = c_loc(data(1,1,1,1))
+    f_ptr = c_loc(data)
 
     ! write array using Fortran pointer
     call h5dread_f(dataset_id, H5T_NATIVE_INTEGER, f_ptr, error, &
@@ -3523,7 +3537,7 @@ contains
     call check_error()
     call h5_create_dataset_prop_list(if_collective)
 
-    f_ptr = c_loc(data(1,1,1,1))
+    f_ptr = c_loc(data)
 
     ! write array using Fortran pointer
     if (CUSTOM_REAL == 4) then
@@ -3580,7 +3594,7 @@ contains
     call check_error()
     call h5_create_dataset_prop_list(if_collective)
 
-    f_ptr = c_loc(data(1,1,1,1))
+    f_ptr = c_loc(data)
 
     ! write array using Fortran pointer
     if (CUSTOM_REAL == 4) then
@@ -3639,7 +3653,7 @@ contains
     call check_error()
     call h5_create_dataset_prop_list(if_collective)
 
-    f_ptr = c_loc(data(1,1,1,1,1))
+    f_ptr = c_loc(data)
 
     ! write array using Fortran pointer
     if (CUSTOM_REAL == 4) then
@@ -3697,7 +3711,7 @@ contains
     call check_error()
     call h5_create_dataset_prop_list(if_collective)
 
-    f_ptr = c_loc(data(1,1,1,1,1))
+    f_ptr = c_loc(data)
 
     ! write array using Fortran pointer
     if (CUSTOM_REAL == 4) then
@@ -3768,7 +3782,7 @@ contains
     if (size(data) == 0) then
       call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, dummy_1d_array, dim, error,xfer_prp=plist_id)
     else
-      f_ptr = c_loc(data(1))
+      f_ptr = c_loc(data)
       call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, f_ptr, error, &
                       xfer_prp=plist_id)
     endif
@@ -3826,7 +3840,7 @@ contains
     if (size(data) == 0) then
       call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, dummy_1d_array, dim, error,xfer_prp=plist_id)
     else
-      f_ptr = c_loc(data(1))
+      f_ptr = c_loc(data)
       call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, f_ptr, error, &
                       xfer_prp=plist_id)
     endif
@@ -3874,7 +3888,7 @@ contains
     !call h5pset_dxpl_mpio_f(plist_id, H5FD_MPIO_COLLECTIVE_F, error)
     call check_error()
     ! write array using Fortran pointer
-    f_ptr = c_loc(data(1))
+    f_ptr = c_loc(data)
     if (CUSTOM_REAL == 4) then
       call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, f_ptr, error, &
                       xfer_prp=plist_id)
@@ -3923,7 +3937,7 @@ contains
     call check_error()
 
     ! write array using Fortran pointer
-    f_ptr = c_loc(data(1,1))
+    f_ptr = c_loc(data)
     call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, f_ptr, error, &
                     xfer_prp=plist_id)
     if (error /= 0) write(*,*) 'hdf5 dataset write failed for ', dataset_name
@@ -3969,7 +3983,7 @@ contains
     call check_error()
 
     ! write array using Fortran pointer
-    f_ptr = c_loc(data(1,1))
+    f_ptr = c_loc(data)
     call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, f_ptr, error, &
                     xfer_prp=plist_id)
     if (error /= 0) write(*,*) 'hdf5 dataset write failed for ', dataset_name
@@ -4015,7 +4029,7 @@ contains
     !call h5pset_dxpl_mpio_f(plist_id, H5FD_MPIO_COLLECTIVE_F, error)
     call check_error()
     ! write array using Fortran pointer
-    f_ptr = c_loc(data(1,1))
+    f_ptr = c_loc(data)
     if (CUSTOM_REAL == 4) then
       call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, f_ptr, error, &
                       xfer_prp=plist_id)
@@ -4063,7 +4077,7 @@ contains
     !call h5pset_dxpl_mpio_f(plist_id, H5FD_MPIO_COLLECTIVE_F, error)
     call check_error()
     ! write array using Fortran pointer
-    f_ptr = c_loc(data(1,1))
+    f_ptr = c_loc(data)
     call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, f_ptr, error, &
                    xfer_prp=plist_id)
     if (error /= 0) write(*,*) 'hdf5 dataset write failed for ', dataset_name
@@ -4106,7 +4120,7 @@ contains
     !call h5pset_dxpl_mpio_f(plist_id, H5FD_MPIO_COLLECTIVE_F, error)
     call check_error()
     ! write array using Fortran pointer
-    f_ptr = c_loc(data(1,1,1))
+    f_ptr = c_loc(data)
     call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, f_ptr, error, &
                     xfer_prp=plist_id)
     if (error /= 0) write(*,*) 'hdf5 dataset write failed for ', dataset_name
@@ -4150,7 +4164,7 @@ contains
     call check_error()
 
     ! write array using Fortran pointer
-    f_ptr = c_loc(data(1,1,1))
+    f_ptr = c_loc(data)
     if (CUSTOM_REAL == 4) then
       call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, f_ptr, error, &
                       xfer_prp=plist_id)
@@ -4198,7 +4212,7 @@ contains
     !call h5pset_dxpl_mpio_f(plist_id, H5FD_MPIO_COLLECTIVE_F, error)
     call check_error()
     ! write array using Fortran pointer
-    f_ptr = c_loc(data(1,1,1,1))
+    f_ptr = c_loc(data)
     call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, f_ptr, error, &
                     xfer_prp=plist_id)
     if (error /= 0) write(*,*) 'hdf5 dataset write failed for ', dataset_name
@@ -4241,7 +4255,7 @@ contains
     !call h5pset_dxpl_mpio_f(plist_id, H5FD_MPIO_COLLECTIVE_F, error)
     call check_error()
     ! write array using Fortran pointer
-    f_ptr = c_loc(data(1,1,1,1))
+    f_ptr = c_loc(data)
     if (CUSTOM_REAL == 4) then
       call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, f_ptr, error, &
                       xfer_prp=plist_id)
@@ -4290,7 +4304,7 @@ contains
     call check_error()
 
     ! write array using Fortran pointer
-    f_ptr = c_loc(data(1,1,1,1,1))
+    f_ptr = c_loc(data)
     if (CUSTOM_REAL == 4) then
       call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, f_ptr, error, &
                       xfer_prp=plist_id)
@@ -4329,7 +4343,9 @@ contains
     ! create dataset
     call create_dataset_collect(dataset_name, dim, rank, 1, file_id)
 
-    allocate(data(size(data_in)), stat=error)
+    allocate(data(size(data_in)),stat=error)
+    if (error /= 0) write(*,*) 'hdf5 data allocation failed for ', dataset_name
+
     call bool_array2integer(data_in, data)
 
     write(tempstr, "(i6.6)") this_rank
@@ -4345,7 +4361,7 @@ contains
     !call h5pset_dxpl_mpio_f(plist_id, H5FD_MPIO_COLLECTIVE_F, error)
     call check_error()
     ! write array using Fortran pointer
-    f_ptr = c_loc(data(1))
+    f_ptr = c_loc(data)
     call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, f_ptr, error, &
                     xfer_prp=plist_id)
     if (error /= 0) write(*,*) 'hdf5 dataset write failed for ', dataset_name
@@ -4353,6 +4369,7 @@ contains
     call h5_close_prop_list(dataset_name)
     call h5_close_dataset()
     call h5_close_group()
+
     deallocate(data)
   end subroutine h5_write_dataset_p_1d_l
 
@@ -4492,7 +4509,9 @@ contains
 
     ! select a place where data is inserted.
     count(1) = dim(1)
-    allocate(data(dim(1)))
+
+    allocate(data(dim(1)),stat=error)
+    if (error /= 0) write(*,*) 'hdf5 data allocation failed for ', dataset_name
 
     ! convert logical array to  integer array
     call bool_array2integer(data_in, data)
@@ -4510,7 +4529,7 @@ contains
     !call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, data, dim, error, &
     !                file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     ! F2003 API
-    call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, c_loc(data(1)), error, &
+    call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, c_loc(data), error, &
                     file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     if (error /= 0) write(*,*) 'hdf5 dataset write failed for ', dataset_name
     call check_error()
@@ -4520,8 +4539,8 @@ contains
     call h5sclose_f(file_dspace_id, error)
     call check_error()
     call h5_close_dataset()
-    deallocate(data)
 
+    deallocate(data)
   end subroutine h5_write_dataset_1d_l_collect_hyperslab
 
 !
@@ -4551,7 +4570,9 @@ contains
 
     ! select a place where data is inserted.
     count(1) = dim(1)
-    allocate(data(dim(1)))
+
+    allocate(data(dim(1)),stat=error)
+    if (error /= 0) write(*,*) 'hdf5 data allocation failed for ', dataset_name
 
     ! convert logical array to  integer array
     call bool_array2integer(data_in, data)
@@ -4569,7 +4590,7 @@ contains
     !call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, data, dim, error, &
     !                file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     ! F2003 API
-    call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, c_loc(data(1)), error, &
+    call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, c_loc(data), error, &
                     file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     if (error /= 0) write(*,*) 'hdf5 dataset write failed for ', dataset_name
     call check_error()
@@ -4579,8 +4600,8 @@ contains
     call h5sclose_f(file_dspace_id, error)
     call check_error()
     call h5_close_dataset()
-    deallocate(data)
 
+    deallocate(data)
   end subroutine h5_write_dataset_1d_l_collect_hyperslab_in_group
 
 !
@@ -4624,7 +4645,7 @@ contains
     !call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, data, dim, error, &
     !                file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     ! use F2003 API
-    call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, c_loc(data(1)), error, &
+    call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, c_loc(data), error, &
                     file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     if (error /= 0) write(*,*) 'hdf5 dataset write failed for ', dataset_name
     call check_error()
@@ -4676,7 +4697,7 @@ contains
     !call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, data, dim, error, &
     !                file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     ! use F2003 API
-    call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, c_loc(data(1)), error, &
+    call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, c_loc(data), error, &
                     file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     if (error /= 0) write(*,*) 'hdf5 dataset write failed for ', dataset_name
     call check_error()
@@ -4727,12 +4748,12 @@ contains
     if (CUSTOM_REAL == 4) then
       !call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, data, dim, error, &
       !                file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
-      call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, c_loc(data(1)),error, &
+      call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, c_loc(data),error, &
                       file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     else
       !call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, data, dim, error, &
       !                file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
-      call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, c_loc(data(1)), error, &
+      call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, c_loc(data), error, &
                       file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     endif
     if (error /= 0) write(*,*) 'hdf5 dataset write failed for ', dataset_name
@@ -4784,12 +4805,12 @@ contains
     if (CUSTOM_REAL == 4) then
       !call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, data, dim, error, &
       !                file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
-      call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, c_loc(data(1)), error, &
+      call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, c_loc(data), error, &
                       file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     else
       !call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, data, dim, error, &
       !                file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
-      call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, c_loc(data(1)), error, &
+      call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, c_loc(data), error, &
                       file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     endif
     if (error /= 0) write(*,*) 'hdf5 dataset write failed for ', dataset_name
@@ -4839,7 +4860,7 @@ contains
 !    ! write array using Fortran pointer
 !    !call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, data, dim, error, &
 !    !                file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
-!    call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, c_loc(data(1)), error, &
+!    call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, c_loc(data), error, &
 !                    file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
 !
 !    if (error /= 0) write(*,*) 'hdf5 dataset write failed for ', dataset_name
@@ -4889,7 +4910,7 @@ contains
     ! write array using Fortran pointer
     !call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, data, dim, error, &
     !                file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
-    call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, c_loc(data(1)), error, &
+    call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, c_loc(data), error, &
                     file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
 
     if (error /= 0) write(*,*) 'hdf5 dataset write failed for ', dataset_name
@@ -4943,7 +4964,7 @@ contains
     ! write array using Fortran pointer
     !call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, data, dim, error, &
     !                file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
-    call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, c_loc(data(1,1)), error, &
+    call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, c_loc(data), error, &
                     file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     if (error /= 0) write(*,*) 'hdf5 dataset write failed for ', dataset_name
     call check_error()
@@ -4993,7 +5014,7 @@ contains
     ! write array using Fortran pointer
     !call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, data, dim, error, &
     !                file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
-    call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, c_loc(data(1,1)), error, &
+    call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, c_loc(data), error, &
                     file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     if (error /= 0) write(*,*) 'hdf5 dataset write failed for ', dataset_name
     call check_error()
@@ -5045,12 +5066,12 @@ contains
     if (CUSTOM_REAL == 4) then
       !call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, data, dim, error, &
       !                file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
-      call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, c_loc(data(1,1)), error, &
+      call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, c_loc(data), error, &
                       file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     else
       !call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, data, dim, error, &
       !                file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
-      call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, c_loc(data(1,1)), error, &
+      call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, c_loc(data), error, &
                       file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     endif
     if (error /= 0) write(*,*) 'hdf5 dataset write failed for ', dataset_name
@@ -5102,12 +5123,12 @@ contains
     if (CUSTOM_REAL == 4) then
       !call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, data, dim, error, &
       !                file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
-      call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, c_loc(data(1,1)), error, &
+      call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, c_loc(data), error, &
                       file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     else
       !call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, data, dim, error, &
       !                file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
-      call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, c_loc(data(1,1)), error, &
+      call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, c_loc(data), error, &
                       file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     endif
     if (error /= 0) write(*,*) 'hdf5 dataset write failed for ', dataset_name
@@ -5157,7 +5178,7 @@ contains
     call h5_create_dataset_prop_list(if_collective)
 
     ! write array using Fortran pointer
-    call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, c_loc(data(1,1)), error, &
+    call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, c_loc(data), error, &
                     file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     if (error /= 0) write(*,*) 'hdf5 dataset write failed for ', dataset_name
     call check_error()
@@ -5205,7 +5226,7 @@ contains
     call h5_create_dataset_prop_list(if_collective)
 
     ! write array using Fortran pointer
-    call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, c_loc(data(1,1)), error, &
+    call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, c_loc(data), error, &
                     file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     if (error /= 0) write(*,*) 'hdf5 dataset write failed for ', dataset_name
     call check_error()
@@ -5258,7 +5279,7 @@ contains
     !call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, data, dim, error, &
     !                file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     ! F2003 API
-    call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, c_loc(data(1,1,1)), error, &
+    call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, c_loc(data), error, &
                     file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     if (error /= 0) write(*,*) 'hdf5 dataset write failed for ', dataset_name
     call check_error()
@@ -5310,7 +5331,7 @@ contains
     !call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, data, dim, error, &
     !                file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     ! F2003 API
-    call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, c_loc(data(1,1,1)), error, &
+    call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, c_loc(data), error, &
                     file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     if (error /= 0) write(*,*) 'hdf5 dataset write failed for ', dataset_name
     call check_error()
@@ -5362,10 +5383,10 @@ contains
 
     ! write array using Fortran pointer
     if (CUSTOM_REAL == 4) then
-      call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, c_loc(data(1,1,1)), error, &
+      call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, c_loc(data), error, &
                       file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     else
-      call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, c_loc(data(1,1,1)), error, &
+      call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, c_loc(data), error, &
                       file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     endif
     if (error /= 0) write(*,*) 'hdf5 dataset write failed for ', dataset_name
@@ -5417,10 +5438,10 @@ contains
 
     ! write array using Fortran pointer
     if (CUSTOM_REAL == 4) then
-      call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, c_loc(data(1,1,1)), error, &
+      call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, c_loc(data), error, &
                       file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     else
-      call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, c_loc(data(1,1,1)), error, &
+      call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, c_loc(data), error, &
                       file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     endif
     if (error /= 0) write(*,*) 'hdf5 dataset write failed for ', dataset_name
@@ -5472,7 +5493,7 @@ contains
     call h5_create_dataset_prop_list(if_collective)
 
     ! write array using Fortran pointer
-    call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, c_loc(data(1,1,1,1)), error, &
+    call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, c_loc(data), error, &
                     file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     if (error /= 0) write(*,*) 'hdf5 dataset write failed for ', dataset_name
     call check_error()
@@ -5522,7 +5543,7 @@ contains
     call h5_create_dataset_prop_list(if_collective)
 
     ! write array using Fortran pointer
-    call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, c_loc(data(1,1,1,1)), error, &
+    call h5dwrite_f(dataset_id, H5T_NATIVE_INTEGER, c_loc(data), error, &
                     file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     if (error /= 0) write(*,*) 'hdf5 dataset write failed for ', dataset_name
     call check_error()
@@ -5574,10 +5595,10 @@ contains
 
     ! write array using Fortran pointer
     if (CUSTOM_REAL == 4) then
-      call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, c_loc(data(1,1,1,1)), error, &
+      call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, c_loc(data), error, &
                       file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     else
-      call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, c_loc(data(1,1,1,1)), error, &
+      call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, c_loc(data), error, &
                       file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     endif
     if (error /= 0) write(*,*) 'hdf5 dataset write failed for ', dataset_name
@@ -5629,10 +5650,10 @@ contains
 
     ! write array using Fortran pointer
     if (CUSTOM_REAL == 4) then
-      call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, c_loc(data(1,1,1,1)), error, &
+      call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, c_loc(data), error, &
                       file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     else
-      call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, c_loc(data(1,1,1,1)), error, &
+      call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, c_loc(data), error, &
                       file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     endif
     if (error /= 0) write(*,*) 'hdf5 dataset write failed for ', dataset_name
@@ -5685,10 +5706,10 @@ contains
 
     ! write array using Fortran pointer
     if (CUSTOM_REAL == 4) then
-      call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, c_loc(data(1,1,1,1,1)), error, &
+      call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, c_loc(data), error, &
                       file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     else
-      call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, c_loc(data(1,1,1,1,1)), error, &
+      call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, c_loc(data), error, &
                       file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     endif
     if (error /= 0) write(*,*) 'hdf5 dataset write failed for ', dataset_name
@@ -5742,10 +5763,10 @@ contains
 
     ! write array using Fortran pointer
     if (CUSTOM_REAL == 4) then
-      call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, c_loc(data(1,1,1,1,1)), error, &
+      call h5dwrite_f(dataset_id, H5T_NATIVE_REAL, c_loc(data), error, &
                       file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     else
-      call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, c_loc(data(1,1,1,1,1)), error, &
+      call h5dwrite_f(dataset_id, H5T_NATIVE_DOUBLE, c_loc(data), error, &
                       file_space_id=file_dspace_id, mem_space_id=mem_dspace_id, xfer_prp=plist_id)
     endif
     if (error /= 0) write(*,*) 'hdf5 dataset write failed for ', dataset_name
@@ -5823,7 +5844,7 @@ contains
     integer, dimension(data_rank)               :: dim
     integer, dimension(data_rank,0:total_proc-1), intent(out)      :: all_dim
 
-    dim = dimin ! convert integer 8(HSIZE_T) to 4
+    dim = int(dimin) ! convert integer 8(HSIZE_T) to 4
 
     if (data_rank == 1) then
       call gather_all_all_singlei(dim(1),all_dim,total_proc)
