@@ -46,6 +46,7 @@ run_simple() {
     sed -i "s:^HDF5_ENABLED .*:HDF5_ENABLED    = .true.:" DATA/Par_file
     # HDF5 format seismogram output
     sed -i "s:^OUTPUT_SEISMOS_HDF5 .*:OUTPUT_SEISMOS_HDF5  = .true.:" DATA/Par_file
+    sed -i "s:^WRITE_SEISMOGRAMS_BY_MAIN .*:WRITE_SEISMOGRAMS_BY_MAIN  = .true.:" DATA/Par_file
   fi
 
   # run

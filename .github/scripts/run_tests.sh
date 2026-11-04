@@ -216,6 +216,7 @@ if [ "${HDF5}" == "true" ]; then
   #cp -v run_this_example_HDF5_IO_server.sh run_this_example.sh
   # HDF5 format seismogram output
   sed -i "s:^OUTPUT_SEISMOS_HDF5 .*:OUTPUT_SEISMOS_HDF5  = .true.:" DATA/Par_file
+  sed -i "s:^WRITE_SEISMOGRAMS_BY_MAIN .*:WRITE_SEISMOGRAMS_BY_MAIN  = .true.:" DATA/Par_file
 fi
 
 ## adios
