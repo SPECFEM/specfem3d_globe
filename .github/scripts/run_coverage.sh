@@ -120,8 +120,6 @@ case "$TESTID" in
   1) # vectorization
     run_simple "EXAMPLES/regional_s40rts" 2
     run_simple "EXAMPLES/regional_Berkeley" 2
-    run_simple "EXAMPLES/mars_regional" 2
-    run_simple "EXAMPLES/moon_global" 2
     run_simple "EXAMPLES/regional_sgloberani" 2
     ;;
   2) # vectorization & openMP
@@ -142,6 +140,9 @@ case "$TESTID" in
     ;;
   6) # vectorization w/ NGLL 6
     echo "TESTID=6: no additional coverage examples (base run already executed)"
+    ;;
+  7) # default planetary
+    run_simple "EXAMPLES/moon_global" 2
     ;;
   *)
     echo "TESTID=${TESTID}: no additional coverage examples configured"

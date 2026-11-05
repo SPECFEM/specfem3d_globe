@@ -1093,7 +1093,9 @@ jobs:
           testdir: EXAMPLES/regional_Greece_small
           testflags: --enable-vectorization
           testngll: 6
-
+        - testid: 7
+          testdir: EXAMPLES/mars_regional
+          testflags:
 
     steps:
     - uses: actions/checkout@v7
