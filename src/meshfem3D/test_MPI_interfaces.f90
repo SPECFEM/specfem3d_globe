@@ -869,9 +869,6 @@
   if (ier /= 0) call exit_mpi(myrank,'Error test MPI matching: allocating coordinate buffers')
   send_coord(:,:) = 0.d0; recv_coord(:,:) = 0.d0
 
-  ! node distance between neighboring slice
-  max_dist = 0.d0
-
   ! fills count/coord arrays
   ! loops over MPI interfaces
   do iinterface = 1,num_interfaces
@@ -908,6 +905,11 @@
 
   ! wait for counts
   do iinterface = 1,num_interfaces
+    npoin = nibool_interfaces(iinterface)
+
+    ! skip if no interface points
+    if (npoin <= 0) cycle
+
     call wait_req(req_recv(iinterface))
     call wait_req(req_send(iinterface))
   enddo
@@ -943,15 +945,23 @@
     if (npoin <= 0) cycle
 
     ! exchange coordinates
-    call irecv_dp(recv_coord(:,iinterface),3*max_nibool_interfaces,ineighbor,TAG_COORD,req_recv(iinterface))
-    call isend_dp(send_coord(:,iinterface),3*max_nibool_interfaces,ineighbor,TAG_COORD,req_send(iinterface))
+    call irecv_dp(recv_coord(1:3*npoin,iinterface),3*npoin,ineighbor,TAG_COORD,req_recv(iinterface))
+    call isend_dp(send_coord(1:3*npoin,iinterface),3*npoin,ineighbor,TAG_COORD,req_send(iinterface))
   enddo
 
   ! wait for coords
   do iinterface = 1,num_interfaces
+    npoin = nibool_interfaces(iinterface)
+
+    ! skip if no interface points
+    if (npoin <= 0) cycle
+
     call wait_req(req_recv(iinterface))
     call wait_req(req_send(iinterface))
   enddo
+
+  ! node distance between neighboring slice
+  max_dist = 0.d0
 
   ! checks interface point coordinates
   do iinterface = 1,num_interfaces
@@ -972,6 +982,7 @@
       ! distance
       dist = sqrt(dx*dx + dy*dy + dz*dz)
 
+      ! overall maximum distance
       if (dist > max_dist) max_dist = dist
 
       ! check distance
