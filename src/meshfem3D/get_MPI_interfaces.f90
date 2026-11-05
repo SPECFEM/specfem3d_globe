@@ -31,7 +31,7 @@
                                 max_nibool,MAX_NEIGHBORS, &
                                 ibool,is_on_a_slice_edge, &
                                 IREGION,add_central_cube,idoubling,INCLUDE_CENTRAL_CUBE, &
-                                xstore,ystore,zstore,NPROCTOT)
+                                xstore_glob_dp,ystore_glob_dp,zstore_glob_dp,NPROCTOT)
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,IREGION_INNER_CORE,IFLAG_IN_FICTITIOUS_CUBE,IMAIN
   implicit none
@@ -56,7 +56,7 @@
 
   logical,intent(in) :: INCLUDE_CENTRAL_CUBE
 
-  real(kind=CUSTOM_REAL),dimension(NGLOB),intent(in) :: xstore,ystore,zstore
+  double precision,dimension(NGLOB),intent(in) :: xstore_glob_dp,ystore_glob_dp,zstore_glob_dp
 
   integer,intent(in) :: NPROCTOT
 
@@ -70,8 +70,6 @@
   integer,dimension(:),allocatable :: work_test_flag
   logical,dimension(:),allocatable :: work_ispec_is_outer
   logical,dimension(:,:),allocatable :: work_points_present
-  ! interface point gaps
-  double precision :: min_gap,min_gap_slice,min_gap_all
   ! flag to use work_points_present(:,:) array to check for unique point entries on MPI interfaces
   ! turning it on might help with performance; testing with gfortran compiler shows however slight slow-downs...
   logical, parameter :: USE_WORK_POINTS_ARRAY = .false.
@@ -591,31 +589,10 @@
 
     ! sort buffer obtained to be conforming with neighbor in other chunk
     npoin = nibool_neighbors(iinterface)
-    call sort_MPI_interface(myrank,npoin,ibool_neighbors(1:npoin,iinterface),NGLOB,xstore,ystore,zstore)
+    call sort_MPI_interface(myrank,npoin,ibool_neighbors(1:npoin,iinterface), &
+                            NGLOB,xstore_glob_dp,ystore_glob_dp,zstore_glob_dp)
 
   enddo
-
-  ! get minimum gap between sorted interface points for info
-  min_gap_slice = huge(1.d0)
-
-  do iinterface = 1,num_interfaces
-    npoin = nibool_neighbors(iinterface)
-
-    ! get smallest interface point gaps
-    call get_MPI_interface_point_gap(npoin,ibool_neighbors(1:npoin,iinterface),NGLOB,xstore,ystore,zstore,min_gap)
-
-    ! minimum for all interfaces in this slice
-    if (min_gap < min_gap_slice) min_gap_slice = min_gap
-  enddo
-
-  ! determines minimum gap margin for all processes
-  call min_all_all_dp(min_gap_slice,min_gap_all)
-
-  ! user info
-  if (myrank == 0) then
-    write(IMAIN,*) '  sorting MPI interface margin: smallest gap = ',min_gap_all
-    call flush_IMAIN()
-  endif
 
   ! re-sets flags for outer elements
   is_on_a_slice_edge(:) = work_ispec_is_outer(:)
@@ -630,7 +607,8 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine sort_MPI_interface(myrank,npoin,ibool_n,NGLOB,xstore,ystore,zstore)
+  subroutine sort_MPI_interface(myrank,npoin,ibool_n, &
+                                NGLOB,xstore_glob_dp,ystore_glob_dp,zstore_glob_dp)
 
   use constants, only: CUSTOM_REAL
 
@@ -640,7 +618,7 @@
   integer,dimension(npoin),intent(inout) :: ibool_n
 
   integer,intent(in) :: NGLOB
-  real(kind=CUSTOM_REAL), dimension(NGLOB) :: xstore,ystore,zstore
+  double precision,dimension(NGLOB),intent(in) :: xstore_glob_dp,ystore_glob_dp,zstore_glob_dp
 
   ! local parameters
   ! arrays for sorting routine
@@ -661,23 +639,21 @@
            ifseg(npoin),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error sort MPI interface: allocating temporary sorting arrays')
 
-  ! sets up working arrays
+  ! sets up working arrays for interface points
   do i = 1,npoin
     ipoin = ibool_n(i)
 
     ibool_selected(i) = ipoin
 
-    xstore_selected(i) = dble(xstore(ipoin))
-    ystore_selected(i) = dble(ystore(ipoin))
-    zstore_selected(i) = dble(zstore(ipoin))
+    xstore_selected(i) = xstore_glob_dp(ipoin)
+    ystore_selected(i) = ystore_glob_dp(ipoin)
+    zstore_selected(i) = zstore_glob_dp(ipoin)
   enddo
 
-  ! note: the order produced here must match with the neighbour rank,
-  !       that is both sides must sort the same coordinates into the same order.
+  ! note: the order produced here must match with the neighbor rank,
+  !       that is both sides must sort the coordinates into the same order.
   !
-  !       this is using locations converted from single-precision values at the moment, not ideal yet.
-  !
-  !TODO: improve numerical accurary using original double-precision locations
+  !       this is using locations from double-precision values for better accuracy.
 
   ! sort buffer obtained to be conforming with neighbor in other chunk
   ! sort on x, y and z, the other arrays will be swapped as well
@@ -695,51 +671,6 @@
   deallocate(ninseg,iglob,locval,ifseg)
 
   end subroutine sort_MPI_interface
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine get_MPI_interface_point_gap(npoin,ibool_n,NGLOB,xstore,ystore,zstore,min_gap)
-
-  use constants, only: CUSTOM_REAL
-
-  implicit none
-
-  integer,intent(in) :: npoin
-  integer,dimension(npoin),intent(inout) :: ibool_n
-
-  integer,intent(in) :: NGLOB
-  real(kind=CUSTOM_REAL), dimension(NGLOB) :: xstore,ystore,zstore
-
-  double precision,intent(out) :: min_gap
-
-  ! local parameters
-  integer :: ipoin,iglob1,iglob2
-  double precision :: dx,dy,dz
-
-  ! initializes
-  min_gap = huge(1.d0)
-
-  ! determines smallest gap in the coordinate that decides the order of two consecutive interface points
-  if (npoin > 1) then
-    ! determine smallest gap in sorting
-    do ipoin = 1,npoin-1
-      iglob1 = ibool_n(ipoin)
-      iglob2 = ibool_n(ipoin+1)
-
-      dx = dabs(dble(xstore(iglob2)) - dble(xstore(iglob1)))
-      dy = dabs(dble(ystore(iglob2)) - dble(ystore(iglob1)))
-      dz = dabs(dble(zstore(iglob2)) - dble(zstore(iglob1)))
-
-      ! determine smallest gap
-      if (dx > 0.d0 .and. dx < min_gap) min_gap = dx
-      if (dy > 0.d0 .and. dy < min_gap) min_gap = dy
-      if (dz > 0.d0 .and. dz < min_gap) min_gap = dz
-    enddo
-  endif
-
-  end subroutine get_MPI_interface_point_gap
 
 !
 !-------------------------------------------------------------------------------------------------
