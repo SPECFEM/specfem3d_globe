@@ -42,13 +42,19 @@ run_simple() {
     sed -i "s:^GPU_DEVICE .*:GPU_DEVICE    = *:" DATA/Par_file
   elif [ "${mode}" == "FULL_GRAVITY" ]; then
     # turns on full gravity
+    echo "turning on FULL_GRAVITY"
     sed -i "s:^FULL_GRAVITY .*:FULL_GRAVITY = .true.:" DATA/Par_file
   elif [ "${mode}" == "HDF5" ]; then
     # turns on HDF5
+    echo "turning on HDF5"
     sed -i "s:^HDF5_ENABLED .*:HDF5_ENABLED    = .true.:" DATA/Par_file
     # HDF5 format seismogram output
     sed -i "s:^OUTPUT_SEISMOS_HDF5 .*:OUTPUT_SEISMOS_HDF5  = .true.:" DATA/Par_file
     sed -i "s:^WRITE_SEISMOGRAMS_BY_MAIN .*:WRITE_SEISMOGRAMS_BY_MAIN  = .true.:" DATA/Par_file
+  elif [ "${mode}" == "ADIOS2" ]; then
+    # turns on ADIOS
+    echo "turning on ADIOS"
+    sed -i "s:^ADIOS_ENABLED .*:ADIOS_ENABLED = .true.:" DATA/Par_file
   fi
 
   # run
@@ -84,6 +90,23 @@ run_kernel() {
     # turns on GPU
     echo "turning on GPU"
     sed -i "s:^GPU_MODE .*:GPU_MODE = .true.:" DATA/Par_file
+    sed -i "s:^GPU_PLATFORM .*:GPU_PLATFORM    = *:" DATA/Par_file
+    sed -i "s:^GPU_DEVICE .*:GPU_DEVICE    = *:" DATA/Par_file
+  elif [ "${mode}" == "FULL_GRAVITY" ]; then
+    # turns on full gravity
+    echo "turning on FULL_GRAVITY"
+    sed -i "s:^FULL_GRAVITY .*:FULL_GRAVITY = .true.:" DATA/Par_file
+  elif [ "${mode}" == "HDF5" ]; then
+    # turns on HDF5
+    echo "turning on HDF5"
+    sed -i "s:^HDF5_ENABLED .*:HDF5_ENABLED    = .true.:" DATA/Par_file
+    # HDF5 format seismogram output
+    sed -i "s:^OUTPUT_SEISMOS_HDF5 .*:OUTPUT_SEISMOS_HDF5  = .true.:" DATA/Par_file
+    sed -i "s:^WRITE_SEISMOGRAMS_BY_MAIN .*:WRITE_SEISMOGRAMS_BY_MAIN  = .true.:" DATA/Par_file
+  elif [ "${mode}" == "ADIOS2" ]; then
+    # turns on ADIOS
+    echo "turning on ADIOS"
+    sed -i "s:^ADIOS_ENABLED .*:ADIOS_ENABLED = .true.:" DATA/Par_file
   fi
 
   if [ "${rel_dir}" == "EXAMPLES/regional_EMC_model" ]; then
@@ -128,7 +151,7 @@ case "$TESTID" in
     run_simple "EXAMPLES/global_small" 2 "FULL_GRAVITY"
     ;;
   3) # vectorization w/ ADIOS2
-    run_kernel "EXAMPLES/regional_Greece_small_LDDRK" 2
+    run_kernel "EXAMPLES/regional_Greece_small_LDDRK" 2 "ADIOS2"
     ;;
   4) # regional_s40rts w/ HIP & HDF5
     run_simple "EXAMPLES/regional_s40rts" 2 "GPU"

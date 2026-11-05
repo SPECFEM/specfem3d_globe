@@ -1109,8 +1109,8 @@ jobs:
         HIP: ${{ matrix.testHIP }}
         EMC_MODEL: ${{ matrix.testEMC }}
         NETCDF: ${{ matrix.testNetCDF }}
-        ADIOS2: $${{ matrix.testADIOS2 }}
-        HDF5: $${{ matrix.testHDF5 }}
+        ADIOS2: ${{ matrix.testADIOS2 }}
+        HDF5: ${{ matrix.testHDF5 }}
       run: ./.github/scripts/run_install.sh
       shell: bash
 
@@ -1121,8 +1121,8 @@ jobs:
         OPENCL: ${{ matrix.testOpenCL }}
         HIP: ${{ matrix.testHIP }}
         NETCDF: ${{ matrix.testNetCDF }}
-        ADIOS2: $${{ matrix.testADIOS2 }}
-        HDF5: $${{ matrix.testHDF5 }}
+        ADIOS2: ${{ matrix.testADIOS2 }}
+        HDF5: ${{ matrix.testHDF5 }}
         TESTFLAGS: ${{ matrix.testflags }}
         TESTNGLL: ${{ matrix.testngll }}
       run: ./.github/scripts/run_build.sh
@@ -1131,7 +1131,7 @@ jobs:
     - name: Run base test (coverage)
       env:
         TESTCOV: true
-        ADIOS2: $${{ matrix.testADIOS2 }}
+        ADIOS2: ${{ matrix.testADIOS2 }}
         TESTDIR: ${{ matrix.testdir }}
         TESTID: ${{ matrix.testid }}
       run: ./.github/scripts/run_tests.sh
