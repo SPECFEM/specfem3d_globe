@@ -38,6 +38,8 @@ run_simple() {
     # turns on GPU
     echo "turning on GPU"
     sed -i "s:^GPU_MODE .*:GPU_MODE = .true.:" DATA/Par_file
+    sed -i "s:^GPU_PLATFORM .*:GPU_PLATFORM    = *:" DATA/Par_file
+    sed -i "s:^GPU_DEVICE .*:GPU_DEVICE    = *:" DATA/Par_file
   elif [ "${mode}" == "FULL_GRAVITY" ]; then
     # turns on full gravity
     sed -i "s:^FULL_GRAVITY .*:FULL_GRAVITY = .true.:" DATA/Par_file
