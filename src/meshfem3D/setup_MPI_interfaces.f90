@@ -287,6 +287,13 @@
   ! checks with assembly of test fields
   call test_MPI_cm()
 
+  ! checks cross-rank interface correspondence
+  call test_MPI_interfaces_matching(IREGION_CRUST_MANTLE, &
+                                    num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
+                                    my_neighbors_crust_mantle,nibool_interfaces_crust_mantle, &
+                                    ibool_interfaces_crust_mantle, &
+                                    NGLOB_CRUST_MANTLE,xstore_glob,ystore_glob,zstore_glob)
+
   end subroutine setup_MPI_interfaces_cm
 
 !
@@ -426,6 +433,13 @@
 
   ! checks with assembly of test fields
   call test_MPI_oc()
+
+  ! checks cross-rank interface correspondence
+  call test_MPI_interfaces_matching(IREGION_OUTER_CORE, &
+                                    num_interfaces_outer_core,max_nibool_interfaces_oc, &
+                                    my_neighbors_outer_core,nibool_interfaces_outer_core, &
+                                    ibool_interfaces_outer_core, &
+                                    NGLOB_OUTER_CORE,xstore_glob,ystore_glob,zstore_glob)
 
   end subroutine setup_MPI_interfaces_oc
 
@@ -630,6 +644,13 @@
   ! checks with assembly of test fields
   call test_MPI_ic()
 
+  ! checks cross-rank interface correspondence
+  call test_MPI_interfaces_matching(IREGION_INNER_CORE, &
+                                    num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                                    my_neighbors_inner_core,nibool_interfaces_inner_core, &
+                                    ibool_interfaces_inner_core, &
+                                    NGLOB_INNER_CORE,xstore_glob,ystore_glob,zstore_glob)
+
   end subroutine setup_MPI_interfaces_ic
 
 !
@@ -777,6 +798,13 @@
   ! checks with assembly of test fields
   call test_MPI_trinf()
 
+  ! checks cross-rank interface correspondence
+  call test_MPI_interfaces_matching(IREGION_TRINFINITE, &
+                                    num_interfaces_trinfinite,max_nibool_interfaces_trinfinite, &
+                                    my_neighbors_trinfinite,nibool_interfaces_trinfinite, &
+                                    ibool_interfaces_trinfinite, &
+                                    NGLOB_TRINFINITE,xstore_glob,ystore_glob,zstore_glob)
+
   end subroutine setup_MPI_interfaces_trinf
 
 !
@@ -916,6 +944,13 @@
 
   ! checks with assembly of test fields
   call test_MPI_inf()
+
+  ! checks cross-rank interface correspondence
+  call test_MPI_interfaces_matching(IREGION_INFINITE, &
+                                    num_interfaces_infinite,max_nibool_interfaces_infinite, &
+                                    my_neighbors_infinite,nibool_interfaces_infinite, &
+                                    ibool_interfaces_infinite, &
+                                    NGLOB_INFINITE,xstore_glob,ystore_glob,zstore_glob)
 
   end subroutine setup_MPI_interfaces_inf
 
