@@ -9935,9 +9935,14 @@ ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
 ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
+    FCFLAGS_save="$FCFLAGS"
+
+    # compilation test
     { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for NetCDF modules" >&5
 printf %s "checking for NetCDF modules... " >&6; }
-    FCFLAGS="$NETCDF_FCFLAGS $FCFLAGS"
+    if test "x$NETCDF_FCFLAGS" != "x"; then
+      FCFLAGS="$NETCDF_FCFLAGS $FCFLAGS"
+    fi
     # adds include directory
     if test "x$NETCDF_INC" != "x"; then
       NETCDF_INCLUDES="-I$NETCDF_INC"
@@ -9951,7 +9956,7 @@ printf %s "checking for NetCDF modules... " >&6; }
     if test "x$EMC_FCFLAGS" != "x"; then
       FCFLAGS+=" $EMC_FCFLAGS"
     fi
-    # compilation test
+    # test w/ module
     cat > conftest.$ac_ext <<_ACEOF
 
             program main
@@ -9976,6 +9981,9 @@ printf '%s\n' "no" >&6; }
 esac
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+
+    # restore original flags
+    FCFLAGS="$FCFLAGS_save"
     ac_ext=${ac_fc_srcext-f}
 ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
 ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
@@ -10004,8 +10012,11 @@ printf '%s\n' "$as_me: CEM is enabled" >&6;}
     # daniel: todo add NetCDF checking for Fortran, something like:
     # netcdf checking
     #AC_LANG_PUSH(Fortran)
+    #FCFLAGS_save="$FCFLAGS"
     #AC_MSG_CHECKING([for NetCDF modules])
-    #FCFLAGS="$CEM_FCFLAGS $FCFLAGS"
+    #if test "x$CEM_FCFLAGS" != "x"; then
+    #  FCFLAGS="$CEM_FCFLAGS $FCFLAGS"
+    #fi
     #AC_COMPILE_IFELSE([
     #  AC_LANG_PROGRAM([], [[
     #  use netcdf
@@ -10016,6 +10027,8 @@ printf '%s\n' "$as_me: CEM is enabled" >&6;}
     #  AC_MSG_RESULT(no)
     #  AC_MSG_ERROR([NetCDF modules not found; is NetCDF built with Fortran support for this compiler?])
     #])
+    ## restore original flags
+    #FCFLAGS="$FCFLAGS_save"
     #AC_LANG_POP([Fortran])
 
 fi
@@ -10038,8 +10051,11 @@ printf '%s\n' "$as_me: IRIS EMC is enabled" >&6;}
 
     # NetCDF checking for Fortran
     #AC_LANG_PUSH(Fortran)
+    #FCFLAGS_save="$FCFLAGS"
     #AC_MSG_CHECKING([for NetCDF modules])
-    #FCFLAGS="$EMC_FCFLAGS $FCFLAGS"
+    #if test "x$EMC_FCFLAGS" != "x"; then
+    #  FCFLAGS="$EMC_FCFLAGS $FCFLAGS"
+    #fi
     #AC_COMPILE_IFELSE([
     #  AC_LANG_PROGRAM([], [[
     #  use netcdf
@@ -10050,6 +10066,8 @@ printf '%s\n' "$as_me: IRIS EMC is enabled" >&6;}
     #  AC_MSG_RESULT(no)
     #  AC_MSG_ERROR([NetCDF module not found; is NetCDF built with Fortran support for this compiler?])
     #])
+    ## restore original flags
+    #FCFLAGS="$FCFLAGS_save"
     #AC_LANG_POP([Fortran])
 
 fi
@@ -12133,15 +12151,20 @@ ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
 ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
+    FCFLAGS_save="$FCFLAGS"
+
+    # compilation test
     { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking for HDF5 modules" >&5
 printf %s "checking for HDF5 modules... " >&6; }
-    FCFLAGS="$HDF5_FCFLAGS $FCFLAGS"
+    if test "x$HDF5_FCFLAGS" != "x"; then
+      FCFLAGS="$HDF5_FCFLAGS $FCFLAGS"
+    fi
     # adds include directory
     if test "x$HDF5_INC" != "x"; then
       HDF5_INCLUDES="-I$HDF5_INC"
       FCFLAGS+=" $HDF5_INCLUDES"
     fi
-    # compilation test
+    # test w/ module
     cat > conftest.$ac_ext <<_ACEOF
 
             program main
@@ -12166,6 +12189,9 @@ printf '%s\n' "no" >&6; }
 esac
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+
+    # restore original flags
+    FCFLAGS="$FCFLAGS_save"
     ac_ext=${ac_fc_srcext-f}
 ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
 ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'

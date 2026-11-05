@@ -768,8 +768,13 @@ AS_IF([test x"$want_netcdf" != xno], [
 
     # NetCDF checking for Fortran
     AC_LANG_PUSH(Fortran)
+    FCFLAGS_save="$FCFLAGS"
+
+    # compilation test
     AC_MSG_CHECKING([for NetCDF modules])
-    FCFLAGS="$NETCDF_FCFLAGS $FCFLAGS"
+    if test "x$NETCDF_FCFLAGS" != "x"; then
+      FCFLAGS="$NETCDF_FCFLAGS $FCFLAGS"
+    fi
     # adds include directory
     if test "x$NETCDF_INC" != "x"; then
       NETCDF_INCLUDES="-I$NETCDF_INC"
@@ -783,7 +788,7 @@ AS_IF([test x"$want_netcdf" != xno], [
     if test "x$EMC_FCFLAGS" != "x"; then
       FCFLAGS+=" $EMC_FCFLAGS"
     fi
-    # compilation test
+    # test w/ module
     AC_COMPILE_IFELSE([
       AC_LANG_PROGRAM([], [[
       use netcdf
@@ -794,6 +799,9 @@ AS_IF([test x"$want_netcdf" != xno], [
       AC_MSG_RESULT(no)
       AC_MSG_ERROR([NetCDF module not found; is NetCDF built with Fortran support for this compiler? try setting NETCDF_INC.])
     ])
+
+    # restore original flags
+    FCFLAGS="$FCFLAGS_save"
     AC_LANG_POP([Fortran])
     AC_SUBST([NETCDF_INCLUDES])
 ])
@@ -812,8 +820,11 @@ AS_IF([test x"$want_cem" != xno], [
     # daniel: todo add NetCDF checking for Fortran, something like:
     # netcdf checking
     #AC_LANG_PUSH(Fortran)
+    #FCFLAGS_save="$FCFLAGS"
     #AC_MSG_CHECKING([for NetCDF modules])
-    #FCFLAGS="$CEM_FCFLAGS $FCFLAGS"
+    #if test "x$CEM_FCFLAGS" != "x"; then
+    #  FCFLAGS="$CEM_FCFLAGS $FCFLAGS"
+    #fi
     #AC_COMPILE_IFELSE([
     #  AC_LANG_PROGRAM([], [[
     #  use netcdf
@@ -824,6 +835,8 @@ AS_IF([test x"$want_cem" != xno], [
     #  AC_MSG_RESULT(no)
     #  AC_MSG_ERROR([NetCDF modules not found; is NetCDF built with Fortran support for this compiler?])
     #])
+    ## restore original flags
+    #FCFLAGS="$FCFLAGS_save"
     #AC_LANG_POP([Fortran])
 ])
 
@@ -840,8 +853,11 @@ AS_IF([test x"$want_emc" != xno], [
 
     # NetCDF checking for Fortran
     #AC_LANG_PUSH(Fortran)
+    #FCFLAGS_save="$FCFLAGS"
     #AC_MSG_CHECKING([for NetCDF modules])
-    #FCFLAGS="$EMC_FCFLAGS $FCFLAGS"
+    #if test "x$EMC_FCFLAGS" != "x"; then
+    #  FCFLAGS="$EMC_FCFLAGS $FCFLAGS"
+    #fi
     #AC_COMPILE_IFELSE([
     #  AC_LANG_PROGRAM([], [[
     #  use netcdf
@@ -852,6 +868,8 @@ AS_IF([test x"$want_emc" != xno], [
     #  AC_MSG_RESULT(no)
     #  AC_MSG_ERROR([NetCDF module not found; is NetCDF built with Fortran support for this compiler?])
     #])
+    ## restore original flags
+    #FCFLAGS="$FCFLAGS_save"
     #AC_LANG_POP([Fortran])
 ])
 
@@ -982,14 +1000,19 @@ AS_IF([test x"$want_hdf5" != xno], [
 
     # HDF5 checking for Fortran
     AC_LANG_PUSH(Fortran)
+    FCFLAGS_save="$FCFLAGS"
+
+    # compilation test
     AC_MSG_CHECKING([for HDF5 modules])
-    FCFLAGS="$HDF5_FCFLAGS $FCFLAGS"
+    if test "x$HDF5_FCFLAGS" != "x"; then
+      FCFLAGS="$HDF5_FCFLAGS $FCFLAGS"
+    fi
     # adds include directory
     if test "x$HDF5_INC" != "x"; then
       HDF5_INCLUDES="-I$HDF5_INC"
       FCFLAGS+=" $HDF5_INCLUDES"
     fi
-    # compilation test
+    # test w/ module
     AC_COMPILE_IFELSE([
       AC_LANG_PROGRAM([], [[
       use hdf5
@@ -1000,6 +1023,9 @@ AS_IF([test x"$want_hdf5" != xno], [
       AC_MSG_RESULT(no)
       AC_MSG_ERROR([HDF5 module not found; is HDF5 built with Fortran support for this compiler?])
     ])
+
+    # restore original flags
+    FCFLAGS="$FCFLAGS_save"
     AC_LANG_POP([Fortran])
     AC_SUBST([HDF5_INCLUDES])
 ])
