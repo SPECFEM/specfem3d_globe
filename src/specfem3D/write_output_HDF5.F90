@@ -119,8 +119,9 @@
     endif
   enddo
 
-  ! write the time dataset
-  call h5_write_dataset_no_group('time',time_array)
+  ! time array
+  call h5_write_dataset_no_group("time",time_array)
+
   ! free the memory
   deallocate(time_array)
 
@@ -144,6 +145,7 @@
 
   ! read the station information
   ! each line includes: network.station dummy dummy dist dummy
+  ! for example, "YL.BEKI epicentral distance    9.84928036      deg"
   do irec = 1,nrec
     ! read network.station and separate them by '.'
     !read(IOUT) tmpstr, dummy, dummy, rec_dists(irec), dummy
@@ -157,9 +159,9 @@
   close(IOUT)
 
   ! write the station information
-  call h5_write_dataset_no_group('stations',stations)
-  call h5_write_dataset_no_group('networks',networks)
-  call h5_write_dataset_no_group('dists',rec_dists)
+  call h5_write_dataset_no_group("stations",stations)   ! station names
+  call h5_write_dataset_no_group("networks",networks)   ! network names
+  call h5_write_dataset_no_group("dists",rec_dists)     ! epicentral distances
 
   ! free the memory
   deallocate(stations,networks,rec_dists)
@@ -183,7 +185,7 @@
 
 #ifdef USE_HDF5
   use specfem_par, only: &
-    myrank, seismo_current, nrec, &
+    myrank, seismo_current, seismo_offset, nrec, &
     NTSTEP_BETWEEN_OUTPUT_SAMPLE, &
     WRITE_SEISMOGRAMS_BY_MAIN, hdf5_seismo_fname
   use shared_parameters, only: &
@@ -204,6 +206,8 @@
   logical, save :: is_initialized = .false.
   integer :: i, nlength_total_seismogram
   logical :: if_dataset_exists
+  ! debugging
+  logical, parameter :: DEBUG = .false.
 
   ! check if anything to do
   if (.not. OUTPUT_SEISMOS_HDF5) return
@@ -216,14 +220,14 @@
   nlength_total_seismogram = NSTEP / NTSTEP_BETWEEN_OUTPUT_SAMPLE
 
   ! debug
-  if (myrank == 0) then
+  if (DEBUG .and. myrank == 0) then
     print *, '*** HDF5 seismogram outputs: station irec = ',irec,'***'
     print *, '    nlength_total_seismogram = ', nlength_total_seismogram
     print *, '    NSTEP = ', NSTEP
     print *, '    NTSTEP_BETWEEN_OUTPUT_SAMPLE = ', NTSTEP_BETWEEN_OUTPUT_SAMPLE
     print *, '    nrec = ', nrec
     print *, '    irec = ', irec, 'irec_local = ', irec_local
-    print *, '    seismo_current = ', seismo_current
+    print *, '    seismo_offset/seismo_current = ', seismo_offset,'/',seismo_current
     print *, '    shape(seismogram_tmp) = ', shape(seismogram_tmp)
     print *, '    shape(seismogram_tmp(iorientation,1:seismo_current)) = ', shape(seismogram_tmp(iorientation,1:seismo_current))
     print *
@@ -255,7 +259,7 @@
   endif
 
   ! write the seismogram
-  call h5_write_dataset_collect_hyperslab(trim(chn), seismogram_tmp(1:seismo_current, :), (/0,irec-1/), .false.)
+  call h5_write_dataset_collect_hyperslab(trim(chn), seismogram_tmp(1:seismo_current, :), (/seismo_offset,irec-1/), .false.)
 
   ! close the file
   call h5_close_file()

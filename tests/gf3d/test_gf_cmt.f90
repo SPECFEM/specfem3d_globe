@@ -120,7 +120,7 @@
   endif
   write(*,'(a)') ''
 
-  call gf_open(dbpath,db,ierr,check_completion=.false.)
+  call gf_open(dbpath,db,ierr,check_completion = .false.)
   if (ierr /= GF_OK) then
     write(*,'(a)') '  could not open the database'
     write(*,'(a)') '  '//trim(gf_error_string(ierr))//': '//trim(gf_errmsg)

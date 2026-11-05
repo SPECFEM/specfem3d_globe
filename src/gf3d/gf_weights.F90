@@ -310,8 +310,8 @@
 
   implicit none
 
-  integer, parameter :: NRUN = GF_NCOMP*GF_NCOMP*NGLLX*NGLLY*NGLLZ
-  integer, parameter :: NFULL = (NRUN/GF_NLANE)*GF_NLANE
+  integer, parameter :: NRUN = GF_NCOMP * GF_NCOMP * NGLLX * NGLLY * NGLLZ
+  integer, parameter :: NFULL = NRUN - mod(NRUN, GF_NLANE) ! equals: NFULL = int(NRUN/GF_NLANE) * GF_NLANE w/out integer division
 
   integer, intent(in) :: nt,nw
   real(kind=CUSTOM_REAL), dimension(NRUN,nt), intent(in) :: u

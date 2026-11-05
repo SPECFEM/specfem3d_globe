@@ -589,7 +589,6 @@ OUTPUT = $B/OUTPUT_FILES
 SUBDIRS = \
 	auxiliaries \
 	create_header_file \
-	gf3d \
 	gpu \
 	meshfem3D \
 	shared \
@@ -601,9 +600,8 @@ SUBDIRS = \
 # full gravity tool
 SUBDIRS += gindex3D
 
-#ifeq ($(HAS_GPU),yes)
-#  SUBDIRS := gpu $(SUBDIRS)
-#endif
+# Green function database - gf3d
+SUBDIRS += gf3d
 
 # default targets
 DEFAULT = \
@@ -638,14 +636,14 @@ endif
 #	$(EMPTY_MACRO)
 #endif
 
-# Green function extraction library and tool
-# note: the database format is HDF5-only, so this is off unless configured --with-hdf5
-ifeq ($(HDF5), yes)
-DEFAULT += 	xgf3d
-endif
-
 # full gravity tool
 DEFAULT += 	xgindex3D
+
+# Green function extraction library and tool
+# note: the database format is HDF5-only, so this is off unless configured --with-hdf5
+#ifeq ($(HDF5), yes)
+#  DEFAULT += 	xgf3d
+#endif
 
 
 all: default aux movies postprocess tomography
@@ -655,19 +653,21 @@ default: $(DEFAULT)
 ifdef CLEAN
 clean:
 	@echo "cleaning by CLEAN"
-	-rm -f $(foreach dir, $(CLEAN), $($(dir)_OBJECTS) $($(dir)_MODULES) $($(dir)_SHARED_OBJECTS) $($(dir)_TARGETS))
+	-rm -f $(foreach dir, $(CLEAN), $($(dir)_OBJECTS) $($(dir)_MODULES) $($(dir)_SHARED_OBJECTS) $($(dir)_PROGRAM_OBJECTS) $($(dir)_TARGETS))
 	-rm -f ${E}/*__genmod.*
 	-rm -f ${O}/*__genmod.*
 	-rm -f ${O}/*.smod
 	-rm -f ${O}/*.lst
+	-rm -rf ${O}/gfpic
 else
 clean:
 	@echo "cleaning all"
-	-rm -f $(foreach dir, $(SUBDIRS), $($(dir)_OBJECTS) $($(dir)_MODULES) $($(dir)_TARGETS))
+	-rm -f $(foreach dir, $(SUBDIRS), $($(dir)_OBJECTS) $($(dir)_MODULES) $($(dir)_SHARED_OBJECTS) $($(dir)_PROGRAM_OBJECTS) $($(dir)_TARGETS))
 	-rm -f ${E}/*__genmod.*
 	-rm -f ${O}/*__genmod.*
 	-rm -f ${O}/*.smod
 	-rm -f ${O}/*.lst
+	-rm -rf ${O}/gfpic
 endif
 
 realclean: clean

@@ -59,7 +59,7 @@
 
   private
 
-  public :: gf_geographic_to_cartesian
+  public :: gf_geographic_to_Cartesian
   public :: gf_source_nu
   public :: gf_find_local_coords
   public :: gf_gather_anchors
@@ -70,7 +70,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine gf_geographic_to_cartesian(lat,lon,depth_km,is_elliptical,elevation, &
+  subroutine gf_geographic_to_Cartesian(lat,lon,depth_km,is_elliptical,elevation, &
                                         nspl,rspl,ell1,ell2,R_PLANET, &
                                         xyz_target,theta,phi,r_surface,ierr)
 
@@ -123,7 +123,7 @@
   r_surface = 0.d0
 
   if (R_PLANET <= 0.d0) then
-    call gf_set_error(ierr,GF_ERR_ARG,'gf_geographic_to_cartesian: R_PLANET must be positive')
+    call gf_set_error(ierr,GF_ERR_ARG,'gf_geographic_to_Cartesian: R_PLANET must be positive')
     return
   endif
 
@@ -193,7 +193,7 @@
 
   ierr = GF_OK
 
-  end subroutine gf_geographic_to_cartesian
+  end subroutine gf_geographic_to_Cartesian
 
 !
 !-------------------------------------------------------------------------------------------------

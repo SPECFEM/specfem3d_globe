@@ -1301,7 +1301,8 @@
   integer :: ierr,nm,nsta,c
 
   ierr = GF_OK
-  nm = GF_NCOMP*NGLLX*NGLLY*NGLLZ
+  nm = GF_NCOMP * NGLLX * NGLLY * NGLLZ
+  nsta = 0
 
   call use_handle(h,ierr)
 
@@ -1321,6 +1322,7 @@
 
   if (ierr == GF_OK) then
     nsta = handles(h)%nstations
+    if (nsta == 0) call gf_set_error(ierr,GF_ERR_ARG,'gf3d_weights: nsta must be non-zero')
     allocate(fw(nm),fdw(nm,ndw),fscale(nsta),stat=c)
     if (c /= 0) call gf_set_error(ierr,GF_ERR_ALLOC,'gf3d_weights: cannot allocate')
   endif

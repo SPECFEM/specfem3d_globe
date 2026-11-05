@@ -70,7 +70,7 @@
   ! containing element, and the value is not arbitrary:
   ! find_local_coordinates() (locate_point.f90:513-519) clamps each of
   ! xi/eta/gamma to +-1.10, and locate_point.f90:377 then treats anything
-  ! above 1.099 as "this point probably belongs to a neighbour" and starts
+  ! above 1.099 as "this point probably belongs to a neighbor" and starts
   ! an adjacency walk. So 1.099 is exactly the solver's own test for "the
   ! element I have is the element I want", and accepting <= 1.1 instead
   ! would accept an iterate that merely hit the clamp, i.e. one that failed.
@@ -186,7 +186,7 @@
   ! again without reading anything as long as its candidates are still
   ! held: one locate's GF_NCOORD_MIN always fit, and a handle that keeps
   ! max_elements elements has as many entries. That is room for each kept
-  ! element's own coordinates, not always for every neighbour its locate
+  ! element's own coordinates, not always for every neighbor its locate
   ! tried first. Its counters are not the element counters above: a
   ! coordinate read counts only in files_read.
   !-----------------------------------------------------------------

@@ -739,7 +739,7 @@ jobs:
       shell: bash
 
   linuxTest_11:
-    name: Test 11 - regional_Greece_small hdf5 i/o
+    name: Test 11 - regional_Greece_small HDF5 i/o
     runs-on: ubuntu-latest
     needs: [compilationChecks]
 
@@ -981,6 +981,15 @@ jobs:
         utils/green_function/.venv/bin/python -c "import numpy, scipy, h5py, obspy; print('numpy', numpy.__version__, 'scipy', scipy.__version__, 'h5py', h5py.__version__, 'obspy', obspy.__version__)"
       shell: bash
 
+    - name: gf3d
+      env:
+        HDF5_INC: /usr/include/hdf5/openmpi
+        HDF5_LIBS: "-L/usr/lib/x86_64-linux-gnu/hdf5/openmpi"
+      run: |
+        ./configure --enable-debug --with-hdf5
+        make -j2 xgf3d
+      shell: bash
+
     - name: gf3d tests
       env:
         HDF5_INC: /usr/include/hdf5/openmpi
@@ -988,8 +997,7 @@ jobs:
         GF3D_TEST_STRICT: 1
         GF3D_PYTHON: ${{ github.workspace }}/utils/green_function/.venv/bin/python
       run: |
-        cd tests
-        ./run_all_tests.sh gf3d
+        make tests gf3d
       shell: bash
 
     - name: Summary
@@ -1074,6 +1082,7 @@ jobs:
           testdir: EXAMPLES/regional_s40rts
           testflags: --enable-vectorization
           testHIP: true
+          testHDF5: true
         - testid: 5
           testdir: EXAMPLES/regional_EMC_model
           testflags:
@@ -1084,6 +1093,9 @@ jobs:
           testdir: EXAMPLES/regional_Greece_small
           testflags: --enable-vectorization
           testngll: 6
+        - testid: 7
+          testdir: EXAMPLES/mars_regional
+          testflags:
 
     steps:
     - uses: actions/checkout@v7
@@ -1097,7 +1109,8 @@ jobs:
         HIP: ${{ matrix.testHIP }}
         EMC_MODEL: ${{ matrix.testEMC }}
         NETCDF: ${{ matrix.testNetCDF }}
-        ADIOS2: $${{ matrix.testADIOS2 }}
+        ADIOS2: ${{ matrix.testADIOS2 }}
+        HDF5: ${{ matrix.testHDF5 }}
       run: ./.github/scripts/run_install.sh
       shell: bash
 
@@ -1108,7 +1121,8 @@ jobs:
         OPENCL: ${{ matrix.testOpenCL }}
         HIP: ${{ matrix.testHIP }}
         NETCDF: ${{ matrix.testNetCDF }}
-        ADIOS2: $${{ matrix.testADIOS2 }}
+        ADIOS2: ${{ matrix.testADIOS2 }}
+        HDF5: ${{ matrix.testHDF5 }}
         TESTFLAGS: ${{ matrix.testflags }}
         TESTNGLL: ${{ matrix.testngll }}
       run: ./.github/scripts/run_build.sh
@@ -1117,7 +1131,7 @@ jobs:
     - name: Run base test (coverage)
       env:
         TESTCOV: true
-        ADIOS2: $${{ matrix.testADIOS2 }}
+        ADIOS2: ${{ matrix.testADIOS2 }}
         TESTDIR: ${{ matrix.testdir }}
         TESTID: ${{ matrix.testid }}
       run: ./.github/scripts/run_tests.sh

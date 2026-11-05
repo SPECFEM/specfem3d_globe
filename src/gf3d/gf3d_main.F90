@@ -157,7 +157,7 @@
     call read_double_arg(4,'longitude',lon)
     call read_double_arg(5,'depth',depth_km)
 
-    call gf_open(dbpath,db,ierr,check_completion=.false.)
+    call gf_open(dbpath,db,ierr,check_completion = .false.)
     if (ierr /= GF_OK) call die('Error opening the Green function database',ierr)
 
     call gf_locate_source(db,lat,lon,depth_km,loc,ierr)
@@ -266,7 +266,7 @@
     want_sac   = (trim(format) == 'sac'   .or. trim(format) == 'all')
     want_sacan = (trim(format) == 'sacan' .or. trim(format) == 'all')
 
-    call gf_open(dbpath,db,ierr,check_completion=.false.)
+    call gf_open(dbpath,db,ierr,check_completion = .false.)
     if (ierr /= GF_OK) call die('Error opening the Green function database',ierr)
 
     ! FORCESOLUTION or CMTSOLUTION, decided from the file's own first line
@@ -306,7 +306,7 @@
       ! completed even when ierr /= GF_OK, so a failure inside the
       ! extraction itself still reports where the source was and what
       ! conversion was planned.
-      call gf_extract(db,src,t0_req,kind,seis,dp,ierr,t=tsec,onset=onset, &
+      call gf_extract(db,src,t0_req,kind,seis,dp,ierr,t = tsec,onset = onset, &
                        loc=loc,tax=tax,stf=stf)
 
       if (loc%ielem > 0) then
@@ -372,7 +372,7 @@
 
     call get_command_argument(2,dbpath)
 
-    call gf_open(dbpath,db,ierr,check_completion=.false.)
+    call gf_open(dbpath,db,ierr,check_completion = .false.)
     if (ierr /= GF_OK) call die('Error opening the Green function database',ierr)
 
     call gf_check_anchors_all(db,worst_err,ielem_worst,ierr)

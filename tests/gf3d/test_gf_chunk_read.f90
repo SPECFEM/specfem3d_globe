@@ -116,7 +116,7 @@
   write(*,'(a,a)') '  route    = ',trim(expect)
   write(*,'(a)') ''
 
-  call gf_open(dbpath,db,ierr,check_completion=.false.)
+  call gf_open(dbpath,db,ierr,check_completion = .false.)
   if (ierr /= GF_OK) call die('could not open the database')
 
   nt = db%nt_subsampled
@@ -338,8 +338,9 @@
   implicit none
   logical, intent(in) :: complete
 
-  real, dimension(NC,NC,NGLLX,NGLLY,NGLLZ,NT3) :: d,want
-  real(kind=CUSTOM_REAL), dimension(NC*NM*NT3+1) :: b
+  ! adds 'save' keyword as its larger than possible limit set by '-fmax-stack-var-size=' to avoid stack overflow
+  real, dimension(NC,NC,NGLLX,NGLLY,NGLLZ,NT3), save :: d,want
+  real(kind=CUSTOM_REAL), dimension(NC*NM*NT3+1), save :: b
   integer(kind=HID_T) :: f,s,ds,p,ms,fs
   integer(kind=HSIZE_T), dimension(6) :: dims,cdims,cnt,off
   integer :: ia,i,ier,iorder,nwritten

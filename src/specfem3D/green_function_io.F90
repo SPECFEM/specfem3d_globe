@@ -503,7 +503,7 @@
   hs_count(6) = gf_ibuf
 
   ! hyperslab offset (0-based)
-  hs_offset(1) = gf_force_component - 1   ! which force component (N=0, E=1, Z=2)
+  hs_offset(1) = gf_force_component - 1   ! which force component (N = 0, E = 1, Z = 2)
   hs_offset(2) = 0
   hs_offset(3) = 0
   hs_offset(4) = 0

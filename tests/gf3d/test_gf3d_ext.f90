@@ -374,7 +374,7 @@
 
   write(*,*) '4. gf_extract and its optional outputs'
 
-  call gf_extract(db,src,t0,2,synt,dp,ierr,t=t,onset=onset, &
+  call gf_extract(db,src,t0,2,synt,dp,ierr,t = t,onset = onset, &
                   loc=locx,tax=taxx,stf=stfx)
   call report_true('   gf_extract, kind 2',ierr == GF_OK,nfail)
 
@@ -438,7 +438,7 @@
 
   write(*,*) '6. a second handle on the same database'
 
-  call gf_open(trim(dbpath),db2,ierr,check_completion=.false.)
+  call gf_open(trim(dbpath),db2,ierr,check_completion = .false.)
   call report_true('   a second handle opens',ierr == GF_OK,nfail)
   call report_true('   with a different open id',db2%open_id /= db%open_id,nfail)
 
@@ -474,7 +474,7 @@
 
   !--- 7. a source that leaves its element ---
   !
-  ! Extraction from a neighbouring element must work exactly as from the
+  ! Extraction from a neighboring element must work exactly as from the
   ! first: the element index, the kd-tree and the read path are all shared
   ! state, and a source that moves is the whole point of the library.
   !
@@ -880,7 +880,7 @@
     ! the first line is 'FORCE <label>', which carries no value
     if (iline == 1) cycle
 
-    icolon = index(line,':',back=.true.)
+    icolon = index(line,':',back = .true.)
     if (icolon < 1) then
       close(IIN_F)
       return

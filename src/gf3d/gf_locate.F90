@@ -91,7 +91,7 @@
 
   use gf_element_io, only: gf_read_element_coords,gf_element_coords
 
-  use gf_geometry, only: gf_geographic_to_cartesian,gf_source_nu, &
+  use gf_geometry, only: gf_geographic_to_Cartesian,gf_source_nu, &
                          gf_gather_anchors,gf_find_local_coords
 
   use gf_shape3D, only: gf_shape3D_map,gf_shape3D_map_2nd
@@ -293,7 +293,7 @@
   integer, intent(out) :: ierr
 
   ! how many times the radius may double before we give up on finding
-  ! GF_NCAND neighbours and work with what we have
+  ! GF_NCAND neighbors and work with what we have
   integer, parameter :: NGROW = 6
 
   ! local parameters
@@ -456,12 +456,12 @@
   ! the two cases are separate calls rather than one call with a conditional
   ! actual argument -- an unallocated allocatable cannot be passed at all
   if (db%ellipticity) then
-    call gf_geographic_to_cartesian(lat,lon,depth_km,db%ellipticity,elevation, &
+    call gf_geographic_to_Cartesian(lat,lon,depth_km,db%ellipticity,elevation, &
                                     db%nspl,db%rspl,db%ellipicity_spline,db%ellipicity_spline2, &
                                     db%R_PLANET,xyz_target,theta,phi,r_surface,ierr)
   else
     no_spline(1) = 0.d0
-    call gf_geographic_to_cartesian(lat,lon,depth_km,db%ellipticity,elevation, &
+    call gf_geographic_to_Cartesian(lat,lon,depth_km,db%ellipticity,elevation, &
                                     0,no_spline,no_spline,no_spline, &
                                     db%R_PLANET,xyz_target,theta,phi,r_surface,ierr)
   endif

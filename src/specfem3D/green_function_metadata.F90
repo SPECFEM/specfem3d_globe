@@ -242,8 +242,6 @@
     TOPOGRAPHY, ELLIPTICITY, GRAVITY, ROTATION, ATTENUATION, &
     RESOLUTION_TOPO_FILE, R_PLANET
 
-  use green_function_par, only: gf_nt_sub
-
   implicit none
 
   character(len=MAX_STRING_LEN) :: filepath

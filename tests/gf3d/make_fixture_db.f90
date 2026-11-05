@@ -507,12 +507,17 @@
   real, dimension(NSTEP), intent(out) :: s
 
   integer :: it
-  double precision :: t,hd
+  double precision :: t,hd,arg
 
   hd = 4.d0*DT
   do it = 1,NSTEP
     t = dble(it-1)*DT - T0
-    s(it) = real(exp(-(t/hd)**2))
+    ! cap the exponent so glibc's aarch64 vector exp never gets the underflow-range inputs
+    ! that trip its special_case handler (SIGFPE under -ffpe-trap);
+    ! the capped value rounds to 0 in real anyway
+    arg = (t/hd)**2
+    if (arg > 676.d0) arg = 676.d0
+    s(it) = real(exp(-arg))
   enddo
 
   end subroutine fill_stf

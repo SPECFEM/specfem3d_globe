@@ -71,7 +71,7 @@
 
   print *,'test_gf_open'
   print *,'  database: ',trim(dbpath)
-  print *,''
+  print *
 
   !--------------------------------------------------------------------
   ! a path that does not exist must return an error, not stop
@@ -270,7 +270,7 @@
   call gf_close(db)
 
   !--------------------------------------------------------------------
-  print *,''
+  print *
   if (nfail == 0) then
     print *,'test_gf_open: all assertions passed'
   else

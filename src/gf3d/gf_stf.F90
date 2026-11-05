@@ -149,7 +149,7 @@
 
   private
 
-  public :: gf_hdur_gaussian
+  public :: gf_hdur_Gaussian
   public :: gf_default_t0
   public :: gf_stf_khalf
   public :: gf_stf_plan
@@ -218,7 +218,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  double precision function gf_hdur_gaussian(hdur)
+  double precision function gf_hdur_Gaussian(hdur)
 
 ! the Gaussian width specfem uses for a source file's half duration:
 ! hdur_Gaussian = hdur/SOURCE_DECAY_MIMIC_TRIANGLE (setup_sources_receivers.f90:777)
@@ -227,9 +227,9 @@
 
   double precision, intent(in) :: hdur
 
-  gf_hdur_gaussian = hdur / SOURCE_DECAY_MIMIC_TRIANGLE
+  gf_hdur_Gaussian = hdur / SOURCE_DECAY_MIMIC_TRIANGLE
 
-  end function gf_hdur_gaussian
+  end function gf_hdur_Gaussian
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -360,7 +360,7 @@
   case (GF_SRC_CMT)
     ! comp_source_time_function_heavi at hdur_Gaussian (compute_add_sources.f90:556)
     stf%kind_stf = GF_STF_HEAVI
-    stf%hdur_target = gf_hdur_gaussian(hdur_src)
+    stf%hdur_target = gf_hdur_Gaussian(hdur_src)
     stf%note = 'CMT: quasi-Heaviside 0.5(1+erf(t/h)) at h = hdur/1.628'
 
   case (GF_SRC_FORCE)
@@ -368,11 +368,11 @@
     select case (force_stf)
     case (0)
       stf%kind_stf = GF_STF_GAUSS
-      stf%hdur_target = gf_hdur_gaussian(hdur_src)
+      stf%hdur_target = gf_hdur_Gaussian(hdur_src)
       stf%note = 'force_stf 0: Gaussian at h = hdur/1.628'
     case (2)
       stf%kind_stf = GF_STF_HEAVI
-      stf%hdur_target = gf_hdur_gaussian(hdur_src)
+      stf%hdur_target = gf_hdur_Gaussian(hdur_src)
       stf%note = 'force_stf 2: quasi-Heaviside 0.5(1+erf(t/h)) at h = hdur/1.628'
     case (4)
       ! comp_source_time_function_gauss_2, sqrt(pi/h^2) exp(-pi^2 t^2/h^2),
@@ -1168,7 +1168,7 @@
 
 ! how silent the trace is before the reciprocal source switches on
 !
-! ratio = max |x| over the samples with t < -4 hdur_db, divided by max |x|
+! ratio = max |x| over the samples with t <-4 hdur_db, divided by max |x|
 ! over the trace. The conversion extends the record with zeros to the left,
 ! which is right only if the record really is zero there; the writer's
 ! t0 = T_min/2 is meant to guarantee it, and this is the check that it did.
@@ -1221,7 +1221,7 @@
 
   select case (kind_stf)
   case (GF_STF_NONE)  ; str = 'none'
-  case (GF_STF_GAUSS) ; str = 'gaussian'
+  case (GF_STF_GAUSS) ; str = 'Gaussian'
   case (GF_STF_HEAVI) ; str = 'heaviside'
   case default        ; str = 'unknown'
   end select

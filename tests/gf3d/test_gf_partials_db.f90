@@ -55,7 +55,7 @@
 !----      their agreement; measured on the shipped examples it is ~1e-10.
 !----      Three things are checked per perturbed position and reported when
 !----      they bite, because each makes the comparison meaningless rather
-!----      than wrong: a relocation into a *neighbouring* element (the
+!----      than wrong: a relocation into a *neighboring* element (the
 !----      interpolant is only C0 across faces), a position outside the
 !----      database, and a stencil straddling a topography cell edge (the
 !----      elevation is bilinear per cell, so its gradient jumps there; the
@@ -159,7 +159,7 @@
   write(*,'(a,a)') '  source   = ',trim(cmtfile)
   write(*,'(a)') ''
 
-  call gf_open(dbpath,db,ierr,check_completion=.false.)
+  call gf_open(dbpath,db,ierr,check_completion = .false.)
   if (ierr /= GF_OK) then
     write(*,'(a)') '  could not open the database: '//trim(gf_errmsg)
     stop 1
@@ -352,7 +352,7 @@
       cycle
     endif
     if (.not. same_elem) write(*,'(a,a,a)') '     ',trim(pname), &
-      ': a perturbed position relocated into a neighbouring element (C0 face): reported, not asserted'
+      ': a perturbed position relocated into a neighboring element (C0 face): reported, not asserted'
     if (.not. in_cell) write(*,'(a,a,a)') '     ',trim(pname), &
       ': the stencil straddles a topography cell edge: reported, not asserted'
 
