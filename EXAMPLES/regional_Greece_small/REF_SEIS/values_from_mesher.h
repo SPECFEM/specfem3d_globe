@@ -26,39 +26,39 @@
  ! total for full 1-chunk mesh:
  ! ---------------------------
  !
- ! exact total number of spectral elements in entire mesh =
- !    49728.000000000000
- ! approximate total number of points in entire mesh =
- !    3328124.0000000000
- ! approximate total number of degrees of freedom in entire mesh =
- !    9361516.0000000000
+ ! exact total number of spectral elements in entire mesh = 
+ !    49728.000000000000     
+ ! approximate total number of points in entire mesh = 
+ !    3328124.0000000000     
+ ! approximate total number of degrees of freedom in entire mesh = 
+ !    9361516.0000000000     
  !
  ! position of the mesh chunk at the surface:
  ! -----------------------------------------
  !
- ! angular size in first direction in degrees =    20.0000000
- ! angular size in second direction in degrees =    20.0000000
+ ! angular size in first direction in degrees =    20.0000000    
+ ! angular size in second direction in degrees =    20.0000000    
  !
- ! longitude of center in degrees =    25.0000000
- ! latitude of center in degrees =    40.0000000
+ ! longitude of center in degrees =    25.0000000    
+ ! latitude of center in degrees =    40.0000000    
  !
- ! angle of rotation of the first chunk =    0.00000000
+ ! angle of rotation of the first chunk =    0.00000000    
  !
  ! corner            1
- ! longitude in degrees =    13.682753768668109
- ! latitude in degrees =    29.492489378095556
+ ! longitude in degrees =    13.682753768668109     
+ ! latitude in degrees =    29.492489378095556     
  !
  ! corner            2
- ! longitude in degrees =    36.317246231331893
- ! latitude in degrees =    29.492489378095556
+ ! longitude in degrees =    36.317246231331893     
+ ! latitude in degrees =    29.492489378095556     
  !
  ! corner            3
- ! longitude in degrees =    9.9387399017687663
- ! latitude in degrees =    49.011233731524619
+ ! longitude in degrees =    9.9387399017687663     
+ ! latitude in degrees =    49.011233731524619     
  !
  ! corner            4
- ! longitude in degrees =    40.061260098231237
- ! latitude in degrees =    49.011233731524619
+ ! longitude in degrees =    40.061260098231237     
+ ! latitude in degrees =    49.011233731524619     
  !
  ! resolution of the mesh at the surface:
  ! -------------------------------------
@@ -66,8 +66,8 @@
  ! spectral elements along a great circle =         1152
  ! GLL points along a great circle =         4608
  ! average distance between points in degrees =    7.81250000E-02
- ! average distance between points in km =    8.68710327
- ! average size of a spectral element in km =    34.7484131
+ ! average distance between points in km =    8.68710327    
+ ! average size of a spectral element in km =    34.7484131    
  !
 
  ! approximate static memory needed by the solver:
@@ -105,10 +105,14 @@
  integer, parameter :: NSPEC_CRUST_MANTLE =        11264
  integer, parameter :: NSPEC_OUTER_CORE =         1120
  integer, parameter :: NSPEC_INNER_CORE =           48
+ integer, parameter :: NSPEC_TRINFINITE =            0
+ integer, parameter :: NSPEC_INFINITE =            0
 
  integer, parameter :: NGLOB_CRUST_MANTLE =       750417
  integer, parameter :: NGLOB_OUTER_CORE =        77857
  integer, parameter :: NGLOB_INNER_CORE =         3757
+ integer, parameter :: NGLOB_TRINFINITE =            0
+ integer, parameter :: NGLOB_INFINITE =            0
 
  integer, parameter :: NSPECMAX_ANISO_IC =            0
 
@@ -131,9 +135,15 @@
  integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT =            0
  integer, parameter :: NSPEC_OUTER_CORE_ADJOINT =            0
  integer, parameter :: NSPEC_INNER_CORE_ADJOINT =            0
+ integer, parameter :: NSPEC_TRINFINITE_ADJOINT =            0
+ integer, parameter :: NSPEC_INFINITE_ADJOINT =            0
+
  integer, parameter :: NGLOB_CRUST_MANTLE_ADJOINT =            0
  integer, parameter :: NGLOB_OUTER_CORE_ADJOINT =            0
  integer, parameter :: NGLOB_INNER_CORE_ADJOINT =            0
+ integer, parameter :: NGLOB_TRINFINITE_ADJOINT =            0
+ integer, parameter :: NGLOB_INFINITE_ADJOINT =            0
+
  integer, parameter :: NSPEC_OUTER_CORE_ROT_ADJOINT =            0
 
  integer, parameter :: NSPEC_CRUST_MANTLE_STACEY =        11264
@@ -184,19 +194,32 @@
  integer, parameter :: NSPEC2DMAX_YMIN_YMAX_CM =          640
  integer, parameter :: NSPEC2D_BOTTOM_CM =           64
  integer, parameter :: NSPEC2D_TOP_CM =         1024
+
  integer, parameter :: NSPEC2DMAX_XMIN_XMAX_IC =           12
  integer, parameter :: NSPEC2DMAX_YMIN_YMAX_IC =           12
  integer, parameter :: NSPEC2D_BOTTOM_IC =           16
  integer, parameter :: NSPEC2D_TOP_IC =           16
+
  integer, parameter :: NSPEC2DMAX_XMIN_XMAX_OC =          168
  integer, parameter :: NSPEC2DMAX_YMIN_YMAX_OC =          168
  integer, parameter :: NSPEC2D_BOTTOM_OC =           16
  integer, parameter :: NSPEC2D_TOP_OC =           64
- integer, parameter :: NSPEC2D_MOHO =            1
- integer, parameter :: NSPEC2D_400 =            1
- integer, parameter :: NSPEC2D_670 =            1
- integer, parameter :: NSPEC2D_CMB =            1
- integer, parameter :: NSPEC2D_ICB =            1
+
+ integer, parameter :: NSPEC2DMAX_XMIN_XMAX_TRINF =            0
+ integer, parameter :: NSPEC2DMAX_YMIN_YMAX_TRINF =            0
+ integer, parameter :: NSPEC2D_BOTTOM_TRINF =            0
+ integer, parameter :: NSPEC2D_TOP_TRINF =            0
+
+ integer, parameter :: NSPEC2DMAX_XMIN_XMAX_INF =            0
+ integer, parameter :: NSPEC2DMAX_YMIN_YMAX_INF =            0
+ integer, parameter :: NSPEC2D_BOTTOM_INF =            0
+ integer, parameter :: NSPEC2D_TOP_INF =            0
+
+ integer, parameter :: NSPEC2D_MOHO =            0
+ integer, parameter :: NSPEC2D_400 =            0
+ integer, parameter :: NSPEC2D_670 =            0
+ integer, parameter :: NSPEC2D_CMB =            0
+ integer, parameter :: NSPEC2D_ICB =            0
 
  logical, parameter :: USE_DEVILLE_PRODUCTS_VAL = .true.
  integer, parameter :: NSPEC_CRUST_MANTLE_3DMOVIE = 0

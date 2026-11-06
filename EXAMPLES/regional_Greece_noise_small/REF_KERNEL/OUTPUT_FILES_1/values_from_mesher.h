@@ -26,48 +26,48 @@
  ! total for full 1-chunk mesh:
  ! ---------------------------
  !
- ! exact total number of spectral elements in entire mesh =
- !    23364.000000000000
- ! approximate total number of points in entire mesh =
- !    1581452.0000000000
- ! approximate total number of degrees of freedom in entire mesh =
- !    4466492.0000000000
+ ! exact total number of spectral elements in entire mesh = 
+ !    23364.000000000000     
+ ! approximate total number of points in entire mesh = 
+ !    1581452.0000000000     
+ ! approximate total number of degrees of freedom in entire mesh = 
+ !    4466492.0000000000     
  !
  ! position of the mesh chunk at the surface:
  ! -----------------------------------------
  !
- ! angular size in first direction in degrees =    20.0000000
- ! angular size in second direction in degrees =    20.0000000
+ ! angular size in first direction in degrees =    20.0000000    
+ ! angular size in second direction in degrees =    20.0000000    
  !
- ! longitude of center in degrees =    25.0000000
- ! latitude of center in degrees =    40.0000000
+ ! longitude of center in degrees =    25.0000000    
+ ! latitude of center in degrees =    40.0000000    
  !
- ! angle of rotation of the first chunk =    0.00000000
+ ! angle of rotation of the first chunk =    0.00000000    
  !
  ! corner            1
- ! longitude in degrees =    13.682753768668109
- ! latitude in degrees =    29.492489378095556
+ ! longitude in degrees =    13.682753768668109     
+ ! latitude in degrees =    29.492489378095556     
  !
  ! corner            2
- ! longitude in degrees =    36.317246231331893
- ! latitude in degrees =    29.492489378095556
+ ! longitude in degrees =    36.317246231331893     
+ ! latitude in degrees =    29.492489378095556     
  !
  ! corner            3
- ! longitude in degrees =    9.9387399017687663
- ! latitude in degrees =    49.011233731524619
+ ! longitude in degrees =    9.9387399017687663     
+ ! latitude in degrees =    49.011233731524619     
  !
  ! corner            4
- ! longitude in degrees =    40.061260098231237
- ! latitude in degrees =    49.011233731524619
+ ! longitude in degrees =    40.061260098231237     
+ ! latitude in degrees =    49.011233731524619     
  !
  ! resolution of the mesh at the surface:
  ! -------------------------------------
  !
  ! spectral elements along a great circle =          864
  ! GLL points along a great circle =         3456
- ! average distance between points in degrees =   0.104166664
- ! average distance between points in km =    11.5828047
- ! average size of a spectral element in km =    46.3312187
+ ! average distance between points in degrees =   0.104166664    
+ ! average distance between points in km =    11.5828047    
+ ! average size of a spectral element in km =    46.3312187    
  !
 
  ! approximate static memory needed by the solver:
@@ -215,11 +215,11 @@
  integer, parameter :: NSPEC2D_BOTTOM_INF =            0
  integer, parameter :: NSPEC2D_TOP_INF =            0
 
- integer, parameter :: NSPEC2D_MOHO =            1
- integer, parameter :: NSPEC2D_400 =            1
- integer, parameter :: NSPEC2D_670 =            1
- integer, parameter :: NSPEC2D_CMB =            1
- integer, parameter :: NSPEC2D_ICB =            1
+ integer, parameter :: NSPEC2D_MOHO =            0
+ integer, parameter :: NSPEC2D_400 =            0
+ integer, parameter :: NSPEC2D_670 =            0
+ integer, parameter :: NSPEC2D_CMB =            0
+ integer, parameter :: NSPEC2D_ICB =            0
 
  logical, parameter :: USE_DEVILLE_PRODUCTS_VAL = .true.
  integer, parameter :: NSPEC_CRUST_MANTLE_3DMOVIE = 0
