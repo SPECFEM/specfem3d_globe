@@ -114,8 +114,8 @@
     if (DEBUG) then
       write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_innerouter_crust_mantle_proc',myrank
       call write_VTK_data_elem_l(NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
-                                xstore_glob,ystore_glob,zstore_glob, &
-                                ibool,is_on_a_slice_edge,filename)
+                                 xstore_glob,ystore_glob,zstore_glob, &
+                                 ibool,is_on_a_slice_edge,filename)
     endif
 
     !debug
@@ -168,8 +168,8 @@
     if (DEBUG) then
       write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_innerouter_outer_core_proc',myrank
       call write_VTK_data_elem_l(NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
-                                xstore_glob,ystore_glob,zstore_glob, &
-                                ibool,is_on_a_slice_edge,filename)
+                                 xstore_glob,ystore_glob,zstore_glob, &
+                                 ibool,is_on_a_slice_edge,filename)
     endif
 
   case (IREGION_INNER_CORE)
@@ -265,8 +265,8 @@
     if (DEBUG) then
       write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_innerouter_inner_core_proc',myrank
       call write_VTK_data_elem_l(NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-                                xstore_glob,ystore_glob,zstore_glob, &
-                                ibool,is_on_a_slice_edge,filename)
+                                 xstore_glob,ystore_glob,zstore_glob, &
+                                 ibool,is_on_a_slice_edge,filename)
     endif
 
   case (IREGION_TRINFINITE)
@@ -311,8 +311,8 @@
     if (DEBUG) then
       write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_innerouter_trinfinite_proc',myrank
       call write_VTK_data_elem_l(NSPEC_TRINFINITE,NGLOB_TRINFINITE, &
-                                xstore_glob,ystore_glob,zstore_glob, &
-                                ibool,is_on_a_slice_edge,filename)
+                                 xstore_glob,ystore_glob,zstore_glob, &
+                                 ibool,is_on_a_slice_edge,filename)
     endif
 
   case (IREGION_INFINITE)
@@ -357,8 +357,8 @@
     if (DEBUG) then
       write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_innerouter_infinite_proc',myrank
       call write_VTK_data_elem_l(NSPEC_INFINITE,NGLOB_INFINITE, &
-                                xstore_glob,ystore_glob,zstore_glob, &
-                                ibool,is_on_a_slice_edge,filename)
+                                 xstore_glob,ystore_glob,zstore_glob, &
+                                 ibool,is_on_a_slice_edge,filename)
     endif
 
   end select

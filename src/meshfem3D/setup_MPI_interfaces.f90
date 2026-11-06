@@ -28,10 +28,7 @@
 
   subroutine setup_MPI_interfaces(iregion_code)
 
-  use constants, only: myrank,NGLLX,NGLLY,NGLLZ
-
-  use meshfem_par, only: INCLUDE_CENTRAL_CUBE,NUMFACES_SHARED, &
-    xstore,ystore,zstore,ibool,nspec,nglob
+  use meshfem_par, only: myrank,INCLUDE_CENTRAL_CUBE,NUMFACES_SHARED
 
   use MPI_interfaces_par
 
@@ -53,41 +50,6 @@
   integer, dimension(:),allocatable :: my_neighbors,nibool_neighbors
   integer, dimension(:,:),allocatable :: ibool_neighbors
   integer :: ier
-  ! global node locations (in double precision for sorting accuracy)
-  integer :: i,j,k,iglob,ispec
-  double precision, dimension(:), allocatable :: xstore_glob_dp,ystore_glob_dp,zstore_glob_dp
-
-  ! allocates temporary arrays for setup routines
-  ! global node locations for sorting
-  allocate(xstore_glob_dp(nglob),ystore_glob_dp(nglob),zstore_glob_dp(nglob),stat=ier)
-  if (ier /= 0) call exit_mpi(myrank,'Error allocating temporary global node arrays')
-
-  xstore_glob_dp(:) = 0.d0
-  ystore_glob_dp(:) = 0.d0
-  zstore_glob_dp(:) = 0.d0
-
-  ! fill arrays
-  do ispec = 1,nspec
-    do k = 1,NGLLZ
-      do j = 1,NGLLY
-        do i = 1,NGLLX
-          iglob = ibool(i,j,k,ispec)
-
-          if (iglob < 1 .or. iglob > nglob) then
-            print *,'Error rank ',myrank,': invalid iglob',iglob,'at element',ispec,'ijk',i,j,k,'ibool',ibool(:,:,:,ispec)
-            stop 'Error fill temporary global node arrays has invalid iglob index'
-          endif
-
-          ! double precision locations
-          ! taken directly from xstore/ystore/zstore arrays to avoid including a conversion to single precision
-          ! and back to double precision again (which would degrade accuracy)
-          xstore_glob_dp(iglob) = xstore(i,j,k,ispec)
-          ystore_glob_dp(iglob) = ystore(i,j,k,ispec)
-          zstore_glob_dp(iglob) = zstore(i,j,k,ispec)
-        enddo
-      enddo
-    enddo
-  enddo
 
   ! estimates a maximum size of needed arrays
   MAX_NEIGHBORS = 8 + NCORNERSCHUNKS
@@ -112,37 +74,31 @@
   case (IREGION_CRUST_MANTLE)
     ! crust/mantle
     call setup_MPI_interfaces_cm(MAX_NEIGHBORS,my_neighbors,nibool_neighbors, &
-                                 max_nibool,ibool_neighbors, &
-                                 nglob,xstore_glob_dp,ystore_glob_dp,zstore_glob_dp)
+                                 max_nibool,ibool_neighbors)
 
   case (IREGION_OUTER_CORE)
     ! outer core
     call setup_MPI_interfaces_oc(MAX_NEIGHBORS,my_neighbors,nibool_neighbors, &
-                                 max_nibool,ibool_neighbors, &
-                                 nglob,xstore_glob_dp,ystore_glob_dp,zstore_glob_dp)
+                                 max_nibool,ibool_neighbors)
 
   case (IREGION_INNER_CORE)
     ! inner core
     call setup_MPI_interfaces_ic(MAX_NEIGHBORS,my_neighbors,nibool_neighbors, &
-                                 max_nibool,ibool_neighbors, &
-                                 nglob,xstore_glob_dp,ystore_glob_dp,zstore_glob_dp)
+                                 max_nibool,ibool_neighbors)
 
   case (IREGION_TRINFINITE)
     ! transition infinite region
     call setup_MPI_interfaces_trinf(MAX_NEIGHBORS,my_neighbors,nibool_neighbors, &
-                                    max_nibool,ibool_neighbors, &
-                                    nglob,xstore_glob_dp,ystore_glob_dp,zstore_glob_dp)
+                                    max_nibool,ibool_neighbors)
 
   case (IREGION_INFINITE)
     ! infinite region
     call setup_MPI_interfaces_inf(MAX_NEIGHBORS,my_neighbors,nibool_neighbors, &
-                                  max_nibool,ibool_neighbors, &
-                                  nglob,xstore_glob_dp,ystore_glob_dp,zstore_glob_dp)
+                                  max_nibool,ibool_neighbors)
 
   end select
 
   ! frees temporary array
-  deallocate(xstore_glob_dp,ystore_glob_dp,zstore_glob_dp)
   deallocate(ibool_neighbors)
   deallocate(my_neighbors,nibool_neighbors)
 
@@ -195,8 +151,7 @@
 !
 
   subroutine setup_MPI_interfaces_cm(MAX_NEIGHBORS,my_neighbors,nibool_neighbors, &
-                                     max_nibool,ibool_neighbors, &
-                                     NGLOB,xstore_glob_dp,ystore_glob_dp,zstore_glob_dp)
+                                     max_nibool,ibool_neighbors)
 
   use meshfem_par, only: &
     myrank,iproc_xi,iproc_eta,ichunk,addressing,INCLUDE_CENTRAL_CUBE, &
@@ -214,9 +169,6 @@
   integer,intent(in) :: MAX_NEIGHBORS,max_nibool
   integer, dimension(MAX_NEIGHBORS),intent(inout) :: my_neighbors,nibool_neighbors
   integer, dimension(max_nibool,MAX_NEIGHBORS),intent(inout) :: ibool_neighbors
-
-  integer,intent(in) :: NGLOB
-  double precision, dimension(NGLOB),intent(in) :: xstore_glob_dp,ystore_glob_dp,zstore_glob_dp
 
   ! local parameters
   ! temporary buffers for send and receive between faces of the slices and the chunks
@@ -237,9 +189,6 @@
     write(IMAIN,*) 'crust mantle MPI:'
     call flush_IMAIN()
   endif
-
-  ! safety check
-  if (NGLOB /= NGLOB_CRUST_MANTLE) stop 'Invalid NGLOB /= NGLOB_CRUST_MANTLE in setup MPI'
 
   if (NPROCTOT > 1) then
     allocate(test_flag(NGLOB_CRUST_MANTLE),stat=ier)
@@ -279,7 +228,7 @@
                             max_nibool,MAX_NEIGHBORS, &
                             ibool,is_on_a_slice_edge, &
                             IREGION_CRUST_MANTLE,add_central_cube,dummy_i,INCLUDE_CENTRAL_CUBE, &
-                            xstore_glob_dp,ystore_glob_dp,zstore_glob_dp,NPROCTOT)
+                            xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
 
     deallocate(test_flag)
     deallocate(dummy_i)
@@ -319,7 +268,7 @@
     do i = 1,num_interfaces_crust_mantle
       write(filename,'(a,i6.6,a,i2.2)') trim(OUTPUT_FILES)//'/MPI_points_crust_mantle_proc',myrank, &
                       '_',my_neighbors_crust_mantle(i)
-      call write_VTK_data_points(NGLOB_crust_mantle, &
+      call write_VTK_data_points(NGLOB_CRUST_MANTLE, &
                         xstore_glob,ystore_glob,zstore_glob, &
                         ibool_interfaces_crust_mantle(1:nibool_interfaces_crust_mantle(i),i), &
                         nibool_interfaces_crust_mantle(i),filename)
@@ -338,7 +287,7 @@
                                     num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                                     my_neighbors_crust_mantle,nibool_interfaces_crust_mantle, &
                                     ibool_interfaces_crust_mantle, &
-                                    NGLOB,xstore_glob_dp,ystore_glob_dp,zstore_glob_dp)
+                                    NGLOB_CRUST_MANTLE,xstore_glob,ystore_glob,zstore_glob)
 
   ! checks with assembly of test fields
   call test_MPI_cm()
@@ -350,8 +299,7 @@
 !
 
   subroutine setup_MPI_interfaces_oc(MAX_NEIGHBORS,my_neighbors,nibool_neighbors, &
-                                     max_nibool,ibool_neighbors, &
-                                     NGLOB,xstore_glob_dp,ystore_glob_dp,zstore_glob_dp)
+                                     max_nibool,ibool_neighbors)
 
   use meshfem_par, only: &
     myrank,iproc_xi,iproc_eta,ichunk,addressing,INCLUDE_CENTRAL_CUBE, &
@@ -369,9 +317,6 @@
   integer :: MAX_NEIGHBORS,max_nibool
   integer, dimension(MAX_NEIGHBORS) :: my_neighbors,nibool_neighbors
   integer, dimension(max_nibool,MAX_NEIGHBORS) :: ibool_neighbors
-
-  integer,intent(in) :: NGLOB
-  double precision, dimension(NGLOB),intent(in) :: xstore_glob_dp,ystore_glob_dp,zstore_glob_dp
 
   ! local parameters
   ! temporary buffers for send and receive between faces of the slices and the chunks
@@ -392,9 +337,6 @@
     write(IMAIN,*) 'outer core MPI:'
     call flush_IMAIN()
   endif
-
-  ! safety check
-  if (NGLOB /= NGLOB_OUTER_CORE) stop 'Invalid NGLOB /= NGLOB_OUTER_CORE in setup MPI'
 
   if (NPROCTOT > 1 .and. NSPEC_OUTER_CORE > 0) then
     allocate(test_flag(NGLOB_OUTER_CORE),stat=ier)
@@ -434,7 +376,7 @@
                             max_nibool,MAX_NEIGHBORS, &
                             ibool,is_on_a_slice_edge, &
                             IREGION_OUTER_CORE,add_central_cube,dummy_i,INCLUDE_CENTRAL_CUBE, &
-                            xstore_glob_dp,ystore_glob_dp,zstore_glob_dp,NPROCTOT)
+                            xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
 
     deallocate(test_flag)
     deallocate(dummy_i)
@@ -492,7 +434,7 @@
                                     num_interfaces_outer_core,max_nibool_interfaces_oc, &
                                     my_neighbors_outer_core,nibool_interfaces_outer_core, &
                                     ibool_interfaces_outer_core, &
-                                    NGLOB,xstore_glob_dp,ystore_glob_dp,zstore_glob_dp)
+                                    NGLOB_OUTER_CORE,xstore_glob,ystore_glob,zstore_glob)
 
   ! checks with assembly of test fields
   call test_MPI_oc()
@@ -504,8 +446,7 @@
 !
 
   subroutine setup_MPI_interfaces_ic(MAX_NEIGHBORS,my_neighbors,nibool_neighbors, &
-                                     max_nibool,ibool_neighbors, &
-                                     NGLOB,xstore_glob_dp,ystore_glob_dp,zstore_glob_dp)
+                                     max_nibool,ibool_neighbors)
 
   use meshfem_par, only: &
     myrank,iproc_xi,iproc_eta,ichunk,addressing,INCLUDE_CENTRAL_CUBE, &
@@ -523,9 +464,6 @@
   integer :: MAX_NEIGHBORS,max_nibool
   integer, dimension(MAX_NEIGHBORS) :: my_neighbors,nibool_neighbors
   integer, dimension(max_nibool,MAX_NEIGHBORS) :: ibool_neighbors
-
-  integer,intent(in) :: NGLOB
-  double precision, dimension(NGLOB),intent(in) :: xstore_glob_dp,ystore_glob_dp,zstore_glob_dp
 
   ! local parameters
   ! temporary buffers for send and receive between faces of the slices and the chunks
@@ -546,9 +484,6 @@
     write(IMAIN,*) 'inner core MPI:'
     call flush_IMAIN()
   endif
-
-  ! safety check
-  if (NGLOB /= NGLOB_INNER_CORE) stop 'Invalid NGLOB /= NGLOB_INNER_CORE in setup MPI'
 
   if (NPROCTOT > 1 .and. NSPEC_INNER_CORE > 0) then
     allocate(test_flag(NGLOB_INNER_CORE),stat=ier)
@@ -640,7 +575,7 @@
     !                            max_nibool,MAX_NEIGHBORS, &
     !                            ibool,is_on_a_slice_edge, &
     !                            IREGION_INNER_CORE,add_central_cube,idoubling,INCLUDE_CENTRAL_CUBE, &
-    !                            xstore_glob_dp,ystore_glob_dp,zstore_glob_dp,NPROCTOT)
+    !                            xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
     !  endif
     !  call synchronize_all()
     !enddo
@@ -652,7 +587,7 @@
                             max_nibool,MAX_NEIGHBORS, &
                             ibool,is_on_a_slice_edge, &
                             IREGION_INNER_CORE,add_central_cube,idoubling,INCLUDE_CENTRAL_CUBE, &
-                            xstore_glob_dp,ystore_glob_dp,zstore_glob_dp,NPROCTOT)
+                            xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
 
     deallocate(test_flag)
   else
@@ -709,7 +644,7 @@
                                     num_interfaces_inner_core,max_nibool_interfaces_ic, &
                                     my_neighbors_inner_core,nibool_interfaces_inner_core, &
                                     ibool_interfaces_inner_core, &
-                                    NGLOB,xstore_glob_dp,ystore_glob_dp,zstore_glob_dp)
+                                    NGLOB_INNER_CORE,xstore_glob,ystore_glob,zstore_glob)
 
   ! checks with assembly of test fields
   call test_MPI_ic()
@@ -721,8 +656,7 @@
 !
 
   subroutine setup_MPI_interfaces_trinf(MAX_NEIGHBORS,my_neighbors,nibool_neighbors, &
-                                        max_nibool,ibool_neighbors, &
-                                        NGLOB,xstore_glob_dp,ystore_glob_dp,zstore_glob_dp)
+                                        max_nibool,ibool_neighbors)
 
   use meshfem_par, only: &
     myrank,iproc_xi,iproc_eta,ichunk,addressing,INCLUDE_CENTRAL_CUBE, &
@@ -740,9 +674,6 @@
   integer :: MAX_NEIGHBORS,max_nibool
   integer, dimension(MAX_NEIGHBORS) :: my_neighbors,nibool_neighbors
   integer, dimension(max_nibool,MAX_NEIGHBORS) :: ibool_neighbors
-
-  integer,intent(in) :: NGLOB
-  double precision, dimension(NGLOB),intent(in) :: xstore_glob_dp,ystore_glob_dp,zstore_glob_dp
 
   ! local parameters
   ! temporary buffers for send and receive between faces of the slices and the chunks
@@ -763,9 +694,6 @@
     write(IMAIN,*) 'transition infinite MPI:'
     call flush_IMAIN()
   endif
-
-  ! safety check
-  if (NGLOB /= NGLOB_TRINFINITE) stop 'Invalid NGLOB /= NGLOB_TRINFINITE in setup MPI'
 
   if (NPROCTOT > 1 .and. NSPEC_TRINFINITE > 0) then
     allocate(test_flag(NGLOB_TRINFINITE),stat=ier)
@@ -812,7 +740,7 @@
                             max_nibool,MAX_NEIGHBORS, &
                             ibool,is_on_a_slice_edge, &
                             IREGION_TRINFINITE,add_central_cube,dummy_i,INCLUDE_CENTRAL_CUBE, &
-                            xstore_glob_dp,ystore_glob_dp,zstore_glob_dp,NPROCTOT)
+                            xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
 
     deallocate(test_flag)
     deallocate(dummy_i)
@@ -870,7 +798,7 @@
                                     num_interfaces_trinfinite,max_nibool_interfaces_trinfinite, &
                                     my_neighbors_trinfinite,nibool_interfaces_trinfinite, &
                                     ibool_interfaces_trinfinite, &
-                                    NGLOB,xstore_glob_dp,ystore_glob_dp,zstore_glob_dp)
+                                    NGLOB_TRINFINITE,xstore_glob,ystore_glob,zstore_glob)
 
   ! checks with assembly of test fields
   call test_MPI_trinf()
@@ -882,8 +810,7 @@
 !
 
   subroutine setup_MPI_interfaces_inf(MAX_NEIGHBORS,my_neighbors,nibool_neighbors, &
-                                      max_nibool,ibool_neighbors, &
-                                      NGLOB,xstore_glob_dp,ystore_glob_dp,zstore_glob_dp)
+                                      max_nibool,ibool_neighbors)
 
   use meshfem_par, only: &
     myrank,iproc_xi,iproc_eta,ichunk,addressing,INCLUDE_CENTRAL_CUBE, &
@@ -901,9 +828,6 @@
   integer :: MAX_NEIGHBORS,max_nibool
   integer, dimension(MAX_NEIGHBORS) :: my_neighbors,nibool_neighbors
   integer, dimension(max_nibool,MAX_NEIGHBORS) :: ibool_neighbors
-
-  integer,intent(in) :: NGLOB
-  double precision, dimension(NGLOB),intent(in) :: xstore_glob_dp,ystore_glob_dp,zstore_glob_dp
 
   ! local parameters
   ! temporary buffers for send and receive between faces of the slices and the chunks
@@ -924,9 +848,6 @@
     write(IMAIN,*) 'infinite MPI:'
     call flush_IMAIN()
   endif
-
-  ! safety check
-  if (NGLOB /= NGLOB_INFINITE) stop 'Invalid NGLOB /= NGLOB_INFINITE in setup MPI'
 
   if (NPROCTOT > 1 .and. NSPEC_INFINITE > 0) then
     allocate(test_flag(NGLOB_INFINITE),stat=ier)
@@ -966,7 +887,7 @@
                             max_nibool,MAX_NEIGHBORS, &
                             ibool,is_on_a_slice_edge, &
                             IREGION_INFINITE,add_central_cube,dummy_i,INCLUDE_CENTRAL_CUBE, &
-                            xstore_glob_dp,ystore_glob_dp,zstore_glob_dp,NPROCTOT)
+                            xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
 
     deallocate(test_flag)
     deallocate(dummy_i)
@@ -1024,7 +945,7 @@
                                     num_interfaces_infinite,max_nibool_interfaces_infinite, &
                                     my_neighbors_infinite,nibool_interfaces_infinite, &
                                     ibool_interfaces_infinite, &
-                                    NGLOB,xstore_glob_dp,ystore_glob_dp,zstore_glob_dp)
+                                    NGLOB_INFINITE,xstore_glob,ystore_glob,zstore_glob)
 
   ! checks with assembly of test fields
   call test_MPI_inf()

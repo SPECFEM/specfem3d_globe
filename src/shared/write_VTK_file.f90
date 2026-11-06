@@ -68,7 +68,7 @@
   integer,intent(in) :: nglob
 
   ! global coordinates
-  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: xstore_dummy,ystore_dummy,zstore_dummy
+  double precision, dimension(nglob),intent(in) :: xstore_dummy,ystore_dummy,zstore_dummy
 
   ! GLL data values array
   integer,intent(in) :: num_points_globalindices
@@ -129,7 +129,7 @@
 !  integer,intent(in) :: nglob
 !
 !  ! global coordinates
-!  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: xstore_dummy,ystore_dummy,zstore_dummy
+!  double precision, dimension(nglob),intent(in) :: xstore_dummy,ystore_dummy,zstore_dummy
 !
 !  ! GLL data values array
 !  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: glob_values
@@ -178,8 +178,8 @@
 
 
   subroutine write_VTK_data_elem_l(nspec,nglob, &
-                        xstore_dummy,ystore_dummy,zstore_dummy,ibool, &
-                        elem_flag,prname_file)
+                                   xstore_dummy,ystore_dummy,zstore_dummy,ibool, &
+                                   elem_flag,prname_file)
 
 ! routine for saving VTK file holding logical flag on each spectral element
 
@@ -191,7 +191,7 @@
 
   ! global coordinates
   integer, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
-  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: xstore_dummy,ystore_dummy,zstore_dummy
+  double precision, dimension(nglob),intent(in) :: xstore_dummy,ystore_dummy,zstore_dummy
 
   ! element flag array
   logical, dimension(nspec),intent(in) :: elem_flag
@@ -270,7 +270,7 @@
 
   ! global coordinates
   integer, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
-  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: xstore_dummy,ystore_dummy,zstore_dummy
+  double precision, dimension(nglob),intent(in) :: xstore_dummy,ystore_dummy,zstore_dummy
 
   ! element flag array
   integer, dimension(nspec),intent(in) :: elem_flag
@@ -862,7 +862,7 @@
 
   ! global coordinates
   integer, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
-  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: xstore_dummy,ystore_dummy,zstore_dummy
+  double precision, dimension(nglob),intent(in) :: xstore_dummy,ystore_dummy,zstore_dummy
 
   ! element data values array
   real(kind=CUSTOM_REAL), dimension(nspec),intent(in) :: elem_data
@@ -930,7 +930,7 @@
 
   ! global coordinates
   integer, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
-  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: xstore_dummy,ystore_dummy,zstore_dummy
+  double precision, dimension(nglob),intent(in) :: xstore_dummy,ystore_dummy,zstore_dummy
 
   ! element data values array
   real(kind=CUSTOM_REAL), dimension(nspec),intent(in) :: elem_data

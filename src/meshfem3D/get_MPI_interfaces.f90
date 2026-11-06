@@ -31,7 +31,7 @@
                                 max_nibool,MAX_NEIGHBORS, &
                                 ibool,is_on_a_slice_edge, &
                                 IREGION,add_central_cube,idoubling,INCLUDE_CENTRAL_CUBE, &
-                                xstore_glob_dp,ystore_glob_dp,zstore_glob_dp,NPROCTOT)
+                                xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,IREGION_INNER_CORE,IFLAG_IN_FICTITIOUS_CUBE,IMAIN
   implicit none
@@ -56,7 +56,7 @@
 
   logical,intent(in) :: INCLUDE_CENTRAL_CUBE
 
-  double precision,dimension(NGLOB),intent(in) :: xstore_glob_dp,ystore_glob_dp,zstore_glob_dp
+  double precision,dimension(NGLOB),intent(in) :: xstore_glob,ystore_glob,zstore_glob
 
   integer,intent(in) :: NPROCTOT
 
@@ -590,7 +590,7 @@
     ! sort buffer obtained to be conforming with neighbor in other chunk
     npoin = nibool_neighbors(iinterface)
     call sort_MPI_interface(myrank,npoin,ibool_neighbors(1:npoin,iinterface), &
-                            NGLOB,xstore_glob_dp,ystore_glob_dp,zstore_glob_dp)
+                            NGLOB,xstore_glob,ystore_glob,zstore_glob)
 
   enddo
 
@@ -608,7 +608,7 @@
 !
 
   subroutine sort_MPI_interface(myrank,npoin,ibool_n, &
-                                NGLOB,xstore_glob_dp,ystore_glob_dp,zstore_glob_dp)
+                                NGLOB,xstore_glob,ystore_glob,zstore_glob)
 
   use constants, only: CUSTOM_REAL
 
@@ -618,7 +618,7 @@
   integer,dimension(npoin),intent(inout) :: ibool_n
 
   integer,intent(in) :: NGLOB
-  double precision,dimension(NGLOB),intent(in) :: xstore_glob_dp,ystore_glob_dp,zstore_glob_dp
+  double precision,dimension(NGLOB),intent(in) :: xstore_glob,ystore_glob,zstore_glob
 
   ! local parameters
   ! arrays for sorting routine
@@ -645,9 +645,9 @@
 
     ibool_selected(i) = ipoin
 
-    xstore_selected(i) = xstore_glob_dp(ipoin)
-    ystore_selected(i) = ystore_glob_dp(ipoin)
-    zstore_selected(i) = zstore_glob_dp(ipoin)
+    xstore_selected(i) = xstore_glob(ipoin)
+    ystore_selected(i) = ystore_glob(ipoin)
+    zstore_selected(i) = zstore_glob(ipoin)
   enddo
 
   ! note: the order produced here must match with the neighbor rank,

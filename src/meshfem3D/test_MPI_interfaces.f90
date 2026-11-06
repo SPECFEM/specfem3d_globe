@@ -824,10 +824,10 @@
                                           num_interfaces,max_nibool_interfaces, &
                                           my_neighbors,nibool_interfaces, &
                                           ibool_interfaces, &
-                                          NGLOB,xstore_glob_dp,ystore_glob_dp,zstore_glob_dp)
+                                          NGLOB,xstore_glob,ystore_glob,zstore_glob)
 
-  use constants, only: CUSTOM_REAL,IMAIN
-  use meshfem_par, only: NPROCTOT,myrank,R_PLANET
+  use constants, only: myrank,CUSTOM_REAL,IMAIN,itag,SMALLVALTOL
+  use meshfem_par, only: NPROCTOT,R_PLANET
 
   implicit none
 
@@ -837,7 +837,7 @@
   integer,dimension(max_nibool_interfaces,num_interfaces),intent(in) :: ibool_interfaces
 
   integer,intent(in) :: NGLOB
-  double precision,dimension(NGLOB),intent(in) :: xstore_glob_dp,ystore_glob_dp,zstore_glob_dp
+  double precision,dimension(NGLOB),intent(in) :: xstore_glob,ystore_glob,zstore_glob
 
   ! local parameters
   integer :: iinterface,ineighbor,npoin,npoin_other,ipoin,iglob,ier
@@ -845,19 +845,16 @@
   integer, dimension(:), allocatable :: req_send,req_recv
   double precision, dimension(:,:), allocatable :: send_coord,recv_coord
   double precision :: dx,dy,dz,dist,max_dist,max_dist_all
-  ! interface point gaps
-  double precision :: min_gap,min_gap_slice,min_gap_all
-
-  ! MPI comm tags
-  integer, parameter :: TAG_COUNT = 4321, TAG_COORD = 4322
-
-  ! tolerance for matching shared interface point locations
-  ! (relative to smallest point gap on interface)
-  double precision, parameter :: MATCHING_TOLERANCE = 1.d-2
 
   ! checks if anything to do
   if (NPROCTOT <= 1) return
   if (num_interfaces <= 0) return
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  MPI interface matching:'
+    call flush_IMAIN()
+  endif
 
   ! initializes
   allocate(send_count(num_interfaces), &
@@ -886,9 +883,9 @@
     ! packs the sorted coordinates of the interface points
     do ipoin = 1,npoin
       iglob = ibool_interfaces(ipoin,iinterface)
-      send_coord(3*(ipoin-1) + 1,iinterface) = xstore_glob_dp(iglob)
-      send_coord(3*(ipoin-1) + 2,iinterface) = ystore_glob_dp(iglob)
-      send_coord(3*(ipoin-1) + 3,iinterface) = zstore_glob_dp(iglob)
+      send_coord(3*(ipoin-1) + 1,iinterface) = xstore_glob(iglob)
+      send_coord(3*(ipoin-1) + 2,iinterface) = ystore_glob(iglob)
+      send_coord(3*(ipoin-1) + 3,iinterface) = zstore_glob(iglob)
     enddo
 
     ! interface point count
@@ -904,8 +901,8 @@
     if (npoin <= 0) cycle
 
     ! exchanges the number of interface points first
-    call irecv_i(recv_count(iinterface),1,ineighbor,TAG_COUNT,req_recv(iinterface))
-    call isend_i(send_count(iinterface),1,ineighbor,TAG_COUNT,req_send(iinterface))
+    call irecv_i(recv_count(iinterface),1,ineighbor,itag,req_recv(iinterface))
+    call isend_i(send_count(iinterface),1,ineighbor,itag,req_send(iinterface))
   enddo
 
   ! wait for counts
@@ -941,6 +938,12 @@
   ! synchronizes all MPI processes
   call synchronize_all()
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '    point counts match'
+    call flush_IMAIN()
+  endif
+
   ! exchanges the sorted coordinates with the neighbor
   do iinterface = 1,num_interfaces
     ineighbor = my_neighbors(iinterface)
@@ -950,8 +953,8 @@
     if (npoin <= 0) cycle
 
     ! exchange coordinates
-    call irecv_dp(recv_coord(1:3*npoin,iinterface),3*npoin,ineighbor,TAG_COORD,req_recv(iinterface))
-    call isend_dp(send_coord(1:3*npoin,iinterface),3*npoin,ineighbor,TAG_COORD,req_send(iinterface))
+    call irecv_dp(recv_coord(1:3*npoin,iinterface),3*npoin,ineighbor,itag,req_recv(iinterface))
+    call isend_dp(send_coord(1:3*npoin,iinterface),3*npoin,ineighbor,itag,req_send(iinterface))
   enddo
 
   ! wait for coords
@@ -965,10 +968,7 @@
     call wait_req(req_send(iinterface))
   enddo
 
-  ! get minimum gap between sorted interface points
-  min_gap_slice = huge(1.d0)
-
-  ! node distance between neighboring slice
+  ! node distance to neighboring slice
   max_dist = 0.d0
 
   ! checks interface point coordinates
@@ -979,21 +979,13 @@
     ! skip if no interface points
     if (npoin <= 0) cycle
 
-    ! get smallest interface point gaps
-    call test_MPI_interface_point_gap(npoin,ibool_interfaces(1:npoin,iinterface), &
-                                      NGLOB,xstore_glob_dp,ystore_glob_dp,zstore_glob_dp, &
-                                      min_gap)
-
-    ! minimum for all interfaces in this slice for info
-    if (min_gap < min_gap_slice) min_gap_slice = min_gap
-
     ! compares the sorted coordinates point by point
     do ipoin = 1,npoin
       iglob = ibool_interfaces(ipoin,iinterface)
 
-      dx = xstore_glob_dp(iglob) - recv_coord(3*(ipoin-1) + 1,iinterface)
-      dy = ystore_glob_dp(iglob) - recv_coord(3*(ipoin-1) + 2,iinterface)
-      dz = zstore_glob_dp(iglob) - recv_coord(3*(ipoin-1) + 3,iinterface)
+      dx = xstore_glob(iglob) - recv_coord(3*(ipoin-1) + 1,iinterface)
+      dy = ystore_glob(iglob) - recv_coord(3*(ipoin-1) + 2,iinterface)
+      dz = zstore_glob(iglob) - recv_coord(3*(ipoin-1) + 3,iinterface)
 
       ! distance
       dist = sqrt(dx*dx + dy*dy + dz*dz)
@@ -1001,20 +993,14 @@
       ! overall maximum distance
       if (dist > max_dist) max_dist = dist
 
-      ! avoid zero gap values for distance check
-      if (min_gap < 1.d-22) min_gap = 1.d-15
-      ! avoid huge gap values
-      if (min_gap > 1.d-2) min_gap = 1.d-15
-
       ! check distance
-      if (dist > MATCHING_TOLERANCE * min_gap) then
+      if (dist > SMALLVALTOL) then
         print *,'Error test MPI matching: rank ',myrank,' neighbor ',ineighbor,' region ',iregion_code
-        print *,'  interface point ',ipoin,' match distance (to the neighbor point): ',dist, &
-                ' minimum sorting gap: ',min_gap, &
-                ' (relative) check tolerance: ',MATCHING_TOLERANCE
-        print *,'  location (mine)    : x/y/z = ',xstore_glob_dp(iglob),'/', &
-                                                  ystore_glob_dp(iglob),'/', &
-                                                  zstore_glob_dp(iglob)
+        print *,'  interface point ',ipoin,' match distance (to the neighbor point) ',dist, &
+                ' exceeds check tolerance ',SMALLVALTOL
+        print *,'  location (mine)    : x/y/z = ',xstore_glob(iglob),'/', &
+                                                  ystore_glob(iglob),'/', &
+                                                  zstore_glob(iglob)
         print *,'           (neighbor): x/y/z = ',recv_coord(3*(ipoin-1)+1,iinterface),'/', &
                                                   recv_coord(3*(ipoin-1)+2,iinterface),'/', &
                                                   recv_coord(3*(ipoin-1)+3,iinterface)
@@ -1026,17 +1012,11 @@
   ! synchronizes all MPI processes
   call synchronize_all()
 
-  ! determines minimum gap margin from all processes
-  call min_all_dp(min_gap_slice,min_gap_all)
-
   ! report the worst-case distance across ranks (tracking, not fatal)
   call max_all_dp(max_dist,max_dist_all)
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) '  MPI interface matching:'
-    write(IMAIN,*) '    smallest sorting gap          = ',min_gap_all
-    write(IMAIN,*) '                                  = ',min_gap_all * R_PLANET,'(m)'
     write(IMAIN,*) '    maximum shared point distance = ',max_dist_all
     write(IMAIN,*) '                                  = ',max_dist_all * R_PLANET,'(m)'
     write(IMAIN,*) '    interface match is okay'
@@ -1054,49 +1034,3 @@
 
   end subroutine test_MPI_interfaces_matching
 
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine test_MPI_interface_point_gap(npoin,ibool_n, &
-                                          NGLOB,xstore_glob_dp,ystore_glob_dp,zstore_glob_dp, &
-                                          min_gap)
-
-  use constants, only: CUSTOM_REAL
-
-  implicit none
-
-  integer,intent(in) :: npoin
-  integer,dimension(npoin),intent(in) :: ibool_n
-
-  integer,intent(in) :: NGLOB
-  double precision,dimension(NGLOB),intent(in) :: xstore_glob_dp,ystore_glob_dp,zstore_glob_dp
-
-  double precision,intent(out) :: min_gap
-
-  ! local parameters
-  integer :: ipoin,iglob1,iglob2
-  double precision :: dx,dy,dz
-
-  ! initializes
-  min_gap = huge(1.d0)
-
-  ! determines smallest gap in the coordinate that decides the order of two consecutive interface points
-  if (npoin > 1) then
-    ! determine smallest gap in (sorted) interface points
-    do ipoin = 1,npoin-1
-      iglob1 = ibool_n(ipoin)
-      iglob2 = ibool_n(ipoin+1)
-
-      dx = dabs(xstore_glob_dp(iglob2) - xstore_glob_dp(iglob1))
-      dy = dabs(ystore_glob_dp(iglob2) - ystore_glob_dp(iglob1))
-      dz = dabs(zstore_glob_dp(iglob2) - zstore_glob_dp(iglob1))
-
-      ! determine smallest gap
-      if (dx > 0.d0 .and. dx < min_gap) min_gap = dx
-      if (dy > 0.d0 .and. dy < min_gap) min_gap = dy
-      if (dz > 0.d0 .and. dz < min_gap) min_gap = dz
-    enddo
-  endif
-
-  end subroutine test_MPI_interface_point_gap
