@@ -31,7 +31,8 @@
                                 my_neighbors,nibool_interfaces, &
                                 ibool_interfaces)
 
-  use constants
+  use constants, only: IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
+    IREGION_TRINFINITE,IREGION_INFINITE,IMAIN,itag
   use meshfem_par, only: NPROCTOT,myrank
 
   use MPI_crust_mantle_par, only: NGLOB_CRUST_MANTLE
@@ -814,3 +815,222 @@
   call synchronize_all()
 
   end subroutine test_MPI_inf
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine test_MPI_interfaces_matching(iregion_code, &
+                                          num_interfaces,max_nibool_interfaces, &
+                                          my_neighbors,nibool_interfaces, &
+                                          ibool_interfaces, &
+                                          NGLOB,xstore_glob,ystore_glob,zstore_glob)
+
+  use constants, only: myrank,CUSTOM_REAL,IMAIN,itag,SMALLVALTOL
+  use meshfem_par, only: NPROCTOT,R_PLANET
+
+  implicit none
+
+  integer,intent(in) :: iregion_code
+  integer,intent(in) :: num_interfaces,max_nibool_interfaces
+  integer,dimension(num_interfaces),intent(in) :: my_neighbors,nibool_interfaces
+  integer,dimension(max_nibool_interfaces,num_interfaces),intent(in) :: ibool_interfaces
+
+  integer,intent(in) :: NGLOB
+  double precision,dimension(NGLOB),intent(in) :: xstore_glob,ystore_glob,zstore_glob
+
+  ! local parameters
+  integer :: iinterface,ineighbor,npoin,npoin_other,ipoin,iglob,ier
+  integer, dimension(:), allocatable :: send_count,recv_count
+  integer, dimension(:), allocatable :: req_send,req_recv
+  double precision, dimension(:,:), allocatable :: send_coord,recv_coord
+  double precision :: dx,dy,dz,dist,max_dist,max_dist_all
+
+  ! checks if anything to do
+  if (NPROCTOT <= 1) return
+  if (num_interfaces <= 0) return
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  MPI interface matching:'
+    call flush_IMAIN()
+  endif
+
+  ! initializes
+  allocate(send_count(num_interfaces), &
+           recv_count(num_interfaces), &
+           req_send(num_interfaces), &
+           req_recv(num_interfaces), stat=ier)
+  if (ier /= 0) call exit_mpi(myrank,'Error test MPI matching: allocating count buffers')
+  send_count(:) = 0; recv_count(:) = 0
+  req_send(:) = 0; req_recv(:) = 0
+
+  ! send/receive point coordinates
+  allocate(send_coord(3*max_nibool_interfaces,num_interfaces), &
+           recv_coord(3*max_nibool_interfaces,num_interfaces),stat=ier)
+  if (ier /= 0) call exit_mpi(myrank,'Error test MPI matching: allocating coordinate buffers')
+  send_coord(:,:) = 0.d0; recv_coord(:,:) = 0.d0
+
+  ! fills count/coord arrays
+  ! loops over MPI interfaces
+  do iinterface = 1,num_interfaces
+    ineighbor = my_neighbors(iinterface)
+    npoin = nibool_interfaces(iinterface)
+
+    ! skip if no interface points
+    if (npoin <= 0) cycle
+
+    ! packs the sorted coordinates of the interface points
+    do ipoin = 1,npoin
+      iglob = ibool_interfaces(ipoin,iinterface)
+      send_coord(3*(ipoin-1) + 1,iinterface) = xstore_glob(iglob)
+      send_coord(3*(ipoin-1) + 2,iinterface) = ystore_glob(iglob)
+      send_coord(3*(ipoin-1) + 3,iinterface) = zstore_glob(iglob)
+    enddo
+
+    ! interface point count
+    send_count(iinterface) = npoin
+  enddo
+
+  ! exchanges counts
+  do iinterface = 1,num_interfaces
+    ineighbor = my_neighbors(iinterface)
+    npoin = nibool_interfaces(iinterface)
+
+    ! skip if no interface points
+    if (npoin <= 0) cycle
+
+    ! exchanges the number of interface points first
+    call irecv_i(recv_count(iinterface),1,ineighbor,itag,req_recv(iinterface))
+    call isend_i(send_count(iinterface),1,ineighbor,itag,req_send(iinterface))
+  enddo
+
+  ! wait for counts
+  do iinterface = 1,num_interfaces
+    npoin = nibool_interfaces(iinterface)
+
+    ! skip if no interface points
+    if (npoin <= 0) cycle
+
+    call wait_req(req_recv(iinterface))
+    call wait_req(req_send(iinterface))
+  enddo
+
+  ! checks interface point count
+  do iinterface = 1,num_interfaces
+    ineighbor = my_neighbors(iinterface)
+    npoin = nibool_interfaces(iinterface)
+
+    ! skip if no interface points
+    if (npoin <= 0) cycle
+
+    ! neighbor count
+    npoin_other = recv_count(iinterface)
+
+    ! check number of interface points
+    if (npoin_other /= npoin) then
+      print *,'Error test MPI matching: rank ',myrank,' neighbor ',ineighbor
+      print *,'  number of interface points: ',npoin,' (mine) ',npoin_other,' (neighbor)'
+      call exit_mpi(myrank,'Error test MPI: number of interface points differs')
+    endif
+  enddo
+
+  ! synchronizes all MPI processes
+  call synchronize_all()
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '    point counts match'
+    call flush_IMAIN()
+  endif
+
+  ! exchanges the sorted coordinates with the neighbor
+  do iinterface = 1,num_interfaces
+    ineighbor = my_neighbors(iinterface)
+    npoin = nibool_interfaces(iinterface)
+
+    ! skip if no interface points
+    if (npoin <= 0) cycle
+
+    ! exchange coordinates
+    call irecv_dp(recv_coord(1:3*npoin,iinterface),3*npoin,ineighbor,itag,req_recv(iinterface))
+    call isend_dp(send_coord(1:3*npoin,iinterface),3*npoin,ineighbor,itag,req_send(iinterface))
+  enddo
+
+  ! wait for coords
+  do iinterface = 1,num_interfaces
+    npoin = nibool_interfaces(iinterface)
+
+    ! skip if no interface points
+    if (npoin <= 0) cycle
+
+    call wait_req(req_recv(iinterface))
+    call wait_req(req_send(iinterface))
+  enddo
+
+  ! node distance to neighboring slice
+  max_dist = 0.d0
+
+  ! checks interface point coordinates
+  do iinterface = 1,num_interfaces
+    ineighbor = my_neighbors(iinterface)
+    npoin = nibool_interfaces(iinterface)
+
+    ! skip if no interface points
+    if (npoin <= 0) cycle
+
+    ! compares the sorted coordinates point by point
+    do ipoin = 1,npoin
+      iglob = ibool_interfaces(ipoin,iinterface)
+
+      dx = xstore_glob(iglob) - recv_coord(3*(ipoin-1) + 1,iinterface)
+      dy = ystore_glob(iglob) - recv_coord(3*(ipoin-1) + 2,iinterface)
+      dz = zstore_glob(iglob) - recv_coord(3*(ipoin-1) + 3,iinterface)
+
+      ! distance
+      dist = sqrt(dx*dx + dy*dy + dz*dz)
+
+      ! overall maximum distance
+      if (dist > max_dist) max_dist = dist
+
+      ! check distance
+      if (dist > SMALLVALTOL) then
+        print *,'Error test MPI matching: rank ',myrank,' neighbor ',ineighbor,' region ',iregion_code
+        print *,'  interface point ',ipoin,' match distance (to the neighbor point) ',dist, &
+                ' exceeds check tolerance ',SMALLVALTOL
+        print *,'  location (mine)    : x/y/z = ',xstore_glob(iglob),'/', &
+                                                  ystore_glob(iglob),'/', &
+                                                  zstore_glob(iglob)
+        print *,'           (neighbor): x/y/z = ',recv_coord(3*(ipoin-1)+1,iinterface),'/', &
+                                                  recv_coord(3*(ipoin-1)+2,iinterface),'/', &
+                                                  recv_coord(3*(ipoin-1)+3,iinterface)
+        call exit_mpi(myrank,'Error test MPI: interface points do not match')
+      endif
+    enddo
+  enddo
+
+  ! synchronizes all MPI processes
+  call synchronize_all()
+
+  ! report the worst-case distance across ranks (tracking, not fatal)
+  call max_all_dp(max_dist,max_dist_all)
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '    maximum shared point distance = ',max_dist_all
+    write(IMAIN,*) '                                  = ',max_dist_all * R_PLANET,'(m)'
+    write(IMAIN,*) '    interface match is okay'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  ! free temporary arrays
+  deallocate(send_count,recv_count)
+  deallocate(req_send,req_recv)
+  deallocate(send_coord,recv_coord)
+
+  ! synchronizes all MPI processes
+  call synchronize_all()
+
+  end subroutine test_MPI_interfaces_matching
+

@@ -198,6 +198,7 @@ program smooth_sem_globe
   ! debugging
   integer, dimension(:),allocatable :: ispec_flag
   !real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: tmp_bk
+  double precision, dimension(:), allocatable :: tmp_xstore_glob, tmp_ystore_glob, tmp_zstore_glob
   double precision :: memory_size
 
   ! timing
@@ -1163,10 +1164,15 @@ program smooth_sem_globe
 
           ! writes out vtk file for debugging
           write(filename,'(a,i4.4,a,i6.6)') trim(LOCAL_PATH)//'/search_elem',tmp_ispec_dbg,'_proc',iproc
-          call write_VTK_data_elem_i(NSPEC_AB,NGLOB_AB,xstore,ystore,zstore, &
+
+          allocate(tmp_xstore_glob(NGLOB_AB),tmp_ystore_glob(NGLOB_AB),tmp_zstore_glob(NGLOB_AB))
+          tmp_xstore_glob = dble(xstore); tmp_ystore_glob = dble(ystore); tmp_zstore_glob = dble(zstore)
+
+          call write_VTK_data_elem_i(NSPEC_AB,NGLOB_AB,tmp_xstore_glob,tmp_ystore_glob,tmp_zstore_glob, &
                                      ibool,ispec_flag,filename)
 
           print *,'file written: ',trim(filename)//'.vtk'
+          deallocate(tmp_xstore_glob,tmp_ystore_glob,tmp_zstore_glob)
           deallocate(ispec_flag)
         endif
       endif

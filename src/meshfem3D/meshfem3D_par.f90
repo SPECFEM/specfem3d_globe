@@ -218,7 +218,7 @@
   double precision, dimension(:,:,:,:), allocatable :: xstore,ystore,zstore
 
   ! temporary arrays with mesh only on global points
-  real(kind=CUSTOM_REAL), dimension(:),allocatable :: xstore_glob,ystore_glob,zstore_glob
+  double precision, dimension(:),allocatable :: xstore_glob,ystore_glob,zstore_glob
 
   ! parameters needed to store the radii of the grid points
   ! in the spherically symmetric Earth

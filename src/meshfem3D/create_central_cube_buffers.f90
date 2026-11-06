@@ -61,7 +61,7 @@
   ! local to global mapping
   integer, dimension(NSPEC_INNER_CORE), intent(in) :: idoubling_inner_core
 
-  real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE), intent(in) :: xstore_inner_core,ystore_inner_core,zstore_inner_core
+  double precision, dimension(NGLOB_INNER_CORE), intent(in) :: xstore_inner_core,ystore_inner_core,zstore_inner_core
 
   ! boundary parameters locator
   integer, intent(in) :: nspec2D_xmin_inner_core,nspec2D_xmax_inner_core,nspec2D_ymin_inner_core,nspec2D_ymax_inner_core
@@ -307,9 +307,9 @@
         do i = 1,NGLLX
           ipoin = ipoin + 1
           iglob = ibool_inner_core(i,j,k,ispec)
-          buffer_slices(ipoin,1) = dble(xstore_inner_core(iglob))
-          buffer_slices(ipoin,2) = dble(ystore_inner_core(iglob))
-          buffer_slices(ipoin,3) = dble(zstore_inner_core(iglob))
+          buffer_slices(ipoin,1) = xstore_inner_core(iglob)
+          buffer_slices(ipoin,2) = ystore_inner_core(iglob)
+          buffer_slices(ipoin,3) = zstore_inner_core(iglob)
         enddo
       enddo
     enddo
@@ -337,9 +337,9 @@
           do i = 1,NGLLX
             ipoin = ipoin + 1
             iglob = ibool_inner_core(i,j,k,ispec)
-            buffer_slices(ipoin,1) = dble(xstore_inner_core(iglob))
-            buffer_slices(ipoin,2) = dble(ystore_inner_core(iglob))
-            buffer_slices(ipoin,3) = dble(zstore_inner_core(iglob))
+            buffer_slices(ipoin,1) = xstore_inner_core(iglob)
+            buffer_slices(ipoin,2) = ystore_inner_core(iglob)
+            buffer_slices(ipoin,3) = zstore_inner_core(iglob)
           enddo
         enddo
       endif
@@ -384,9 +384,9 @@
         do k = 1,NGLLZ
           do j = 1,NGLLY
            iglob = ibool_inner_core(i,j,k,ispec)
-           x_current = dble(xstore_inner_core(iglob))
-           y_current = dble(ystore_inner_core(iglob))
-           z_current = dble(zstore_inner_core(iglob))
+           x_current = xstore_inner_core(iglob)
+           y_current = ystore_inner_core(iglob)
+           z_current = zstore_inner_core(iglob)
            ! look for matching point
            if (dsqrt((x_current-x_target)**2 + (y_current-y_target)**2 + (z_current-z_target)**2) < SMALLVALTOL) then
              ibool_central_cube(imsg,ipoin) = ibool_inner_core(i,j,k,ispec)
@@ -409,9 +409,9 @@
         do k = 1,NGLLZ
           do j = 1,NGLLY
             iglob = ibool_inner_core(i,j,k,ispec)
-            x_current = dble(xstore_inner_core(iglob))
-            y_current = dble(ystore_inner_core(iglob))
-            z_current = dble(zstore_inner_core(iglob))
+            x_current = xstore_inner_core(iglob)
+            y_current = ystore_inner_core(iglob)
+            z_current = zstore_inner_core(iglob)
             ! look for matching point
             if (dsqrt((x_current-x_target)**2 + (y_current-y_target)**2 + (z_current-z_target)**2) < SMALLVALTOL) then
               ibool_central_cube(imsg,ipoin) = ibool_inner_core(i,j,k,ispec)
@@ -434,9 +434,9 @@
         do k = 1,NGLLZ
           do i = 1,NGLLX
             iglob = ibool_inner_core(i,j,k,ispec)
-            x_current = dble(xstore_inner_core(iglob))
-            y_current = dble(ystore_inner_core(iglob))
-            z_current = dble(zstore_inner_core(iglob))
+            x_current = xstore_inner_core(iglob)
+            y_current = ystore_inner_core(iglob)
+            z_current = zstore_inner_core(iglob)
             ! look for matching point
             if (dsqrt((x_current-x_target)**2 + (y_current-y_target)**2 + (z_current-z_target)**2) < SMALLVALTOL) then
               ibool_central_cube(imsg,ipoin) = ibool_inner_core(i,j,k,ispec)
@@ -459,9 +459,9 @@
         do k = 1,NGLLZ
           do i = 1,NGLLX
             iglob = ibool_inner_core(i,j,k,ispec)
-            x_current = dble(xstore_inner_core(iglob))
-            y_current = dble(ystore_inner_core(iglob))
-            z_current = dble(zstore_inner_core(iglob))
+            x_current = xstore_inner_core(iglob)
+            y_current = ystore_inner_core(iglob)
+            z_current = zstore_inner_core(iglob)
             ! look for matching point
             if (dsqrt((x_current-x_target)**2 + (y_current-y_target)**2 + (z_current-z_target)**2) < SMALLVALTOL) then
               ibool_central_cube(imsg,ipoin) = ibool_inner_core(i,j,k,ispec)
@@ -479,9 +479,9 @@
         do j = 1,NGLLY
           do i = 1,NGLLX
             iglob = ibool_inner_core(i,j,k,ispec)
-            x_current = dble(xstore_inner_core(iglob))
-            y_current = dble(ystore_inner_core(iglob))
-            z_current = dble(zstore_inner_core(iglob))
+            x_current = xstore_inner_core(iglob)
+            y_current = ystore_inner_core(iglob)
+            z_current = zstore_inner_core(iglob)
             ! look for matching point
             if (dsqrt((x_current-x_target)**2 + (y_current-y_target)**2 + (z_current-z_target)**2) < SMALLVALTOL) then
               ibool_central_cube(imsg,ipoin) = ibool_inner_core(i,j,k,ispec)
@@ -524,9 +524,9 @@
             do j = 1,NGLLY
               do i = 1,NGLLX
                 iglob = ibool_inner_core(i,j,k,ispec)
-                x_current = dble(xstore_inner_core(iglob))
-                y_current = dble(ystore_inner_core(iglob))
-                z_current = dble(zstore_inner_core(iglob))
+                x_current = xstore_inner_core(iglob)
+                y_current = ystore_inner_core(iglob)
+                z_current = zstore_inner_core(iglob)
                 ! look for matching point
                 if (dsqrt((x_current-x_target)**2 + (y_current-y_target)**2 + (z_current-z_target)**2) < SMALLVALTOL) then
                   ibool_central_cube(imsg,ipoin) = 0

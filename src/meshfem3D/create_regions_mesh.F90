@@ -1378,11 +1378,11 @@
   allocate(xstore_glob(nglob),ystore_glob(nglob),zstore_glob(nglob),stat=ier)
   if (ier /= 0) call exit_mpi(myrank,'Error allocating temporary global mesh arrays')
 
-  xstore_glob(:) = 0._CUSTOM_REAL
-  ystore_glob(:) = 0._CUSTOM_REAL
-  zstore_glob(:) = 0._CUSTOM_REAL
+  xstore_glob(:) = 0.d0
+  ystore_glob(:) = 0.d0
+  zstore_glob(:) = 0.d0
 
-  ! fill CUSTOM_REAL arrays
+  ! fill arrays
   do ispec = 1,nspec
     do k = 1,NGLLZ
       do j = 1,NGLLY
@@ -1394,10 +1394,10 @@
             stop 'Error fill global meshes has invalid iglob index'
           endif
 
-          ! distinguish between single and double precision for reals
-          xstore_glob(iglob) = real(xstore(i,j,k,ispec), kind=CUSTOM_REAL)
-          ystore_glob(iglob) = real(ystore(i,j,k,ispec), kind=CUSTOM_REAL)
-          zstore_glob(iglob) = real(zstore(i,j,k,ispec), kind=CUSTOM_REAL)
+          ! store global node (last-only fill)
+          xstore_glob(iglob) = xstore(i,j,k,ispec)
+          ystore_glob(iglob) = ystore(i,j,k,ispec)
+          zstore_glob(iglob) = zstore(i,j,k,ispec)
         enddo
       enddo
     enddo

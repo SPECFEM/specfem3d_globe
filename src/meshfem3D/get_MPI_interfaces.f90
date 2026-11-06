@@ -31,9 +31,9 @@
                                 max_nibool,MAX_NEIGHBORS, &
                                 ibool,is_on_a_slice_edge, &
                                 IREGION,add_central_cube,idoubling,INCLUDE_CENTRAL_CUBE, &
-                                xstore,ystore,zstore,NPROCTOT)
+                                xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,IREGION_INNER_CORE,IFLAG_IN_FICTITIOUS_CUBE
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,IREGION_INNER_CORE,IFLAG_IN_FICTITIOUS_CUBE,IMAIN
   implicit none
 
   integer,intent(in) :: myrank,NGLOB,NSPEC
@@ -56,7 +56,7 @@
 
   logical,intent(in) :: INCLUDE_CENTRAL_CUBE
 
-  real(kind=CUSTOM_REAL),dimension(NGLOB),intent(in) :: xstore,ystore,zstore
+  double precision,dimension(NGLOB),intent(in) :: xstore_glob,ystore_glob,zstore_glob
 
   integer,intent(in) :: NPROCTOT
 
@@ -590,7 +590,7 @@
     ! sort buffer obtained to be conforming with neighbor in other chunk
     npoin = nibool_neighbors(iinterface)
     call sort_MPI_interface(myrank,npoin,ibool_neighbors(1:npoin,iinterface), &
-                                NGLOB,xstore,ystore,zstore)
+                            NGLOB,xstore_glob,ystore_glob,zstore_glob)
 
   enddo
 
@@ -608,7 +608,7 @@
 !
 
   subroutine sort_MPI_interface(myrank,npoin,ibool_n, &
-                                NGLOB,xstore,ystore,zstore)
+                                NGLOB,xstore_glob,ystore_glob,zstore_glob)
 
   use constants, only: CUSTOM_REAL
 
@@ -618,7 +618,7 @@
   integer,dimension(npoin),intent(inout) :: ibool_n
 
   integer,intent(in) :: NGLOB
-  real(kind=CUSTOM_REAL), dimension(NGLOB) :: xstore,ystore,zstore
+  double precision,dimension(NGLOB),intent(in) :: xstore_glob,ystore_glob,zstore_glob
 
   ! local parameters
   ! arrays for sorting routine
@@ -639,16 +639,21 @@
            ifseg(npoin),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error sort MPI interface: allocating temporary sorting arrays')
 
-  ! sets up working arrays
+  ! sets up working arrays for interface points
   do i = 1,npoin
     ipoin = ibool_n(i)
 
     ibool_selected(i) = ipoin
 
-    xstore_selected(i) = dble(xstore(ipoin))
-    ystore_selected(i) = dble(ystore(ipoin))
-    zstore_selected(i) = dble(zstore(ipoin))
+    xstore_selected(i) = xstore_glob(ipoin)
+    ystore_selected(i) = ystore_glob(ipoin)
+    zstore_selected(i) = zstore_glob(ipoin)
   enddo
+
+  ! note: the order produced here must match with the neighbor rank,
+  !       that is both sides must sort the coordinates into the same order.
+  !
+  !       this is using locations from double-precision values for better accuracy.
 
   ! sort buffer obtained to be conforming with neighbor in other chunk
   ! sort on x, y and z, the other arrays will be swapped as well
@@ -662,9 +667,8 @@
   ibool_n(1:npoin) = ibool_selected(1:npoin)
 
   ! frees array memory
-  deallocate(ibool_selected,xstore_selected,ystore_selected,zstore_selected, &
-             ninseg,iglob,locval,ifseg)
-
+  deallocate(ibool_selected,xstore_selected,ystore_selected,zstore_selected)
+  deallocate(ninseg,iglob,locval,ifseg)
 
   end subroutine sort_MPI_interface
 
