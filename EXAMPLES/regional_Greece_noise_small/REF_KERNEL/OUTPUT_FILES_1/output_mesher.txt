@@ -44,6 +44,7 @@
    no inner-core anisotropy
    no general mantle anisotropy
 
+
  Reference radius of the globe used is    6371.0000000000000       km
 
  Central cube is at a radius of    935.00000000000000       km
@@ -56,10 +57,11 @@
 
    topography/bathymetry: min/max =        -7747        5507
 
-   Elapsed time for reading in seconds =    5.2094000000000001E-002
+   Elapsed time for reading in seconds =    1.89830009E-02
 
  attenuation model:
    1D reference model
+
    model: PREM attenuation
 
  additional mesh optimizations
@@ -117,41 +119,43 @@
    ...setting up layers
 
    ...creating mesh elements
+   current clock time is: 20h 13min 02sec
+
    creating layer            1 out of           11
      number of regular elements  =            0
      number of doubling elements =         1008
-      9.1%    current clock (NOT elapsed) time is: 16h 51min 54sec
+      9.1%    elapsed time:     0.0 s - estimated total time:     0.0 s
    creating layer            2 out of           11
      number of regular elements  =          288
-     18.2%    current clock (NOT elapsed) time is: 16h 51min 54sec
+     18.2%    elapsed time:     0.0 s - estimated total time:     0.0 s
    creating layer            3 out of           11
      number of regular elements  =           72
-     27.3%    current clock (NOT elapsed) time is: 16h 51min 54sec
+     27.3%    elapsed time:     0.0 s - estimated total time:     0.0 s
    creating layer            4 out of           11
      number of regular elements  =          360
      number of doubling elements =          288
-     36.4%    current clock (NOT elapsed) time is: 16h 51min 54sec
+     36.4%    elapsed time:     0.0 s - estimated total time:     0.0 s
    creating layer            5 out of           11
      number of regular elements  =         1296
-     45.5%    current clock (NOT elapsed) time is: 16h 51min 54sec
+     45.5%    elapsed time:     0.0 s - estimated total time:     0.0 s
    creating layer            6 out of           11
      number of regular elements  =          144
-     54.5%    current clock (NOT elapsed) time is: 16h 51min 54sec
+     54.5%    elapsed time:     0.0 s - estimated total time:     0.0 s
    creating layer            7 out of           11
      number of regular elements  =          144
-     63.6%    current clock (NOT elapsed) time is: 16h 51min 54sec
+     63.6%    elapsed time:     0.0 s - estimated total time:     0.0 s
    creating layer            8 out of           11
      number of regular elements  =          288
-     72.7%    current clock (NOT elapsed) time is: 16h 51min 54sec
+     72.7%    elapsed time:     0.0 s - estimated total time:     0.0 s
    creating layer            9 out of           11
      number of regular elements  =          288
-     81.8%    current clock (NOT elapsed) time is: 16h 51min 54sec
+     81.8%    elapsed time:     0.0 s - estimated total time:     0.0 s
    creating layer           10 out of           11
      number of regular elements  =          576
-     90.9%    current clock (NOT elapsed) time is: 16h 51min 54sec
+     90.9%    elapsed time:     0.0 s - estimated total time:     0.0 s
    creating layer           11 out of           11
      number of regular elements  =          576
-    100.0%    current clock (NOT elapsed) time is: 16h 51min 54sec
+    100.0%    elapsed time:     0.0 s - estimated total time:     0.0 s
    layers done
 
    number of elements (per slice)        =         5328
@@ -174,41 +178,43 @@
    ...setting up layers
 
    ...creating mesh elements
+   current clock time is: 20h 13min 02sec
+
    creating layer            1 out of           11
      number of regular elements  =            0
      number of doubling elements =         1008
-      9.1%    current clock (NOT elapsed) time is: 16h 51min 54sec
+      9.1%    elapsed time:     0.0 s - estimated total time:     0.2 s
    creating layer            2 out of           11
      number of regular elements  =          288
-     18.2%    current clock (NOT elapsed) time is: 16h 51min 54sec
+     18.2%    elapsed time:     0.1 s - estimated total time:     0.2 s
    creating layer            3 out of           11
      number of regular elements  =           72
-     27.3%    current clock (NOT elapsed) time is: 16h 51min 54sec
+     27.3%    elapsed time:     0.1 s - estimated total time:     0.2 s
    creating layer            4 out of           11
      number of regular elements  =          360
      number of doubling elements =          288
-     36.4%    current clock (NOT elapsed) time is: 16h 51min 54sec
+     36.4%    elapsed time:     0.1 s - estimated total time:     0.2 s
    creating layer            5 out of           11
      number of regular elements  =         1296
-     45.5%    current clock (NOT elapsed) time is: 16h 51min 54sec
+     45.5%    elapsed time:     0.1 s - estimated total time:     0.2 s
    creating layer            6 out of           11
      number of regular elements  =          144
-     54.5%    current clock (NOT elapsed) time is: 16h 51min 54sec
+     54.5%    elapsed time:     0.1 s - estimated total time:     0.2 s
    creating layer            7 out of           11
      number of regular elements  =          144
-     63.6%    current clock (NOT elapsed) time is: 16h 51min 54sec
+     63.6%    elapsed time:     0.1 s - estimated total time:     0.2 s
    creating layer            8 out of           11
      number of regular elements  =          288
-     72.7%    current clock (NOT elapsed) time is: 16h 51min 54sec
+     72.7%    elapsed time:     0.2 s - estimated total time:     0.2 s
    creating layer            9 out of           11
      number of regular elements  =          288
-     81.8%    current clock (NOT elapsed) time is: 16h 51min 54sec
+     81.8%    elapsed time:     0.2 s - estimated total time:     0.2 s
    creating layer           10 out of           11
      number of regular elements  =          576
-     90.9%    current clock (NOT elapsed) time is: 16h 51min 54sec
+     90.9%    elapsed time:     0.2 s - estimated total time:     0.2 s
    creating layer           11 out of           11
      number of regular elements  =          576
-    100.0%    current clock (NOT elapsed) time is: 16h 51min 54sec
+    100.0%    elapsed time:     0.2 s - estimated total time:     0.2 s
    layers done
 
    number of elements (per slice)        =         5328
@@ -228,18 +234,18 @@
    Max Vp =    13.7166214      (km/s)
 
    Max element edge size =    140.770157      (km)
-   Min element edge size =    9.22850227      (km)
-   Max/min ratio =    15.2538462
+   Min element edge size =    9.22890472      (km)
+   Max/min ratio =    15.2531815
 
-   Max Jacobian eigenvalue ratio =   0.996704221
-   Min Jacobian eigenvalue ratio =   0.131029740
+   Max Jacobian eigenvalue ratio =   0.997195244
+   Min Jacobian eigenvalue ratio =   0.135530382
 
    Minimum period resolved =    23.7204380      (s)
    Minimum period resolved (empirical) =    20.5916538      (s)
    Maximum suggested time step =   0.125000000      (s)
 
    for DT :   0.165000007      (s)
-   Max stability for wave velocities =   0.704104006
+   Max stability for wave velocities =   0.704073310
  ----------------------------------
 
 
@@ -275,6 +281,12 @@
    MPI addressing maximum interfaces:           3
    MPI addressing : all interfaces okay
 
+   MPI interface matching:
+     point counts match
+     maximum shared point distance =    1.6653345369377348E-016
+                                   =    1.0609846334830308E-009 (m)
+     interface match is okay
+
    total MPI interface points :        51276
    unique MPI interface points:        50180
    maximum valence            :            3
@@ -283,25 +295,24 @@
 
    ...element inner/outer separation
 
- for overlapping of communications with calculations:
+   for overlapping of communications with calculations:
+   percentage of edge elements in crust/mantle    14.7147150     %
+   percentage of volume elements in crust/mantle    85.2852859     %
 
- percentage of edge elements in crust/mantle    14.7147150     %
- percentage of volume elements in crust/mantle    85.2852859     %
 
-
-   ...element mesh coloring
-      mesh coloring:  F
+   ...element mesh permutation
 
    ...creating absorbing boundary arrays
 
    ...creating mass matrix
       updates mass matrix with Stacey boundary corrections
       updates mass matrix with ocean load
+        using minimum ocean thickness:    50.000000000000000      (m)
 
    ...saving binary files
 
- calculated region volume:    3.36249024E-02
-                 top area:   0.120567955
+ calculated region volume:    3.36249284E-02
+                 top area:   0.120567575
               bottom area:    3.59788574E-02
 
  *******************************************
@@ -317,13 +328,15 @@
    ...setting up layers
 
    ...creating mesh elements
+   current clock time is: 20h 13min 02sec
+
    creating layer            1 out of            2
      number of regular elements  =           90
      number of doubling elements =           72
-     50.0%    current clock (NOT elapsed) time is: 16h 51min 55sec
+     50.0%    elapsed time:     0.0 s - estimated total time:     0.0 s
    creating layer            2 out of            2
      number of regular elements  =          324
-    100.0%    current clock (NOT elapsed) time is: 16h 51min 55sec
+    100.0%    elapsed time:     0.0 s - estimated total time:     0.0 s
    layers done
 
    number of elements (per slice)        =          486
@@ -346,13 +359,15 @@
    ...setting up layers
 
    ...creating mesh elements
+   current clock time is: 20h 13min 02sec
+
    creating layer            1 out of            2
      number of regular elements  =           90
      number of doubling elements =           72
-     50.0%    current clock (NOT elapsed) time is: 16h 51min 55sec
+     50.0%    elapsed time:     0.0 s - estimated total time:     0.0 s
    creating layer            2 out of            2
      number of regular elements  =          324
-    100.0%    current clock (NOT elapsed) time is: 16h 51min 55sec
+    100.0%    elapsed time:     0.0 s - estimated total time:     0.0 s
    layers done
 
    number of elements (per slice)        =          486
@@ -383,7 +398,7 @@
    Maximum suggested time step =   0.529999971      (s)
 
    for DT :   0.165000007      (s)
-   Max stability for wave velocities =   0.170376599
+   Max stability for wave velocities =   0.170376614
  ----------------------------------
 
 
@@ -419,6 +434,12 @@
    MPI addressing maximum interfaces:           3
    MPI addressing : all interfaces okay
 
+   MPI interface matching:
+     point counts match
+     maximum shared point distance =    8.3266726846886741E-017
+                                   =    5.3049231674151542E-010 (m)
+     interface match is okay
+
    total MPI interface points :        14108
    unique MPI interface points:        13364
    maximum valence            :            3
@@ -426,12 +447,13 @@
 
 
    ...element inner/outer separation
- percentage of edge elements in outer core    36.6255150     %
- percentage of volume elements in outer core    63.3744850     %
+
+   for overlapping of communications with calculations:
+   percentage of edge elements in outer core    36.6255150     %
+   percentage of volume elements in outer core    63.3744850     %
 
 
-   ...element mesh coloring
-      mesh coloring:  F
+   ...element mesh permutation
 
    ...creating absorbing boundary arrays
 
@@ -457,9 +479,11 @@
    ...setting up layers
 
    ...creating mesh elements
+   current clock time is: 20h 13min 02sec
+
    creating layer            1 out of            1
      number of regular elements  =           27
-    100.0%    current clock (NOT elapsed) time is: 16h 51min 55sec
+    100.0%    elapsed time:     0.0 s - estimated total time:     0.0 s
    layers done
 
    number of elements (per slice)        =           27
@@ -482,9 +506,11 @@
    ...setting up layers
 
    ...creating mesh elements
+   current clock time is: 20h 13min 02sec
+
    creating layer            1 out of            1
      number of regular elements  =           27
-    100.0%    current clock (NOT elapsed) time is: 16h 51min 55sec
+    100.0%    elapsed time:     0.0 s - estimated total time:     0.0 s
    layers done
 
    number of elements (per slice)        =           27
@@ -551,6 +577,12 @@
    MPI addressing maximum interfaces:           3
    MPI addressing : all interfaces okay
 
+   MPI interface matching:
+     point counts match
+     maximum shared point distance =    3.1031676915590914E-017
+                                   =    1.9770281362922971E-010 (m)
+     interface match is okay
+
    total MPI interface points :         1404
    unique MPI interface points:         1300
    maximum valence            :            3
@@ -558,12 +590,13 @@
 
 
    ...element inner/outer separation
- percentage of edge elements in inner core    55.5555573     %
- percentage of volume elements in inner core    44.4444427     %
+
+   for overlapping of communications with calculations:
+   percentage of edge elements in inner core    55.5555573     %
+   percentage of volume elements in inner core    44.4444427     %
 
 
-   ...element mesh coloring
-      mesh coloring:  F
+   ...element mesh permutation
 
    ...creating absorbing boundary arrays
 
@@ -581,7 +614,7 @@
 
  finalizing simulation:
 
- calculated volume:    4.0047468185913218E-002
+ calculated volume:    4.0047492820308721E-002
 
  Repartition of elements in regions:
  ----------------------------------
@@ -605,7 +638,7 @@
  smallest and largest possible floating-point numbers are:    1.17549435E-38   3.40282347E+38
 
 
- Elapsed time for mesh generation and buffer creation in seconds =   0.778747022
+ Elapsed time for mesh generation and buffer creation in seconds =   0.744009972
  Elapsed time for mesh generation and buffer creation in hh:mm:ss =    0 h 00 m 00 s
 
  End of mesh generation

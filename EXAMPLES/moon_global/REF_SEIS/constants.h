@@ -48,12 +48,47 @@
 
 !*********************************************************************************************************
 
+!!-----------------------------------------------------------
+!!
+!! Gauss-Lobatto-Legendre resolution
+!!
+!!-----------------------------------------------------------
+! number of GLL points in each direction of an element (degree plus one)
+  integer, parameter :: NGLLX = 5
+  integer, parameter :: NGLLY = NGLLX
+  integer, parameter :: NGLLZ = NGLLX
+
+
+!!-----------------------------------------------------------
+!!
+!! Energy
+!!
+!!-----------------------------------------------------------
 !! added this temporarily here to make SPECFEM3D and SPECFEM3D_GLOBE much more similar
 !! in terms of the structure of their main time iteration loop; these are future features
 !! that are missing in this code but implemented in the other and that could thus be cut and pasted one day
   logical, parameter :: OUTPUT_ENERGY = .false.
   integer, parameter :: IOUT_ENERGY = 937  ! file number for the energy file
   logical, parameter :: GRAVITY_SIMULATION = .false.
+
+
+!!-----------------------------------------------------------
+!!
+!! new version compatibility
+!!
+!!-----------------------------------------------------------
+! for comparison against older versions
+! in version 7.0: tiso was constrained to below moho, new version allows also in crust
+! in version 8.0: conversions between geodetic & geocentric latitudes were always applied,
+!                 and additional differences in 1-chunk centering & source positioning
+  logical, parameter :: USE_OLD_VERSION_FORMAT = .false.
+
+
+!!-----------------------------------------------------------
+!!
+!! I/O
+!!
+!!-----------------------------------------------------------
 
 ! if files on a local path on each node are also seen as global with same path
 ! set to .true. typically on a machine with a common (shared) file system, e.g. LUSTRE, GPFS or NFS-mounted /home
@@ -156,7 +191,7 @@
   character (len=*), parameter :: PATHNAME_TOPO_FILE_1 = &
     'DATA/topo_bathy/topo_bathy_etopo1_ice_c_smoothed_window_3.bin'
 
-!--- Default
+!!--- Default
 ! Topography defaults to ETOPO4
   integer, parameter :: EARTH_NX_BATHY = NX_BATHY_4
   integer, parameter :: EARTH_NY_BATHY = NY_BATHY_4
@@ -206,6 +241,41 @@
 
 !!-----------------------------------------------------------
 !!
+!! for Berkeley model
+!!
+!!-----------------------------------------------------------
+
+! Path to A3d model
+! Make sure this line ends on "/"
+  character (len=*), parameter :: A3d_folder = "DATA/SEMUCB_A3d/"
+
+! topography model
+!!--- ETOPO1 5 - Berkeley filtered
+! size of topography and bathymetry file
+! note: NX = 360     to match longitude range [0,360[ , i.e., 0,1,2,..,359
+!       NY = 180 + 1 to match colatitude range [0,180], i.e., 0,1,2,..,180
+  integer, parameter :: NX_BATHY_BERKELEY = 360,NY_BATHY_BERKELEY = 181
+! resolution of topography file in minutes (1 degree == 60 minutes)
+  integer, parameter :: RESOLUTION_TOPO_FILE_BERKELEY = 60
+! pathname of the topography file (un-smoothed)
+  character (len=*), parameter :: PATHNAME_TOPO_FILE_BERKELEY = trim(A3d_folder)//"ETOPO5_1x1_filtre.dat"
+
+!! uncomment this only to use Berkeley topography as default for all other Earth models as well
+!! note: Berkeley topography setting is used by default for SEMUCB model (see in get_model_parameters.F90 file).
+!!       uncommenting the lines below here (- and commenting out corresponding parameters in the topo/bathy section above)
+!!       will force the Berkeley topo to be used as the default topography for all Earth models.
+!! Topography defaults to Berkeley
+!  integer, parameter :: EARTH_NX_BATHY = NX_BATHY_BERKELEY
+!  integer, parameter :: EARTH_NY_BATHY = NY_BATHY_BERKELEY
+!  double precision, parameter :: EARTH_RESOLUTION_TOPO_FILE = RESOLUTION_TOPO_FILE_BERKELEY
+!  character (len=*), parameter :: EARTH_PATHNAME_TOPO_FILE = PATHNAME_TOPO_FILE_BERKELEY
+
+! Save mirror files - not implemented yet
+!  logical, parameter :: SAVE_MIRRORS = .false.
+
+
+!!-----------------------------------------------------------
+!!
 !! for crustal model
 !!
 !!-----------------------------------------------------------
@@ -225,18 +295,6 @@
   logical, parameter :: INCLUDE_SEDIMENTS_IN_CRUST = .true.
   logical, parameter :: INCLUDE_ICE_IN_CRUST       = .false. ! always set this to false except for gravity integral calculations
   double precision, parameter :: MINIMUM_SEDIMENT_THICKNESS = 2.d0 ! minimim thickness in km
-
-
-!!-----------------------------------------------------------
-!!
-!! Gauss-Lobatto-Legendre resolution
-!!
-!!-----------------------------------------------------------
-
-! number of GLL points in each direction of an element (degree plus one)
-  integer, parameter :: NGLLX = 5
-  integer, parameter :: NGLLY = NGLLX
-  integer, parameter :: NGLLZ = NGLLX
 
 
 !!-----------------------------------------------------------
@@ -881,6 +939,8 @@
   integer, parameter :: REFERENCE_MODEL_JP1D       = 7
   integer, parameter :: REFERENCE_MODEL_SEA1D      = 8
   integer, parameter :: REFERENCE_MODEL_CCREM      = 9
+  integer, parameter :: REFERENCE_MODEL_SEMUCB     = 10   ! Berkeley reference model
+
   ! Mars
   integer, parameter :: REFERENCE_MODEL_SOHL       = 101
   integer, parameter :: REFERENCE_MODEL_SOHL_B     = 102
@@ -902,6 +962,7 @@
   integer, parameter :: ICRUST_BKMNS_GLAD  = 8    ! Block Mantle Spherical-Harmonics model
   integer, parameter :: ICRUST_SPIRAL      = 9    ! SPiRaL
   integer, parameter :: ICRUST_SH_MARS     = 10   ! SH mars models (define crust & mantle values)
+  integer, parameter :: ICRUST_BERKELEY    = 11   ! Berkeley crustal model
 
 ! define flag for 3D Earth model
   integer, parameter :: THREE_D_MODEL_S20RTS        = 101
@@ -924,6 +985,9 @@
   integer, parameter :: THREE_D_MODEL_SPIRAL        = 118
   integer, parameter :: THREE_D_MODEL_HETEROGEN_PREM = 119
   integer, parameter :: THREE_D_MODEL_SH_MARS       = 120
+  integer, parameter :: THREE_D_MODEL_BERKELEY      = 121
+  integer, parameter :: THREE_D_MODEL_BERKELEY_AZIM = 122
+
   ! inner core model
   integer, parameter :: THREE_D_MODEL_INNER_CORE_ISHII = 201
 
@@ -1008,8 +1072,12 @@
   integer, parameter :: NUM_ITER = 5
 
 ! number of hours per day for rotation rate of the Earth
+! Solar day is 24 * 3600 s
   double precision, parameter :: EARTH_HOURS_PER_DAY = 24.d0
   double precision, parameter :: EARTH_SECONDS_PER_HOUR = 3600.d0
+! Sidereal day is ~86,164.0905 s ~ 23 h 56 min 4.0905 s or 23.9344696 h
+!  double precision, parameter :: EARTH_HOURS_PER_DAY = 23.9344696d0
+!  double precision, parameter :: EARTH_SECONDS_PER_HOUR = 3600.d0
 
 ! for lookup table for gravity every 100 m in radial direction of Earth model
   integer, parameter :: NRAD_GRAVITY = 70000
@@ -1024,7 +1092,7 @@
 ! parameters for GLL model (used for iterative model inversions)
   character(len=*), parameter :: PATHNAME_GLL_modeldir = 'DATA/GLL/'
 
-! to create a reference model based on 1D_REF but with 3D crust and 410/660 topography
+! to create a reference model based on the 1D reference model but with 3D crust and 410/660 topography
   logical,parameter :: USE_1D_REFERENCE = .false.
 
 !!-- uncomment for using PREM as reference model (used in CEM inversion)
@@ -1318,39 +1386,41 @@
 !!
 !!-----------------------------------------------------------
 
-! transition-to-infinite and inifinite regions
+! transition-to-infinite and infinite regions
   logical, parameter :: ADD_TRINF = .true.
-
   integer, parameter :: NLAYER_TRINF = 10           ! default 10
-  !!integer, parameter :: NREGIONS_INF = 2            ! this must be: 2 == transition infinite + infinite
-  !!integer, parameter :: NUM_REGIONS_ALL = 5        ! this must be == MAX_NUM_REGIONS == 5 == 3 + NREGIONS_INF == 3 + 2
+
+! pole position for infinite element region
+! center of the Earth
+  double precision, dimension(NDIM), parameter :: POLE_INF = (/ 0.d0, 0.d0, 0.d0 /)
+! or
+!! center of the source or disturbance
+!!  double precision, dimension(NDIM), parameter :: POLE_INF = (/ -0.6334289d0, 0.4764568d0, 0.6045561d0 /)
 
 ! degrees of freedoms
   integer, parameter :: NNDOFU   = 0 ! displacement components
   integer, parameter :: NNDOFCHI = 0 ! displacement potential
   integer, parameter :: NNDOFP   = 0 ! pressure
   integer, parameter :: NNDOFPHI = 1 ! gravitational potential
-  integer, parameter :: NNDOF    = NNDOFU + NNDOFCHI + NNDOFP + NNDOFPHI ! all nodal freedoms
+
+! all nodal freedoms
+  integer, parameter :: NNDOF    = NNDOFU + NNDOFCHI + NNDOFP + NNDOFPHI
 
 ! number of GLL points in each direction of an element (degree plus one)
-  integer, parameter :: NGLLX1 = 3
-  integer, parameter :: NGLLY1 = NGLLX1
-  integer, parameter :: NGLLZ1 = NGLLX1
-  integer, parameter :: NGLLCUBE1 = NGLLX1 * NGLLY1 * NGLLZ1
-
-  !integer, parameter :: NGLLZ_INF = 3        ! this is always 3
-  !integer, parameter :: NGLL = NGLLCUBE      ! NGLLX*NGLLY*NGLLZ!, NGLL_INF=NGLLX*NGLLY*NGLLZ_INF
-  !integer, parameter :: NGLLXY = NGLLSQUARE  ! NGLLX*NGLLY
-  !integer, parameter :: NSUBHEX = (NGLLX-1)*(NGLLY-1)*(NGLLZ-1)
+  integer, parameter :: NGLLX_INF = 3
+  integer, parameter :: NGLLY_INF = NGLLX_INF
+  integer, parameter :: NGLLZ_INF = NGLLX_INF
+  integer, parameter :: NGLLCUBE_INF = NGLLX_INF * NGLLY_INF * NGLLZ_INF
 
 !------------------------------------------------------------
 ! Level-1 solver
 !------------------------------------------------------------
-  integer, parameter :: NEDOF1    = NGLLCUBE1 * NNDOF
-  integer, parameter :: NEDOFU1   = NGLLCUBE1 * NNDOFU, &
-                        NEDOFCHI1 = NGLLCUBE1 * NNDOFCHI,&
-                        NEDOFP1   = NGLLCUBE1 * NNDOFP, &
-                        NEDOFPHI1 = NGLLCUBE1 * NNDOFPHI
+  integer, parameter :: NEDOFU1   = NGLLCUBE_INF * NNDOFU, &
+                        NEDOFCHI1 = NGLLCUBE_INF * NNDOFCHI, &
+                        NEDOFP1   = NGLLCUBE_INF * NNDOFP, &
+                        NEDOFPHI1 = NGLLCUBE_INF * NNDOFPHI
+
+  integer, parameter :: NEDOF1    = NGLLCUBE_INF * NNDOF
 
 !------------------------------------------------------------
 ! Level-2 solver
@@ -1359,8 +1429,8 @@
                         NEDOFCHI = NGLLCUBE * NNDOFCHI, &
                         NEDOFP   = NGLLCUBE * NNDOFP, &
                         NEDOFPHI = NGLLCUBE * NNDOFPHI
-  integer, parameter :: NEDOF = NGLLCUBE * NNDOF
 
+  integer, parameter :: NEDOF    = NGLLCUBE * NNDOF
 
 !!-----------------------------------------------------------
 !!
@@ -1369,33 +1439,23 @@
 !!-----------------------------------------------------------
 
 ! maximum number of iteration for conjugate gradient solver
-  integer, parameter :: BUILTIN = 0, PETSC = 1
+  integer, parameter :: ISOLVER_BUILTIN = 0, ISOLVER_PETSC = 1
 
-! by default, the Poisson solver needs the PETSc library
-  integer, parameter :: POISSON_SOLVER = PETSC            ! or BUILTIN
-  logical, parameter :: POISSON_SOLVER_5GLL = .false.
+! Level-2 solver
+  logical, parameter :: USE_POISSON_SOLVER_5GLL = .false.
 
-! if the following parameter is .true., contribution of the perturbed gravity is
-! discarded in compute force routines, perturbed gravity is still computed from
-! the density perturbation.
+! If the following parameter is .true., contribution of the perturbed gravity is discarded in compute force routines
+! (perturbed gravity is still computed from the density perturbation)
   logical, parameter :: DISCARD_GCONTRIB = .false.
 
-! maximum number of iteration for conjugate gradient solver
-  integer, parameter :: CG_MAXITER = 10000
+!!-----------------------------------------------------------
+!!
+!! Green function database
+!!
+!!-----------------------------------------------------------
 
-! relative tolerance for conjugate gradient solver
-  real(kind=CUSTOM_REAL), parameter :: CG_TOL  = 1.0e-7_CUSTOM_REAL, &
-                                       CG_TOL1 = 1.0e-7_CUSTOM_REAL
+! number of force components (N, E, Z)
+  integer, parameter :: GF_NCOMP_FORCE = 3
+! number of displacement dimensions (x, y, z)
+  integer, parameter :: GF_NCOMP_DISP  = 3
 
-! Krylov subspace method (KSP)
-! Level-1 KSP solver
-  integer,parameter :: KSP_MAXITER1 = 3000
-  real(kind=CUSTOM_REAL), parameter :: KSP_RTOL1 = 1.0e-7_CUSTOM_REAL
-  real(kind=CUSTOM_REAL), parameter :: KSP_ATOL1 = 1.0e-30_CUSTOM_REAL
-  real(kind=CUSTOM_REAL), parameter :: KSP_DTOL1 = 1.0e30_CUSTOM_REAL
-
-! Level-2 KSP solver
-  integer,parameter :: KSP_MAXITER = 3000
-  real(kind=CUSTOM_REAL), parameter :: KSP_RTOL = 1.0e-7_CUSTOM_REAL
-  real(kind=CUSTOM_REAL), parameter :: KSP_ATOL = 1.0e-30_CUSTOM_REAL
-  real(kind=CUSTOM_REAL), parameter :: KSP_DTOL = 1.0e30_CUSTOM_REAL

@@ -105,10 +105,14 @@
  integer, parameter :: NSPEC_CRUST_MANTLE =          540
  integer, parameter :: NSPEC_OUTER_CORE =           43
  integer, parameter :: NSPEC_INNER_CORE =            2
+ integer, parameter :: NSPEC_TRINFINITE =            0
+ integer, parameter :: NSPEC_INFINITE =            0
 
  integer, parameter :: NGLOB_CRUST_MANTLE =        38773
  integer, parameter :: NGLOB_OUTER_CORE =         3697
  integer, parameter :: NGLOB_INNER_CORE =          225
+ integer, parameter :: NGLOB_TRINFINITE =            0
+ integer, parameter :: NGLOB_INFINITE =            0
 
  integer, parameter :: NSPECMAX_ANISO_IC =            0
 
@@ -131,9 +135,15 @@
  integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT =            0
  integer, parameter :: NSPEC_OUTER_CORE_ADJOINT =            0
  integer, parameter :: NSPEC_INNER_CORE_ADJOINT =            0
+ integer, parameter :: NSPEC_TRINFINITE_ADJOINT =            0
+ integer, parameter :: NSPEC_INFINITE_ADJOINT =            0
+
  integer, parameter :: NGLOB_CRUST_MANTLE_ADJOINT =            0
  integer, parameter :: NGLOB_OUTER_CORE_ADJOINT =            0
  integer, parameter :: NGLOB_INNER_CORE_ADJOINT =            0
+ integer, parameter :: NGLOB_TRINFINITE_ADJOINT =            0
+ integer, parameter :: NGLOB_INFINITE_ADJOINT =            0
+
  integer, parameter :: NSPEC_OUTER_CORE_ROT_ADJOINT =            0
 
  integer, parameter :: NSPEC_CRUST_MANTLE_STACEY =          540
@@ -184,19 +194,32 @@
  integer, parameter :: NSPEC2DMAX_YMIN_YMAX_CM =          110
  integer, parameter :: NSPEC2D_BOTTOM_CM =            4
  integer, parameter :: NSPEC2D_TOP_CM =           64
+
  integer, parameter :: NSPEC2DMAX_XMIN_XMAX_IC =            2
  integer, parameter :: NSPEC2DMAX_YMIN_YMAX_IC =            2
  integer, parameter :: NSPEC2D_BOTTOM_IC =            1
  integer, parameter :: NSPEC2D_TOP_IC =            1
+
  integer, parameter :: NSPEC2DMAX_XMIN_XMAX_OC =           26
  integer, parameter :: NSPEC2DMAX_YMIN_YMAX_OC =           27
  integer, parameter :: NSPEC2D_BOTTOM_OC =            1
  integer, parameter :: NSPEC2D_TOP_OC =            4
- integer, parameter :: NSPEC2D_MOHO =            1
- integer, parameter :: NSPEC2D_400 =            1
- integer, parameter :: NSPEC2D_670 =            1
- integer, parameter :: NSPEC2D_CMB =            1
- integer, parameter :: NSPEC2D_ICB =            1
+
+ integer, parameter :: NSPEC2DMAX_XMIN_XMAX_TRINF =            0
+ integer, parameter :: NSPEC2DMAX_YMIN_YMAX_TRINF =            0
+ integer, parameter :: NSPEC2D_BOTTOM_TRINF =            0
+ integer, parameter :: NSPEC2D_TOP_TRINF =            0
+
+ integer, parameter :: NSPEC2DMAX_XMIN_XMAX_INF =            0
+ integer, parameter :: NSPEC2DMAX_YMIN_YMAX_INF =            0
+ integer, parameter :: NSPEC2D_BOTTOM_INF =            0
+ integer, parameter :: NSPEC2D_TOP_INF =            0
+
+ integer, parameter :: NSPEC2D_MOHO =            0
+ integer, parameter :: NSPEC2D_400 =            0
+ integer, parameter :: NSPEC2D_670 =            0
+ integer, parameter :: NSPEC2D_CMB =            0
+ integer, parameter :: NSPEC2D_ICB =            0
 
  logical, parameter :: USE_DEVILLE_PRODUCTS_VAL = .true.
  integer, parameter :: NSPEC_CRUST_MANTLE_3DMOVIE = 0

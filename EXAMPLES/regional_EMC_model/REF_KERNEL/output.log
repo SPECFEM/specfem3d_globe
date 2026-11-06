@@ -1,4 +1,4 @@
-running example: Tue Nov 19 10:08:48 CET 2024
+running example: Fri Nov  6 20:42:44 CET 2026
 directory: /Users/Shared/SPECFEM3D_GLOBE/EXAMPLES/regional_EMC_model
 (will take about 7 minutes)
 
@@ -18,7 +18,7 @@ Changed simulation_type to 1 and save_forward = .true. in Par_file
 
 forward simulation...
 
-Tue Nov 19 10:08:50 CET 2024
+Fri Nov 6 20:42:46 CET 2026
 starting MPI mesher on 4 processors
 
  simulation time step size:
@@ -34,10 +34,10 @@ starting MPI mesher on 4 processors
             doubling layer at =            5
    fictitious moho at depth   :    40.0000000     (km)
 
-  mesher done: Tue Nov 19 10:08:59 CET 2024
+  mesher done: Fri Nov  6 20:42:53 CET 2026
 
 
-Tue Nov 19 10:09:01 CET 2024
+Fri Nov 6 20:42:55 CET 2026
 starting run in current directory /Users/Shared/SPECFEM3D_GLOBE/EXAMPLES/regional_EMC_model
 
  simulation time step size:
@@ -54,7 +54,7 @@ starting run in current directory /Users/Shared/SPECFEM3D_GLOBE/EXAMPLES/regiona
    fictitious moho at depth   :    40.0000000     (km)
 
 finished successfully
-Tue Nov 19 10:09:15 CET 2024
+Fri Nov 6 20:43:08 CET 2026
 
 #########################################################
 adjoint sources
@@ -70,7 +70,7 @@ OUTPUT_FILES/IU.COLA.BXZ.sem.ascii -> SEM/IU.COLA.BXZ.sem.ascii
 
 compiling xcreate_adjsrc_traveltime:
   using fortran compiler = gfortran
-  using C compiler       = gcc
+  using C compiler       = gcc -std
 
 gfortran -Wall -o xcreate_adjsrc_traveltime create_adjsrc_traveltime.o rw_ascfile_c.o
 xcreate_adjsrc_traveltime -> /Users/Shared/SPECFEM3D_GLOBE/EXAMPLES/regional_EMC_model/SEM/xcreate_adjsrc_traveltime
@@ -87,9 +87,9 @@ running adjoint source creation
  time step:   5.0000190000000444E-002
  number of steps:        3200
 
- i =            1 norm =    1.3382609814114356E-010
- i =            2 norm =    7.4112161423547478E-010
- i =            3 norm =    2.7333060200934709E-010
+ i =            1 norm =    1.3384037224122397E-010
+ i =            2 norm =    7.4209682890208978E-010
+ i =            3 norm =    2.7345445423467344E-010
 
  write to asc file IU.COLA.BXE.sem.ascii.adj
  write to asc file IU.COLA.BXN.sem.ascii.adj
@@ -112,7 +112,7 @@ Changed simulation_type to 3 in Par_file
 
 backward/kernel simulation...
 
-Tue Nov 19 10:09:18 CET 2024
+Fri Nov 6 20:43:10 CET 2026
 starting run in current directory /Users/Shared/SPECFEM3D_GLOBE/EXAMPLES/regional_EMC_model
 
  simulation time step size:
@@ -129,10 +129,10 @@ starting run in current directory /Users/Shared/SPECFEM3D_GLOBE/EXAMPLES/regiona
    fictitious moho at depth   :    40.0000000     (km)
 
 finished successfully
-Tue Nov 19 10:10:05 CET 2024
+Fri Nov 6 20:43:50 CET 2026
 
 see results in directory       : OUTPUT_FILES/
     kernel outputs in directory:  ./DATABASES_MPI
 
 done
-Tue Nov 19 10:10:05 CET 2024
+Fri Nov 6 20:43:50 CET 2026

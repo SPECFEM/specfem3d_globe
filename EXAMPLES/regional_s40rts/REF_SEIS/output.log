@@ -1,4 +1,5 @@
-running example: Thu Mar 14 18:57:11 CET 2024
+running example: Fri Nov  6 20:09:15 CET 2026
+directory: /Users/Shared/SPECFEM3D_GLOBE/EXAMPLES/regional_s40rts
 (will take about 2 minutes)
 
 
@@ -8,16 +9,17 @@ running example: Thu Mar 14 18:57:11 CET 2024
   running script...
 
 
-Thu Mar 14 18:57:13 CET 2024
+Fri Nov 6 20:09:17 CET 2026
 starting MPI mesher on 4 processors
 
-  mesher done: Thu Mar 14 18:57:17 CET 2024
+  mesher done: Fri Nov  6 20:09:22 CET 2026
 
 
-Thu Mar 14 18:57:19 CET 2024
+Fri Nov 6 20:09:24 CET 2026
+starting run in current directory /Users/Shared/SPECFEM3D_GLOBE/EXAMPLES/regional_s40rts
 
 finished successfully
-Thu Mar 14 18:57:32 CET 2024
+Fri Nov 6 20:09:35 CET 2026
 
   creating movie files...
 
@@ -65,13 +67,13 @@ Thu Mar 14 18:57:32 CET 2024
 
    file ./OUTPUT_FILES//moviedata000200
 
-   data ux min/max:   -3.64418702E-06   2.60442334E-06
-   data uy min/max:   -2.89832747E-06   2.30337878E-06
-   data uz min/max:   -2.75845946E-06   1.69284704E-06
+   data ux min/max:   -3.79873063E-06   2.59872627E-06
+   data uy min/max:   -2.88894626E-06   2.28780959E-06
+   data uz min/max:   -2.75262914E-06   1.35202731E-06
 
 
- minimum amplitude in current snapshot =   -1.2187706488475669E-006
- maximum amplitude in current snapshot =    4.0280167468154104E-007
+ minimum amplitude in current snapshot =   -1.2176573136457591E-006
+ maximum amplitude in current snapshot =    4.0216420416072651E-007
 
  sorting...
  sorting list of points
@@ -83,13 +85,13 @@ Thu Mar 14 18:57:32 CET 2024
 
    file ./OUTPUT_FILES//moviedata000400
 
-   data ux min/max:   -3.30844159E-05   2.39820929E-05
-   data uy min/max:   -3.11440999E-05   1.92584012E-05
-   data uz min/max:   -2.26361990E-05   1.51715958E-05
+   data ux min/max:   -3.31894771E-05   2.39029523E-05
+   data uy min/max:   -3.10743526E-05   1.92457137E-05
+   data uz min/max:   -2.26080538E-05   1.48543213E-05
 
 
- minimum amplitude in current snapshot =   -8.0963764048647135E-006
- maximum amplitude in current snapshot =    2.4068679067568155E-006
+ minimum amplitude in current snapshot =   -8.1021098594646901E-006
+ maximum amplitude in current snapshot =    2.4028149709920399E-006
 
  sorting...
  sorting list of points
@@ -101,13 +103,13 @@ Thu Mar 14 18:57:32 CET 2024
 
    file ./OUTPUT_FILES//moviedata000600
 
-   data ux min/max:   -8.30044519E-05   6.57427954E-05
-   data uy min/max:   -8.29504497E-05   5.40849796E-05
-   data uz min/max:   -5.75790764E-05   4.14327296E-05
+   data ux min/max:   -8.29299752E-05   6.55491458E-05
+   data uy min/max:   -8.27777330E-05   5.40990368E-05
+   data uz min/max:   -5.75262602E-05   4.13640882E-05
 
 
- minimum amplitude in current snapshot =   -1.8123177142115310E-005
- maximum amplitude in current snapshot =    6.9205680119921453E-006
+ minimum amplitude in current snapshot =   -1.8151722542825155E-005
+ maximum amplitude in current snapshot =    6.9133634497120511E-006
 
  sorting...
  sorting list of points
@@ -119,13 +121,13 @@ Thu Mar 14 18:57:32 CET 2024
 
    file ./OUTPUT_FILES//moviedata000800
 
-   data ux min/max:   -6.39274294E-05   5.27317716E-05
-   data uy min/max:   -6.63813262E-05   4.49535619E-05
-   data uz min/max:   -4.40536569E-05   3.35938457E-05
+   data ux min/max:   -6.38252241E-05   5.25884570E-05
+   data uy min/max:   -6.62531165E-05   4.49898944E-05
+   data uz min/max:   -4.40072108E-05   3.36087614E-05
 
 
- minimum amplitude in current snapshot =   -1.2596811757248361E-005
- maximum amplitude in current snapshot =    7.4977410804422107E-006
+ minimum amplitude in current snapshot =   -1.2610581507033203E-005
+ maximum amplitude in current snapshot =    7.4805202530114911E-006
 
  sorting...
  sorting list of points
@@ -137,13 +139,13 @@ Thu Mar 14 18:57:32 CET 2024
 
    file ./OUTPUT_FILES//moviedata001000
 
-   data ux min/max:   -1.47591227E-05   1.05575155E-05
-   data uy min/max:   -1.36880035E-05   8.59642114E-06
-   data uz min/max:   -9.00774921E-06   6.93195761E-06
+   data ux min/max:   -1.47572482E-05   1.05370700E-05
+   data uy min/max:   -1.36657491E-05   8.64775302E-06
+   data uz min/max:   -8.97021619E-06   6.86940666E-06
 
 
- minimum amplitude in current snapshot =   -2.8805493457184639E-006
- maximum amplitude in current snapshot =    2.4910514184739441E-006
+ minimum amplitude in current snapshot =   -2.8804740850318922E-006
+ maximum amplitude in current snapshot =    2.4903201847337186E-006
 
  sorting...
  sorting list of points
@@ -155,13 +157,13 @@ Thu Mar 14 18:57:32 CET 2024
 
    file ./OUTPUT_FILES//moviedata001200
 
-   data ux min/max:   -3.33712478E-06   3.26573991E-06
-   data uy min/max:   -3.48315643E-06   3.32721902E-06
-   data uz min/max:   -2.98790906E-06   2.21565620E-06
+   data ux min/max:   -3.33576850E-06   3.26526219E-06
+   data uy min/max:   -3.48235426E-06   3.32666013E-06
+   data uz min/max:   -2.98658597E-06   2.21276150E-06
 
 
- minimum amplitude in current snapshot =   -2.5930708034138661E-006
- maximum amplitude in current snapshot =    1.9003952047569328E-006
+ minimum amplitude in current snapshot =   -2.5912488581525395E-006
+ maximum amplitude in current snapshot =    1.8996881863131421E-006
 
  sorting...
  sorting list of points
@@ -173,13 +175,13 @@ Thu Mar 14 18:57:32 CET 2024
 
    file ./OUTPUT_FILES//moviedata001400
 
-   data ux min/max:   -2.59380568E-06   2.86646423E-06
-   data uy min/max:   -2.94323922E-06   2.70909277E-06
-   data uz min/max:   -2.12872806E-06   1.97355462E-06
+   data ux min/max:   -2.59316903E-06   2.86717568E-06
+   data uy min/max:   -2.94198799E-06   2.70874420E-06
+   data uz min/max:   -2.12773557E-06   1.97287955E-06
 
 
- minimum amplitude in current snapshot =   -1.9528579286998138E-006
- maximum amplitude in current snapshot =    1.9441458789515309E-006
+ minimum amplitude in current snapshot =   -1.9531437374098459E-006
+ maximum amplitude in current snapshot =    1.9451238131296122E-006
 
  sorting...
  sorting list of points
@@ -191,13 +193,13 @@ Thu Mar 14 18:57:32 CET 2024
 
    file ./OUTPUT_FILES//moviedata001600
 
-   data ux min/max:   -2.28746967E-06   2.59220838E-06
-   data uy min/max:   -2.53684243E-06   2.41369935E-06
-   data uz min/max:   -1.68045790E-06   1.95501525E-06
+   data ux min/max:   -2.28673639E-06   2.59232365E-06
+   data uy min/max:   -2.53717963E-06   2.41287489E-06
+   data uz min/max:   -1.67994074E-06   1.95495386E-06
 
 
- minimum amplitude in current snapshot =   -1.4434001514018746E-006
- maximum amplitude in current snapshot =    1.8727541828411631E-006
+ minimum amplitude in current snapshot =   -1.4427101859837421E-006
+ maximum amplitude in current snapshot =    1.8723928860708838E-006
 
  sorting...
  sorting list of points
@@ -209,13 +211,13 @@ Thu Mar 14 18:57:32 CET 2024
 
    file ./OUTPUT_FILES//moviedata001800
 
-   data ux min/max:   -1.93881556E-06   2.07698440E-06
-   data uy min/max:   -2.27032842E-06   2.10296957E-06
-   data uz min/max:   -1.54623808E-06   1.75647085E-06
+   data ux min/max:   -1.93793721E-06   2.07718313E-06
+   data uy min/max:   -2.27143460E-06   2.10264966E-06
+   data uz min/max:   -1.54544273E-06   1.75618288E-06
 
 
- minimum amplitude in current snapshot =   -1.2729889249385451E-006
- maximum amplitude in current snapshot =    1.6827520994411316E-006
+ minimum amplitude in current snapshot =   -1.2726234217552701E-006
+ maximum amplitude in current snapshot =    1.6827146964715212E-006
 
  sorting...
  sorting list of points
@@ -227,13 +229,13 @@ Thu Mar 14 18:57:32 CET 2024
 
    file ./OUTPUT_FILES//moviedata002000
 
-   data ux min/max:   -1.67320718E-06   1.79756967E-06
-   data uy min/max:   -2.04633284E-06   1.82475901E-06
-   data uz min/max:   -1.31231343E-06   1.53561029E-06
+   data ux min/max:   -1.67246264E-06   1.79678045E-06
+   data uy min/max:   -2.04579328E-06   1.82442318E-06
+   data uz min/max:   -1.31167087E-06   1.53414953E-06
 
 
- minimum amplitude in current snapshot =   -1.0542211157371639E-006
- maximum amplitude in current snapshot =    1.5219663964671781E-006
+ minimum amplitude in current snapshot =   -1.0535414958212641E-006
+ maximum amplitude in current snapshot =    1.5206768466669018E-006
 
  sorting...
  sorting list of points
@@ -245,13 +247,13 @@ Thu Mar 14 18:57:32 CET 2024
 
    file ./OUTPUT_FILES//moviedata002200
 
-   data ux min/max:   -1.50571475E-06   1.53262943E-06
-   data uy min/max:   -1.84142800E-06   1.65700089E-06
-   data uz min/max:   -1.16647334E-06   1.42678880E-06
+   data ux min/max:   -1.50552023E-06   1.53290807E-06
+   data uy min/max:   -1.84109524E-06   1.65654239E-06
+   data uz min/max:   -1.16599404E-06   1.42565909E-06
 
 
- minimum amplitude in current snapshot =   -1.0320408136976766E-006
- maximum amplitude in current snapshot =    1.3917077694713953E-006
+ minimum amplitude in current snapshot =   -1.0314380460840766E-006
+ maximum amplitude in current snapshot =    1.3914564078731928E-006
 
  sorting...
  sorting list of points
@@ -263,13 +265,13 @@ Thu Mar 14 18:57:32 CET 2024
 
    file ./OUTPUT_FILES//moviedata002400
 
-   data ux min/max:   -1.42818806E-06   1.44170065E-06
-   data uy min/max:   -1.67298151E-06   1.47383116E-06
-   data uz min/max:   -1.00374075E-06   1.35896391E-06
+   data ux min/max:   -1.42857607E-06   1.44127534E-06
+   data uy min/max:   -1.67275186E-06   1.47358639E-06
+   data uz min/max:   -1.00320267E-06   1.35806840E-06
 
 
- minimum amplitude in current snapshot =   -9.3866589168101200E-007
- maximum amplitude in current snapshot =    1.3437276038530399E-006
+ minimum amplitude in current snapshot =   -9.3811956958234077E-007
+ maximum amplitude in current snapshot =    1.3431175602818257E-006
 
  sorting...
  sorting list of points
@@ -281,13 +283,13 @@ Thu Mar 14 18:57:32 CET 2024
 
    file ./OUTPUT_FILES//moviedata002600
 
-   data ux min/max:   -1.26971474E-06   1.31793843E-06
-   data uy min/max:   -1.55970156E-06   1.39815586E-06
-   data uz min/max:   -9.27957160E-07   1.23711141E-06
+   data ux min/max:   -1.26925920E-06   1.31791887E-06
+   data uy min/max:   -1.55880468E-06   1.39784311E-06
+   data uz min/max:   -9.27374231E-07   1.23681741E-06
 
 
- minimum amplitude in current snapshot =   -9.2055597633589059E-007
- maximum amplitude in current snapshot =    1.2572053265103023E-006
+ minimum amplitude in current snapshot =   -9.2002500196031178E-007
+ maximum amplitude in current snapshot =    1.2568457350425888E-006
 
  sorting...
  sorting list of points
@@ -299,13 +301,13 @@ Thu Mar 14 18:57:32 CET 2024
 
    file ./OUTPUT_FILES//moviedata002800
 
-   data ux min/max:   -1.25691122E-06   1.28742488E-06
-   data uy min/max:   -1.49161781E-06   1.27202384E-06
-   data uz min/max:   -8.22526829E-07   1.15719592E-06
+   data ux min/max:   -1.25651479E-06   1.28713691E-06
+   data uy min/max:   -1.49157233E-06   1.27136423E-06
+   data uz min/max:   -8.22313439E-07   1.15662817E-06
 
 
- minimum amplitude in current snapshot =   -8.4411516354521154E-007
- maximum amplitude in current snapshot =    1.2457747970984201E-006
+ minimum amplitude in current snapshot =   -8.4374119069252629E-007
+ maximum amplitude in current snapshot =    1.2451479278752231E-006
 
  sorting...
  sorting list of points
@@ -317,13 +319,13 @@ Thu Mar 14 18:57:32 CET 2024
 
    file ./OUTPUT_FILES//moviedata003000
 
-   data ux min/max:   -1.18176649E-06   1.19737285E-06
-   data uy min/max:   -1.42018803E-06   1.20214827E-06
-   data uz min/max:   -7.95212713E-07   1.16391993E-06
+   data ux min/max:   -1.18195726E-06   1.19688320E-06
+   data uy min/max:   -1.41965836E-06   1.20185200E-06
+   data uz min/max:   -7.94801736E-07   1.16382262E-06
 
 
- minimum amplitude in current snapshot =   -7.6553158123715548E-007
- maximum amplitude in current snapshot =    1.1413505944801727E-006
+ minimum amplitude in current snapshot =   -7.6512588975674589E-007
+ maximum amplitude in current snapshot =    1.1407598776713712E-006
 
  sorting...
  sorting list of points
@@ -335,13 +337,13 @@ Thu Mar 14 18:57:32 CET 2024
 
    file ./OUTPUT_FILES//moviedata003200
 
-   data ux min/max:   -1.13438955E-06   1.14608724E-06
-   data uy min/max:   -1.39356382E-06   1.12832231E-06
-   data uz min/max:   -8.05522461E-07   1.08396330E-06
+   data ux min/max:   -1.13358942E-06   1.14606837E-06
+   data uy min/max:   -1.39326266E-06   1.12826069E-06
+   data uz min/max:   -8.05716581E-07   1.08334041E-06
 
 
- minimum amplitude in current snapshot =   -7.6591169317907770E-007
- maximum amplitude in current snapshot =    1.0884408538913704E-006
+ minimum amplitude in current snapshot =   -7.6554675842999131E-007
+ maximum amplitude in current snapshot =    1.0879308547373512E-006
 
  sorting...
  sorting list of points
@@ -353,13 +355,13 @@ Thu Mar 14 18:57:32 CET 2024
 
    file ./OUTPUT_FILES//moviedata003400
 
-   data ux min/max:   -1.07427513E-06   1.19222852E-06
-   data uy min/max:   -1.29111697E-06   1.05281549E-06
-   data uz min/max:   -7.24262463E-07   1.01933904E-06
+   data ux min/max:   -1.07470964E-06   1.19203025E-06
+   data uy min/max:   -1.29085618E-06   1.05261336E-06
+   data uz min/max:   -7.24074766E-07   1.01915975E-06
 
 
- minimum amplitude in current snapshot =   -7.3161663749488071E-007
- maximum amplitude in current snapshot =    1.0563622936388128E-006
+ minimum amplitude in current snapshot =   -7.3149948320860858E-007
+ maximum amplitude in current snapshot =    1.0559755310168839E-006
 
  sorting...
  sorting list of points
@@ -371,13 +373,13 @@ Thu Mar 14 18:57:32 CET 2024
 
    file ./OUTPUT_FILES//moviedata003600
 
-   data ux min/max:   -9.94819402E-07   1.12605244E-06
-   data uy min/max:   -1.27358305E-06   1.02424428E-06
-   data uz min/max:   -6.87559975E-07   1.01159708E-06
+   data ux min/max:   -9.94659786E-07   1.12518330E-06
+   data uy min/max:   -1.27307101E-06   1.02405943E-06
+   data uz min/max:   -6.87597492E-07   1.01147793E-06
 
 
- minimum amplitude in current snapshot =   -6.9966006321919849E-007
- maximum amplitude in current snapshot =    1.0630245697029750E-006
+ minimum amplitude in current snapshot =   -6.9967012450433685E-007
+ maximum amplitude in current snapshot =    1.0629941016304656E-006
 
  sorting...
  sorting list of points
@@ -389,13 +391,13 @@ Thu Mar 14 18:57:32 CET 2024
 
    file ./OUTPUT_FILES//moviedata003800
 
-   data ux min/max:   -9.50742333E-07   1.12979239E-06
-   data uy min/max:   -1.27096598E-06   9.79495439E-07
-   data uz min/max:   -6.76287186E-07   9.81688572E-07
+   data ux min/max:   -9.50808840E-07   1.12933299E-06
+   data uy min/max:   -1.27059150E-06   9.79460083E-07
+   data uz min/max:   -6.76313732E-07   9.81651169E-07
 
 
- minimum amplitude in current snapshot =   -6.6592536995813134E-007
- maximum amplitude in current snapshot =    9.5726579729671357E-007
+ minimum amplitude in current snapshot =   -6.6594890313353972E-007
+ maximum amplitude in current snapshot =    9.5709333436388988E-007
 
  sorting...
  sorting list of points
@@ -407,13 +409,13 @@ Thu Mar 14 18:57:32 CET 2024
 
    file ./OUTPUT_FILES//moviedata004000
 
-   data ux min/max:   -9.45614204E-07   1.15020214E-06
-   data uy min/max:   -1.24468932E-06   9.48738716E-07
-   data uz min/max:   -6.57529426E-07   9.34737386E-07
+   data ux min/max:   -9.45214822E-07   1.14994248E-06
+   data uy min/max:   -1.24430392E-06   9.48671243E-07
+   data uz min/max:   -6.57494525E-07   9.34793150E-07
 
 
- minimum amplitude in current snapshot =   -6.8319059209898114E-007
- maximum amplitude in current snapshot =    8.6221626816040953E-007
+ minimum amplitude in current snapshot =   -6.8293826416265802E-007
+ maximum amplitude in current snapshot =    8.6222445361272548E-007
 
  sorting...
  sorting list of points
@@ -425,13 +427,13 @@ Thu Mar 14 18:57:32 CET 2024
 
    file ./OUTPUT_FILES//moviedata004200
 
-   data ux min/max:   -1.00122406E-06   1.14426621E-06
-   data uy min/max:   -1.22801453E-06   1.01797195E-06
-   data uz min/max:   -6.43882004E-07   8.45972295E-07
+   data ux min/max:   -1.00091336E-06   1.14391662E-06
+   data uy min/max:   -1.22773804E-06   1.01760509E-06
+   data uz min/max:   -6.43365468E-07   8.45931936E-07
 
 
- minimum amplitude in current snapshot =   -6.4889809436863288E-007
- maximum amplitude in current snapshot =    7.7868082826171303E-007
+ minimum amplitude in current snapshot =   -6.4836416413527331E-007
+ maximum amplitude in current snapshot =    7.7881566085125087E-007
 
  sorting...
  sorting list of points
@@ -444,4 +446,4 @@ Thu Mar 14 18:57:32 CET 2024
  AVS files are stored in ./OUTPUT_FILES//AVS_*.inp
 
 
-Thu Mar 14 18:57:32 CET 2024
+Fri Nov 6 20:09:35 CET 2026

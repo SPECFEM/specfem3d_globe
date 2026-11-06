@@ -940,6 +940,7 @@
   integer, parameter :: REFERENCE_MODEL_SEA1D      = 8
   integer, parameter :: REFERENCE_MODEL_CCREM      = 9
   integer, parameter :: REFERENCE_MODEL_SEMUCB     = 10   ! Berkeley reference model
+
   ! Mars
   integer, parameter :: REFERENCE_MODEL_SOHL       = 101
   integer, parameter :: REFERENCE_MODEL_SOHL_B     = 102
@@ -985,6 +986,8 @@
   integer, parameter :: THREE_D_MODEL_HETEROGEN_PREM = 119
   integer, parameter :: THREE_D_MODEL_SH_MARS       = 120
   integer, parameter :: THREE_D_MODEL_BERKELEY      = 121
+  integer, parameter :: THREE_D_MODEL_BERKELEY_AZIM = 122
+
   ! inner core model
   integer, parameter :: THREE_D_MODEL_INNER_CORE_ISHII = 201
 
@@ -1069,8 +1072,12 @@
   integer, parameter :: NUM_ITER = 5
 
 ! number of hours per day for rotation rate of the Earth
+! Solar day is 24 * 3600 s
   double precision, parameter :: EARTH_HOURS_PER_DAY = 24.d0
   double precision, parameter :: EARTH_SECONDS_PER_HOUR = 3600.d0
+! Sidereal day is ~86,164.0905 s ~ 23 h 56 min 4.0905 s or 23.9344696 h
+!  double precision, parameter :: EARTH_HOURS_PER_DAY = 23.9344696d0
+!  double precision, parameter :: EARTH_SECONDS_PER_HOUR = 3600.d0
 
 ! for lookup table for gravity every 100 m in radial direction of Earth model
   integer, parameter :: NRAD_GRAVITY = 70000
@@ -1440,4 +1447,15 @@
 ! If the following parameter is .true., contribution of the perturbed gravity is discarded in compute force routines
 ! (perturbed gravity is still computed from the density perturbation)
   logical, parameter :: DISCARD_GCONTRIB = .false.
+
+!!-----------------------------------------------------------
+!!
+!! Green function database
+!!
+!!-----------------------------------------------------------
+
+! number of force components (N, E, Z)
+  integer, parameter :: GF_NCOMP_FORCE = 3
+! number of displacement dimensions (x, y, z)
+  integer, parameter :: GF_NCOMP_DISP  = 3
 
