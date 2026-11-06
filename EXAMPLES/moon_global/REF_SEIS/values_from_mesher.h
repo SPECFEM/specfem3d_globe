@@ -26,21 +26,21 @@
  ! total for full 6-chunk mesh:
  ! ---------------------------
  !
- ! exact total number of spectral elements in entire mesh = 
- !    100224.00000000000     
- ! approximate total number of points in entire mesh = 
- !    6651901.0000000000     
- ! approximate total number of degrees of freedom in entire mesh = 
- !    19561803.000000000     
+ ! exact total number of spectral elements in entire mesh =
+ !    100224.00000000000
+ ! approximate total number of points in entire mesh =
+ !    6651901.0000000000
+ ! approximate total number of degrees of freedom in entire mesh =
+ !    19561803.000000000
  !
  ! resolution of the mesh at the surface:
  ! -------------------------------------
  !
  ! spectral elements along a great circle =          192
  ! GLL points along a great circle =          768
- ! average distance between points in degrees =   0.468750000    
- ! average distance between points in km =    14.2116165    
- ! average size of a spectral element in km =    56.8464661    
+ ! average distance between points in degrees =   0.468750000
+ ! average distance between points in km =    14.2116165
+ ! average size of a spectral element in km =    56.8464661
  !
 
  ! approximate static memory needed by the solver:

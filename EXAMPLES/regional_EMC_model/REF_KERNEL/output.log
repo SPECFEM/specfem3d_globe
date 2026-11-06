@@ -5,14 +5,14 @@ directory: /Users/Shared/SPECFEM3D_GLOBE/EXAMPLES/regional_EMC_model
 
    setting up example...
 
-Changed simulation_type to 1 and save_forward = .true. in Par_file 
+Changed simulation_type to 1 and save_forward = .true. in Par_file
 
 #########################################################
 forward simulation
 #########################################################
 (running forward simulation with saving forward wavefield)
 
-Changed simulation_type to 1 and save_forward = .true. in Par_file 
+Changed simulation_type to 1 and save_forward = .true. in Par_file
 
   running script...
 
@@ -22,7 +22,7 @@ Fri Nov 6 20:42:46 CET 2026
 starting MPI mesher on 4 processors
 
  simulation time step size:
-   DT determined =   0.11500000000000000     
+   DT determined =   0.11500000000000000
    Par_file: user overrides with specified DT =    5.0000000000000003E-002
 
  using local mesh layout:
@@ -41,7 +41,7 @@ Fri Nov 6 20:42:55 CET 2026
 starting run in current directory /Users/Shared/SPECFEM3D_GLOBE/EXAMPLES/regional_EMC_model
 
  simulation time step size:
-   DT determined =   0.11500000000000000     
+   DT determined =   0.11500000000000000
    Par_file: user overrides with specified DT =    5.0000000000000003E-002
 
  using local mesh layout:
@@ -78,19 +78,19 @@ xcreate_adjsrc_traveltime -> /Users/Shared/SPECFEM3D_GLOBE/EXAMPLES/regional_EMC
 running adjoint source creation
 
  ifile =            0   lrot =  F
-  
+
  reading asc file IU.COLA.BXE.sem.ascii ...
  reading asc file IU.COLA.BXN.sem.ascii ...
  reading asc file IU.COLA.BXZ.sem.ascii ...
-  
- start time:  -4.5000000000000000     
+
+ start time:  -4.5000000000000000
  time step:   5.0000190000000444E-002
  number of steps:        3200
-  
+
  i =            1 norm =    1.3384037224122397E-010
  i =            2 norm =    7.4209682890208978E-010
  i =            3 norm =    2.7345445423467344E-010
-  
+
  write to asc file IU.COLA.BXE.sem.ascii.adj
  write to asc file IU.COLA.BXN.sem.ascii.adj
  write to asc file IU.COLA.BXZ.sem.ascii.adj
@@ -106,7 +106,7 @@ kernel simulation
 #########################################################
 (running kernel simulation: SIMULATION_TYPE == 3)
 
-Changed simulation_type to 3 in Par_file 
+Changed simulation_type to 3 in Par_file
 
   running script...
 
@@ -116,7 +116,7 @@ Fri Nov 6 20:43:10 CET 2026
 starting run in current directory /Users/Shared/SPECFEM3D_GLOBE/EXAMPLES/regional_EMC_model
 
  simulation time step size:
-   DT determined =   0.11500000000000000     
+   DT determined =   0.11500000000000000
    Par_file: user overrides with specified DT =    5.0000000000000003E-002
 
  using local mesh layout:

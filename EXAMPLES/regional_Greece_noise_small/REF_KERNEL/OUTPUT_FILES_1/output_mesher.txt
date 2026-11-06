@@ -53,7 +53,7 @@
 
  incorporating topography
    topo file            : DATA/topo_bathy/topo_bathy_etopo4_smoothed_window_7.bin
-   resolution in minutes:    4.00000000    
+   resolution in minutes:    4.00000000
 
    topography/bathymetry: min/max =        -7747        5507
 
@@ -76,10 +76,10 @@
  Radial Meshing parameters:
    NCHUNKS                =            1
 
-   CENTER LAT/LON:             40.0000000     /   25.0000000    
-   GAMMA_ROTATION_AZIMUTH:     0.00000000    
+   CENTER LAT/LON:             40.0000000     /   25.0000000
+   GAMMA_ROTATION_AZIMUTH:     0.00000000
 
-   CHUNK WIDTH XI/ETA:         20.0000000     /   20.0000000    
+   CHUNK WIDTH XI/ETA:         20.0000000     /   20.0000000
    NEX XI/ETA:                        48 /          48
 
    NER_CRUST:                          2
@@ -98,11 +98,11 @@
    R_CENTRAL_CUBE =    935.000000      km
 
  Mesh resolution:
-   DT =   0.16500000000000001     
+   DT =   0.16500000000000001
    Minimum period =    20.5916538      (s)
 
-   MIN_ATTENUATION_PERIOD =    20.5916538    
-   MAX_ATTENUATION_PERIOD =    1157.95374    
+   MIN_ATTENUATION_PERIOD =    20.5916538
+   MAX_ATTENUATION_PERIOD =    1157.95374
 
 
 
@@ -235,17 +235,17 @@
 
    Max element edge size =    140.770157      (km)
    Min element edge size =    9.22890472      (km)
-   Max/min ratio =    15.2531815    
+   Max/min ratio =    15.2531815
 
-   Max Jacobian eigenvalue ratio =   0.997195244    
-   Min Jacobian eigenvalue ratio =   0.135530382    
+   Max Jacobian eigenvalue ratio =   0.997195244
+   Min Jacobian eigenvalue ratio =   0.135530382
 
    Minimum period resolved =    23.7204380      (s)
    Minimum period resolved (empirical) =    20.5916538      (s)
    Maximum suggested time step =   0.125000000      (s)
 
    for DT :   0.165000007      (s)
-   Max stability for wave velocities =   0.704073310    
+   Max stability for wave velocities =   0.704073310
  ----------------------------------
 
 
@@ -312,7 +312,7 @@
    ...saving binary files
 
  calculated region volume:    3.36249284E-02
-                 top area:   0.120567575    
+                 top area:   0.120567575
               bottom area:    3.59788574E-02
 
  *******************************************
@@ -388,17 +388,17 @@
 
    Max element edge size =    161.360687      (km)
    Min element edge size =    53.7388840      (km)
-   Max/min ratio =    3.00268030    
+   Max/min ratio =    3.00268030
 
-   Max Jacobian eigenvalue ratio =   0.997647107    
-   Min Jacobian eigenvalue ratio =   0.222442403    
+   Max Jacobian eigenvalue ratio =   0.997647107
+   Min Jacobian eigenvalue ratio =   0.222442403
 
    Minimum period resolved =    15.1957874      (s)
    Minimum period resolved (empirical) =    20.5916538      (s)
    Maximum suggested time step =   0.529999971      (s)
 
    for DT :   0.165000007      (s)
-   Max stability for wave velocities =   0.170376614    
+   Max stability for wave velocities =   0.170376614
  ----------------------------------
 
 
@@ -531,17 +531,17 @@
 
    Max element edge size =    95.5216827      (km)
    Min element edge size =    53.5320854      (km)
-   Max/min ratio =    1.78438187    
+   Max/min ratio =    1.78438187
 
-   Max Jacobian eigenvalue ratio =   0.744332194    
-   Min Jacobian eigenvalue ratio =   0.553061068    
+   Max Jacobian eigenvalue ratio =   0.744332194
+   Min Jacobian eigenvalue ratio =   0.553061068
 
    Minimum period resolved =    23.3216400      (s)
    Minimum period resolved (empirical) =    20.5916538      (s)
    Maximum suggested time step =   0.455000013      (s)
 
    for DT :   0.165000007      (s)
-   Max stability for wave velocities =   0.198586658    
+   Max stability for wave velocities =   0.198586658
  ----------------------------------
 
 
@@ -631,14 +631,14 @@
  Load balancing = 100 % by definition
 
 
- the time step of the solver will be DT =   0.165000007    
+ the time step of the solver will be DT =   0.165000007
 
  using single precision for the calculations
 
  smallest and largest possible floating-point numbers are:    1.17549435E-38   3.40282347E+38
 
 
- Elapsed time for mesh generation and buffer creation in seconds =   0.744009972    
+ Elapsed time for mesh generation and buffer creation in seconds =   0.744009972
  Elapsed time for mesh generation and buffer creation in hh:mm:ss =    0 h 00 m 00 s
 
  End of mesh generation

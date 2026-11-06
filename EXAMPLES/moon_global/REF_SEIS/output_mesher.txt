@@ -52,25 +52,25 @@
 
  Spatial distribution of the slices
                         0
-  
+
      2       1       4
-  
+
                         5
-  
+
                         3
-  
+
 
  incorporating topography
    topo file            : DATA/topo_bathy/topo_bathy_moon4_smoothed_window_0.dat.bin
-   resolution in minutes:    4.00000000    
+   resolution in minutes:    4.00000000
 
    topography/bathymetry: min/max =        -9026       10673
 
    Elapsed time for reading in seconds =    8.99180025E-02
 
 
-   VTK topo output: topo resolution in minutes =    4.00000000    
-                    samples per degree         =    15.0000000    
+   VTK topo output: topo resolution in minutes =    4.00000000
+                    samples per degree         =    15.0000000
                     resolution distance        =    2.02120757     (km)
                     full globe NLAT =         2700
                                NLON =         5400
@@ -97,10 +97,10 @@
  Radial Meshing parameters:
    NCHUNKS                =            6
 
-   CENTER LAT/LON:             0.00000000     /   0.00000000    
-   GAMMA_ROTATION_AZIMUTH:     0.00000000    
+   CENTER LAT/LON:             0.00000000     /   0.00000000
+   GAMMA_ROTATION_AZIMUTH:     0.00000000
 
-   CHUNK WIDTH XI/ETA:         90.0000000     /   90.0000000    
+   CHUNK WIDTH XI/ETA:         90.0000000     /   90.0000000
    NEX XI/ETA:                        48 /          48
 
    NER_CRUST:                          2
@@ -119,11 +119,11 @@
    R_CENTRAL_CUBE =    200.000000      km
 
  Mesh resolution:
-   DT =   0.14999999999999999     
+   DT =   0.14999999999999999
    Minimum period =    31.5813694      (s)
 
-   MIN_ATTENUATION_PERIOD =    31.5813694    
-   MAX_ATTENUATION_PERIOD =    1775.95093    
+   MIN_ATTENUATION_PERIOD =    31.5813694
+   MAX_ATTENUATION_PERIOD =    1775.95093
 
 
 
@@ -252,9 +252,9 @@
 
    Max element edge size =    182.637726      (km)
    Min element edge size =    11.5550747      (km)
-   Max/min ratio =    15.8058453    
+   Max/min ratio =    15.8058453
 
-   Max Jacobian eigenvalue ratio =   0.998392284    
+   Max Jacobian eigenvalue ratio =   0.998392284
    Min Jacobian eigenvalue ratio =    2.20965482E-02
 
    Minimum period resolved =    31.0038643      (s)
@@ -262,7 +262,7 @@
    Maximum suggested time step =   0.264999986      (s)
 
    for DT :   0.150000006      (s)
-   Max stability for wave velocities =   0.310105890    
+   Max stability for wave velocities =   0.310105890
  ----------------------------------
 
    saving vtk mesh files for resolution res_minimum_period...
@@ -342,9 +342,9 @@
 
    ...saving mesh files
 
- calculated region volume:    4.14320230    
-                 top area:    12.5862951    
-              bottom area:   0.601352870    
+ calculated region volume:    4.14320230
+                 top area:    12.5862951
+              bottom area:   0.601352870
 
  *******************************************
  creating mesh in region            2
@@ -419,17 +419,17 @@
 
    Max element edge size =    81.0256195      (km)
    Min element edge size =    17.4447556      (km)
-   Max/min ratio =    4.64469767    
+   Max/min ratio =    4.64469767
 
-   Max Jacobian eigenvalue ratio =   0.948015034    
-   Min Jacobian eigenvalue ratio =   0.141344443    
+   Max Jacobian eigenvalue ratio =   0.948015034
+   Min Jacobian eigenvalue ratio =   0.141344443
 
    Minimum period resolved =    10.6870480      (s)
    Minimum period resolved (empirical) =    31.5813694      (s)
    Maximum suggested time step =   0.400000006      (s)
 
    for DT :   0.150000006      (s)
-   Max stability for wave velocities =   0.204166949    
+   Max stability for wave velocities =   0.204166949
  ----------------------------------
 
    saving vtk mesh files for resolution res_minimum_period...
@@ -510,8 +510,8 @@
    ...saving mesh files
 
  calculated region volume:    3.28027606E-02
-                 top area:   0.601352870    
-              bottom area:   0.239871740    
+                 top area:   0.601352870
+              bottom area:   0.239871740
 
  *******************************************
  creating mesh in region            3
@@ -586,17 +586,17 @@
 
    Max element edge size =    62.7262459      (km)
    Min element edge size =    20.0000000      (km)
-   Max/min ratio =    3.13631225    
+   Max/min ratio =    3.13631225
 
-   Max Jacobian eigenvalue ratio =   0.997585237    
-   Min Jacobian eigenvalue ratio =   0.276104629    
+   Max Jacobian eigenvalue ratio =   0.997585237
+   Min Jacobian eigenvalue ratio =   0.276104629
 
    Minimum period resolved =    25.6517906      (s)
    Minimum period resolved (empirical) =    31.5813694      (s)
    Maximum suggested time step =   0.439999998      (s)
 
    for DT :   0.150000006      (s)
-   Max stability for wave velocities =   0.186769038    
+   Max stability for wave velocities =   0.186769038
  ----------------------------------
 
    saving vtk mesh files for resolution res_minimum_period...
@@ -684,8 +684,8 @@
    ...saving mesh files
 
  calculated region volume:    1.10468864E-02
-                 top area:   0.239871740    
-              bottom area:   0.126210108    
+                 top area:   0.239871740
+              bottom area:   0.126210108
 
  all mesh regions created - done
 
@@ -693,17 +693,17 @@
 
  finalizing simulation:
 
- calculated volume:    4.1870519181764703     
+ calculated volume:    4.1870519181764703
 
- computed total Moon mass for this density model and mesh: 
+ computed total Moon mass for this density model and mesh:
        7.38360790E+22  kg
     (should be not too far from 7.347E+22 kg)
 
- average density for this density model and mesh: 
+ average density for this density model and mesh:
        3364.23120      kg/m3
     (should be not too far from 3344 kg/m3)
 
- position of the center of mass of the globe for this density model and mesh: 
+ position of the center of mass of the globe for this density model and mesh:
     x =   -1.88208365      km
     y =  -0.823448718      km
     z =    8.68919119E-02  km
@@ -724,14 +724,14 @@
  Load balancing = 100 % by definition
 
 
- the time step of the solver will be DT =   0.150000006    
+ the time step of the solver will be DT =   0.150000006
 
  using single precision for the calculations
 
  smallest and largest possible floating-point numbers are:    1.17549435E-38   3.40282347E+38
 
 
- Elapsed time for mesh generation and buffer creation in seconds =    3.44799304    
+ Elapsed time for mesh generation and buffer creation in seconds =    3.44799304
  Elapsed time for mesh generation and buffer creation in hh:mm:ss =    0 h 00 m 03 s
 
  End of mesh generation
